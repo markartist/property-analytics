@@ -1,0 +1,1093 @@
+{
+  "meta": {
+    "run_date": "2026-01-23",
+    "ga4_window": {
+      "start": "2025-12-23",
+      "end": "2026-01-22"
+    },
+    "gsc_window": {
+      "start": "2025-12-21",
+      "end": "2026-01-20"
+    },
+    "framework_version": "1.0"
+  },
+  "cohorts": {
+    "resi": {
+      "count": 4,
+      "properties": [
+        "Camber Ridge",
+        "The Delta Pearland",
+        "Cendana District West",
+        "Monteverde"
+      ]
+    },
+    "legacy": {
+      "count": 87,
+      "properties": [
+        "The Pointe Bentonville",
+        "Gateway North",
+        "The Grove at Clermont",
+        "The Anatole",
+        "Tomoka Pointe",
+        "Cobblestone at Eagle Harbor",
+        "Links at Windsor Parke",
+        "Village Walk",
+        "Cane Island",
+        "The Retreat at Lakeland",
+        "The Villages at Oakleaf",
+        "Villas Continental",
+        "Luma Headwaters",
+        "Northbridge at Millenia Lake",
+        "The District Universal Boulevard",
+        "Trevesta Place",
+        "Valencia at Westchase",
+        "Avasa Grove West",
+        "Avasa Hammock Landing",
+        "Luminary at 95",
+        "Champions Green",
+        "Apex West Midtown",
+        "Axial Buckhead",
+        "CoHo",
+        "The Harrison",
+        "The Whitney",
+        "Tuscany at Lindbergh",
+        "Canton Mill Lofts",
+        "The Maddox",
+        "Tree Park",
+        "Villas at Newnan Crossing",
+        "Balmoral Village",
+        "Retreat at Kedron Village",
+        "Botanic Luxury",
+        "Steeplechase",
+        "Bradford Mills Lofts",
+        "Clearwater Farm",
+        "Clearwater Heights",
+        "The Metropolitan",
+        "The Reserves of Thomas Glen",
+        "Timberlane Village",
+        "Town Station",
+        "Town Station Lofts",
+        "Creekside",
+        "The Parker",
+        "Boulevard at Lakeside",
+        "Anatole at Norman",
+        "West 46th",
+        "Stonecreek Ranch",
+        "Coles Crossing",
+        "Highpark",
+        "Zang Triangle",
+        "Bella Ruscello",
+        "Belterra",
+        "Republic Park Vista",
+        "The Phoenix",
+        "Villa Lago",
+        "Mission Mayfield Downs",
+        "Avasa Spring Branch",
+        "Calais Midtown",
+        "Stoneridge on the 8",
+        "Elation at Grandway West",
+        "The Cape at Grand Harbor",
+        "Keystone",
+        "College View",
+        "Fairways at South Shore",
+        "Riverbend",
+        "South Shore Lakes",
+        "Venue at Hometown",
+        "Preserve at Baywood",
+        "St. Andrews",
+        "Townhomes at Lake Park",
+        "The Retreat",
+        "Avasa at 1604",
+        "Carlyle Place",
+        "French Place",
+        "Park on Wurzbach",
+        "Ventana",
+        "Westover Oaks",
+        "Preserve at Colony Lakes",
+        "Shadowbrooke",
+        "Silverbrooke",
+        "Vinings",
+        "Estancia at Morningstar",
+        "Forest View",
+        "Timber Mill",
+        "San Palmilla"
+      ]
+    }
+  },
+  "medians": {
+    "gsc_ctr": {
+      "resi": 4.783966096057553,
+      "legacy": 10.928693947561872
+    },
+    "engagement_rate": {
+      "resi": 55.60158807188661,
+      "legacy": 63.10307017543859
+    },
+    "cwv": {
+      "lcp": {
+        "resi": 7.95,
+        "legacy": 5.48
+      },
+      "fid": {
+        "resi": 314.0,
+        "legacy": 198.0
+      },
+      "cls": {
+        "resi": 0.078,
+        "legacy": 0.054
+      }
+    }
+  },
+  "coverage": {
+    "gsc": {
+      "resi": 2,
+      "legacy": 11
+    },
+    "ga4": {
+      "resi": 4,
+      "legacy": 11
+    },
+    "cwv": {
+      "resi": 4,
+      "legacy": 11
+    }
+  },
+  "exclusions": {
+    "gsc": {
+      "resi": [
+        {
+          "property": "Cendana District West",
+          "reason": "Insufficient clicks (9 < 300)"
+        },
+        {
+          "property": "Monteverde",
+          "reason": "Insufficient clicks (150 < 300)"
+        }
+      ],
+      "legacy": [
+        {
+          "property": "The Pointe Bentonville",
+          "reason": "Insufficient clicks (264 < 300)"
+        },
+        {
+          "property": "Gateway North",
+          "reason": "Insufficient clicks (145 < 300)"
+        },
+        {
+          "property": "The Grove at Clermont",
+          "reason": "Insufficient clicks (214 < 300)"
+        },
+        {
+          "property": "Tomoka Pointe",
+          "reason": "Insufficient clicks (119 < 300)"
+        },
+        {
+          "property": "Links at Windsor Parke",
+          "reason": "Insufficient clicks (105 < 300)"
+        },
+        {
+          "property": "Village Walk",
+          "reason": "Insufficient clicks (132 < 300)"
+        },
+        {
+          "property": "Cane Island",
+          "reason": "Insufficient clicks (95 < 300)"
+        },
+        {
+          "property": "The Villages at Oakleaf",
+          "reason": "Insufficient clicks (191 < 300)"
+        },
+        {
+          "property": "Villas Continental",
+          "reason": "Insufficient clicks (38 < 300)"
+        },
+        {
+          "property": "Luma Headwaters",
+          "reason": "Insufficient clicks (188 < 300)"
+        },
+        {
+          "property": "Northbridge at Millenia Lake",
+          "reason": "Insufficient clicks (178 < 300)"
+        },
+        {
+          "property": "The District Universal Boulevard",
+          "reason": "Insufficient clicks (167 < 300)"
+        },
+        {
+          "property": "Valencia at Westchase",
+          "reason": "Insufficient clicks (82 < 300)"
+        },
+        {
+          "property": "Avasa Hammock Landing",
+          "reason": "Insufficient clicks (154 < 300)"
+        },
+        {
+          "property": "Luminary at 95",
+          "reason": "Insufficient clicks (180 < 300)"
+        },
+        {
+          "property": "Champions Green",
+          "reason": "Insufficient clicks (182 < 300)"
+        },
+        {
+          "property": "Apex West Midtown",
+          "reason": "Insufficient clicks (189 < 300)"
+        },
+        {
+          "property": "Axial Buckhead",
+          "reason": "Insufficient clicks (125 < 300)"
+        },
+        {
+          "property": "The Harrison",
+          "reason": "Insufficient clicks (129 < 300)"
+        },
+        {
+          "property": "The Whitney",
+          "reason": "Insufficient clicks (130 < 300)"
+        },
+        {
+          "property": "Tuscany at Lindbergh",
+          "reason": "Insufficient clicks (143 < 300)"
+        },
+        {
+          "property": "Canton Mill Lofts",
+          "reason": "Insufficient clicks (170 < 300)"
+        },
+        {
+          "property": "Tree Park",
+          "reason": "Insufficient clicks (192 < 300)"
+        },
+        {
+          "property": "Villas at Newnan Crossing",
+          "reason": "Insufficient clicks (95 < 300)"
+        },
+        {
+          "property": "Balmoral Village",
+          "reason": "Insufficient clicks (100 < 300)"
+        },
+        {
+          "property": "Retreat at Kedron Village",
+          "reason": "Insufficient clicks (100 < 300)"
+        },
+        {
+          "property": "Botanic Luxury",
+          "reason": "Insufficient clicks (119 < 300)"
+        },
+        {
+          "property": "Steeplechase",
+          "reason": "Insufficient clicks (73 < 300)"
+        },
+        {
+          "property": "Bradford Mills Lofts",
+          "reason": "Insufficient clicks (178 < 300)"
+        },
+        {
+          "property": "Clearwater Heights",
+          "reason": "Insufficient clicks (17 < 300)"
+        },
+        {
+          "property": "The Metropolitan",
+          "reason": "Insufficient clicks (21 < 300)"
+        },
+        {
+          "property": "The Reserves of Thomas Glen",
+          "reason": "Insufficient clicks (72 < 300)"
+        },
+        {
+          "property": "Timberlane Village",
+          "reason": "Insufficient clicks (79 < 300)"
+        },
+        {
+          "property": "Town Station",
+          "reason": "Insufficient clicks (64 < 300)"
+        },
+        {
+          "property": "Town Station Lofts",
+          "reason": "Insufficient clicks (55 < 300)"
+        },
+        {
+          "property": "Creekside",
+          "reason": "Insufficient clicks (184 < 300)"
+        },
+        {
+          "property": "The Parker",
+          "reason": "Insufficient clicks (84 < 300)"
+        },
+        {
+          "property": "Anatole at Norman",
+          "reason": "Insufficient clicks (140 < 300)"
+        },
+        {
+          "property": "West 46th",
+          "reason": "Insufficient clicks (124 < 300)"
+        },
+        {
+          "property": "Stonecreek Ranch",
+          "reason": "Insufficient clicks (65 < 300)"
+        },
+        {
+          "property": "Coles Crossing",
+          "reason": "Insufficient clicks (150 < 300)"
+        },
+        {
+          "property": "Highpark",
+          "reason": "Insufficient clicks (146 < 300)"
+        },
+        {
+          "property": "Zang Triangle",
+          "reason": "Insufficient clicks (119 < 300)"
+        },
+        {
+          "property": "Bella Ruscello",
+          "reason": "Insufficient clicks (78 < 300)"
+        },
+        {
+          "property": "Belterra",
+          "reason": "Insufficient clicks (96 < 300)"
+        },
+        {
+          "property": "Republic Park Vista",
+          "reason": "Insufficient clicks (98 < 300)"
+        },
+        {
+          "property": "The Phoenix",
+          "reason": "Insufficient clicks (63 < 300)"
+        },
+        {
+          "property": "Villa Lago",
+          "reason": "Insufficient clicks (45 < 300)"
+        },
+        {
+          "property": "Calais Midtown",
+          "reason": "Insufficient clicks (199 < 300)"
+        },
+        {
+          "property": "Stoneridge on the 8",
+          "reason": "Insufficient clicks (96 < 300)"
+        },
+        {
+          "property": "The Cape at Grand Harbor",
+          "reason": "Insufficient clicks (137 < 300)"
+        },
+        {
+          "property": "Keystone",
+          "reason": "Insufficient clicks (220 < 300)"
+        },
+        {
+          "property": "College View",
+          "reason": "Insufficient clicks (27 < 300)"
+        },
+        {
+          "property": "Fairways at South Shore",
+          "reason": "Insufficient clicks (152 < 300)"
+        },
+        {
+          "property": "Riverbend",
+          "reason": "Insufficient clicks (105 < 300)"
+        },
+        {
+          "property": "South Shore Lakes",
+          "reason": "Insufficient clicks (100 < 300)"
+        },
+        {
+          "property": "Venue at Hometown",
+          "reason": "Insufficient clicks (100 < 300)"
+        },
+        {
+          "property": "Preserve at Baywood",
+          "reason": "Insufficient clicks (190 < 300)"
+        },
+        {
+          "property": "St. Andrews",
+          "reason": "Insufficient clicks (235 < 300)"
+        },
+        {
+          "property": "Townhomes at Lake Park",
+          "reason": "Insufficient clicks (200 < 300)"
+        },
+        {
+          "property": "The Retreat",
+          "reason": "Insufficient clicks (73 < 300)"
+        },
+        {
+          "property": "Avasa at 1604",
+          "reason": "Insufficient clicks (166 < 300)"
+        },
+        {
+          "property": "Carlyle Place",
+          "reason": "Insufficient clicks (93 < 300)"
+        },
+        {
+          "property": "French Place",
+          "reason": "Insufficient clicks (72 < 300)"
+        },
+        {
+          "property": "Park on Wurzbach",
+          "reason": "Insufficient clicks (78 < 300)"
+        },
+        {
+          "property": "Ventana",
+          "reason": "Insufficient clicks (197 < 300)"
+        },
+        {
+          "property": "Westover Oaks",
+          "reason": "Insufficient clicks (93 < 300)"
+        },
+        {
+          "property": "Preserve at Colony Lakes",
+          "reason": "Insufficient clicks (178 < 300)"
+        },
+        {
+          "property": "Shadowbrooke",
+          "reason": "Insufficient clicks (93 < 300)"
+        },
+        {
+          "property": "Silverbrooke",
+          "reason": "Insufficient clicks (122 < 300)"
+        },
+        {
+          "property": "Vinings",
+          "reason": "Insufficient clicks (148 < 300)"
+        },
+        {
+          "property": "Estancia at Morningstar",
+          "reason": "Insufficient clicks (116 < 300)"
+        },
+        {
+          "property": "Forest View",
+          "reason": "Insufficient clicks (65 < 300)"
+        },
+        {
+          "property": "Timber Mill",
+          "reason": "Insufficient clicks (59 < 300)"
+        },
+        {
+          "property": "Clearwater Farm",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Boulevard at Lakeside",
+          "reason": "Filtered: did not pass all volume gates"
+        }
+      ]
+    },
+    "ga4": {
+      "resi": [],
+      "legacy": [
+        {
+          "property": "Links at Windsor Parke",
+          "reason": "Insufficient sessions (1125 < 1500)"
+        },
+        {
+          "property": "Cane Island",
+          "reason": "Insufficient sessions (1381 < 1500)"
+        },
+        {
+          "property": "Valencia at Westchase",
+          "reason": "Insufficient sessions (1266 < 1500)"
+        },
+        {
+          "property": "Avasa Hammock Landing",
+          "reason": "Insufficient sessions (160 < 1500)"
+        },
+        {
+          "property": "Axial Buckhead",
+          "reason": "Insufficient sessions (1192 < 1500)"
+        },
+        {
+          "property": "The Whitney",
+          "reason": "Insufficient sessions (1470 < 1500)"
+        },
+        {
+          "property": "Villas at Newnan Crossing",
+          "reason": "Insufficient sessions (1463 < 1500)"
+        },
+        {
+          "property": "Balmoral Village",
+          "reason": "Insufficient sessions (933 < 1500)"
+        },
+        {
+          "property": "Retreat at Kedron Village",
+          "reason": "Insufficient sessions (1181 < 1500)"
+        },
+        {
+          "property": "Steeplechase",
+          "reason": "Insufficient sessions (932 < 1500)"
+        },
+        {
+          "property": "Clearwater Farm",
+          "reason": "Insufficient sessions (1402 < 1500)"
+        },
+        {
+          "property": "Clearwater Heights",
+          "reason": "Insufficient sessions (216 < 1500)"
+        },
+        {
+          "property": "The Metropolitan",
+          "reason": "Insufficient sessions (926 < 1500)"
+        },
+        {
+          "property": "Timberlane Village",
+          "reason": "Insufficient sessions (1438 < 1500)"
+        },
+        {
+          "property": "Town Station",
+          "reason": "Insufficient sessions (651 < 1500)"
+        },
+        {
+          "property": "Town Station Lofts",
+          "reason": "Insufficient sessions (531 < 1500)"
+        },
+        {
+          "property": "Boulevard at Lakeside",
+          "reason": "Insufficient sessions (1313 < 1500)"
+        },
+        {
+          "property": "Anatole at Norman",
+          "reason": "Insufficient sessions (1269 < 1500)"
+        },
+        {
+          "property": "West 46th",
+          "reason": "Insufficient sessions (1102 < 1500)"
+        },
+        {
+          "property": "Zang Triangle",
+          "reason": "Insufficient sessions (1442 < 1500)"
+        },
+        {
+          "property": "Republic Park Vista",
+          "reason": "Insufficient sessions (1161 < 1500)"
+        },
+        {
+          "property": "The Phoenix",
+          "reason": "Insufficient sessions (1080 < 1500)"
+        },
+        {
+          "property": "Villa Lago",
+          "reason": "Insufficient sessions (740 < 1500)"
+        },
+        {
+          "property": "The Cape at Grand Harbor",
+          "reason": "Insufficient sessions (1228 < 1500)"
+        },
+        {
+          "property": "Keystone",
+          "reason": "Insufficient sessions (721 < 1500)"
+        },
+        {
+          "property": "College View",
+          "reason": "Insufficient sessions (732 < 1500)"
+        },
+        {
+          "property": "The Retreat",
+          "reason": "Insufficient sessions (1095 < 1500)"
+        },
+        {
+          "property": "Carlyle Place",
+          "reason": "Insufficient sessions (1010 < 1500)"
+        },
+        {
+          "property": "French Place",
+          "reason": "Insufficient sessions (793 < 1500)"
+        },
+        {
+          "property": "Westover Oaks",
+          "reason": "Insufficient sessions (1428 < 1500)"
+        },
+        {
+          "property": "Shadowbrooke",
+          "reason": "Insufficient sessions (1309 < 1500)"
+        },
+        {
+          "property": "Vinings",
+          "reason": "Insufficient sessions (1306 < 1500)"
+        },
+        {
+          "property": "Estancia at Morningstar",
+          "reason": "Insufficient sessions (1396 < 1500)"
+        },
+        {
+          "property": "Forest View",
+          "reason": "Insufficient sessions (1224 < 1500)"
+        },
+        {
+          "property": "Timber Mill",
+          "reason": "Insufficient sessions (1219 < 1500)"
+        },
+        {
+          "property": "The Pointe Bentonville",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Gateway North",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Grove at Clermont",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Tomoka Pointe",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Village Walk",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Villages at Oakleaf",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Villas Continental",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Luma Headwaters",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Northbridge at Millenia Lake",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The District Universal Boulevard",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Luminary at 95",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Champions Green",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Apex West Midtown",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Harrison",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Tuscany at Lindbergh",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Canton Mill Lofts",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Tree Park",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Botanic Luxury",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Bradford Mills Lofts",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Reserves of Thomas Glen",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Creekside",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Parker",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Stonecreek Ranch",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Coles Crossing",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Highpark",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Bella Ruscello",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Belterra",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Calais Midtown",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Stoneridge on the 8",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Fairways at South Shore",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Riverbend",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "South Shore Lakes",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Venue at Hometown",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Preserve at Baywood",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "St. Andrews",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Townhomes at Lake Park",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Avasa at 1604",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Park on Wurzbach",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Ventana",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Preserve at Colony Lakes",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Silverbrooke",
+          "reason": "Filtered: did not pass all volume gates"
+        }
+      ]
+    },
+    "cwv": {
+      "resi": [],
+      "legacy": [
+        {
+          "property": "The Pointe Bentonville",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Gateway North",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Grove at Clermont",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Tomoka Pointe",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Links at Windsor Parke",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Village Walk",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Cane Island",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Villages at Oakleaf",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Villas Continental",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Luma Headwaters",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Northbridge at Millenia Lake",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The District Universal Boulevard",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Valencia at Westchase",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Avasa Hammock Landing",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Luminary at 95",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Champions Green",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Apex West Midtown",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Axial Buckhead",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Harrison",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Whitney",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Tuscany at Lindbergh",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Canton Mill Lofts",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Tree Park",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Villas at Newnan Crossing",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Balmoral Village",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Retreat at Kedron Village",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Botanic Luxury",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Steeplechase",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Bradford Mills Lofts",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Clearwater Farm",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Clearwater Heights",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Metropolitan",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Reserves of Thomas Glen",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Timberlane Village",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Town Station",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Town Station Lofts",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Creekside",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Parker",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Boulevard at Lakeside",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Anatole at Norman",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "West 46th",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Stonecreek Ranch",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Coles Crossing",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Highpark",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Zang Triangle",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Bella Ruscello",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Belterra",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Republic Park Vista",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Phoenix",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Villa Lago",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Calais Midtown",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Stoneridge on the 8",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Cape at Grand Harbor",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Keystone",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "College View",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Fairways at South Shore",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Riverbend",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "South Shore Lakes",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Venue at Hometown",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Preserve at Baywood",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "St. Andrews",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Townhomes at Lake Park",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "The Retreat",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Avasa at 1604",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Carlyle Place",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "French Place",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Park on Wurzbach",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Ventana",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Westover Oaks",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Preserve at Colony Lakes",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Shadowbrooke",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Silverbrooke",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Vinings",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Estancia at Morningstar",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Forest View",
+          "reason": "Filtered: did not pass all volume gates"
+        },
+        {
+          "property": "Timber Mill",
+          "reason": "Filtered: did not pass all volume gates"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,2393 @@
+{
+  "meta": {
+    "run_date": "2026-01-23",
+    "ga4_window": {
+      "start": "2025-12-23",
+      "end": "2026-01-22"
+    },
+    "gsc_window": {
+      "start": "2025-12-21",
+      "end": "2026-01-20"
+    },
+    "framework": "Atlas Executive Comparison v1.0"
+  },
+  "scorecard": {
+    "resi": {
+      "conversion_eligible_count": 3,
+      "median_ctr": 5.794472308184825,
+      "median_engagement": 59.010840108401084
+    },
+    "legacy": {
+      "conversion_eligible_count": 13,
+      "median_ctr": 10.928693947561872,
+      "median_engagement": 61.843107387661846
+    }
+  },
+  "properties": {
+    "resi": [
+      {
+        "name": "Camber Ridge",
+        "ga4_id": "445473253",
+        "gsc_url": "https://camberridgeapartments.com/",
+        "gsc": {
+          "clicks": 578,
+          "impressions": 7336,
+          "ctr": 7.878953107960742,
+          "avg_position": 7.950308610365253,
+          "days_tracked": 50,
+          "click_velocity": 19.266666666666666
+        },
+        "ga4": {
+          "sessions": 5428,
+          "engaged_sessions": 2833,
+          "engagement_rate": 52.19233603537214
+        },
+        "cwv": {
+          "lcp": 11.25,
+          "fid": 369.0,
+          "cls": 0.058,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (578 clicks \u2265 300)"
+      },
+      {
+        "name": "The Delta Pearland",
+        "ga4_id": "441503068",
+        "gsc_url": "https://thedeltapearland.com/",
+        "gsc": {
+          "clicks": 516,
+          "impressions": 30551,
+          "ctr": 1.6889790841543648,
+          "avg_position": 9.66927299458849,
+          "days_tracked": 128,
+          "click_velocity": 17.2
+        },
+        "ga4": {
+          "sessions": 4554,
+          "engaged_sessions": 3189,
+          "engagement_rate": 70.02635046113306
+        },
+        "cwv": {
+          "lcp": 8.5,
+          "fid": 402.0,
+          "cls": 0.117,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (516 clicks \u2265 300)"
+      },
+      {
+        "name": "Cendana District West",
+        "ga4_id": "424416990",
+        "gsc_url": "sc-domain:cendanalife.com",
+        "gsc": {
+          "clicks": 543,
+          "impressions": 9371,
+          "ctr": 5.794472308184825,
+          "avg_position": 7.9801215248188555,
+          "days_tracked": 92,
+          "click_velocity": 18.1
+        },
+        "ga4": {
+          "sessions": 2952,
+          "engaged_sessions": 1742,
+          "engagement_rate": 59.010840108401084
+        },
+        "cwv": {
+          "lcp": 6.85,
+          "fid": 242.0,
+          "cls": 0.051,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (543 clicks \u2265 300)"
+      },
+      {
+        "name": "Monteverde",
+        "ga4_id": "488649687",
+        "gsc_url": "sc-domain:monteverdesatx.com",
+        "gsc": {
+          "clicks": 150,
+          "impressions": 1354,
+          "ctr": 11.078286558345644,
+          "avg_position": 14.107685095093938,
+          "days_tracked": 24,
+          "click_velocity": 5.0
+        },
+        "ga4": {
+          "sessions": 4395,
+          "engaged_sessions": 1971,
+          "engagement_rate": 44.846416382252556
+        },
+        "cwv": {
+          "lcp": 7.4,
+          "fid": 259.0,
+          "cls": 0.098,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "New property (24 days tracked < 45)"
+      }
+    ],
+    "legacy": [
+      {
+        "name": "The Pointe Bentonville",
+        "ga4_id": "482958962",
+        "gsc_url": "https://venterraliving.com/apartments/the-pointe-bentonville/",
+        "gsc": {
+          "clicks": 264,
+          "impressions": 9652,
+          "ctr": 2.7351844177372566,
+          "avg_position": 15.62921719132608,
+          "days_tracked": 128,
+          "click_velocity": 8.8
+        },
+        "ga4": {
+          "sessions": 1890,
+          "engaged_sessions": 1132,
+          "engagement_rate": 59.894179894179885
+        },
+        "cwv": {
+          "lcp": 5.18,
+          "fid": 216.0,
+          "cls": 0.051,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (264 clicks, 8.8 clicks/day)"
+      },
+      {
+        "name": "Gateway North",
+        "ga4_id": "378703470",
+        "gsc_url": "https://venterraliving.com/apartments/gateway-north/",
+        "gsc": {
+          "clicks": 145,
+          "impressions": 10569,
+          "ctr": 1.3719367962910398,
+          "avg_position": 17.318682101396575,
+          "days_tracked": 128,
+          "click_velocity": 4.833333333333333
+        },
+        "ga4": {
+          "sessions": 2327,
+          "engaged_sessions": 1521,
+          "engagement_rate": 65.36312849162012
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 241.0,
+          "cls": 0.008,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (145 clicks, 4.8 clicks/day)"
+      },
+      {
+        "name": "The Grove at Clermont",
+        "ga4_id": "411396458",
+        "gsc_url": "https://venterraliving.com/apartments/the-grove-at-clermont/",
+        "gsc": {
+          "clicks": 214,
+          "impressions": 23920,
+          "ctr": 0.8946488294314381,
+          "avg_position": 12.6430463234015,
+          "days_tracked": 128,
+          "click_velocity": 7.133333333333334
+        },
+        "ga4": {
+          "sessions": 3644,
+          "engaged_sessions": 2417,
+          "engagement_rate": 66.32821075740945
+        },
+        "cwv": {
+          "lcp": 8.9,
+          "fid": 262.0,
+          "cls": 0.05,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (214 clicks, 7.1 clicks/day)"
+      },
+      {
+        "name": "The Anatole",
+        "ga4_id": "378385381",
+        "gsc_url": "https://venterraliving.com/apartments/the-anatole/",
+        "gsc": {
+          "clicks": 446,
+          "impressions": 4081,
+          "ctr": 10.928693947561872,
+          "avg_position": 10.630199038668644,
+          "days_tracked": 128,
+          "click_velocity": 14.866666666666667
+        },
+        "ga4": {
+          "sessions": 3507,
+          "engaged_sessions": 1709,
+          "engagement_rate": 48.731109210151125
+        },
+        "cwv": {
+          "lcp": 5.25,
+          "fid": 253.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (446 clicks \u2265 300)"
+      },
+      {
+        "name": "Tomoka Pointe",
+        "ga4_id": "383876294",
+        "gsc_url": "https://venterraliving.com/apartments/tomoka-pointe/",
+        "gsc": {
+          "clicks": 119,
+          "impressions": 9222,
+          "ctr": 1.290392539579267,
+          "avg_position": 23.12168854869281,
+          "days_tracked": 128,
+          "click_velocity": 3.966666666666667
+        },
+        "ga4": {
+          "sessions": 1922,
+          "engaged_sessions": 1193,
+          "engagement_rate": 62.07075962539022
+        },
+        "cwv": {
+          "lcp": 4.95,
+          "fid": 104.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (119 clicks, 4.0 clicks/day)"
+      },
+      {
+        "name": "Cobblestone at Eagle Harbor",
+        "ga4_id": "378412786",
+        "gsc_url": "https://venterraliving.com/apartments/cobblestone-at-eagle-harbor/",
+        "gsc": {
+          "clicks": 545,
+          "impressions": 3889,
+          "ctr": 14.013885317562355,
+          "avg_position": 9.433560051014991,
+          "days_tracked": 128,
+          "click_velocity": 18.166666666666668
+        },
+        "ga4": {
+          "sessions": 1811,
+          "engaged_sessions": 1163,
+          "engagement_rate": 64.21866372170072
+        },
+        "cwv": {
+          "lcp": 10.41,
+          "fid": 204.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (545 clicks \u2265 300)"
+      },
+      {
+        "name": "Links at Windsor Parke",
+        "ga4_id": "378702022",
+        "gsc_url": "https://venterraliving.com/apartments/links-at-windsor-parke/",
+        "gsc": {
+          "clicks": 105,
+          "impressions": 2795,
+          "ctr": 3.7567084078711988,
+          "avg_position": 11.501422819369042,
+          "days_tracked": 128,
+          "click_velocity": 3.5
+        },
+        "ga4": {
+          "sessions": 1125,
+          "engaged_sessions": 787,
+          "engagement_rate": 69.95555555555556
+        },
+        "cwv": {
+          "lcp": 4.35,
+          "fid": 220.0,
+          "cls": 0.064,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (105 clicks, 3.5 clicks/day)"
+      },
+      {
+        "name": "Village Walk",
+        "ga4_id": "378697137",
+        "gsc_url": "https://venterraliving.com/apartments/village-walk/",
+        "gsc": {
+          "clicks": 132,
+          "impressions": 10386,
+          "ctr": 1.270941652224148,
+          "avg_position": 27.798674108468173,
+          "days_tracked": 128,
+          "click_velocity": 4.4
+        },
+        "ga4": {
+          "sessions": 1571,
+          "engaged_sessions": 1052,
+          "engagement_rate": 66.96371737746658
+        },
+        "cwv": {
+          "lcp": 5.36,
+          "fid": 171.0,
+          "cls": 0.063,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (132 clicks, 4.4 clicks/day)"
+      },
+      {
+        "name": "Cane Island",
+        "ga4_id": "378405224",
+        "gsc_url": "https://venterraliving.com/apartments/cane-island/",
+        "gsc": {
+          "clicks": 95,
+          "impressions": 8378,
+          "ctr": 1.13392217713058,
+          "avg_position": 20.85627938095431,
+          "days_tracked": 128,
+          "click_velocity": 3.1666666666666665
+        },
+        "ga4": {
+          "sessions": 1381,
+          "engaged_sessions": 759,
+          "engagement_rate": 54.96017378711079
+        },
+        "cwv": {
+          "lcp": 4.95,
+          "fid": 164.0,
+          "cls": 0.051,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (95 clicks, 3.2 clicks/day)"
+      },
+      {
+        "name": "The Retreat at Lakeland",
+        "ga4_id": "378713160",
+        "gsc_url": "https://venterraliving.com/apartments/the-retreat-at-lakeland/",
+        "gsc": {
+          "clicks": 870,
+          "impressions": 10625,
+          "ctr": 8.188235294117648,
+          "avg_position": 11.747306388245567,
+          "days_tracked": 128,
+          "click_velocity": 29.0
+        },
+        "ga4": {
+          "sessions": 2494,
+          "engaged_sessions": 1655,
+          "engagement_rate": 66.35926222935045
+        },
+        "cwv": {
+          "lcp": 9.91,
+          "fid": 220.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (870 clicks \u2265 300)"
+      },
+      {
+        "name": "The Villages at Oakleaf",
+        "ga4_id": "378702944",
+        "gsc_url": "https://venterraliving.com/apartments/the-villages-at-oakleaf/",
+        "gsc": {
+          "clicks": 191,
+          "impressions": 11577,
+          "ctr": 1.6498229247646194,
+          "avg_position": 15.519837718661234,
+          "days_tracked": 128,
+          "click_velocity": 6.366666666666666
+        },
+        "ga4": {
+          "sessions": 2427,
+          "engaged_sessions": 1562,
+          "engagement_rate": 64.35929130613927
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 142.0,
+          "cls": 0.062,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (191 clicks, 6.4 clicks/day)"
+      },
+      {
+        "name": "Villas Continental",
+        "ga4_id": "378700639",
+        "gsc_url": "https://venterraliving.com/apartments/villas-continental/",
+        "gsc": {
+          "clicks": 38,
+          "impressions": 6960,
+          "ctr": 0.5459770114942528,
+          "avg_position": 27.885492063757397,
+          "days_tracked": 128,
+          "click_velocity": 1.2666666666666666
+        },
+        "ga4": {
+          "sessions": 2913,
+          "engaged_sessions": 1203,
+          "engagement_rate": 41.29763130792997
+        },
+        "cwv": {
+          "lcp": 5.1,
+          "fid": 166.0,
+          "cls": 0.083,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (38 clicks, 1.3 clicks/day)"
+      },
+      {
+        "name": "Luma Headwaters",
+        "ga4_id": "383898543",
+        "gsc_url": "https://venterraliving.com/apartments/luma-headwaters/",
+        "gsc": {
+          "clicks": 188,
+          "impressions": 12474,
+          "ctr": 1.5071348404681737,
+          "avg_position": 29.585995833303965,
+          "days_tracked": 128,
+          "click_velocity": 6.266666666666667
+        },
+        "ga4": {
+          "sessions": 3433,
+          "engaged_sessions": 2258,
+          "engagement_rate": 65.77337605592776
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 178.0,
+          "cls": 0.132,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (188 clicks, 6.3 clicks/day)"
+      },
+      {
+        "name": "Northbridge at Millenia Lake",
+        "ga4_id": "378701160",
+        "gsc_url": "https://venterraliving.com/apartments/northbridge-at-millenia-lake/",
+        "gsc": {
+          "clicks": 178,
+          "impressions": 11347,
+          "ctr": 1.5686965717810875,
+          "avg_position": 14.674959618126627,
+          "days_tracked": 128,
+          "click_velocity": 5.933333333333334
+        },
+        "ga4": {
+          "sessions": 4330,
+          "engaged_sessions": 2418,
+          "engagement_rate": 55.84295612009238
+        },
+        "cwv": {
+          "lcp": 6.3,
+          "fid": 164.0,
+          "cls": 0.057,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (178 clicks, 5.9 clicks/day)"
+      },
+      {
+        "name": "The District Universal Boulevard",
+        "ga4_id": "378644585",
+        "gsc_url": "https://venterraliving.com/apartments/the-district-universal-boulevard/",
+        "gsc": {
+          "clicks": 167,
+          "impressions": 6842,
+          "ctr": 2.4408067816427943,
+          "avg_position": 13.218913867503922,
+          "days_tracked": 81,
+          "click_velocity": 5.566666666666666
+        },
+        "ga4": {
+          "sessions": 2198,
+          "engaged_sessions": 1298,
+          "engagement_rate": 59.053685168334844
+        },
+        "cwv": {
+          "lcp": 10.24,
+          "fid": 318.0,
+          "cls": 0.0,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (167 clicks, 5.6 clicks/day)"
+      },
+      {
+        "name": "Trevesta Place",
+        "ga4_id": "453604813",
+        "gsc_url": "https://venterraliving.com/apartments/trevesta-place/",
+        "gsc": {
+          "clicks": 701,
+          "impressions": 5320,
+          "ctr": 13.17669172932331,
+          "avg_position": 7.981011810388646,
+          "days_tracked": 128,
+          "click_velocity": 23.366666666666667
+        },
+        "ga4": {
+          "sessions": 2074,
+          "engaged_sessions": 1154,
+          "engagement_rate": 55.64127290260367
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 198.0,
+          "cls": 0.081,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (701 clicks \u2265 300)"
+      },
+      {
+        "name": "Valencia at Westchase",
+        "ga4_id": "378724718",
+        "gsc_url": "https://venterraliving.com/apartments/valencia-at-westchase/",
+        "gsc": {
+          "clicks": 82,
+          "impressions": 4785,
+          "ctr": 1.7136886102403344,
+          "avg_position": 16.549711220333705,
+          "days_tracked": 128,
+          "click_velocity": 2.7333333333333334
+        },
+        "ga4": {
+          "sessions": 1266,
+          "engaged_sessions": 829,
+          "engagement_rate": 65.48183254344391
+        },
+        "cwv": {
+          "lcp": 9.8,
+          "fid": 197.0,
+          "cls": 0.057,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (82 clicks, 2.7 clicks/day)"
+      },
+      {
+        "name": "Avasa Grove West",
+        "ga4_id": "408537081",
+        "gsc_url": "https://venterraliving.com/apartments/avasa-grove-west/",
+        "gsc": {
+          "clicks": 877,
+          "impressions": 11030,
+          "ctr": 7.9510426110607435,
+          "avg_position": 15.474167050585327,
+          "days_tracked": 128,
+          "click_velocity": 29.233333333333334
+        },
+        "ga4": {
+          "sessions": 2674,
+          "engaged_sessions": 1611,
+          "engagement_rate": 60.246821241585636
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 207.0,
+          "cls": 0.057,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (877 clicks \u2265 300)"
+      },
+      {
+        "name": "Avasa Hammock Landing",
+        "ga4_id": "416886840",
+        "gsc_url": "https://venterraliving.com/apartments/avasa-hammock-landing/",
+        "gsc": {
+          "clicks": 154,
+          "impressions": 6998,
+          "ctr": 2.2006287510717346,
+          "avg_position": 9.973855441824432,
+          "days_tracked": 128,
+          "click_velocity": 5.133333333333334
+        },
+        "ga4": {
+          "sessions": 160,
+          "engaged_sessions": 160,
+          "engagement_rate": 100.0
+        },
+        "cwv": {
+          "lcp": 10.21,
+          "fid": 291.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (154 clicks, 5.1 clicks/day)"
+      },
+      {
+        "name": "Luminary at 95",
+        "ga4_id": "383898696",
+        "gsc_url": "https://venterraliving.com/apartments/the-luminary-at-95/",
+        "gsc": {
+          "clicks": 180,
+          "impressions": 18894,
+          "ctr": 0.952683391552874,
+          "avg_position": 13.835512257906645,
+          "days_tracked": 128,
+          "click_velocity": 6.0
+        },
+        "ga4": {
+          "sessions": 1862,
+          "engaged_sessions": 1184,
+          "engagement_rate": 63.587540279269604
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 230.0,
+          "cls": 0.062,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (180 clicks, 6.0 clicks/day)"
+      },
+      {
+        "name": "Champions Green",
+        "ga4_id": "378404769",
+        "gsc_url": "https://venterraliving.com/apartments/champions-green/",
+        "gsc": {
+          "clicks": 182,
+          "impressions": 5199,
+          "ctr": 3.500673206385843,
+          "avg_position": 18.909620235010532,
+          "days_tracked": 128,
+          "click_velocity": 6.066666666666666
+        },
+        "ga4": {
+          "sessions": 28325,
+          "engaged_sessions": 12812,
+          "engagement_rate": 45.23212709620476
+        },
+        "cwv": {
+          "lcp": 5.55,
+          "fid": 140.0,
+          "cls": 0.059,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (182 clicks, 6.1 clicks/day)"
+      },
+      {
+        "name": "Apex West Midtown",
+        "ga4_id": "378403365",
+        "gsc_url": "https://venterraliving.com/apartments/apex-west-midtown/",
+        "gsc": {
+          "clicks": 189,
+          "impressions": 18217,
+          "ctr": 1.0374924521051765,
+          "avg_position": 18.3581869902921,
+          "days_tracked": 128,
+          "click_velocity": 6.3
+        },
+        "ga4": {
+          "sessions": 2968,
+          "engaged_sessions": 1788,
+          "engagement_rate": 60.24258760107817
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 105.0,
+          "cls": 0.063,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (189 clicks, 6.3 clicks/day)"
+      },
+      {
+        "name": "Axial Buckhead",
+        "ga4_id": "378379349",
+        "gsc_url": "https://venterraliving.com/apartments/axial-buckhead/",
+        "gsc": {
+          "clicks": 125,
+          "impressions": 6682,
+          "ctr": 1.8706973959892248,
+          "avg_position": 18.051299529041106,
+          "days_tracked": 128,
+          "click_velocity": 4.166666666666667
+        },
+        "ga4": {
+          "sessions": 1192,
+          "engaged_sessions": 904,
+          "engagement_rate": 75.83892617449665
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 109.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (125 clicks, 4.2 clicks/day)"
+      },
+      {
+        "name": "CoHo",
+        "ga4_id": "378415300",
+        "gsc_url": "https://venterraliving.com/apartments/coho/",
+        "gsc": {
+          "clicks": 306,
+          "impressions": 4142,
+          "ctr": 7.387735393529696,
+          "avg_position": 11.713893321360974,
+          "days_tracked": 128,
+          "click_velocity": 10.2
+        },
+        "ga4": {
+          "sessions": 1826,
+          "engaged_sessions": 1106,
+          "engagement_rate": 60.56955093099672
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 177.0,
+          "cls": 0.047,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (306 clicks \u2265 300)"
+      },
+      {
+        "name": "The Harrison",
+        "ga4_id": "378702475",
+        "gsc_url": "https://venterraliving.com/apartments/the-harrison/",
+        "gsc": {
+          "clicks": 129,
+          "impressions": 9139,
+          "ctr": 1.4115329904803589,
+          "avg_position": 19.929491064962527,
+          "days_tracked": 128,
+          "click_velocity": 4.3
+        },
+        "ga4": {
+          "sessions": 1600,
+          "engaged_sessions": 893,
+          "engagement_rate": 55.8125
+        },
+        "cwv": {
+          "lcp": 5.63,
+          "fid": 166.0,
+          "cls": 0.053,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (129 clicks, 4.3 clicks/day)"
+      },
+      {
+        "name": "The Whitney",
+        "ga4_id": "378701831",
+        "gsc_url": "https://venterraliving.com/apartments/the-whitney/",
+        "gsc": {
+          "clicks": 130,
+          "impressions": 8002,
+          "ctr": 1.6245938515371157,
+          "avg_position": 18.054011686079942,
+          "days_tracked": 128,
+          "click_velocity": 4.333333333333333
+        },
+        "ga4": {
+          "sessions": 1470,
+          "engaged_sessions": 855,
+          "engagement_rate": 58.16326530612245
+        },
+        "cwv": {
+          "lcp": 5.63,
+          "fid": 214.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (130 clicks, 4.3 clicks/day)"
+      },
+      {
+        "name": "Tuscany at Lindbergh",
+        "ga4_id": "378703985",
+        "gsc_url": "https://venterraliving.com/apartments/tuscany-at-lindbergh/",
+        "gsc": {
+          "clicks": 143,
+          "impressions": 7397,
+          "ctr": 1.9332161687170473,
+          "avg_position": 12.541242184644727,
+          "days_tracked": 128,
+          "click_velocity": 4.766666666666667
+        },
+        "ga4": {
+          "sessions": 1925,
+          "engaged_sessions": 1464,
+          "engagement_rate": 76.05194805194805
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 149.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (143 clicks, 4.8 clicks/day)"
+      },
+      {
+        "name": "Canton Mill Lofts",
+        "ga4_id": "378412775",
+        "gsc_url": "https://venterraliving.com/apartments/canton-mill-lofts/",
+        "gsc": {
+          "clicks": 170,
+          "impressions": 7644,
+          "ctr": 2.2239665096807952,
+          "avg_position": 10.225378014040409,
+          "days_tracked": 128,
+          "click_velocity": 5.666666666666667
+        },
+        "ga4": {
+          "sessions": 2585,
+          "engaged_sessions": 1544,
+          "engagement_rate": 59.72920696324952
+        },
+        "cwv": {
+          "lcp": 6.83,
+          "fid": 513.0,
+          "cls": 0.046,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (170 clicks, 5.7 clicks/day)"
+      },
+      {
+        "name": "The Maddox",
+        "ga4_id": "378707080",
+        "gsc_url": "https://venterraliving.com/apartments/the-maddox/",
+        "gsc": {
+          "clicks": 652,
+          "impressions": 8945,
+          "ctr": 7.288988261598658,
+          "avg_position": 15.504859742147135,
+          "days_tracked": 128,
+          "click_velocity": 21.733333333333334
+        },
+        "ga4": {
+          "sessions": 1661,
+          "engaged_sessions": 1002,
+          "engagement_rate": 60.32510535821795
+        },
+        "cwv": {
+          "lcp": 5.7,
+          "fid": 158.0,
+          "cls": 0.051,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (652 clicks \u2265 300)"
+      },
+      {
+        "name": "Tree Park",
+        "ga4_id": "378726133",
+        "gsc_url": "https://venterraliving.com/apartments/tree-park/",
+        "gsc": {
+          "clicks": 192,
+          "impressions": 8705,
+          "ctr": 2.205628948879954,
+          "avg_position": 9.440574129009851,
+          "days_tracked": 128,
+          "click_velocity": 6.4
+        },
+        "ga4": {
+          "sessions": 2361,
+          "engaged_sessions": 1495,
+          "engagement_rate": 63.32062685302839
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 179.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (192 clicks, 6.4 clicks/day)"
+      },
+      {
+        "name": "Villas at Newnan Crossing",
+        "ga4_id": "378710933",
+        "gsc_url": "https://venterraliving.com/apartments/villas-at-newnan-crossing/",
+        "gsc": {
+          "clicks": 95,
+          "impressions": 4242,
+          "ctr": 2.2395096652522395,
+          "avg_position": 14.451743140363083,
+          "days_tracked": 128,
+          "click_velocity": 3.1666666666666665
+        },
+        "ga4": {
+          "sessions": 1463,
+          "engaged_sessions": 871,
+          "engagement_rate": 59.5352016404648
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 240.0,
+          "cls": 0.066,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (95 clicks, 3.2 clicks/day)"
+      },
+      {
+        "name": "Balmoral Village",
+        "ga4_id": "378397296",
+        "gsc_url": "https://venterraliving.com/apartments/balmoral-village/",
+        "gsc": {
+          "clicks": 100,
+          "impressions": 6701,
+          "ctr": 1.4923145799134456,
+          "avg_position": 11.874328621346155,
+          "days_tracked": 128,
+          "click_velocity": 3.3333333333333335
+        },
+        "ga4": {
+          "sessions": 933,
+          "engaged_sessions": 617,
+          "engagement_rate": 66.13076098606645
+        },
+        "cwv": {
+          "lcp": 8.72,
+          "fid": 239.0,
+          "cls": 0.07,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (100 clicks, 3.3 clicks/day)"
+      },
+      {
+        "name": "Retreat at Kedron Village",
+        "ga4_id": "378387143",
+        "gsc_url": "https://venterraliving.com/apartments/the-retreat-at-kedron-village/",
+        "gsc": {
+          "clicks": 100,
+          "impressions": 13099,
+          "ctr": 0.7634170547370028,
+          "avg_position": 12.673819502946834,
+          "days_tracked": 128,
+          "click_velocity": 3.3333333333333335
+        },
+        "ga4": {
+          "sessions": 1181,
+          "engaged_sessions": 815,
+          "engagement_rate": 69.00931414055886
+        },
+        "cwv": {
+          "lcp": 9.46,
+          "fid": 233.0,
+          "cls": 0.07,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (100 clicks, 3.3 clicks/day)"
+      },
+      {
+        "name": "Botanic Luxury",
+        "ga4_id": "453129717",
+        "gsc_url": "https://venterraliving.com/apartments/botanic-apartments/",
+        "gsc": {
+          "clicks": 119,
+          "impressions": 12113,
+          "ctr": 0.9824155865598942,
+          "avg_position": 13.15583048614492,
+          "days_tracked": 128,
+          "click_velocity": 3.966666666666667
+        },
+        "ga4": {
+          "sessions": 2373,
+          "engaged_sessions": 1288,
+          "engagement_rate": 54.27728613569322
+        },
+        "cwv": {
+          "lcp": 5.18,
+          "fid": 161.0,
+          "cls": 0.059,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (119 clicks, 4.0 clicks/day)"
+      },
+      {
+        "name": "Steeplechase",
+        "ga4_id": "383899747",
+        "gsc_url": "https://venterraliving.com/apartments/steeplechase/",
+        "gsc": {
+          "clicks": 73,
+          "impressions": 4099,
+          "ctr": 1.780922176140522,
+          "avg_position": 16.05115097031894,
+          "days_tracked": 128,
+          "click_velocity": 2.433333333333333
+        },
+        "ga4": {
+          "sessions": 932,
+          "engaged_sessions": 601,
+          "engagement_rate": 64.48497854077253
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 187.0,
+          "cls": 0.057,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (73 clicks, 2.4 clicks/day)"
+      },
+      {
+        "name": "Bradford Mills Lofts",
+        "ga4_id": "378422088",
+        "gsc_url": "https://venterraliving.com/apartments/bradford-mills-lofts/",
+        "gsc": {
+          "clicks": 178,
+          "impressions": 20408,
+          "ctr": 0.8722069776558212,
+          "avg_position": 24.061319688562456,
+          "days_tracked": 81,
+          "click_velocity": 5.933333333333334
+        },
+        "ga4": {
+          "sessions": 1548,
+          "engaged_sessions": 1118,
+          "engagement_rate": 72.22222222222221
+        },
+        "cwv": {
+          "lcp": 5.1,
+          "fid": 125.0,
+          "cls": 0.067,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (178 clicks, 5.9 clicks/day)"
+      },
+      {
+        "name": "Clearwater Farm",
+        "ga4_id": "378405236",
+        "gsc_url": "https://venterraliving.com/apartments/clearwater-farm/",
+        "gsc": {
+          "clicks": 366,
+          "impressions": 5205,
+          "ctr": 7.031700288184438,
+          "avg_position": 10.374529790047976,
+          "days_tracked": 128,
+          "click_velocity": 12.2
+        },
+        "ga4": {
+          "sessions": 1402,
+          "engaged_sessions": 836,
+          "engagement_rate": 59.62910128388017
+        },
+        "cwv": {
+          "lcp": 5.41,
+          "fid": 201.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (366 clicks \u2265 300)"
+      },
+      {
+        "name": "Clearwater Heights",
+        "ga4_id": "414406175",
+        "gsc_url": "https://venterraliving.com/apartments/clearwater-heights/",
+        "gsc": {
+          "clicks": 17,
+          "impressions": 1723,
+          "ctr": 0.9866511897852582,
+          "avg_position": 9.133776251713986,
+          "days_tracked": 128,
+          "click_velocity": 0.5666666666666667
+        },
+        "ga4": {
+          "sessions": 216,
+          "engaged_sessions": 150,
+          "engagement_rate": 69.44444444444444
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 265.0,
+          "cls": 0.064,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (17 clicks, 0.6 clicks/day)"
+      },
+      {
+        "name": "The Metropolitan",
+        "ga4_id": "378702557",
+        "gsc_url": "https://venterraliving.com/apartments/the-metropolitan/",
+        "gsc": {
+          "clicks": 21,
+          "impressions": 3530,
+          "ctr": 0.594900849858357,
+          "avg_position": 14.60553260387867,
+          "days_tracked": 128,
+          "click_velocity": 0.7
+        },
+        "ga4": {
+          "sessions": 926,
+          "engaged_sessions": 539,
+          "engagement_rate": 58.207343412527
+        },
+        "cwv": {
+          "lcp": 5.18,
+          "fid": 138.0,
+          "cls": 0.08,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (21 clicks, 0.7 clicks/day)"
+      },
+      {
+        "name": "The Reserves of Thomas Glen",
+        "ga4_id": "465807797",
+        "gsc_url": "https://venterraliving.com/apartments/reserves-of-thomas-glen/",
+        "gsc": {
+          "clicks": 72,
+          "impressions": 6854,
+          "ctr": 1.0504814706740588,
+          "avg_position": 10.789211491968759,
+          "days_tracked": 128,
+          "click_velocity": 2.4
+        },
+        "ga4": {
+          "sessions": 3002,
+          "engaged_sessions": 950,
+          "engagement_rate": 31.645569620253166
+        },
+        "cwv": {
+          "lcp": 5.03,
+          "fid": 112.0,
+          "cls": 0.06,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (72 clicks, 2.4 clicks/day)"
+      },
+      {
+        "name": "Timberlane Village",
+        "ga4_id": "383911613",
+        "gsc_url": "https://venterraliving.com/apartments/timberlane-village/",
+        "gsc": {
+          "clicks": 79,
+          "impressions": 5135,
+          "ctr": 1.5384615384615385,
+          "avg_position": 12.36131430936066,
+          "days_tracked": 128,
+          "click_velocity": 2.6333333333333333
+        },
+        "ga4": {
+          "sessions": 1438,
+          "engaged_sessions": 943,
+          "engagement_rate": 65.57719054242003
+        },
+        "cwv": {
+          "lcp": 9.87,
+          "fid": 115.0,
+          "cls": 0.091,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (79 clicks, 2.6 clicks/day)"
+      },
+      {
+        "name": "Town Station",
+        "ga4_id": "378679402",
+        "gsc_url": "https://venterraliving.com/apartments/town-station/",
+        "gsc": {
+          "clicks": 64,
+          "impressions": 9371,
+          "ctr": 0.6829580621064988,
+          "avg_position": 31.58009571157208,
+          "days_tracked": 128,
+          "click_velocity": 2.1333333333333333
+        },
+        "ga4": {
+          "sessions": 651,
+          "engaged_sessions": 413,
+          "engagement_rate": 63.44086021505376
+        },
+        "cwv": {
+          "lcp": 10.11,
+          "fid": 264.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (64 clicks, 2.1 clicks/day)"
+      },
+      {
+        "name": "Town Station Lofts",
+        "ga4_id": "378702730",
+        "gsc_url": "https://venterraliving.com/apartments/town-station-lofts/",
+        "gsc": {
+          "clicks": 55,
+          "impressions": 3416,
+          "ctr": 1.6100702576112413,
+          "avg_position": 22.805062899486437,
+          "days_tracked": 128,
+          "click_velocity": 1.8333333333333333
+        },
+        "ga4": {
+          "sessions": 531,
+          "engaged_sessions": 371,
+          "engagement_rate": 69.86817325800376
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 134.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (55 clicks, 1.8 clicks/day)"
+      },
+      {
+        "name": "Creekside",
+        "ga4_id": "383887248",
+        "gsc_url": "https://venterraliving.com/apartments/creekside/",
+        "gsc": {
+          "clicks": 184,
+          "impressions": 17904,
+          "ctr": 1.0277033065236818,
+          "avg_position": 17.265393570890822,
+          "days_tracked": 128,
+          "click_velocity": 6.133333333333334
+        },
+        "ga4": {
+          "sessions": 2551,
+          "engaged_sessions": 1882,
+          "engagement_rate": 73.7749901999216
+        },
+        "cwv": {
+          "lcp": 9.26,
+          "fid": 102.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (184 clicks, 6.1 clicks/day)"
+      },
+      {
+        "name": "The Parker",
+        "ga4_id": "378644177",
+        "gsc_url": "https://venterraliving.com/apartments/the-parker/",
+        "gsc": {
+          "clicks": 84,
+          "impressions": 16609,
+          "ctr": 0.5057498946354386,
+          "avg_position": 12.412850954744814,
+          "days_tracked": 128,
+          "click_velocity": 2.8
+        },
+        "ga4": {
+          "sessions": 1718,
+          "engaged_sessions": 915,
+          "engagement_rate": 53.259604190919674
+        },
+        "cwv": {
+          "lcp": 4.58,
+          "fid": 196.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (84 clicks, 2.8 clicks/day)"
+      },
+      {
+        "name": "Boulevard at Lakeside",
+        "ga4_id": "378382252",
+        "gsc_url": "https://venterraliving.com/apartments/boulevard-at-lakeside/",
+        "gsc": {
+          "clicks": 490,
+          "impressions": 3900,
+          "ctr": 12.564102564102564,
+          "avg_position": 11.745448848999047,
+          "days_tracked": 128,
+          "click_velocity": 16.333333333333332
+        },
+        "ga4": {
+          "sessions": 1313,
+          "engaged_sessions": 812,
+          "engagement_rate": 61.843107387661846
+        },
+        "cwv": {
+          "lcp": 5.25,
+          "fid": 196.0,
+          "cls": 0.062,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (490 clicks \u2265 300)"
+      },
+      {
+        "name": "Anatole at Norman",
+        "ga4_id": "383878732",
+        "gsc_url": "https://venterraliving.com/apartments/anatole-at-norman/",
+        "gsc": {
+          "clicks": 140,
+          "impressions": 8766,
+          "ctr": 1.5970796258270592,
+          "avg_position": 17.203443023448106,
+          "days_tracked": 128,
+          "click_velocity": 4.666666666666667
+        },
+        "ga4": {
+          "sessions": 1269,
+          "engaged_sessions": 772,
+          "engagement_rate": 60.83530338849488
+        },
+        "cwv": {
+          "lcp": 5.25,
+          "fid": 162.0,
+          "cls": 0.063,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (140 clicks, 4.7 clicks/day)"
+      },
+      {
+        "name": "West 46th",
+        "ga4_id": "378733984",
+        "gsc_url": "https://venterraliving.com/apartments/west-46th/",
+        "gsc": {
+          "clicks": 124,
+          "impressions": 6988,
+          "ctr": 1.7744705208929592,
+          "avg_position": 21.675808070394826,
+          "days_tracked": 128,
+          "click_velocity": 4.133333333333334
+        },
+        "ga4": {
+          "sessions": 1102,
+          "engaged_sessions": 734,
+          "engagement_rate": 66.60617059891108
+        },
+        "cwv": {
+          "lcp": 5.7,
+          "fid": 126.0,
+          "cls": 0.05,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (124 clicks, 4.1 clicks/day)"
+      },
+      {
+        "name": "Stonecreek Ranch",
+        "ga4_id": "378409482",
+        "gsc_url": "https://venterraliving.com/apartments/stonecreek-ranch/",
+        "gsc": {
+          "clicks": 65,
+          "impressions": 2980,
+          "ctr": 2.1812080536912752,
+          "avg_position": 13.44208277991311,
+          "days_tracked": 128,
+          "click_velocity": 2.1666666666666665
+        },
+        "ga4": {
+          "sessions": 5078,
+          "engaged_sessions": 1743,
+          "engagement_rate": 34.32453721937771
+        },
+        "cwv": {
+          "lcp": 4.73,
+          "fid": 144.0,
+          "cls": 0.053,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (65 clicks, 2.2 clicks/day)"
+      },
+      {
+        "name": "Coles Crossing",
+        "ga4_id": "378384243",
+        "gsc_url": "https://venterraliving.com/apartments/coles-crossing/",
+        "gsc": {
+          "clicks": 150,
+          "impressions": 6193,
+          "ctr": 2.4220894558372357,
+          "avg_position": 9.781001729839598,
+          "days_tracked": 128,
+          "click_velocity": 5.0
+        },
+        "ga4": {
+          "sessions": 2299,
+          "engaged_sessions": 1603,
+          "engagement_rate": 69.72596781209222
+        },
+        "cwv": {
+          "lcp": 10.44,
+          "fid": 239.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (150 clicks, 5.0 clicks/day)"
+      },
+      {
+        "name": "Highpark",
+        "ga4_id": "383911599",
+        "gsc_url": "https://venterraliving.com/apartments/highpark/",
+        "gsc": {
+          "clicks": 146,
+          "impressions": 6400,
+          "ctr": 2.28125,
+          "avg_position": 10.014767057497535,
+          "days_tracked": 128,
+          "click_velocity": 4.866666666666666
+        },
+        "ga4": {
+          "sessions": 2604,
+          "engaged_sessions": 1898,
+          "engagement_rate": 72.88786482334869
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 235.0,
+          "cls": 0.051,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (146 clicks, 4.9 clicks/day)"
+      },
+      {
+        "name": "Zang Triangle",
+        "ga4_id": "378304847",
+        "gsc_url": "https://venterraliving.com/apartments/zang-triangle/",
+        "gsc": {
+          "clicks": 119,
+          "impressions": 5623,
+          "ctr": 2.1163080206295573,
+          "avg_position": 19.89131820525729,
+          "days_tracked": 128,
+          "click_velocity": 3.966666666666667
+        },
+        "ga4": {
+          "sessions": 1442,
+          "engaged_sessions": 1018,
+          "engagement_rate": 70.59639389736478
+        },
+        "cwv": {
+          "lcp": 5.36,
+          "fid": 113.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (119 clicks, 4.0 clicks/day)"
+      },
+      {
+        "name": "Bella Ruscello",
+        "ga4_id": "378370331",
+        "gsc_url": "https://venterraliving.com/apartments/bella-ruscello/",
+        "gsc": {
+          "clicks": 78,
+          "impressions": 5436,
+          "ctr": 1.434878587196468,
+          "avg_position": 9.937024913954989,
+          "days_tracked": 128,
+          "click_velocity": 2.6
+        },
+        "ga4": {
+          "sessions": 1615,
+          "engaged_sessions": 1110,
+          "engagement_rate": 68.73065015479877
+        },
+        "cwv": {
+          "lcp": 5.63,
+          "fid": 275.0,
+          "cls": 0.068,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (78 clicks, 2.6 clicks/day)"
+      },
+      {
+        "name": "Belterra",
+        "ga4_id": "378388864",
+        "gsc_url": "https://venterraliving.com/apartments/belterra/",
+        "gsc": {
+          "clicks": 96,
+          "impressions": 4672,
+          "ctr": 2.054794520547945,
+          "avg_position": 15.80866589009383,
+          "days_tracked": 128,
+          "click_velocity": 3.2
+        },
+        "ga4": {
+          "sessions": 2186,
+          "engaged_sessions": 1147,
+          "engagement_rate": 52.47026532479414
+        },
+        "cwv": {
+          "lcp": 5.43,
+          "fid": 275.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (96 clicks, 3.2 clicks/day)"
+      },
+      {
+        "name": "Republic Park Vista",
+        "ga4_id": "378383339",
+        "gsc_url": "https://venterraliving.com/apartments/republic-park-vista/",
+        "gsc": {
+          "clicks": 98,
+          "impressions": 4038,
+          "ctr": 2.426944031698861,
+          "avg_position": 15.265777030470272,
+          "days_tracked": 128,
+          "click_velocity": 3.2666666666666666
+        },
+        "ga4": {
+          "sessions": 1161,
+          "engaged_sessions": 714,
+          "engagement_rate": 61.49870801033591
+        },
+        "cwv": {
+          "lcp": 4.73,
+          "fid": 255.0,
+          "cls": 0.057,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (98 clicks, 3.3 clicks/day)"
+      },
+      {
+        "name": "The Phoenix",
+        "ga4_id": "378402543",
+        "gsc_url": "https://venterraliving.com/apartments/the-phoenix/",
+        "gsc": {
+          "clicks": 63,
+          "impressions": 8550,
+          "ctr": 0.7368421052631579,
+          "avg_position": 28.054832256706803,
+          "days_tracked": 128,
+          "click_velocity": 2.1
+        },
+        "ga4": {
+          "sessions": 1080,
+          "engaged_sessions": 756,
+          "engagement_rate": 70.0
+        },
+        "cwv": null,
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (63 clicks, 2.1 clicks/day)"
+      },
+      {
+        "name": "Villa Lago",
+        "ga4_id": "378284749",
+        "gsc_url": "https://venterraliving.com/apartments/villa-lago/",
+        "gsc": {
+          "clicks": 45,
+          "impressions": 2237,
+          "ctr": 2.011622708985248,
+          "avg_position": 12.052355968313078,
+          "days_tracked": 128,
+          "click_velocity": 1.5
+        },
+        "ga4": {
+          "sessions": 740,
+          "engaged_sessions": 495,
+          "engagement_rate": 66.8918918918919
+        },
+        "cwv": {
+          "lcp": 10.26,
+          "fid": 191.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (45 clicks, 1.5 clicks/day)"
+      },
+      {
+        "name": "Mission Mayfield Downs",
+        "ga4_id": "378377712",
+        "gsc_url": "https://venterraliving.com/apartments/mission-mayfield-downs/",
+        "gsc": {
+          "clicks": 529,
+          "impressions": 4306,
+          "ctr": 12.285183464932652,
+          "avg_position": 13.002077476091449,
+          "days_tracked": 128,
+          "click_velocity": 17.633333333333333
+        },
+        "ga4": {
+          "sessions": 1746,
+          "engaged_sessions": 1147,
+          "engagement_rate": 65.6930126002291
+        },
+        "cwv": {
+          "lcp": 9.76,
+          "fid": 162.0,
+          "cls": 0.054,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (529 clicks \u2265 300)"
+      },
+      {
+        "name": "Avasa Spring Branch",
+        "ga4_id": "403700195",
+        "gsc_url": "https://venterraliving.com/apartments/avasa-spring-branch/",
+        "gsc": {
+          "clicks": 826,
+          "impressions": 7458,
+          "ctr": 11.075355323142935,
+          "avg_position": 9.759764730387602,
+          "days_tracked": 128,
+          "click_velocity": 27.533333333333335
+        },
+        "ga4": {
+          "sessions": 2851,
+          "engaged_sessions": 2175,
+          "engagement_rate": 76.2890213960014
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 251.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (826 clicks \u2265 300)"
+      },
+      {
+        "name": "Calais Midtown",
+        "ga4_id": "378381499",
+        "gsc_url": "https://venterraliving.com/apartments/calais-midtown/",
+        "gsc": {
+          "clicks": 199,
+          "impressions": 5605,
+          "ctr": 3.5504014272970563,
+          "avg_position": 21.240293581027533,
+          "days_tracked": 128,
+          "click_velocity": 6.633333333333334
+        },
+        "ga4": {
+          "sessions": 2356,
+          "engaged_sessions": 1646,
+          "engagement_rate": 69.8641765704584
+        },
+        "cwv": {
+          "lcp": 5.63,
+          "fid": 107.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (199 clicks, 6.6 clicks/day)"
+      },
+      {
+        "name": "Stoneridge on the 8",
+        "ga4_id": "378703792",
+        "gsc_url": "https://venterraliving.com/apartments/stoneridge-on-the-8/",
+        "gsc": {
+          "clicks": 96,
+          "impressions": 18855,
+          "ctr": 0.5091487669053302,
+          "avg_position": 31.54043524521011,
+          "days_tracked": 128,
+          "click_velocity": 3.2
+        },
+        "ga4": {
+          "sessions": 7585,
+          "engaged_sessions": 2388,
+          "engagement_rate": 31.48319050758075
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 122.0,
+          "cls": 0.058,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (96 clicks, 3.2 clicks/day)"
+      },
+      {
+        "name": "Elation at Grandway West",
+        "ga4_id": "378381999",
+        "gsc_url": "https://venterraliving.com/apartments/elation-at-grandway-west/",
+        "gsc": {
+          "clicks": 701,
+          "impressions": 7998,
+          "ctr": 8.7646911727932,
+          "avg_position": 16.45387719661458,
+          "days_tracked": 128,
+          "click_velocity": 23.366666666666667
+        },
+        "ga4": {
+          "sessions": 1824,
+          "engaged_sessions": 1151,
+          "engagement_rate": 63.10307017543859
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 103.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (701 clicks \u2265 300)"
+      },
+      {
+        "name": "The Cape at Grand Harbor",
+        "ga4_id": "378375463",
+        "gsc_url": "https://venterraliving.com/apartments/the-cape-at-grand-harbor/",
+        "gsc": {
+          "clicks": 137,
+          "impressions": 3471,
+          "ctr": 3.9469893402477676,
+          "avg_position": 10.22816218869709,
+          "days_tracked": 128,
+          "click_velocity": 4.566666666666666
+        },
+        "ga4": {
+          "sessions": 1228,
+          "engaged_sessions": 793,
+          "engagement_rate": 64.57654723127035
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 171.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (137 clicks, 4.6 clicks/day)"
+      },
+      {
+        "name": "Keystone",
+        "ga4_id": "383791347",
+        "gsc_url": "https://venterraliving.com/apartments/keystone/",
+        "gsc": {
+          "clicks": 220,
+          "impressions": 3830,
+          "ctr": 5.7441253263707575,
+          "avg_position": 13.261349603135951,
+          "days_tracked": 128,
+          "click_velocity": 7.333333333333333
+        },
+        "ga4": {
+          "sessions": 721,
+          "engaged_sessions": 453,
+          "engagement_rate": 62.82940360610264
+        },
+        "cwv": {
+          "lcp": 5.1,
+          "fid": 209.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (220 clicks, 7.3 clicks/day)"
+      },
+      {
+        "name": "College View",
+        "ga4_id": "378426727",
+        "gsc_url": "https://venterraliving.com/apartments/college-view-apartments/",
+        "gsc": {
+          "clicks": 27,
+          "impressions": 874,
+          "ctr": 3.0892448512585813,
+          "avg_position": 9.622135574896935,
+          "days_tracked": 128,
+          "click_velocity": 0.9
+        },
+        "ga4": {
+          "sessions": 732,
+          "engaged_sessions": 474,
+          "engagement_rate": 64.75409836065575
+        },
+        "cwv": {
+          "lcp": 5.4,
+          "fid": 247.0,
+          "cls": 0.081,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (27 clicks, 0.9 clicks/day)"
+      },
+      {
+        "name": "Fairways at South Shore",
+        "ga4_id": "378444042",
+        "gsc_url": "https://venterraliving.com/apartments/fairways-at-south-shore/",
+        "gsc": {
+          "clicks": 152,
+          "impressions": 7655,
+          "ctr": 1.985630306988896,
+          "avg_position": 19.017015671734296,
+          "days_tracked": 109,
+          "click_velocity": 5.066666666666666
+        },
+        "ga4": {
+          "sessions": 2069,
+          "engaged_sessions": 1299,
+          "engagement_rate": 62.78395360077332
+        },
+        "cwv": {
+          "lcp": 5.25,
+          "fid": 141.0,
+          "cls": 0.058,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (152 clicks, 5.1 clicks/day)"
+      },
+      {
+        "name": "Riverbend",
+        "ga4_id": "378381569",
+        "gsc_url": "https://venterraliving.com/apartments/riverbend/",
+        "gsc": {
+          "clicks": 105,
+          "impressions": 10594,
+          "ctr": 0.9911270530488956,
+          "avg_position": 17.58707534991844,
+          "days_tracked": 128,
+          "click_velocity": 3.5
+        },
+        "ga4": {
+          "sessions": 2178,
+          "engaged_sessions": 1342,
+          "engagement_rate": 61.61616161616161
+        },
+        "cwv": {
+          "lcp": 10.05,
+          "fid": 203.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (105 clicks, 3.5 clicks/day)"
+      },
+      {
+        "name": "South Shore Lakes",
+        "ga4_id": "378444042",
+        "gsc_url": "https://venterraliving.com/apartments/south-shore-lakes/",
+        "gsc": {
+          "clicks": 100,
+          "impressions": 7521,
+          "ctr": 1.3296104241457254,
+          "avg_position": 19.558363634529705,
+          "days_tracked": 128,
+          "click_velocity": 3.3333333333333335
+        },
+        "ga4": {
+          "sessions": 2069,
+          "engaged_sessions": 1299,
+          "engagement_rate": 62.78395360077332
+        },
+        "cwv": {
+          "lcp": 5.25,
+          "fid": 141.0,
+          "cls": 0.058,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (100 clicks, 3.3 clicks/day)"
+      },
+      {
+        "name": "Venue at Hometown",
+        "ga4_id": "378396775",
+        "gsc_url": "https://venterraliving.com/apartments/venue-at-hometown/",
+        "gsc": {
+          "clicks": 100,
+          "impressions": 3180,
+          "ctr": 3.1446540880503147,
+          "avg_position": 16.48066512811577,
+          "days_tracked": 128,
+          "click_velocity": 3.3333333333333335
+        },
+        "ga4": {
+          "sessions": 2007,
+          "engaged_sessions": 1115,
+          "engagement_rate": 55.55555555555556
+        },
+        "cwv": {
+          "lcp": 10.35,
+          "fid": 226.0,
+          "cls": 0.057,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (100 clicks, 3.3 clicks/day)"
+      },
+      {
+        "name": "Preserve at Baywood",
+        "ga4_id": "378379334",
+        "gsc_url": "https://venterraliving.com/apartments/preserve-at-baywood/",
+        "gsc": {
+          "clicks": 190,
+          "impressions": 9207,
+          "ctr": 2.0636472249375473,
+          "avg_position": 18.548868514052504,
+          "days_tracked": 128,
+          "click_velocity": 6.333333333333333
+        },
+        "ga4": {
+          "sessions": 2324,
+          "engaged_sessions": 1572,
+          "engagement_rate": 67.64199655765921
+        },
+        "cwv": {
+          "lcp": 5.25,
+          "fid": 201.0,
+          "cls": 0.076,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (190 clicks, 6.3 clicks/day)"
+      },
+      {
+        "name": "St. Andrews",
+        "ga4_id": "378657905",
+        "gsc_url": "https://venterraliving.com/apartments/st-andrews/",
+        "gsc": {
+          "clicks": 235,
+          "impressions": 6136,
+          "ctr": 3.8298565840938723,
+          "avg_position": 8.83382679262568,
+          "days_tracked": 128,
+          "click_velocity": 7.833333333333333
+        },
+        "ga4": {
+          "sessions": 2216,
+          "engaged_sessions": 1475,
+          "engagement_rate": 66.56137184115524
+        },
+        "cwv": {
+          "lcp": 10.18,
+          "fid": 185.0,
+          "cls": 0.078,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (235 clicks, 7.8 clicks/day)"
+      },
+      {
+        "name": "Townhomes at Lake Park",
+        "ga4_id": "466186053",
+        "gsc_url": "https://venterraliving.com/apartments/townhomes-at-lake-park/",
+        "gsc": {
+          "clicks": 200,
+          "impressions": 12625,
+          "ctr": 1.5841584158415842,
+          "avg_position": 13.502716337241893,
+          "days_tracked": 128,
+          "click_velocity": 6.666666666666667
+        },
+        "ga4": {
+          "sessions": 3979,
+          "engaged_sessions": 2034,
+          "engagement_rate": 51.118371450113095
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 175.0,
+          "cls": 0.051,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (200 clicks, 6.7 clicks/day)"
+      },
+      {
+        "name": "The Retreat",
+        "ga4_id": "378675172",
+        "gsc_url": "https://venterraliving.com/apartments/the-retreat/",
+        "gsc": {
+          "clicks": 73,
+          "impressions": 7505,
+          "ctr": 0.9726848767488342,
+          "avg_position": 17.454012106502248,
+          "days_tracked": 128,
+          "click_velocity": 2.433333333333333
+        },
+        "ga4": {
+          "sessions": 1095,
+          "engaged_sessions": 640,
+          "engagement_rate": 58.44748858447488
+        },
+        "cwv": {
+          "lcp": 4.73,
+          "fid": 279.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (73 clicks, 2.4 clicks/day)"
+      },
+      {
+        "name": "Avasa at 1604",
+        "ga4_id": "426692912",
+        "gsc_url": "https://venterraliving.com/apartments/avasa-at-1604/",
+        "gsc": {
+          "clicks": 166,
+          "impressions": 8203,
+          "ctr": 2.0236498841887114,
+          "avg_position": 14.320819853500621,
+          "days_tracked": 128,
+          "click_velocity": 5.533333333333333
+        },
+        "ga4": {
+          "sessions": 3110,
+          "engaged_sessions": 1820,
+          "engagement_rate": 58.520900321543415
+        },
+        "cwv": {
+          "lcp": 5.63,
+          "fid": 269.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (166 clicks, 5.5 clicks/day)"
+      },
+      {
+        "name": "Carlyle Place",
+        "ga4_id": "378149021",
+        "gsc_url": "https://venterraliving.com/apartments/carlyle-place-apartments/",
+        "gsc": {
+          "clicks": 93,
+          "impressions": 2937,
+          "ctr": 3.1664964249233916,
+          "avg_position": 12.512126102355454,
+          "days_tracked": 128,
+          "click_velocity": 3.1
+        },
+        "ga4": {
+          "sessions": 1010,
+          "engaged_sessions": 606,
+          "engagement_rate": 60.0
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 148.0,
+          "cls": 0.082,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (93 clicks, 3.1 clicks/day)"
+      },
+      {
+        "name": "French Place",
+        "ga4_id": "378380748",
+        "gsc_url": "https://venterraliving.com/apartments/french-place-apartments/",
+        "gsc": {
+          "clicks": 72,
+          "impressions": 4765,
+          "ctr": 1.5110178384050368,
+          "avg_position": 27.323014096254596,
+          "days_tracked": 128,
+          "click_velocity": 2.4
+        },
+        "ga4": {
+          "sessions": 793,
+          "engaged_sessions": 520,
+          "engagement_rate": 65.57377049180327
+        },
+        "cwv": {
+          "lcp": 6.15,
+          "fid": 143.0,
+          "cls": 0.058,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (72 clicks, 2.4 clicks/day)"
+      },
+      {
+        "name": "Park on Wurzbach",
+        "ga4_id": "378700447",
+        "gsc_url": "https://venterraliving.com/apartments/park-on-wurzbach/",
+        "gsc": {
+          "clicks": 78,
+          "impressions": 3976,
+          "ctr": 1.9617706237424548,
+          "avg_position": 14.972160169993332,
+          "days_tracked": 128,
+          "click_velocity": 2.6
+        },
+        "ga4": {
+          "sessions": 1621,
+          "engaged_sessions": 1045,
+          "engagement_rate": 64.46637877853178
+        },
+        "cwv": {
+          "lcp": 4.58,
+          "fid": 295.0,
+          "cls": 0.076,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (78 clicks, 2.6 clicks/day)"
+      },
+      {
+        "name": "Ventana",
+        "ga4_id": "378380644",
+        "gsc_url": "https://venterraliving.com/apartments/ventana/",
+        "gsc": {
+          "clicks": 197,
+          "impressions": 7516,
+          "ctr": 2.621075039914848,
+          "avg_position": 13.376056904184061,
+          "days_tracked": 128,
+          "click_velocity": 6.566666666666666
+        },
+        "ga4": {
+          "sessions": 3114,
+          "engaged_sessions": 1975,
+          "engagement_rate": 63.42324983943482
+        },
+        "cwv": {
+          "lcp": 5.55,
+          "fid": 130.0,
+          "cls": 0.003,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (197 clicks, 6.6 clicks/day)"
+      },
+      {
+        "name": "Westover Oaks",
+        "ga4_id": "378389543",
+        "gsc_url": "https://venterraliving.com/apartments/westover-oaks/",
+        "gsc": {
+          "clicks": 93,
+          "impressions": 9454,
+          "ctr": 0.9837105986883858,
+          "avg_position": 26.966167125554378,
+          "days_tracked": 128,
+          "click_velocity": 3.1
+        },
+        "ga4": {
+          "sessions": 1428,
+          "engaged_sessions": 923,
+          "engagement_rate": 64.6358543417367
+        },
+        "cwv": {
+          "lcp": 5.18,
+          "fid": 165.0,
+          "cls": 0.059,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (93 clicks, 3.1 clicks/day)"
+      },
+      {
+        "name": "Preserve at Colony Lakes",
+        "ga4_id": "378379618",
+        "gsc_url": "https://venterraliving.com/apartments/preserve-at-colony-lakes/",
+        "gsc": {
+          "clicks": 178,
+          "impressions": 8023,
+          "ctr": 2.2186214632930326,
+          "avg_position": 14.277525246279668,
+          "days_tracked": 128,
+          "click_velocity": 5.933333333333334
+        },
+        "ga4": {
+          "sessions": 1673,
+          "engaged_sessions": 1071,
+          "engagement_rate": 64.01673640167364
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 167.0,
+          "cls": 0.058,
+          "passes_good": false
+        },
+        "classification": "Ramp-Stage",
+        "classification_reason": "Building visibility (178 clicks, 5.9 clicks/day)"
+      },
+      {
+        "name": "Shadowbrooke",
+        "ga4_id": "378695682",
+        "gsc_url": "https://venterraliving.com/apartments/shadowbrooke/",
+        "gsc": {
+          "clicks": 93,
+          "impressions": 4159,
+          "ctr": 2.236114450589084,
+          "avg_position": 22.24482770300286,
+          "days_tracked": 128,
+          "click_velocity": 3.1
+        },
+        "ga4": {
+          "sessions": 1309,
+          "engaged_sessions": 825,
+          "engagement_rate": 63.02521008403361
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 196.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (93 clicks, 3.1 clicks/day)"
+      },
+      {
+        "name": "Silverbrooke",
+        "ga4_id": "378679398",
+        "gsc_url": "https://venterraliving.com/apartments/silverbrooke/",
+        "gsc": {
+          "clicks": 122,
+          "impressions": 2330,
+          "ctr": 5.236051502145923,
+          "avg_position": 5.108578635168339,
+          "days_tracked": 128,
+          "click_velocity": 4.066666666666666
+        },
+        "ga4": {
+          "sessions": 1512,
+          "engaged_sessions": 1095,
+          "engagement_rate": 72.42063492063492
+        },
+        "cwv": {
+          "lcp": 5.33,
+          "fid": 162.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (122 clicks, 4.1 clicks/day)"
+      },
+      {
+        "name": "Vinings",
+        "ga4_id": "378388378",
+        "gsc_url": "https://venterraliving.com/apartments/vinings/",
+        "gsc": {
+          "clicks": 148,
+          "impressions": 4483,
+          "ctr": 3.301360695962525,
+          "avg_position": 19.01060753941536,
+          "days_tracked": 128,
+          "click_velocity": 4.933333333333334
+        },
+        "ga4": {
+          "sessions": 1306,
+          "engaged_sessions": 873,
+          "engagement_rate": 66.84532924961715
+        },
+        "cwv": {
+          "lcp": 5.55,
+          "fid": 327.0,
+          "cls": 0.047,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (148 clicks, 4.9 clicks/day)"
+      },
+      {
+        "name": "Estancia at Morningstar",
+        "ga4_id": "378432451",
+        "gsc_url": "https://venterraliving.com/apartments/estancia-at-morningstar/",
+        "gsc": {
+          "clicks": 116,
+          "impressions": 4250,
+          "ctr": 2.7294117647058824,
+          "avg_position": 12.457272715617853,
+          "days_tracked": 128,
+          "click_velocity": 3.8666666666666667
+        },
+        "ga4": {
+          "sessions": 1396,
+          "engaged_sessions": 864,
+          "engagement_rate": 61.891117478510026
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 220.0,
+          "cls": 0.056,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (116 clicks, 3.9 clicks/day)"
+      },
+      {
+        "name": "Forest View",
+        "ga4_id": "378700663",
+        "gsc_url": "https://venterraliving.com/apartments/forest-view/",
+        "gsc": {
+          "clicks": 65,
+          "impressions": 9520,
+          "ctr": 0.6827731092436975,
+          "avg_position": 19.521943235558272,
+          "days_tracked": 128,
+          "click_velocity": 2.1666666666666665
+        },
+        "ga4": {
+          "sessions": 1224,
+          "engaged_sessions": 766,
+          "engagement_rate": 62.58169934640523
+        },
+        "cwv": {
+          "lcp": 5.48,
+          "fid": 240.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (65 clicks, 2.2 clicks/day)"
+      },
+      {
+        "name": "Timber Mill",
+        "ga4_id": "378385211",
+        "gsc_url": "https://venterraliving.com/apartments/timber-mill/",
+        "gsc": {
+          "clicks": 59,
+          "impressions": 5551,
+          "ctr": 1.0628715546748335,
+          "avg_position": 26.86486242691377,
+          "days_tracked": 128,
+          "click_velocity": 1.9666666666666666
+        },
+        "ga4": {
+          "sessions": 1219,
+          "engaged_sessions": 779,
+          "engagement_rate": 63.90484003281378
+        },
+        "cwv": {
+          "lcp": 5.55,
+          "fid": 197.0,
+          "cls": 0.052,
+          "passes_good": false
+        },
+        "classification": "Visibility-Constrained",
+        "classification_reason": "Low organic visibility (59 clicks, 2.0 clicks/day)"
+      },
+      {
+        "name": "San Palmilla",
+        "ga4_id": "378698257",
+        "gsc_url": "https://venterraliving.com/apartments/san-palmilla/",
+        "gsc": {
+          "clicks": 1157,
+          "impressions": 7310,
+          "ctr": 15.827633378932967,
+          "avg_position": 7.807980858078509,
+          "days_tracked": 128,
+          "click_velocity": 38.56666666666667
+        },
+        "ga4": {
+          "sessions": 2818,
+          "engaged_sessions": 1891,
+          "engagement_rate": 67.10432931156849
+        },
+        "cwv": {
+          "lcp": 5.18,
+          "fid": 129.0,
+          "cls": 0.055,
+          "passes_good": false
+        },
+        "classification": "Conversion-Ready",
+        "classification_reason": "Passed volume gate (1157 clicks \u2265 300)"
+      }
+    ]
+  }
+}

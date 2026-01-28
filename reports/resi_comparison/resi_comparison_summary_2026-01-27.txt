@@ -1,0 +1,145 @@
+================================================================================
+RESI VS PORTFOLIO COMPARISON - PHASE 1 SUMMARY
+================================================================================
+Analysis Date: 2026-01-27
+Analysis Window: Last 30 days
+================================================================================
+
+
+================================================================================
+RESI PROPERTY: Cendana District West
+================================================================================
+Metro: Houston, TX
+Units: 349
+GA4 ID: 424416990
+
+--- MATCHED PROPERTIES (1) ---
+
+1. The Delta Pearland
+   Match Score: 85/100
+   Units: 358 | Traffic: 4,156
+
+--- DATA AVAILABILITY ---
+GA4: PARTIAL
+  → Only 28/30 days with data
+GSC: PARTIAL
+  → Only 15/27 days with data (accounting for 3-day lag)
+PSI: PARTIAL
+  → Only 12/30 days with data
+GBP: MISSING
+  → No GBP data
+
+--- KEY METRICS (Resi vs Matches Avg) ---
+
+GA4:
+  Sessions: 2,770 vs 4,156
+  Engagement Rate: 59.8% vs 71.7%
+  CIR/100 Sessions: 0.00 vs 0.00
+
+PageSpeed:
+  Performance Score: 65 vs 37
+  LCP: 7.02s vs 14.81s
+
+--- EARLY DIRECTIONAL SIGNALS ---
+✓ Resi shows better performance score
+✓ Resi shows faster page load (LCP)
+
+(Full winner analysis in Phase 2)
+
+
+================================================================================
+RESI PROPERTY: Camber Ridge
+================================================================================
+Metro: Unknown
+Units: 312
+GA4 ID: 445473253
+
+--- MATCHED PROPERTIES (2) ---
+
+1. Monteverde
+   Match Score: 95/100
+   Units: 272 | Traffic: 4,691
+
+2. The Grove at Clermont
+   Match Score: 85/100
+   Units: 288 | Traffic: 3,695
+
+--- DATA AVAILABILITY ---
+GA4: PARTIAL
+  → Only 28/30 days with data
+GSC: FULL
+PSI: PARTIAL
+  → Only 12/30 days with data
+GBP: MISSING
+  → No GBP data
+
+--- KEY METRICS (Resi vs Matches Avg) ---
+
+GA4:
+  Sessions: 5,142 vs 4,193
+  Engagement Rate: 52.8% vs 56.5%
+  CIR/100 Sessions: 0.00 vs 0.00
+
+PageSpeed:
+  Performance Score: 54 vs 63
+  LCP: 10.30s vs 7.33s
+
+--- EARLY DIRECTIONAL SIGNALS ---
+⚠  Resi shows worse performance score
+⚠  Resi shows slower page load (LCP)
+
+(Full winner analysis in Phase 2)
+
+
+================================================================================
+RESI PROPERTY: The Delta Pearland
+================================================================================
+Metro: Houston, TX
+Units: 358
+GA4 ID: 441503068
+
+--- MATCHED PROPERTIES (0) ---
+
+--- DATA AVAILABILITY ---
+GA4: PARTIAL
+  → Only 28/30 days with data
+GSC: FULL
+PSI: PARTIAL
+  → Only 12/30 days with data
+GBP: MISSING
+  → No GBP data
+
+--- KEY METRICS (Resi vs Matches Avg) ---
+
+--- EARLY DIRECTIONAL SIGNALS ---
+✓ Resi shows better performance score
+⚠  Resi shows slower page load (LCP)
+
+(Full winner analysis in Phase 2)
+
+
+================================================================================
+RESI PROPERTY: Monteverde
+================================================================================
+Metro: San Antonio, TX
+Units: 272
+GA4 ID: 488649687
+
+--- MATCHED PROPERTIES (0) ---
+
+--- DATA AVAILABILITY ---
+GA4: PARTIAL
+  → Only 28/30 days with data
+GSC: FULL
+PSI: PARTIAL
+  → Only 12/30 days with data
+GBP: MISSING
+  → No GBP data
+
+--- KEY METRICS (Resi vs Matches Avg) ---
+
+--- EARLY DIRECTIONAL SIGNALS ---
+✓ Resi shows better performance score
+⚠  Resi shows slower page load (LCP)
+
+(Full winner analysis in Phase 2)

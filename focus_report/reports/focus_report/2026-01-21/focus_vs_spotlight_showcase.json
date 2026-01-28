@@ -1,0 +1,1018 @@
+{
+  "showcase_version": "1.0",
+  "generated_at": "2026-01-21T19:01:10.357435",
+  "report_date": "2026-01-21",
+  "cohorts": {
+    "focus": {
+      "requested": [
+        "Botanic",
+        "Camber Ridge",
+        "CoHo",
+        "Oakleaf",
+        "Spring Branch",
+        "Stonecreek",
+        "Thomas Glen"
+      ],
+      "resolved": [
+        "Botanic Luxury",
+        "Camber Ridge",
+        "CoHo",
+        "The Villages at Oakleaf",
+        "Avasa Spring Branch",
+        "Stonecreek Ranch",
+        "The Reserves of Thomas Glen"
+      ],
+      "failed": [],
+      "count": 7
+    },
+    "spotlight": {
+      "requested": [
+        "Avasa at 1604",
+        "Anatole Daytona",
+        "Apex",
+        "Belterra",
+        "Calais Midtown",
+        "Cane Island",
+        "Canton Mill Lofts",
+        "Elation",
+        "Fairways",
+        "Grand Harbor",
+        "Grove West",
+        "Luma Headwaters",
+        "Mayfield",
+        "Northbridge",
+        "Townhomes",
+        "Trevesta"
+      ],
+      "resolved": [
+        "Avasa at 1604",
+        "The Anatole",
+        "Apex West Midtown",
+        "Belterra",
+        "Calais Midtown",
+        "Cane Island",
+        "Canton Mill Lofts",
+        "Elation at Grandway West",
+        "Fairways at South Shore",
+        "The Cape at Grand Harbor",
+        "Avasa Grove West",
+        "Luma Headwaters",
+        "Mission Mayfield Downs",
+        "Northbridge at Millenia Lake",
+        "Townhomes at Lake Park",
+        "Trevesta Place"
+      ],
+      "failed": [],
+      "count": 16
+    }
+  },
+  "scorecard": {
+    "focus_medians": {
+      "sessions_wow_pct": -4.802867383512545,
+      "clicks_wow_pct": 14.788732394366196,
+      "ctr_wow_delta": 0.38503204341392594,
+      "position_wow_delta": -1.7219935270542184,
+      "lcp_p75": 7700.0,
+      "inp_p75": null,
+      "cls_p75": 0.054
+    },
+    "spotlight_medians": {
+      "sessions_wow_pct": -9.409183296378417,
+      "clicks_wow_pct": -7.359000183116645,
+      "ctr_wow_delta": 0.02932112353244276,
+      "position_wow_delta": -1.2591889881163132,
+      "lcp_p75": 5480.0,
+      "inp_p75": null,
+      "cls_p75": 0.056
+    },
+    "comparative_signals": {
+      "sessions": "Focus stronger",
+      "clicks": "Focus stronger",
+      "ctr": "Focus stronger",
+      "position": "Comparable",
+      "lcp": "Spotlight stronger",
+      "inp": "Insufficient data",
+      "cls": "Comparable"
+    }
+  },
+  "narrative": "Focus properties showed stronger demand momentum, with median session growth of -4.8% vs Spotlight's -9.4%, and clicks +14.8% vs -7.4%. Focus maintained better search positioning with a median CTR shift of +0.39pp and position change of -1.7. Spotlight properties show better site health with LCP of 5480ms vs Focus's 7700ms.",
+  "properties": {
+    "focus": [
+      {
+        "property_name": "Botanic Luxury",
+        "kpis": {
+          "sessions_current": 570,
+          "sessions_prior": 595,
+          "sessions_wow_pct": -4.201680672268908,
+          "clicks_current": 36,
+          "clicks_prior": 26,
+          "clicks_wow_pct": 38.46153846153847,
+          "ctr_current": 1.277917111325039,
+          "ctr_prior": 0.892885067911113,
+          "ctr_wow_delta": 0.38503204341392594,
+          "position_current": 13.352414154184741,
+          "position_prior": 14.104512075670181,
+          "position_wow_delta": -0.75209792148544,
+          "mobile_pct": 62.63157894736842,
+          "engagement_rate": 0.005595947341775326,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 41.75438596491228,
+          "sessions_sparkline": [
+            109,
+            99,
+            62,
+            54,
+            72,
+            70,
+            104
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 11080.0,
+          "fid_p75": 282.0,
+          "inp_p75": null,
+          "cls_p75": 0.0,
+          "performance_score": 37
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Camber Ridge",
+        "kpis": {
+          "sessions_current": 1328,
+          "sessions_prior": 1395,
+          "sessions_wow_pct": -4.802867383512545,
+          "clicks_current": 163,
+          "clicks_prior": 142,
+          "clicks_wow_pct": 14.788732394366196,
+          "ctr_current": 9.130456880345955,
+          "ctr_prior": 7.9790571169334115,
+          "ctr_wow_delta": 1.1513997634125435,
+          "position_current": 8.38524040539694,
+          "position_prior": 7.684111213451533,
+          "position_wow_delta": 0.7011291919454079,
+          "mobile_pct": 72.61098570353649,
+          "engagement_rate": 0.09335060465606064,
+          "top_channel": "Display",
+          "top_channel_pct": 28.915662650602407,
+          "sessions_sparkline": [
+            231,
+            187,
+            148,
+            217,
+            174,
+            202,
+            169
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5850.0,
+          "fid_p75": 400.0,
+          "inp_p75": null,
+          "cls_p75": 0.058,
+          "performance_score": 56
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "CoHo",
+        "kpis": {
+          "sessions_current": 456,
+          "sessions_prior": 437,
+          "sessions_wow_pct": 4.3478260869565215,
+          "clicks_current": 86,
+          "clicks_prior": 84,
+          "clicks_wow_pct": 2.380952380952381,
+          "ctr_current": 8.947752029024793,
+          "ctr_prior": 9.050047278612217,
+          "ctr_wow_delta": -0.10229524958742431,
+          "position_current": 10.618039508203164,
+          "position_prior": 13.70450407076535,
+          "position_wow_delta": -3.0864645625621847,
+          "mobile_pct": 65.78947368421053,
+          "engagement_rate": 0.6284901387035148,
+          "top_channel": "Direct",
+          "top_channel_pct": 30.701754385964914,
+          "sessions_sparkline": [
+            65,
+            63,
+            56,
+            39,
+            43,
+            95,
+            95
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5330.0,
+          "fid_p75": 258.0,
+          "inp_p75": null,
+          "cls_p75": 0.047,
+          "performance_score": 63
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "The Villages at Oakleaf",
+        "kpis": {
+          "sessions_current": 512,
+          "sessions_prior": 600,
+          "sessions_wow_pct": -14.666666666666666,
+          "clicks_current": 51,
+          "clicks_prior": 58,
+          "clicks_wow_pct": -12.068965517241379,
+          "ctr_current": 2.029408199389629,
+          "ctr_prior": 1.9127832250214836,
+          "ctr_wow_delta": 0.11662497436814534,
+          "position_current": 13.840330548744177,
+          "position_prior": 15.562324075798395,
+          "position_wow_delta": -1.7219935270542184,
+          "mobile_pct": 74.46393762183236,
+          "engagement_rate": 0.6270897720183529,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 48.046875,
+          "sessions_sparkline": [
+            69,
+            109,
+            58,
+            52,
+            52,
+            71,
+            101
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 9280.0,
+          "fid_p75": 258.0,
+          "inp_p75": null,
+          "cls_p75": 0.054,
+          "performance_score": 63
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Avasa Spring Branch",
+        "kpis": {
+          "sessions_current": 691,
+          "sessions_prior": 782,
+          "sessions_wow_pct": -11.636828644501279,
+          "clicks_current": 187,
+          "clicks_prior": 235,
+          "clicks_wow_pct": -20.425531914893615,
+          "ctr_current": 10.943415880544084,
+          "ctr_prior": 12.47278237151355,
+          "ctr_wow_delta": -1.5293664909694655,
+          "position_current": 9.977041750569494,
+          "position_prior": 9.578000293263269,
+          "position_wow_delta": 0.3990414573062253,
+          "mobile_pct": 67.05202312138728,
+          "engagement_rate": 0.7245284186756267,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 41.823444283646886,
+          "sessions_sparkline": [
+            92,
+            106,
+            123,
+            90,
+            59,
+            91,
+            130
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 10280.0,
+          "fid_p75": 227.0,
+          "inp_p75": null,
+          "cls_p75": 0.05,
+          "performance_score": 63
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Stonecreek Ranch",
+        "kpis": {
+          "sessions_current": 1146,
+          "sessions_prior": 1242,
+          "sessions_wow_pct": -7.729468599033816,
+          "clicks_current": 14,
+          "clicks_prior": 12,
+          "clicks_wow_pct": 16.666666666666664,
+          "ctr_current": 2.238129494055775,
+          "ctr_prior": 1.7049360870515538,
+          "ctr_wow_delta": 0.5331934070042215,
+          "position_current": 13.098636115985046,
+          "position_prior": 15.197238987069694,
+          "position_wow_delta": -2.0986028710846476,
+          "mobile_pct": 70.32201914708442,
+          "engagement_rate": 0.3122674019941903,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 37.52181500872601,
+          "sessions_sparkline": [
+            170,
+            165,
+            157,
+            148,
+            106,
+            207,
+            193
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 7700.0,
+          "fid_p75": 122.0,
+          "inp_p75": null,
+          "cls_p75": 0.07,
+          "performance_score": 61
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "The Reserves of Thomas Glen",
+        "kpis": {
+          "sessions_current": 1152,
+          "sessions_prior": 496,
+          "sessions_wow_pct": 132.25806451612902,
+          "clicks_current": 25,
+          "clicks_prior": 12,
+          "clicks_wow_pct": 108.33333333333333,
+          "ctr_current": 1.5095121541667889,
+          "ctr_prior": 0.7135265202280234,
+          "ctr_wow_delta": 0.7959856339387654,
+          "position_current": 9.707976333399653,
+          "position_prior": 12.167100648971381,
+          "position_wow_delta": -2.459124315571728,
+          "mobile_pct": 89.59236773633998,
+          "engagement_rate": 0.28403070058062035,
+          "top_channel": "Display",
+          "top_channel_pct": 70.05208333333334,
+          "sessions_sparkline": [
+            158,
+            186,
+            182,
+            155,
+            149,
+            147,
+            175
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5180.0,
+          "fid_p75": 258.0,
+          "inp_p75": null,
+          "cls_p75": 0.06,
+          "performance_score": 63
+        },
+        "cwv_status": "Review"
+      }
+    ],
+    "spotlight": [
+      {
+        "property_name": "Avasa at 1604",
+        "kpis": {
+          "sessions_current": 645,
+          "sessions_prior": 737,
+          "sessions_wow_pct": -12.48303934871099,
+          "clicks_current": 61,
+          "clicks_prior": 35,
+          "clicks_wow_pct": 74.28571428571429,
+          "ctr_current": 2.919664975419288,
+          "ctr_prior": 1.730849144486712,
+          "ctr_wow_delta": 1.188815830932576,
+          "position_current": 12.687813074974562,
+          "position_prior": 14.509304686014106,
+          "position_wow_delta": -1.8214916110395443,
+          "mobile_pct": 73.7984496124031,
+          "engagement_rate": 0.6113392557443726,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 36.58914728682171,
+          "sessions_sparkline": [
+            95,
+            102,
+            79,
+            95,
+            88,
+            77,
+            109
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5480.0,
+          "fid_p75": 197.0,
+          "inp_p75": null,
+          "cls_p75": 0.057,
+          "performance_score": 64
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "The Anatole",
+        "kpis": {
+          "sessions_current": 737,
+          "sessions_prior": 946,
+          "sessions_wow_pct": -22.093023255813954,
+          "clicks_current": 112,
+          "clicks_prior": 127,
+          "clicks_wow_pct": -11.811023622047244,
+          "ctr_current": 10.818567714962475,
+          "ctr_prior": 12.757209622091338,
+          "ctr_wow_delta": -1.9386419071288632,
+          "position_current": 8.798012708033978,
+          "position_prior": 11.360624160462246,
+          "position_wow_delta": -2.5626114524282677,
+          "mobile_pct": 83.73983739837398,
+          "engagement_rate": 0.4935191076210355,
+          "top_channel": "Display",
+          "top_channel_pct": 51.153324287652644,
+          "sessions_sparkline": [
+            87,
+            129,
+            101,
+            112,
+            111,
+            88,
+            109
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 3750.0,
+          "fid_p75": 157.0,
+          "inp_p75": null,
+          "cls_p75": 0.056,
+          "performance_score": 79
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Apex West Midtown",
+        "kpis": {
+          "sessions_current": 552,
+          "sessions_prior": 678,
+          "sessions_wow_pct": -18.58407079646018,
+          "clicks_current": 46,
+          "clicks_prior": 60,
+          "clicks_wow_pct": -23.333333333333332,
+          "ctr_current": 1.1884013003703677,
+          "ctr_prior": 1.299594549323388,
+          "ctr_wow_delta": -0.1111932489530203,
+          "position_current": 18.773980223942885,
+          "position_prior": 19.160857122425366,
+          "position_wow_delta": -0.3868768984824804,
+          "mobile_pct": 70.47101449275362,
+          "engagement_rate": 0.5716082067369013,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 44.565217391304344,
+          "sessions_sparkline": [
+            83,
+            71,
+            88,
+            64,
+            61,
+            80,
+            105
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 9380.0,
+          "fid_p75": 113.0,
+          "inp_p75": null,
+          "cls_p75": 0.061,
+          "performance_score": 65
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Belterra",
+        "kpis": {
+          "sessions_current": 506,
+          "sessions_prior": 581,
+          "sessions_wow_pct": -12.908777969018933,
+          "clicks_current": 25,
+          "clicks_prior": 18,
+          "clicks_wow_pct": 38.88888888888889,
+          "ctr_current": 2.074292949405858,
+          "ctr_prior": 1.6806812942812523,
+          "ctr_wow_delta": 0.39361165512460583,
+          "position_current": 14.960267469570454,
+          "position_prior": 16.556481481018583,
+          "position_wow_delta": -1.5962140114481294,
+          "mobile_pct": 74.7534516765286,
+          "engagement_rate": 0.5362413070764331,
+          "top_channel": "Direct",
+          "top_channel_pct": 32.41106719367589,
+          "sessions_sparkline": [
+            92,
+            58,
+            106,
+            66,
+            59,
+            68,
+            57
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5510.0,
+          "fid_p75": 163.0,
+          "inp_p75": null,
+          "cls_p75": 0.052,
+          "performance_score": 62
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Calais Midtown",
+        "kpis": {
+          "sessions_current": 519,
+          "sessions_prior": 661,
+          "sessions_wow_pct": -21.482602118003026,
+          "clicks_current": 54,
+          "clicks_prior": 51,
+          "clicks_wow_pct": 5.88235294117647,
+          "ctr_current": 3.8737337861417473,
+          "ctr_prior": 3.684381671158959,
+          "ctr_wow_delta": 0.18935211498278814,
+          "position_current": 19.511464834599753,
+          "position_prior": 21.509529979091813,
+          "position_wow_delta": -1.9980651444920596,
+          "mobile_pct": 63.58381502890174,
+          "engagement_rate": 0.747241522146104,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 47.784200385356456,
+          "sessions_sparkline": [
+            70,
+            84,
+            66,
+            77,
+            70,
+            72,
+            80
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5780.0,
+          "fid_p75": 111.0,
+          "inp_p75": null,
+          "cls_p75": 0.055,
+          "performance_score": 62
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Cane Island",
+        "kpis": {
+          "sessions_current": 329,
+          "sessions_prior": 401,
+          "sessions_wow_pct": -17.955112219451372,
+          "clicks_current": 24,
+          "clicks_prior": 35,
+          "clicks_wow_pct": -31.428571428571427,
+          "ctr_current": 1.2936660820419708,
+          "ctr_prior": 1.6844323493322704,
+          "ctr_wow_delta": -0.3907662672902996,
+          "position_current": 20.48654224817977,
+          "position_prior": 20.59856373138171,
+          "position_wow_delta": -0.11202148320193928,
+          "mobile_pct": 69.30091185410335,
+          "engagement_rate": 0.5374901652235344,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 35.56231003039514,
+          "sessions_sparkline": [
+            50,
+            47,
+            55,
+            51,
+            36,
+            35,
+            55
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5400.0,
+          "fid_p75": 119.0,
+          "inp_p75": null,
+          "cls_p75": 0.054,
+          "performance_score": 64
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Canton Mill Lofts",
+        "kpis": {
+          "sessions_current": 644,
+          "sessions_prior": 641,
+          "sessions_wow_pct": 0.46801872074883,
+          "clicks_current": 34,
+          "clicks_prior": 52,
+          "clicks_wow_pct": -34.61538461538461,
+          "ctr_current": 2.0812393482261484,
+          "ctr_prior": 2.729341070465401,
+          "ctr_wow_delta": -0.6481017222392524,
+          "position_current": 9.822011856623389,
+          "position_prior": 9.839259922335014,
+          "position_wow_delta": -0.01724806571162496,
+          "mobile_pct": 69.56521739130434,
+          "engagement_rate": 0.5748431760680913,
+          "top_channel": "Paid Search",
+          "top_channel_pct": 37.732919254658384,
+          "sessions_sparkline": [
+            111,
+            78,
+            89,
+            76,
+            81,
+            98,
+            111
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 20620.0,
+          "fid_p75": 246.0,
+          "inp_p75": null,
+          "cls_p75": 0.008,
+          "performance_score": 40
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Elation at Grandway West",
+        "kpis": {
+          "sessions_current": 440,
+          "sessions_prior": 456,
+          "sessions_wow_pct": -3.508771929824561,
+          "clicks_current": 167,
+          "clicks_prior": 172,
+          "clicks_wow_pct": -2.9069767441860463,
+          "ctr_current": 9.136225828599988,
+          "ctr_prior": 7.901422273684328,
+          "ctr_wow_delta": 1.2348035549156604,
+          "position_current": 15.526379107068541,
+          "position_prior": 17.475638587622875,
+          "position_wow_delta": -1.9492594805543337,
+          "mobile_pct": 75.22727272727273,
+          "engagement_rate": 0.6192864299200411,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 50.90909090909091,
+          "sessions_sparkline": [
+            59,
+            55,
+            48,
+            70,
+            51,
+            60,
+            97
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 10910.0,
+          "fid_p75": 283.0,
+          "inp_p75": null,
+          "cls_p75": 0.0,
+          "performance_score": 59
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Fairways at South Shore",
+        "kpis": {
+          "sessions_current": 475,
+          "sessions_prior": 528,
+          "sessions_wow_pct": -10.037878787878787,
+          "clicks_current": 47,
+          "clicks_prior": 42,
+          "clicks_wow_pct": 11.904761904761903,
+          "ctr_current": 2.5181731688040863,
+          "ctr_prior": 2.271434311539046,
+          "ctr_wow_delta": 0.2467388572650404,
+          "position_current": 18.383682010405924,
+          "position_prior": 18.439365194330936,
+          "position_wow_delta": -0.05568318392501226,
+          "mobile_pct": 64.49579831932773,
+          "engagement_rate": 0.6084032287314886,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 68.42105263157895,
+          "sessions_sparkline": [
+            82,
+            65,
+            75,
+            42,
+            79,
+            62,
+            70
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5180.0,
+          "fid_p75": 266.0,
+          "inp_p75": null,
+          "cls_p75": 0.058,
+          "performance_score": 64
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "The Cape at Grand Harbor",
+        "kpis": {
+          "sessions_current": 331,
+          "sessions_prior": 276,
+          "sessions_wow_pct": 19.92753623188406,
+          "clicks_current": 29,
+          "clicks_prior": 43,
+          "clicks_wow_pct": -32.55813953488372,
+          "ctr_current": 3.5635422542338278,
+          "ctr_prior": 4.628919628525864,
+          "ctr_wow_delta": -1.0653773742920363,
+          "position_current": 9.313894409486517,
+          "position_prior": 10.729397926260644,
+          "position_wow_delta": -1.4155035167741268,
+          "mobile_pct": 61.44578313253012,
+          "engagement_rate": 0.589916703531278,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 50.453172205438065,
+          "sessions_sparkline": [
+            55,
+            53,
+            51,
+            42,
+            29,
+            51,
+            50
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5330.0,
+          "fid_p75": 195.0,
+          "inp_p75": null,
+          "cls_p75": 0.056,
+          "performance_score": 63
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Avasa Grove West",
+        "kpis": {
+          "sessions_current": 561,
+          "sessions_prior": 615,
+          "sessions_wow_pct": -8.780487804878048,
+          "clicks_current": 151,
+          "clicks_prior": 237,
+          "clicks_wow_pct": -36.28691983122363,
+          "ctr_current": 6.236075978102009,
+          "ctr_prior": 8.82061752343922,
+          "ctr_wow_delta": -2.5845415453372107,
+          "position_current": 16.126074735051496,
+          "position_prior": 15.165236475298352,
+          "position_wow_delta": 0.9608382597531442,
+          "mobile_pct": 74.37722419928826,
+          "engagement_rate": 0.5916473770036206,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 37.78966131907308,
+          "sessions_sparkline": [
+            74,
+            67,
+            68,
+            94,
+            75,
+            84,
+            99
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5480.0,
+          "fid_p75": 151.0,
+          "inp_p75": null,
+          "cls_p75": 0.057,
+          "performance_score": 64
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Luma Headwaters",
+        "kpis": {
+          "sessions_current": 727,
+          "sessions_prior": 885,
+          "sessions_wow_pct": -17.853107344632768,
+          "clicks_current": 41,
+          "clicks_prior": 62,
+          "clicks_wow_pct": -33.87096774193548,
+          "ctr_current": 1.6147518072329212,
+          "ctr_prior": 2.085603506206257,
+          "ctr_wow_delta": -0.47085169897333556,
+          "position_current": 28.917104335742014,
+          "position_prior": 29.471929208155462,
+          "position_wow_delta": -0.5548248724134481,
+          "mobile_pct": 79.67032967032966,
+          "engagement_rate": 0.6480496218899304,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 46.49243466299862,
+          "sessions_sparkline": [
+            107,
+            119,
+            90,
+            101,
+            90,
+            104,
+            116
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5410.0,
+          "fid_p75": 183.0,
+          "inp_p75": null,
+          "cls_p75": 0.132,
+          "performance_score": 59
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Mission Mayfield Downs",
+        "kpis": {
+          "sessions_current": 416,
+          "sessions_prior": 427,
+          "sessions_wow_pct": -2.576112412177986,
+          "clicks_current": 118,
+          "clicks_prior": 148,
+          "clicks_wow_pct": -20.27027027027027,
+          "ctr_current": 12.134929416122702,
+          "ctr_prior": 13.708431198434821,
+          "ctr_wow_delta": -1.5735017823121193,
+          "position_current": 12.832481823441727,
+          "position_prior": 13.935356282900226,
+          "position_wow_delta": -1.1028744594584996,
+          "mobile_pct": 73.3173076923077,
+          "engagement_rate": 0.6485138811986834,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 37.25961538461539,
+          "sessions_sparkline": [
+            79,
+            61,
+            59,
+            48,
+            29,
+            66,
+            74
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5400.0,
+          "fid_p75": 232.0,
+          "inp_p75": null,
+          "cls_p75": 0.077,
+          "performance_score": 62
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Northbridge at Millenia Lake",
+        "kpis": {
+          "sessions_current": 1060,
+          "sessions_prior": 1100,
+          "sessions_wow_pct": -3.6363636363636362,
+          "clicks_current": 59,
+          "clicks_prior": 44,
+          "clicks_wow_pct": 34.090909090909086,
+          "ctr_current": 2.255097310078023,
+          "ctr_prior": 1.4741963512169722,
+          "ctr_wow_delta": 0.7809009588610507,
+          "position_current": 13.34523632313372,
+          "position_prior": 15.486655315874886,
+          "position_wow_delta": -2.1414189927411655,
+          "mobile_pct": 79.05660377358491,
+          "engagement_rate": 0.5763666609533115,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 36.60377358490566,
+          "sessions_sparkline": [
+            176,
+            158,
+            150,
+            153,
+            121,
+            155,
+            147
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 6380.0,
+          "fid_p75": 207.0,
+          "inp_p75": null,
+          "cls_p75": 0.057,
+          "performance_score": 60
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Townhomes at Lake Park",
+        "kpis": {
+          "sessions_current": 937,
+          "sessions_prior": 973,
+          "sessions_wow_pct": -3.6998972250770814,
+          "clicks_current": 48,
+          "clicks_prior": 47,
+          "clicks_wow_pct": 2.127659574468085,
+          "ctr_current": 1.6396638688592495,
+          "ctr_prior": 1.4698283728413437,
+          "ctr_wow_delta": 0.16983549601790582,
+          "position_current": 12.53988453328368,
+          "position_prior": 14.303518407462933,
+          "position_wow_delta": -1.7636338741792539,
+          "mobile_pct": 77.5880469583778,
+          "engagement_rate": 0.5169453769778256,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 44.07684098185699,
+          "sessions_sparkline": [
+            146,
+            122,
+            144,
+            166,
+            122,
+            148,
+            89
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 5330.0,
+          "fid_p75": 226.0,
+          "inp_p75": null,
+          "cls_p75": 0.051,
+          "performance_score": 69
+        },
+        "cwv_status": "Review"
+      },
+      {
+        "property_name": "Trevesta Place",
+        "kpis": {
+          "sessions_current": 494,
+          "sessions_prior": 503,
+          "sessions_wow_pct": -1.7892644135188867,
+          "clicks_current": 174,
+          "clicks_prior": 174,
+          "clicks_wow_pct": 0.0,
+          "ctr_current": 14.540242250403073,
+          "ctr_prior": 13.314580671903625,
+          "ctr_wow_delta": 1.225661578499448,
+          "position_current": 7.549430600010491,
+          "position_prior": 8.318199483520177,
+          "position_wow_delta": -0.7687688835096855,
+          "mobile_pct": 74.69635627530364,
+          "engagement_rate": 0.5601382621275893,
+          "top_channel": "Organic Search",
+          "top_channel_pct": 43.31983805668016,
+          "sessions_sparkline": [
+            89,
+            87,
+            74,
+            62,
+            55,
+            68,
+            59
+          ]
+        },
+        "cwv": {
+          "available": true,
+          "lcp_p75": 10590.0,
+          "fid_p75": 355.0,
+          "inp_p75": null,
+          "cls_p75": 0.0,
+          "performance_score": 56
+        },
+        "cwv_status": "Review"
+      }
+    ]
+  },
+  "data_windows": {
+    "ga4": {
+      "current_week_start": "2026-01-14",
+      "current_week_end": "2026-01-20",
+      "prior_week_start": "2026-01-07",
+      "prior_week_end": "2026-01-13",
+      "lag_days": 1
+    },
+    "gsc": {
+      "current_week_start": "2026-01-12",
+      "current_week_end": "2026-01-18",
+      "prior_week_start": "2026-01-05",
+      "prior_week_end": "2026-01-11",
+      "lag_days": 3
+    }
+  }
+}

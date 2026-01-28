@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resi Performance Diagnostic</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; background: #ecf0f1; padding: 10px; border-left: 4px solid #3498db; }
+        .summary-box { background: #e8f4f8; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0; }
+        .warning-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #3498db; color: white; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .metric-value { font-weight: 600; font-size: 1.1em; }
+        .conversion-ready { color: #27ae60; font-weight: 600; }
+        .ramp-stage { color: #f39c12; font-weight: 600; }
+        .visibility-constrained { color: #e74c3c; font-weight: 600; }
+        .pass { color: #27ae60; }
+        .fail { color: #e74c3c; }
+        .footer { text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 0.9em; border-top: 1px solid #ddd; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Resi Performance Diagnostic</h1>
+        <h3>Conversion Efficiency & Demand Ramp (30-Day)</h3>
+        
+        <div class="summary-box">
+            <strong>Run Date:</strong> 2026-01-23<br>
+            <strong>Data Window:</strong> GA4 (2025-12-23 to 2026-01-22), GSC (2025-12-21 to 2026-01-20)<br>
+            <strong>Properties Analyzed:</strong> 4 Resi properties<br>
+            <strong>Framework:</strong> Atlas Governed Diagnostic (separates conversion quality from visibility constraints)
+        </div>
+        
+        <h2>Section A — Conversion Efficiency (When Demand Exists)</h2>
+
+        <p><strong>Properties with Sufficient Demand:</strong> 2 (≥300 organic clicks in 30 days)</p>
+        
+        <table>
+            <tr>
+                <th>Property</th>
+                <th>SERP CTR</th>
+                <th>Avg Position</th>
+                <th>Engagement Rate</th>
+                <th>Sessions</th>
+            </tr>
+
+            <tr>
+                <td><strong>Camber Ridge</strong></td>
+                <td class="metric-value">7.88%</td>
+                <td>8.0</td>
+                <td class="metric-value">52.2%</td>
+                <td>5,428</td>
+            </tr>
+
+            <tr>
+                <td><strong>The Delta Pearland</strong></td>
+                <td class="metric-value">1.69%</td>
+                <td>9.7</td>
+                <td class="metric-value">70.0%</td>
+                <td>4,554</td>
+            </tr>
+
+        </table>
+        
+        <p style="margin-top: 15px;">
+            <strong>Interpretation:</strong> These properties have sufficient organic demand to assess conversion efficiency. 
+            Results represent Resi performance when visibility constraints are not the limiting factor.
+        </p>
+
+        <h2>Section B — Visibility & Ramp Health (All Properties)</h2>
+        
+        <p>All 4 Resi properties included, regardless of volume:</p>
+        
+        <table>
+            <tr>
+                <th>Property</th>
+                <th>Days Tracked</th>
+                <th>Clicks (30d)</th>
+                <th>Click Velocity</th>
+                <th>CWV Status</th>
+                <th>Classification</th>
+            </tr>
+
+            <tr>
+                <td><strong>Camber Ridge</strong></td>
+                <td>50</td>
+                <td class="metric-value">578</td>
+                <td>19.3 /day</td>
+                <td><span class="fail">✗ Needs Improvement</span></td>
+                <td class="conversion_ready">Conversion-Ready</td>
+            </tr>
+
+            <tr>
+                <td><strong>The Delta Pearland</strong></td>
+                <td>128</td>
+                <td class="metric-value">516</td>
+                <td>17.2 /day</td>
+                <td><span class="fail">✗ Needs Improvement</span></td>
+                <td class="conversion_ready">Conversion-Ready</td>
+            </tr>
+
+            <tr>
+                <td><strong>Cendana District West</strong></td>
+                <td>128</td>
+                <td class="metric-value">9</td>
+                <td>0.3 /day</td>
+                <td><span class="fail">✗ Needs Improvement</span></td>
+                <td class="visibility_constrained">Visibility-Constrained</td>
+            </tr>
+
+            <tr>
+                <td><strong>Monteverde</strong></td>
+                <td>24</td>
+                <td class="metric-value">150</td>
+                <td>5.0 /day</td>
+                <td><span class="fail">✗ Needs Improvement</span></td>
+                <td class="ramp_stage">Ramp-Stage</td>
+            </tr>
+
+        </table>
+        
+        <h3>Classification Definitions</h3>
+        <ul>
+            <li><strong class="conversion-ready">Conversion-Ready:</strong> Passed volume gate (≥300 clicks). Sufficient data for conversion analysis.</li>
+            <li><strong class="ramp-stage">Ramp-Stage:</strong> New property (&lt;45 days tracked) building organic visibility.</li>
+            <li><strong class="visibility-constrained">Visibility-Constrained:</strong> Mature property (≥60 days) with low organic traffic (&lt;300 clicks, &lt;5 clicks/day).</li>
+        </ul>
+        
+        <h3>Executive Interpretation</h3>
+
+        <div class="summary-box">
+
+            <p><strong>Conversion Efficiency:</strong> 2 of 4 Resi properties have sufficient demand for conversion analysis. 
+            These properties demonstrate the platform's ability to convert organic traffic when visibility is not the constraint.</p>
+
+            <p><strong>Ramp Health:</strong> 1 properties are in ramp-stage (&lt;45 days tracked), actively building organic visibility. 
+            Performance will strengthen as these properties accumulate search presence.</p>
+
+            <p><strong>Visibility Constraints:</strong> 1 properties are visibility-constrained despite 60+ days of tracking. 
+            These properties require SEO/visibility interventions, not conversion optimization.</p>
+
+        </div>
+        
+        <h3>Guardrails & Limitations</h3>
+        <ul>
+            <li><strong>Volume gates respected:</strong> ≥300 GSC clicks for Section A inclusion</li>
+            <li><strong>No relaxed thresholds:</strong> Properties below gates excluded from conversion analysis</li>
+            <li><strong>Deterministic classification:</strong> No subjective performance judgments</li>
+            <li><strong>No external comparisons:</strong> This is an internal Resi diagnostic, not a competitive analysis</li>
+        </ul>
+        
+        <div class="footer">
+            Generated: 2026-01-23 12:20:51<br>
+            Framework: Atlas Resi Performance Diagnostic v1.0
+        </div>
+    </div>
+</body>
+</html>

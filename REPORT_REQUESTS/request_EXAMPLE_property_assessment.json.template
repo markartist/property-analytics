@@ -1,0 +1,14 @@
+{
+  "request_type": "property_assessment",
+  "created": "2026-01-27T00:00:00Z",
+  "created_by": "Mark Laufhutte",
+  "action": "generate_and_email",
+  "parameters": {
+    "report_type": "executive",
+    "recipients": [
+      "mlaufhutte@venterraliving.com"
+    ],
+    "properties": "current_configuration",
+    "notes": "Monthly property assessment for leadership review. Generated automatically via request system."
+  }
+}

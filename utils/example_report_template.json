@@ -1,0 +1,50 @@
+{
+  "title": "Custom Analysis Report",
+  "subtitle": "Weekly Performance",
+  "version": "1.0.0",
+  "date_range": "01/19/2026 to 01/26/2026",
+  
+  "kpi_tiles": [
+    {
+      "label": "Total Sessions",
+      "value": "12,456",
+      "trend": "+15.3%",
+      "comparison": "vs prior week: 10,811",
+      "is_primary": true
+    },
+    {
+      "label": "Conversion Rate",
+      "value": "3.2%",
+      "trend": "+0.4%",
+      "comparison": "Portfolio avg: 2.8%",
+      "percentile": "72nd percentile"
+    },
+    {
+      "label": "Local Discovery",
+      "grade": "A+",
+      "grade_label": "Excellent"
+    }
+  ],
+  "kpi_columns": 3,
+  
+  "sections": [
+    {
+      "title": "Traffic Analysis",
+      "status": "healthy",
+      "description": "Channel-level performance breakdown",
+      "content": "<p style='font-size: 15px; color: #495057; margin-bottom: 15px;'>All channels showing positive growth.</p>"
+    },
+    {
+      "title": "Search Performance",
+      "status": "watch",
+      "description": "Organic visibility metrics",
+      "content": "<p>Average position: 18.4 (target: <15.0)</p><p>CTR: 4.2% (target: >5.0%)</p>"
+    },
+    {
+      "title": "Site Speed",
+      "status": "action_needed",
+      "description": "PageSpeed performance scores",
+      "content": "<p style='color: #dc3545;'>Mobile: 62 (needs improvement)</p><p style='color: #28a745;'>Desktop: 87 (good)</p>"
+    }
+  ]
+}

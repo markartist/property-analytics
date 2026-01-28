@@ -1,0 +1,85 @@
+QUICK GUIDE: Report Request System
+===================================
+
+SCENARIO: You need a Property Assessment report next month, but don't want 
+to remember to ask Agent when the time comes.
+
+SOLUTION: Queue it now, Agent will process it whenever you ask.
+
+---
+
+STEP 1: Create Request File
+----------------------------
+
+cd /Users/mark/Property_Analytics/REPORT_REQUESTS
+
+# Copy the example template
+cp request_EXAMPLE_property_assessment.json.template \
+   request_2026-02-15_monthly_assessment.json
+
+# Edit the file (change date, notes, etc.)
+nano request_2026-02-15_monthly_assessment.json
+
+# Save and exit
+
+---
+
+STEP 2: Wait Until Ready
+-------------------------
+
+(Days or weeks pass...)
+
+---
+
+STEP 3: Tell Agent to Process
+------------------------------
+
+Start new Agent session and say ANY of these:
+
+  "Check for report requests"
+  "Process REPORT_REQUESTS"
+  "Any pending report requests?"
+  "Execute report queue"
+
+Agent will:
+  ✅ Find your request file
+  ✅ Generate the report
+  ✅ Email it to you
+  ✅ Archive the request to completed/
+
+---
+
+THAT'S IT!
+----------
+
+Your report is generated and sent without having to:
+  ❌ Remember what you asked for
+  ❌ Explain it again to Agent
+  ❌ Look up any details
+
+The request file has all the context Agent needs.
+
+---
+
+EXAMPLE REQUEST FILE
+--------------------
+
+{
+  "request_type": "property_assessment",
+  "created": "2026-01-27T00:00:00Z",
+  "created_by": "Mark Laufhutte",
+  "action": "generate_and_email",
+  "parameters": {
+    "report_type": "executive",
+    "recipients": ["mlaufhutte@venterraliving.com"],
+    "properties": "current_configuration",
+    "notes": "Monthly assessment for February board meeting"
+  }
+}
+
+---
+
+MORE INFO
+---------
+
+Full docs: /Users/mark/Property_Analytics/REPORT_REQUESTS/README.md

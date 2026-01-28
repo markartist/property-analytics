@@ -1,0 +1,86 @@
+================================================================================
+PHASE 1.1: MATCHING DIAGNOSTIC REPORT
+================================================================================
+Generated: 2026-01-27 14:30:44
+================================================================================
+
+
+DIAGNOSTIC FINDINGS:
+
+
+================================================================================
+Property: Cendana District West
+Metro: Houston, TX | Units: 349
+================================================================================
+
+Matching Pipeline:
+  0_initial: 90 properties - All properties (excluding self)
+  1_metro_strict: 1 properties - Strict metro match (Houston, TX)
+  2_units_25pct: 1 properties - Unit count ±25% (349 ± 25%)
+  3a_state_fallback: 89 properties - State-level match (TX) or Unknown metro
+  3b_units_35pct: 57 properties - Unit count ±35% (widened)
+
+Final Pool: 57 candidates
+⚠️  Widening Applied: ±35% units, state-level metro
+
+Selected Matches: 2
+  1. The Delta Pearland (Score: 70/100)
+     Units: 358 | Traffic: 4,156
+  2. Gateway North (Score: 65/100)
+     Units: 342 | Traffic: 2,445
+
+================================================================================
+Property: Camber Ridge
+Metro: Unknown | Units: 312
+================================================================================
+
+Matching Pipeline:
+  0_initial: 90 properties - All properties (excluding self)
+  1_metro_strict: 88 properties - Strict metro match (Unknown)
+  2_units_25pct: 43 properties - Unit count ±25% (312 ± 25%)
+
+Final Pool: 43 candidates
+
+Selected Matches: 2
+  1. Monteverde (Score: 95/100)
+     Units: 272 | Traffic: 4,691
+  2. Luma Headwaters (Score: 85/100)
+     Units: 328 | Traffic: 3,290
+
+================================================================================
+Property: The Delta Pearland
+Metro: Houston, TX | Units: 358
+================================================================================
+
+Matching Pipeline:
+  0_initial: 90 properties - All properties (excluding self)
+  1_metro_strict: 0 properties - Strict metro match (Houston, TX)
+  2_units_25pct: 0 properties - Unit count ±25% (358 ± 25%)
+  3a_state_fallback: 89 properties - State-level match (TX) or Unknown metro
+  3b_units_35pct: 59 properties - Unit count ±35% (widened)
+
+Final Pool: 59 candidates
+⚠️  Widening Applied: ±35% units, state-level metro
+
+Selected Matches: 2
+  1. Luma Headwaters (Score: 65/100)
+     Units: 328 | Traffic: 3,290
+  2. Camber Ridge (Score: 65/100)
+     Units: 312 | Traffic: 5,142
+
+
+================================================================================
+SUMMARY OF FIXES:
+================================================================================
+
+What was broken:
+- Strict metro filtering blocked Delta Pearland and Monteverde
+- No properties exist in their specific metros (single-property markets)
+- Widening logic in Phase 1 only changed scoring, not filtering
+
+How it was fixed:
+- Implemented progressive relaxation: metro → state → any
+- Added explicit widened_mode tracking and logging
+- Unit widening: ±25% → ±35% → ±50%
+- Always return best match even if low confidence
+- Metro score reduced for state-level matches (25 pts vs 40 pts)

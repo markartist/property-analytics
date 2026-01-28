@@ -1,0 +1,199 @@
+{
+  "report_version": "0.1",
+  "generated_at": "2026-01-20T16:59:07.753840",
+  "report_date": "2026-01-20",
+  "data_windows": {
+    "ga4": {
+      "current_week_start": "2026-01-13",
+      "current_week_end": "2026-01-19",
+      "prior_week_start": "2026-01-06",
+      "prior_week_end": "2026-01-12",
+      "lag_days": 1
+    },
+    "gsc": {
+      "current_week_start": "2026-01-11",
+      "current_week_end": "2026-01-17",
+      "prior_week_start": "2026-01-04",
+      "prior_week_end": "2026-01-10",
+      "lag_days": 3
+    }
+  },
+  "focus_properties_count": 5,
+  "properties": [
+    {
+      "property_name": "Cane Island",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 319,
+          "prior": 407,
+          "wow_pct": -21.62162162162162
+        },
+        "clicks": {
+          "current": 26,
+          "prior": 34,
+          "wow_pct": -23.52941176470588
+        },
+        "ctr": {
+          "current": 1.3828175320956766,
+          "prior": 1.6577192250581707,
+          "wow_delta": -0.2749016929624941
+        },
+        "position": {
+          "current": 20.276563730456893,
+          "prior": 20.312489399209817,
+          "wow_delta": -0.03592566875292391
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "Demand softness",
+        "trigger": "Sessions AND Clicks both declined \u226510% WoW"
+      }
+    },
+    {
+      "property_name": "Valencia at Westchase",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 290,
+          "prior": 331,
+          "wow_pct": -12.386706948640484
+        },
+        "clicks": {
+          "current": 14,
+          "prior": 30,
+          "wow_pct": -53.333333333333336
+        },
+        "ctr": {
+          "current": 1.231442908115844,
+          "prior": 2.5872407943292197,
+          "wow_delta": -1.3557978862133757
+        },
+        "position": {
+          "current": 16.754429284534172,
+          "prior": 14.3229633874987,
+          "wow_delta": 2.431465897035473
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "The Grove at Clermont",
+      "status": "yellow",
+      "status_rule": "Sessions declined 10-14.9% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 843,
+          "prior": 977,
+          "wow_pct": -13.715455475946776
+        },
+        "clicks": {
+          "current": 58,
+          "prior": 71,
+          "wow_pct": -18.30985915492958
+        },
+        "ctr": {
+          "current": 1.0011525513847226,
+          "prior": 1.219551949414838,
+          "wow_delta": -0.21839939803011532
+        },
+        "position": {
+          "current": 12.203648600701769,
+          "prior": 12.754271009260863,
+          "wow_delta": -0.5506224085590947
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "Demand softness",
+        "trigger": "Sessions AND Clicks both declined \u226510% WoW"
+      }
+    },
+    {
+      "property_name": "The Villages at Oakleaf",
+      "status": "yellow",
+      "status_rule": "Sessions declined 10-14.9% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 518,
+          "prior": 583,
+          "wow_pct": -11.149228130360205
+        },
+        "clicks": {
+          "current": 55,
+          "prior": 56,
+          "wow_pct": -1.7857142857142856
+        },
+        "ctr": {
+          "current": 2.1863940706612146,
+          "prior": 1.824977568208563,
+          "wow_delta": 0.36141650245265167
+        },
+        "position": {
+          "current": 13.578875813003725,
+          "prior": 16.151978972959345,
+          "wow_delta": -2.57310315995562
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Northbridge at Millenia Lake",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 1053,
+          "prior": 1150,
+          "wow_pct": -8.434782608695652
+        },
+        "clicks": {
+          "current": 56,
+          "prior": 49,
+          "wow_pct": 14.285714285714285
+        },
+        "ctr": {
+          "current": 2.125875019232852,
+          "prior": 1.6711550253834466,
+          "wow_delta": 0.4547199938494053
+        },
+        "position": {
+          "current": 13.698358403359226,
+          "prior": 14.874569269184445,
+          "wow_delta": -1.1762108658252188
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    }
+  ]
+}

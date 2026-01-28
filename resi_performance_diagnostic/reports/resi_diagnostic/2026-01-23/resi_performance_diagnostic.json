@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "run_date": "2026-01-23",
+    "ga4_window": {
+      "start": "2025-12-23",
+      "end": "2026-01-22"
+    },
+    "gsc_window": {
+      "start": "2025-12-21",
+      "end": "2026-01-20"
+    },
+    "framework_version": "1.0",
+    "total_properties": 4
+  },
+  "classifications": {
+    "conversion_ready": 2,
+    "ramp_stage": 1,
+    "visibility_constrained": 1
+  },
+  "properties": [
+    {
+      "name": "Camber Ridge",
+      "ga4_id": "445473253",
+      "gsc_url": "https://camberridgeapartments.com/",
+      "gsc": {
+        "clicks_30d": 578,
+        "impressions_30d": 7336,
+        "ctr": 7.878953107960742,
+        "avg_position": 7.950308610365253,
+        "days_tracked": 50,
+        "click_velocity": 19.266666666666666,
+        "first_tracked": "2025-12-04"
+      },
+      "ga4": {
+        "sessions": 5428,
+        "engaged_sessions": 2833,
+        "engagement_rate": 52.19233603537214,
+        "meaningful_actions_per_session": null
+      },
+      "cwv": {
+        "lcp": 11.25,
+        "fid": 369.0,
+        "cls": 0.058,
+        "passes_good": false
+      },
+      "classification": "Conversion-Ready",
+      "classification_reason": "Passed volume gate (578 clicks \u2265 300)"
+    },
+    {
+      "name": "The Delta Pearland",
+      "ga4_id": "441503068",
+      "gsc_url": "https://thedeltapearland.com/",
+      "gsc": {
+        "clicks_30d": 516,
+        "impressions_30d": 30551,
+        "ctr": 1.6889790841543648,
+        "avg_position": 9.66927299458849,
+        "days_tracked": 128,
+        "click_velocity": 17.2,
+        "first_tracked": "2025-09-17"
+      },
+      "ga4": {
+        "sessions": 4554,
+        "engaged_sessions": 3189,
+        "engagement_rate": 70.02635046113306,
+        "meaningful_actions_per_session": null
+      },
+      "cwv": {
+        "lcp": 8.5,
+        "fid": 402.0,
+        "cls": 0.117,
+        "passes_good": false
+      },
+      "classification": "Conversion-Ready",
+      "classification_reason": "Passed volume gate (516 clicks \u2265 300)"
+    },
+    {
+      "name": "Cendana District West",
+      "ga4_id": "424416990",
+      "gsc_url": "https://venterraliving.com/apartments/cendana-district-west/",
+      "gsc": {
+        "clicks_30d": 9,
+        "impressions_30d": 1730,
+        "ctr": 0.5202312138728323,
+        "avg_position": 5.194928270933594,
+        "days_tracked": 128,
+        "click_velocity": 0.3,
+        "first_tracked": "2025-09-17"
+      },
+      "ga4": {
+        "sessions": 2952,
+        "engaged_sessions": 1742,
+        "engagement_rate": 59.010840108401084,
+        "meaningful_actions_per_session": null
+      },
+      "cwv": {
+        "lcp": 6.85,
+        "fid": 242.0,
+        "cls": 0.051,
+        "passes_good": false
+      },
+      "classification": "Visibility-Constrained",
+      "classification_reason": "Low organic visibility (9 clicks in 128 days, 0.3 clicks/day)"
+    },
+    {
+      "name": "Monteverde",
+      "ga4_id": "488649687",
+      "gsc_url": "sc-domain:monteverdesatx.com",
+      "gsc": {
+        "clicks_30d": 150,
+        "impressions_30d": 1354,
+        "ctr": 11.078286558345644,
+        "avg_position": 14.107685095093938,
+        "days_tracked": 24,
+        "click_velocity": 5.0,
+        "first_tracked": "2025-12-30"
+      },
+      "ga4": {
+        "sessions": 4395,
+        "engaged_sessions": 1971,
+        "engagement_rate": 44.846416382252556,
+        "meaningful_actions_per_session": null
+      },
+      "cwv": {
+        "lcp": 7.4,
+        "fid": 259.0,
+        "cls": 0.098,
+        "passes_good": false
+      },
+      "classification": "Ramp-Stage",
+      "classification_reason": "New property (24 days tracked < 45)"
+    }
+  ]
+}

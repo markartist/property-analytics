@@ -1,0 +1,10 @@
+Property,Type,Metro,Units,Sessions,Engagement Rate,CIR/100,GSC Clicks,GSC Impressions,Performance Score,LCP,Data Status
+Cendana District West,Resi,"Houston, TX",349,2770,59.8%,0.00,265,5156,65.0,7.02s,GA4:PARTIAL GSC:PARTIAL PSI:PARTIAL
+The Delta Pearland,Peer,"Houston, TX",358,4156,71.7%,0.00,457,26382,36.58,14.81s,GA4:PARTIAL GSC:FULL PSI:PARTIAL
+
+Camber Ridge,Resi,Unknown,312,5142,52.8%,0.00,543,6445,54.17,10.30s,GA4:PARTIAL GSC:FULL PSI:PARTIAL
+Monteverde,Peer,Unknown,272,4691,46.6%,0.00,170,1585,61.5,7.27s,GA4:PARTIAL GSC:FULL PSI:PARTIAL
+
+The Delta Pearland,Resi,"Houston, TX",358,4156,71.7%,0.00,457,26382,36.58,14.81s,GA4:PARTIAL GSC:FULL PSI:PARTIAL
+Camber Ridge,Peer,Unknown,312,5142,52.8%,0.00,543,6445,54.17,10.30s,GA4:PARTIAL GSC:FULL PSI:PARTIAL
+

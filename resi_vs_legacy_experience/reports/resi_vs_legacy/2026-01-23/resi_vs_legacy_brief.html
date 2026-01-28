@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resi vs Legacy Site Experience — Exploratory Brief</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .disclaimer { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+        .disclaimer strong { color: #856404; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #3498db; color: white; font-weight: 600; }
+        tr:hover { background: #f8f9fa; }
+        .metric-value { font-weight: 600; font-size: 1.1em; }
+        .resi-stronger { color: #27ae60; }
+        .legacy-stronger { color: #e74c3c; }
+        .comparable { color: #7f8c8d; }
+        .coverage { font-size: 0.9em; color: #7f8c8d; margin-top: 5px; }
+        .narrative { background: #e8f4f8; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0; line-height: 1.6; }
+        .guardrails { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0; font-size: 0.9em; }
+        .guardrails ul { margin: 10px 0; padding-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Resi vs Legacy Site Experience</h1>
+        <h2>Exploratory Conversion Efficiency Brief (30-Day)</h2>
+        
+        <p><strong>Run Date:</strong> 2026-01-23<br>
+        <strong>Data Window:</strong> 2025-12-23 to 2026-01-22 (GA4), 2025-12-21 to 2026-01-20 (GSC)</p>
+        
+        <div class="disclaimer">
+            <strong>⚠️ EXPLORATORY FRAMEWORK — Small Cohorts & Volume Filtering</strong><br>
+            This brief compares <strong>Resi site experience (N=2 complete)</strong> vs <strong>Legacy site experience (N=11 complete)</strong>. 
+            Only properties passing <em>all three</em> volume gates (≥300 GSC clicks, ≥1,500 GA4 sessions, CWV data) are included to ensure apples-to-apples comparison. 
+            The small sample sizes provide directional insights but are insufficient for statistical inference.
+        </div>
+        
+        <h2>Cohort Summary</h2>
+        <table>
+            <tr>
+                <th>Cohort</th>
+                <th>Total Properties</th>
+                <th>Complete Data</th>
+                <th>Completion Rate</th>
+            </tr>
+            <tr>
+                <td><strong>Resi Experience</strong></td>
+                <td class="metric-value">4</td>
+                <td class="metric-value">2</td>
+                <td>50%</td>
+            </tr>
+            <tr>
+                <td><strong>Legacy Experience</strong></td>
+                <td class="metric-value">87</td>
+                <td class="metric-value">11</td>
+                <td>13%</td>
+            </tr>
+        </table>
+        <div class="coverage">
+            <strong>Complete Data:</strong> Properties passing all three volume gates (GSC ≥300 clicks, GA4 ≥1,500 sessions, CWV available).
+        </div>
+        
+        <h2>Executive Scorecard (Cohort Medians)</h2>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Resi Median</th>
+                <th>Legacy Median</th>
+                <th>Directional</th>
+            </tr>
+            <tr>
+                <td><strong>SERP CTR (%)</strong></td>
+                <td class="metric-value">4.78%</td>
+                <td class="metric-value">10.93%</td>
+                <td class="legacy-stronger">
+                    Legacy stronger
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Engagement Rate (%)</strong></td>
+                <td class="metric-value">55.60%</td>
+                <td class="metric-value">63.10%</td>
+                <td class="legacy-stronger">
+                    Legacy stronger
+                </td>
+            </tr>
+            <tr>
+                <td><strong>LCP - Largest Contentful Paint (s)</strong></td>
+                <td class="metric-value">7.95s</td>
+                <td class="metric-value">5.48s</td>
+                <td class="legacy-stronger">
+                    Legacy faster
+                </td>
+            </tr>
+            <tr>
+                <td><strong>FID - First Input Delay (ms)</strong></td>
+                <td class="metric-value">314ms</td>
+                <td class="metric-value">198ms</td>
+                <td class="legacy-stronger">
+                    Legacy faster
+                </td>
+            </tr>
+            <tr>
+                <td><strong>CLS - Cumulative Layout Shift</strong></td>
+                <td class="metric-value">0.078</td>
+                <td class="metric-value">0.054</td>
+                <td class="legacy-stronger">
+                    Legacy better
+                </td>
+            </tr>
+        </table>
+        
+        <div class="coverage">
+            <strong>Note:</strong> SERP CTR from GSC (N=2 Resi, N=11 Legacy). 
+            Engagement Rate from GA4 (N=4 Resi, N=11 Legacy). 
+            CWV metrics from PageSpeed Insights mobile (N=4 Resi, N=11 Legacy). 
+            Lower is better for LCP, FID, CLS.
+        </div>
+        
+        <h2>Executive Narrative</h2>
+        <div class="narrative">
+            Across a 30-day window comparing high-traffic properties (N=2 Resi, N=11 Legacy passing all volume gates), 
+            the Resi site experience demonstrated lower SERP CTR, 
+            lower engagement rate, 
+            and mixed Core Web Vitals performance (LCP: 7.95s vs 5.48s, FID: 314ms vs 198ms). 
+            The extremely small sample sizes limit statistical inference—this is an exploratory baseline to validate the measurement framework. 
+            Results will strengthen as more properties migrate to Resi and accumulate traffic.
+        </div>
+        
+        <h2>Guardrails & Interpretation</h2>
+        <div class="guardrails">
+            <strong>Methodology:</strong>
+            <ul>
+                <li><strong>Medians used</strong> (not averages) for all cohort comparisons</li>
+                <li><strong>Volume gates enforced:</strong> ≥300 GSC clicks, ≥1,500 GA4 sessions, CWV data available</li>
+                <li><strong>Complete data filtering:</strong> Legacy cohort filtered to only properties passing all three gates (N=11 of 87)</li>
+                <li><strong>Conversion proxies:</strong> SERP CTR, engagement rate, CWV (not lease conversions)</li>
+                <li><strong>Internal comparison:</strong> Venterra portfolio only (no external competitors)</li>
+                <li><strong>Sample size limitation:</strong> N=2 Resi, N=11 Legacy with complete data—insufficient for inference</li>
+                <li><strong>Deferred:</strong> Paid Ads efficiency, meaningful actions per session (requires event mapping)</li>
+            </ul>
+            <strong>Interpretation:</strong> This is an <strong>exploratory baseline</strong> comparing high-traffic properties only. 
+            Results are directional and will strengthen as Resi properties accumulate traffic and more properties migrate.
+        </div>
+        
+        <p style="text-align: center; margin-top: 40px; color: #7f8c8d; font-size: 0.9em;">
+            Generated: 2026-01-23 12:16:47<br>
+            Framework: Resi vs Legacy Site Experience v1.0
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+
+================================================================================
+RESI COMPARATIVE ANALYSIS - PHASE 1
+================================================================================
+Date: 2026-01-27
+Window: Last 30 days
+
+================================================================================
+IDENTIFYING RESI PROPERTIES
+================================================================================
+
+✓ Found: Cendana District West
+  GA4 ID: 424416990
+  Units: 349
+  Metro: Houston, TX
+
+✓ Found: Camber Ridge
+  GA4 ID: 445473253
+  Units: 312
+  Metro: Unknown
+
+✓ Found: The Delta Pearland
+  GA4 ID: 441503068
+  Units: 358
+  Metro: Houston, TX
+
+✓ Found: Monteverde
+  GA4 ID: 488649687
+  Units: 272
+  Metro: San Antonio, TX
+
+================================================================================
+FINDING MATCHES FOR: Cendana District West
+================================================================================
+Metro: Houston, TX
+Units: 349
+Traffic (30d): 2,770 sessions
+
+⚠️  Only 1 strict matches found. Widening criteria to ±35% units...
+
+Top 5 Candidates:
+
+1. The Delta Pearland (Score: 85/100)
+   Units: 358 | Traffic: 4,156
+   Match breakdown:
+     - metro: 40 pts
+     - unit_similarity: 30 pts
+     - traffic_similarity: 10 pts
+     - gbp_similarity: 5 pts
+
+✓ Selected 1 match(es) for comparison
+
+--- Extracting metrics for Cendana District West ---
+Traceback (most recent call last):
+  File "/Users/mark/Property_Analytics/resi_phase1_analysis.py", line 801, in <module>
+    main()
+  File "/Users/mark/Property_Analytics/resi_phase1_analysis.py", line 795, in main
+    analysis.run_phase1()
+  File "/Users/mark/Property_Analytics/resi_phase1_analysis.py", line 752, in run_phase1
+    resi_data = self.extract_all_metrics(resi['ga4_property_id'], resi['full_url'])
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mark/Property_Analytics/resi_phase1_analysis.py", line 359, in extract_all_metrics
+    cursor.execute("""
+sqlite3.OperationalError: no such column: domain

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Opening Performance Dashboard - 2026-01-27</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .header {
+            background: #15284B;
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .executive-summary {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .executive-summary h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 3px solid #15284B;
+            padding-bottom: 10px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .summary-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #15284B;
+        }
+        .summary-card .label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin: 5px 0;
+        }
+        .summary-card .subvalue {
+            font-size: 14px;
+            color: #888;
+        }
+        .property-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .property-section h2 {
+            margin-top: 0;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .metro-badge {
+            background: #15284B;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .metric-box h3 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: #666;
+        }
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-complete { background: #d4edda; color: #155724; }
+        .status-partial { background: #fff3cd; color: #856404; }
+        .status-pending { background: #f8d7da; color: #721c24; }
+        .comparative-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .comparative-table th {
+            background: #15284B;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        .comparative-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .comparative-table tr:hover {
+            background: #f8f9fa;
+        }
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .note strong {
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏗️ Pre-Opening Performance Dashboard</h1>
+        <div class="subtitle">New Development Properties | Generated January 27, 2026 at 07:53 PM</div>
+    </div>
+
+    <div class="executive-summary">
+        <h2>Executive Summary</h2>
+        <div class="summary-grid">
+
+            <div class="summary-card">
+                <div class="label">Total Website Sessions</div>
+                <div class="value">18,626</div>
+                <div class="subvalue">Across all properties</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Unique Visitors</div>
+                <div class="value">16,767</div>
+                <div class="subvalue">Cumulative reach</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Search Clicks</div>
+                <div class="value">234</div>
+                <div class="subvalue">2,059 impressions</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Properties Tracked</div>
+                <div class="value">3</div>
+                <div class="subvalue">New developments</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="property-section">
+        <h2>Comparative Overview</h2>
+        <table class="comparative-table">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Metro</th>
+                    <th>Sessions</th>
+                    <th>Users</th>
+                    <th>Search Clicks</th>
+                    <th>Data Status</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr>
+                    <td><strong>Monteverde</strong></td>
+                    <td>San Antonio</td>
+                    <td>18,043</td>
+                    <td>16,251</td>
+                    <td>182</td>
+                    <td><span class="status-badge status-complete">Complete</span></td>
+                </tr>
+    
+                <tr>
+                    <td><strong>The Vine Kyle Parkway</strong></td>
+                    <td>Austin</td>
+                    <td>583</td>
+                    <td>516</td>
+                    <td>46</td>
+                    <td><span class="status-badge status-partial">Partial</span></td>
+                </tr>
+    
+                <tr>
+                    <td><strong>Sundara at Spring Cypress</strong></td>
+                    <td>Houston</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>6</td>
+                    <td><span class="status-badge status-pending">Limited</span></td>
+                </tr>
+    
+            </tbody>
+        </table>
+    </div>
+
+    <div class="property-section">
+        <h2>Monteverde <span class="metro-badge">San Antonio</span></h2>
+        <div class="metrics-grid">
+
+            <div class="metric-box">
+                <h3>📊 Website Traffic (127 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Sessions</span>
+                    <span class="metric-value">18,043</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Unique Users</span>
+                    <span class="metric-value">16,251</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Engagement Rate</span>
+                    <span class="metric-value">48.4%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg. Session Duration</span>
+                    <span class="metric-value">106.6s</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Pages/Session</span>
+                    <span class="metric-value">0.6</span>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>🔍 Search Performance (31 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Clicks</span>
+                    <span class="metric-value">182</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Impressions</span>
+                    <span class="metric-value">1,773</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Click-Through Rate</span>
+                    <span class="metric-value">889.79%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg. Position</span>
+                    <span class="metric-value">15.3</span>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>⚡ Site Performance (12 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Mobile Performance</span>
+                    <span class="metric-value">62/100</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Desktop Performance</span>
+                    <span class="metric-value">90/100</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">LCP (Mobile)</span>
+                    <span class="metric-value">7.27s</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">CLS (Mobile)</span>
+                    <span class="metric-value">0.049</span>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>📍 Google Business Profile (31 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Website Clicks</span>
+                    <span class="metric-value">199</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Phone Calls</span>
+                    <span class="metric-value">6</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Direction Requests</span>
+                    <span class="metric-value">278</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Actions</span>
+                    <span class="metric-value">483</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="property-section">
+        <h2>The Vine Kyle Parkway <span class="metro-badge">Austin</span></h2>
+        <div class="metrics-grid">
+
+            <div class="metric-box">
+                <h3>📊 Website Traffic (135 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Sessions</span>
+                    <span class="metric-value">583</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Unique Users</span>
+                    <span class="metric-value">516</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Engagement Rate</span>
+                    <span class="metric-value">27.4%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg. Session Duration</span>
+                    <span class="metric-value">96.0s</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Pages/Session</span>
+                    <span class="metric-value">1.41</span>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>🔍 Search Performance (91 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Clicks</span>
+                    <span class="metric-value">46</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Impressions</span>
+                    <span class="metric-value">227</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Click-Through Rate</span>
+                    <span class="metric-value">16.0%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg. Position</span>
+                    <span class="metric-value">4.6</span>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>⚡ Site Performance</h3>
+                <div class="note">
+                    <strong>Pending collection.</strong> Will be available in next daily run.
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>📍 Google Business Profile</h3>
+                <div class="note">
+                    <strong>Not configured</strong> or pending collection.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="property-section">
+        <h2>Sundara at Spring Cypress <span class="metro-badge">Houston</span></h2>
+        <div class="metrics-grid">
+
+            <div class="metric-box">
+                <h3>📊 Website Traffic</h3>
+                <div class="note">
+                    <strong>No GA4 data available.</strong> Property ID pending.
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>🔍 Search Performance (91 days)</h3>
+                <div class="metric-row">
+                    <span class="metric-label">Clicks</span>
+                    <span class="metric-value">6</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Impressions</span>
+                    <span class="metric-value">59</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Click-Through Rate</span>
+                    <span class="metric-value">2.38%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Avg. Position</span>
+                    <span class="metric-value">3.0</span>
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>⚡ Site Performance</h3>
+                <div class="note">
+                    <strong>Pending collection.</strong> Will be available in next daily run.
+                </div>
+            </div>
+
+            <div class="metric-box">
+                <h3>📍 Google Business Profile</h3>
+                <div class="note">
+                    <strong>Not configured</strong> or pending collection.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="property-section">
+        <h2>📝 Data Notes</h2>
+        <ul style="line-height: 1.8;">
+            <li><strong>Data Sources:</strong> Google Analytics 4 (GA4), Google Search Console (GSC), PageSpeed Insights (PSI), Google Business Profile (GBP)</li>
+            <li><strong>Update Frequency:</strong> Automated daily collection at 5:00 AM</li>
+            <li><strong>GSC Lag:</strong> Search Console data has a 3-day API delay</li>
+            <li><strong>Pre-Opening Context:</strong> These properties are not yet operational; metrics track pre-launch interest and visibility</li>
+            <li><strong>Missing Data:</strong> Some properties pending GA4 property ID or GBP configuration</li>
+        </ul>
+    </div>
+    
+    <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
+        Generated by Portfolio Analytics System | 2026-01-27 07:53 PM
+    </div>
+</body>
+</html>

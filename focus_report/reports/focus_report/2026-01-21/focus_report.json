@@ -1,0 +1,829 @@
+{
+  "report_version": "0.1",
+  "generated_at": "2026-01-21T11:34:34.518003",
+  "report_date": "2026-01-21",
+  "data_windows": {
+    "ga4": {
+      "current_week_start": "2026-01-14",
+      "current_week_end": "2026-01-20",
+      "prior_week_start": "2026-01-07",
+      "prior_week_end": "2026-01-13",
+      "lag_days": 1
+    },
+    "gsc": {
+      "current_week_start": "2026-01-12",
+      "current_week_end": "2026-01-18",
+      "prior_week_start": "2026-01-05",
+      "prior_week_end": "2026-01-11",
+      "lag_days": 3
+    }
+  },
+  "focus_properties_count": 23,
+  "properties": [
+    {
+      "property_name": "Apex West Midtown",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 552,
+          "prior": 678,
+          "wow_pct": -18.58407079646018
+        },
+        "clicks": {
+          "current": 46,
+          "prior": 60,
+          "wow_pct": -23.333333333333332
+        },
+        "ctr": {
+          "current": 1.1884013003703677,
+          "prior": 1.299594549323388,
+          "wow_delta": -0.1111932489530203
+        },
+        "position": {
+          "current": 18.773980223942885,
+          "prior": 19.160857122425366,
+          "wow_delta": -0.3868768984824804
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "Demand softness",
+        "trigger": "Sessions AND Clicks both declined \u226510% WoW"
+      }
+    },
+    {
+      "property_name": "Avasa Grove West",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 561,
+          "prior": 615,
+          "wow_pct": -8.780487804878048
+        },
+        "clicks": {
+          "current": 151,
+          "prior": 237,
+          "wow_pct": -36.28691983122363
+        },
+        "ctr": {
+          "current": 6.236075978102009,
+          "prior": 8.82061752343922,
+          "wow_delta": -2.5845415453372107
+        },
+        "position": {
+          "current": 16.126074735051496,
+          "prior": 15.165236475298352,
+          "wow_delta": 0.9608382597531442
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "Avasa Spring Branch",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 691,
+          "prior": 782,
+          "wow_pct": -11.636828644501279
+        },
+        "clicks": {
+          "current": 187,
+          "prior": 235,
+          "wow_pct": -20.425531914893615
+        },
+        "ctr": {
+          "current": 10.943415880544084,
+          "prior": 12.47278237151355,
+          "wow_delta": -1.5293664909694655
+        },
+        "position": {
+          "current": 9.977041750569494,
+          "prior": 9.578000293263269,
+          "wow_delta": 0.3990414573062253
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "Cane Island",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 329,
+          "prior": 401,
+          "wow_pct": -17.955112219451372
+        },
+        "clicks": {
+          "current": 24,
+          "prior": 35,
+          "wow_pct": -31.428571428571427
+        },
+        "ctr": {
+          "current": 1.2936660820419708,
+          "prior": 1.6844323493322704,
+          "wow_delta": -0.3907662672902996
+        },
+        "position": {
+          "current": 20.48654224817977,
+          "prior": 20.59856373138171,
+          "wow_delta": -0.11202148320193928
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "Demand softness",
+        "trigger": "Sessions AND Clicks both declined \u226510% WoW"
+      }
+    },
+    {
+      "property_name": "Canton Mill Lofts",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 644,
+          "prior": 641,
+          "wow_pct": 0.46801872074883
+        },
+        "clicks": {
+          "current": 34,
+          "prior": 52,
+          "wow_pct": -34.61538461538461
+        },
+        "ctr": {
+          "current": 2.0812393482261484,
+          "prior": 2.729341070465401,
+          "wow_delta": -0.6481017222392524
+        },
+        "position": {
+          "current": 9.822011856623389,
+          "prior": 9.839259922335014,
+          "wow_delta": -0.01724806571162496
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "Luma Headwaters",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 727,
+          "prior": 885,
+          "wow_pct": -17.853107344632768
+        },
+        "clicks": {
+          "current": 41,
+          "prior": 62,
+          "wow_pct": -33.87096774193548
+        },
+        "ctr": {
+          "current": 1.6147518072329212,
+          "prior": 2.085603506206257,
+          "wow_delta": -0.47085169897333556
+        },
+        "position": {
+          "current": 28.917104335742014,
+          "prior": 29.471929208155462,
+          "wow_delta": -0.5548248724134481
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "Demand softness",
+        "trigger": "Sessions AND Clicks both declined \u226510% WoW"
+      }
+    },
+    {
+      "property_name": "Mission Mayfield Downs",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 416,
+          "prior": 427,
+          "wow_pct": -2.576112412177986
+        },
+        "clicks": {
+          "current": 118,
+          "prior": 148,
+          "wow_pct": -20.27027027027027
+        },
+        "ctr": {
+          "current": 12.134929416122702,
+          "prior": 13.708431198434821,
+          "wow_delta": -1.5735017823121193
+        },
+        "position": {
+          "current": 12.832481823441727,
+          "prior": 13.935356282900226,
+          "wow_delta": -1.1028744594584996
+        }
+      },
+      "insight": {
+        "text": "Steady performance, no significant changes",
+        "source": "template:stable"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "The Anatole",
+      "status": "red",
+      "status_rule": "CTR declined \u22651.0pp WoW AND clicks >50",
+      "kpis": {
+        "sessions": {
+          "current": 737,
+          "prior": 946,
+          "wow_pct": -22.093023255813954
+        },
+        "clicks": {
+          "current": 112,
+          "prior": 127,
+          "wow_pct": -11.811023622047244
+        },
+        "ctr": {
+          "current": 10.818567714962475,
+          "prior": 12.757209622091338,
+          "wow_delta": -1.9386419071288632
+        },
+        "position": {
+          "current": 8.798012708033978,
+          "prior": 11.360624160462246,
+          "wow_delta": -2.5626114524282677
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "The Cape at Grand Harbor",
+      "status": "red",
+      "status_rule": "Organic Clicks declined \u226520% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 331,
+          "prior": 276,
+          "wow_pct": 19.92753623188406
+        },
+        "clicks": {
+          "current": 29,
+          "prior": 43,
+          "wow_pct": -32.55813953488372
+        },
+        "ctr": {
+          "current": 3.5635422542338278,
+          "prior": 4.628919628525864,
+          "wow_delta": -1.0653773742920363
+        },
+        "position": {
+          "current": 9.313894409486517,
+          "prior": 10.729397926260644,
+          "wow_delta": -1.4155035167741268
+        }
+      },
+      "insight": {
+        "text": "Traffic divergence: sessions up, clicks down",
+        "source": "template:divergence"
+      },
+      "watch_flag": {
+        "flag": "CTR erosion",
+        "trigger": "CTR declined \u22650.5pp WoW"
+      }
+    },
+    {
+      "property_name": "Avasa at 1604",
+      "status": "yellow",
+      "status_rule": "Sessions declined 10-14.9% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 645,
+          "prior": 737,
+          "wow_pct": -12.48303934871099
+        },
+        "clicks": {
+          "current": 61,
+          "prior": 35,
+          "wow_pct": 74.28571428571429
+        },
+        "ctr": {
+          "current": 2.919664975419288,
+          "prior": 1.730849144486712,
+          "wow_delta": 1.188815830932576
+        },
+        "position": {
+          "current": 12.687813074974562,
+          "prior": 14.509304686014106,
+          "wow_delta": -1.8214916110395443
+        }
+      },
+      "insight": {
+        "text": "Strong growth momentum this week",
+        "source": "template:acceleration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Belterra",
+      "status": "yellow",
+      "status_rule": "Sessions declined 10-14.9% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 506,
+          "prior": 581,
+          "wow_pct": -12.908777969018933
+        },
+        "clicks": {
+          "current": 25,
+          "prior": 18,
+          "wow_pct": 38.88888888888889
+        },
+        "ctr": {
+          "current": 2.074292949405858,
+          "prior": 1.6806812942812523,
+          "wow_delta": 0.39361165512460583
+        },
+        "position": {
+          "current": 14.960267469570454,
+          "prior": 16.556481481018583,
+          "wow_delta": -1.5962140114481294
+        }
+      },
+      "insight": {
+        "text": "Strong growth momentum this week",
+        "source": "template:acceleration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Fairways at South Shore",
+      "status": "yellow",
+      "status_rule": "Sessions declined 10-14.9% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 475,
+          "prior": 528,
+          "wow_pct": -10.037878787878787
+        },
+        "clicks": {
+          "current": 47,
+          "prior": 42,
+          "wow_pct": 11.904761904761903
+        },
+        "ctr": {
+          "current": 2.5181731688040863,
+          "prior": 2.271434311539046,
+          "wow_delta": 0.2467388572650404
+        },
+        "position": {
+          "current": 18.383682010405924,
+          "prior": 18.439365194330936,
+          "wow_delta": -0.05568318392501226
+        }
+      },
+      "insight": {
+        "text": "Traffic divergence: clicks up, sessions down",
+        "source": "template:divergence"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "The Villages at Oakleaf",
+      "status": "yellow",
+      "status_rule": "Sessions declined 10-14.9% WoW",
+      "kpis": {
+        "sessions": {
+          "current": 512,
+          "prior": 600,
+          "wow_pct": -14.666666666666666
+        },
+        "clicks": {
+          "current": 51,
+          "prior": 58,
+          "wow_pct": -12.068965517241379
+        },
+        "ctr": {
+          "current": 2.029408199389629,
+          "prior": 1.9127832250214836,
+          "wow_delta": 0.11662497436814534
+        },
+        "position": {
+          "current": 13.840330548744177,
+          "prior": 15.562324075798395,
+          "wow_delta": -1.7219935270542184
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": "Demand softness",
+        "trigger": "Sessions AND Clicks both declined \u226510% WoW"
+      }
+    },
+    {
+      "property_name": "Botanic Luxury",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 570,
+          "prior": 595,
+          "wow_pct": -4.201680672268908
+        },
+        "clicks": {
+          "current": 36,
+          "prior": 26,
+          "wow_pct": 38.46153846153847
+        },
+        "ctr": {
+          "current": 1.277917111325039,
+          "prior": 0.892885067911113,
+          "wow_delta": 0.38503204341392594
+        },
+        "position": {
+          "current": 13.352414154184741,
+          "prior": 14.104512075670181,
+          "wow_delta": -0.75209792148544
+        }
+      },
+      "insight": {
+        "text": "Strong growth momentum this week",
+        "source": "template:acceleration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Calais Midtown",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 519,
+          "prior": 661,
+          "wow_pct": -21.482602118003026
+        },
+        "clicks": {
+          "current": 54,
+          "prior": 51,
+          "wow_pct": 5.88235294117647
+        },
+        "ctr": {
+          "current": 3.8737337861417473,
+          "prior": 3.684381671158959,
+          "wow_delta": 0.18935211498278814
+        },
+        "position": {
+          "current": 19.511464834599753,
+          "prior": 21.509529979091813,
+          "wow_delta": -1.9980651444920596
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Camber Ridge",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 1328,
+          "prior": 1395,
+          "wow_pct": -4.802867383512545
+        },
+        "clicks": {
+          "current": 163,
+          "prior": 142,
+          "wow_pct": 14.788732394366196
+        },
+        "ctr": {
+          "current": 9.130456880345955,
+          "prior": 7.9790571169334115,
+          "wow_delta": 1.1513997634125435
+        },
+        "position": {
+          "current": 8.38524040539694,
+          "prior": 7.684111213451533,
+          "wow_delta": 0.7011291919454079
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "CoHo",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 456,
+          "prior": 437,
+          "wow_pct": 4.3478260869565215
+        },
+        "clicks": {
+          "current": 86,
+          "prior": 84,
+          "wow_pct": 2.380952380952381
+        },
+        "ctr": {
+          "current": 8.947752029024793,
+          "prior": 9.050047278612217,
+          "wow_delta": -0.10229524958742431
+        },
+        "position": {
+          "current": 10.618039508203164,
+          "prior": 13.70450407076535,
+          "wow_delta": -3.0864645625621847
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Elation at Grandway West",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 440,
+          "prior": 456,
+          "wow_pct": -3.508771929824561
+        },
+        "clicks": {
+          "current": 167,
+          "prior": 172,
+          "wow_pct": -2.9069767441860463
+        },
+        "ctr": {
+          "current": 9.136225828599988,
+          "prior": 7.901422273684328,
+          "wow_delta": 1.2348035549156604
+        },
+        "position": {
+          "current": 15.526379107068541,
+          "prior": 17.475638587622875,
+          "wow_delta": -1.9492594805543337
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Northbridge at Millenia Lake",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 1060,
+          "prior": 1100,
+          "wow_pct": -3.6363636363636362
+        },
+        "clicks": {
+          "current": 59,
+          "prior": 44,
+          "wow_pct": 34.090909090909086
+        },
+        "ctr": {
+          "current": 2.255097310078023,
+          "prior": 1.4741963512169722,
+          "wow_delta": 0.7809009588610507
+        },
+        "position": {
+          "current": 13.34523632313372,
+          "prior": 15.486655315874886,
+          "wow_delta": -2.1414189927411655
+        }
+      },
+      "insight": {
+        "text": "Strong growth momentum this week",
+        "source": "template:acceleration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Stonecreek Ranch",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 1146,
+          "prior": 1242,
+          "wow_pct": -7.729468599033816
+        },
+        "clicks": {
+          "current": 14,
+          "prior": 12,
+          "wow_pct": 16.666666666666664
+        },
+        "ctr": {
+          "current": 2.238129494055775,
+          "prior": 1.7049360870515538,
+          "wow_delta": 0.5331934070042215
+        },
+        "position": {
+          "current": 13.098636115985046,
+          "prior": 15.197238987069694,
+          "wow_delta": -2.0986028710846476
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "The Reserves of Thomas Glen",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 1152,
+          "prior": 496,
+          "wow_pct": 132.25806451612902
+        },
+        "clicks": {
+          "current": 25,
+          "prior": 12,
+          "wow_pct": 108.33333333333333
+        },
+        "ctr": {
+          "current": 1.5095121541667889,
+          "prior": 0.7135265202280234,
+          "wow_delta": 0.7959856339387654
+        },
+        "position": {
+          "current": 9.707976333399653,
+          "prior": 12.167100648971381,
+          "wow_delta": -2.459124315571728
+        }
+      },
+      "insight": {
+        "text": "Strong growth momentum this week",
+        "source": "template:acceleration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Townhomes at Lake Park",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 937,
+          "prior": 973,
+          "wow_pct": -3.6998972250770814
+        },
+        "clicks": {
+          "current": 48,
+          "prior": 47,
+          "wow_pct": 2.127659574468085
+        },
+        "ctr": {
+          "current": 1.6396638688592495,
+          "prior": 1.4698283728413437,
+          "wow_delta": 0.16983549601790582
+        },
+        "position": {
+          "current": 12.53988453328368,
+          "prior": 14.303518407462933,
+          "wow_delta": -1.7636338741792539
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    },
+    {
+      "property_name": "Trevesta Place",
+      "status": "green",
+      "status_rule": "No red or yellow triggers",
+      "kpis": {
+        "sessions": {
+          "current": 494,
+          "prior": 503,
+          "wow_pct": -1.7892644135188867
+        },
+        "clicks": {
+          "current": 174,
+          "prior": 174,
+          "wow_pct": 0.0
+        },
+        "ctr": {
+          "current": 14.540242250403073,
+          "prior": 13.314580671903625,
+          "wow_delta": 1.225661578499448
+        },
+        "position": {
+          "current": 7.549430600010491,
+          "prior": 8.318199483520177,
+          "wow_delta": -0.7687688835096855
+        }
+      },
+      "insight": {
+        "text": "Search visibility strengthening (CTR/Position gains)",
+        "source": "template:concentration"
+      },
+      "watch_flag": {
+        "flag": null,
+        "trigger": null
+      }
+    }
+  ]
+}

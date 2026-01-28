@@ -1,0 +1,11 @@
+{
+  "request_type": "custom_adhoc",
+  "created": "2026-01-27T01:24:00Z",
+  "created_by": "Mark Laufhutte",
+  "action": "generate_only",
+  "parameters": {
+    "title": "Rebuild Daily Portfolio Health Report",
+    "template": "custom",
+    "notes": "URGENT REBUILD NEEDED. Current report is fundamentally broken - shows 'healthy' when 89/91 properties need improvement and avg LCP is 6 seconds. Requirements: 1) HEAVY focus on portfolio state/stats/averages (current reality, not just exceptions), 2) Show distribution of scores (poor/needs improvement/good counts), 3) Portfolio-wide averages for mobile score, LCP, CLS, FID, 4) Top 10 worst performers with actual scores, 5) Top 10 best performers for context, 6) THEN show exception alerts, 7) Fix data freshness logic - data IS collected daily, latest dates: GA4=1/24, GSC=1/22, PageSpeed=1/25. Database schema: performance_score (not mobile_score), canonical_name (not property_name), metric_date (not collection_date), strategy='mobile' filter required. Current backup at generate_daily_portfolio_health.py.backup. User wants to see REAL DATA every morning - actual state of portfolio, not just problems."
+  }
+}

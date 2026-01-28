@@ -1,0 +1,41 @@
+# Shared credentials and config (sensitive data)
+credentials/
+config/
+
+# Ad-hoc reports (may contain sensitive data)
+AdHoc_Reports/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+~$*
+
+# Database files (workspace-level protection)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/*.db

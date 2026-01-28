@@ -1,0 +1,93 @@
+{
+  "test_date": "2025-12-18T20:32:26.127349",
+  "collectors": {
+    "GA4": {
+      "status": "error",
+      "message": "403 User does not have sufficient permissions for this property. To learn more about Property ID, see https://developers.google.com/analytics/devguides/reporting/data/v1/property-id."
+    },
+    "GTMetrix": {
+      "status": "available",
+      "test_time_per_property": "20-60 seconds",
+      "total_properties": 91,
+      "estimated_time_all": "30-90 minutes for all properties",
+      "api_quota": "Depends on plan (typically 100-500 tests/day)",
+      "rate_limit": "Sequential tests only (no parallel)",
+      "recommendation": "\u26a0\ufe0f  TOO SLOW for daily collection of all properties. Recommend weekly rotation (13 properties/day)"
+    },
+    "PageSpeed Insights": {
+      "status": "error",
+      "message": "API returned 429"
+    },
+    "SEMRush": {
+      "status": "available",
+      "test_time_per_property": "2-5 seconds",
+      "total_properties": 91,
+      "estimated_time_all": "3-8 minutes for all properties",
+      "api_quota": "Depends on plan (typically 10K-50K API units/month)",
+      "rate_limit": "10 requests/second",
+      "api_units_per_request": "10-50 units depending on endpoint",
+      "monthly_cost_estimate": "4K-18K API units for daily collection",
+      "recommendation": "\u2705 Feasible but watch quota. Consider every 2-3 days to conserve units."
+    },
+    "Google Search Console": {
+      "status": "available",
+      "oauth_setup": "Required - one-time browser authorization",
+      "test_time_per_property": "3-5 seconds",
+      "total_properties": 91,
+      "estimated_time_all": "5-8 minutes for all properties",
+      "api_quota": "Generous (rarely hit limits)",
+      "rate_limit": "~1200 requests/minute",
+      "recommendation": "\u2705 Good for daily collection. Fast and reliable."
+    },
+    "Google Business Profile": {
+      "status": "available",
+      "test_time_per_property": "2-4 seconds",
+      "total_properties": 91,
+      "estimated_time_all": "3-6 minutes for all properties",
+      "api_quota": "Subject to Google Business Profile API limits",
+      "rate_limit": "Varies by endpoint",
+      "data_collected": "Location info, reviews, ratings, Q&A",
+      "recommendation": "\u2705 Good for daily collection if quota allows"
+    }
+  },
+  "summary": {
+    "feasibility": {
+      "daily_collection": [
+        "Google Search Console",
+        "Google Business Profile"
+      ],
+      "every_2_3_days": [
+        "SEMRush"
+      ],
+      "weekly_rotation": [
+        "GTMetrix"
+      ]
+    },
+    "recommended_schedule": {
+      "Daily (2 AM)": [
+        "GA4",
+        "GSC"
+      ],
+      "Monday/Wednesday/Friday": [
+        "SEMRush"
+      ],
+      "Weekly rotation (13 properties/day)": [
+        "GTMetrix",
+        "PageSpeed Insights"
+      ],
+      "Optional daily": [
+        "GBP"
+      ]
+    },
+    "total_daily_time_estimate": "15-25 minutes",
+    "recommended_collection_time": "2-4 AM (off-peak hours)",
+    "implementation_priority": [
+      "1. GA4 (already in Portfolio Monitoring) \u2705",
+      "2. GSC (fast, valuable SEO data)",
+      "3. SEMRush (every 2-3 days to manage quota)",
+      "4. PageSpeed Insights (weekly rotation)",
+      "5. GTMetrix (weekly rotation)",
+      "6. GBP (optional, depends on use case)"
+    ]
+  }
+}
