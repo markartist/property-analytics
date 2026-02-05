@@ -39,3 +39,15 @@ ENV/
 *.db-wal
 *.db-shm
 data/*.db
+
+# Generated outputs
+reports/
+exports/
+*.docx
+
+# Python cache
+**/__pycache__/
+**/*.py[cod]
+
+# Logs
+**/*.log
