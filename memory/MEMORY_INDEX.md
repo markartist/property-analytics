@@ -1,7 +1,7 @@
 # Property Analytics Memory Index
 
 **Purpose:** Central index for all first-class documentation in the Property Analytics system.  
-**Last Updated:** January 4, 2026
+**Last Updated:** February 12, 2026
 
 ---
 
@@ -33,6 +33,32 @@ Daily email report showing week-over-week performance trends across 91 Venterra 
 - **Portfolio Dashboard:** Interactive diagnostic tool (escalation path from Pulse)
 - **Property Registry:** `/Users/mark/Property_Analytics/config/venterra_properties_official.json`
 - **Database:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+
+---
+
+### GBP Naming Discrepancy Report (Governance Control)
+**Status:** Active (Ad Hoc / Quarterly)  
+**Authority Level:** Canonical Operational Reference  
+**Location:** `/Users/mark/Property_Analytics/AdHoc_Reports/listing_consistency_test/`
+
+#### Core Documentation
+- **Canonical Reference:** `docs/GBP_NAMING_DISCREPANCY_REPORT_CANON.md`
+- **Implementation README:** `AdHoc_Reports/listing_consistency_test/README.md`
+- **Primary Script:** `AdHoc_Reports/listing_consistency_test/generate_gbp_discrepancy_report.py`
+
+#### Purpose
+Detect mismatch between ThirtyLines canonical property names and live Google Business Profile listing titles.
+
+#### Key Characteristics
+- **Baseline finding date:** 2026-02-11
+- **Coverage:** 93 properties
+- **Discrepancies:** 23 (24.7%)
+- **Main issue type:** Missing `"Apartments"` suffix
+- **Delivery:** PIB-style email + Excel discrepancy workbook with GBP account/location IDs
+
+#### Related Systems
+- **GBP mapping source:** `/Users/mark/Property_Analytics/Portfolio_Monitoring/data/all_properties_gbp_matched.json`
+- **Canonical names source:** `properties.property_name` in `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
 
 ---
 
@@ -142,6 +168,7 @@ Canonical property list and mapping:
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| 1.1 | 2026-02-12 | Codex | Added GBP Naming Discrepancy Report governance control and canonical references |
 | 1.0 | 2026-01-04 | M. Laufhutte | Initial index with Portfolio Pulse baseline |
 
 ---

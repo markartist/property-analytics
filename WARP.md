@@ -1,11 +1,11 @@
 # Property Analytics - AI Assistant Guide
 
-**Last Updated**: December 18, 2025  
+**Last Updated**: January 31, 2026  
 **Purpose**: This document helps AI assistants understand the Property Analytics ecosystem and how to work within it effectively.
 
 ## Overview
 
-**Property Analytics** is a modular analytics platform for 91 Venterra real estate properties. It's designed as a **shared codebase and infrastructure** from which multiple reporting systems, dashboards, and ad-hoc analyses can be built.
+**Property Analytics** is a modular analytics platform for **93 Venterra real estate properties** (updated from 91). It's designed as a **shared codebase and infrastructure** from which multiple reporting systems, dashboards, and ad-hoc analyses can be built.
 
 ### Core Philosophy
 
@@ -29,9 +29,21 @@ Think of it as a **toolkit** where new reports, dashboards, or analyses can be c
 │   └── gbp_api_config.json        # Google Business Profile API
 │
 ├── config/                         # Shared property configurations (NOT in git)
-│   ├── properties_registry.json   # 39 spotlight properties
-│   ├── venterra_all_properties_ga4.json  # All 91 properties
+│   ├── venterra_properties_official.json  # Official registry: 93 properties
+│   ├── properties_registry.json   # 39 spotlight properties (legacy)
+│   ├── venterra_all_properties_ga4.json  # All properties (legacy)
 │   └── all_ga4_properties.json    # GA4 property mappings
+│
+├── data/                           # Unified database (NEW - Jan 2026)
+│   └── portfolio_analytics.db     # Single source of truth for all data
+│
+├── Data_Collection/                # PRODUCTION: Unified data collection (NEW - Jan 2026)
+│   ├── Status: MISSION CRITICAL - Corporate Scrutiny Ready
+│   ├── Schedule: Daily 5:00 AM CST
+│   ├── Collectors: GA4, GSC, PSI, SEMRush, Google Ads, GBP (Reviews/Insights), ThirtyLines, GTMetrix
+│   ├── Database: /Users/mark/Property_Analytics/data/portfolio_analytics.db
+│   ├── Monitoring: 9 sources, 45+ validation rules, full audit trail
+│   └── See: Data_Collection/WARP.md for complete details
 │
 ├── Spotlight_Properties_Report/   # Production: Weekly reporting system
 │   ├── Repository: github.com/markartist/spotlight-properties-report
@@ -39,11 +51,17 @@ Think of it as a **toolkit** where new reports, dashboards, or analyses can be c
 │   ├── Schedule: Weekly (typically Wednesday)
 │   └── Output: CSV reports to OneDrive
 │
-├── Portfolio_Monitoring/          # Production: Daily monitoring system
-│   ├── Repository: github.com/markartist/portfolio-monitoring
-│   ├── Purpose: Daily health monitoring and alerts
-│   ├── Schedule: Daily (6 AM monitoring, 7 AM email)
-│   └── Output: Email alerts + SQLite database
+├── Property_Intelligence_Brief/   # Production: Executive intelligence reports (NEW - Jan 2026)
+│   ├── Status: v2.0.0 LOCKED - Production Ready
+│   ├── Purpose: Comprehensive executive reports with 10 sections
+│   ├── Features: 9 data sources, competitor intelligence, portfolio benchmarking
+│   ├── Schedule: On-demand (monthly/quarterly property reviews)
+│   └── See: Property_Intelligence_Brief/WARP.md for complete details
+│
+├── Portfolio_Monitoring/          # DEPRECATED - Migrated to Data_Collection (Jan 2026)
+│   ├── Status: Legacy system, no longer maintained
+│   ├── Replaced by: Data_Collection/ unified system
+│   └── Reason: Import conflicts caused 3-day data outage (Jan 25-27, 2026)
 │
 └── [Future Projects]              # Ad-hoc reports, dashboards, analyses
     └── Can be created on-demand using shared resources
@@ -51,11 +69,33 @@ Think of it as a **toolkit** where new reports, dashboards, or analyses can be c
 
 ## How This Platform Works
 
-### 1. Shared Data Collectors
+### 1. Unified Data Collection System (NEW - January 2026)
 
-Both existing systems use common patterns for data collection:
+**IMPORTANT**: As of January 27, 2026, all data collection has been consolidated into `Data_Collection/` to resolve import conflicts that caused a 3-day data outage.
 
-**GA4 Traffic Data**:
+**Key Changes**:
+- Single `DatabaseManager` class (no more import conflicts)
+- All collectors in `Data_Collection/collectors/`
+- Unified monitoring with `CollectionMonitor`
+- Single database: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+- Official registry: `/Users/mark/Property_Analytics/config/venterra_properties_official.json`
+
+**Standard Import Pattern**:
+```python
+from Data_Collection.db.database_manager import DatabaseManager
+from Data_Collection.collectors.ga4_collector import GA4Collector
+from Data_Collection.monitoring.collection_monitor import CollectionMonitor
+
+# Initialize database
+db = DatabaseManager('/Users/mark/Property_Analytics/data/portfolio_analytics.db')
+
+# Load official registry
+import json
+with open('/Users/mark/Property_Analytics/config/venterra_properties_official.json') as f:
+    properties = json.load(f)
+```
+
+**Legacy GA4 Pattern** (still works but deprecated):
 ```python
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.oauth2 import service_account
@@ -76,44 +116,90 @@ with open('../config/venterra_all_properties_ga4.json', 'r') as f:
     properties = json.load(f)['spotlight_properties']
 ```
 
-**Email Reporting**:
+**Email Reporting** (AWS SES - Primary Method):
 ```python
-# Shared SMTP configuration
-with open('../credentials/email_config.json', 'r') as f:
-    email_config = json.load(f)
+# Unified Email Sender with AWS SES
+from Data_Collection.utils.email_sender import EmailSender
+
+# Uses /Users/mark/Property_Analytics/credentials/email_config.json
+sender = EmailSender()
+sender.send_email(
+    subject="Report Title",
+    html_body="<h1>Report Content</h1>",
+    recipients=["mlaufhutte@venterraliving.com"]
+)
+
+# Backup Gmail config available at:
+# credentials/email_config.json.gmail_backup
 ```
 
-### 2. Data Sources Available
+### 2. Data Sources Available (Daily Collection)
 
-| Source | Purpose | Location | Access Method |
-|--------|---------|----------|---------------|
-| **GA4** | Traffic, conversions, engagement | `credentials/authentic-reach-*.json` | Service account (read-only) |
-| **GTMetrix** | Performance testing | API key in Spotlight code | HTTP API |
-| **PageSpeed Insights** | Core Web Vitals | Public API | No auth required |
-| **SEMRush** | SEO rankings, keywords | API key in Spotlight code | HTTP API |
-| **Google Search Console** | Search performance | OAuth in `credentials/` | OAuth2 client |
-| **Google Business Profile** | Location data, reviews | `credentials/gbp_api_config.json` | Service account |
-| **SQLite DB** | Historical analytics | `Portfolio_Monitoring/data/` | Direct SQL access |
+**Status**: ✅ Mission Critical - Corporate Scrutiny Ready (Validated Jan 29, 2026)
+
+| Source | Purpose | Collection Status | Quality Score | Data Location |
+|--------|---------|------------------|---------------|---------------|
+| **GA4** | Traffic, conversions, engagement | 92/93 properties | 99% | `portfolio_analytics.db` |
+| **GSC** | Search performance, keywords | 91/93 properties | 81% | `portfolio_analytics.db` |
+| **PageSpeed Insights** | Core Web Vitals, performance | 93/93 properties | 100% ✅ | `portfolio_analytics.db` |
+| **Google Ads** | Ad spend, conversions, CTR | 57/93 properties | N/A | `portfolio_analytics.db` |
+| **SEMRush** | SEO rankings, organic traffic | 92/93 properties | N/A | `portfolio_analytics.db` |
+| **GBP Reviews** | Customer reviews, ratings | 19/93 properties | 100% ✅ | `portfolio_analytics.db` |
+| **GBP Insights** | Business profile views, actions | 91/93 properties | 100% ✅ | `portfolio_analytics.db` |
+| **ThirtyLines** | Unit availability, floor plans | 92/93 properties | 88% | `portfolio_analytics.db` |
+| **GTMetrix** | Performance testing | Weekly/Monthly | N/A | `portfolio_analytics.db` |
+
+**Overall Quality**: 94.5% (2,198 passed / 2,333 validation checks)  
+**Last Validated**: January 29, 2026 at 11:23 AM CST  
+**Monitoring**: 45+ validation rules, full audit trail, automated alerts
+
+### Credentials & API Access
+
+| Credential | Purpose | Location |
+|------------|---------|----------|
+| **GA4 Service Account** | Read-only GA4 access | `credentials/authentic-reach-*.json` |
+| **Google OAuth** | GSC, GBP access | `credentials/client_secret*.json` |
+| **Email Config (AWS SES)** | SMTP for alerts (PRIMARY) | `credentials/email_config.json` |
+| **Email Config (Gmail)** | SMTP backup | `credentials/email_config.json.gmail_backup` |
+| **GBP API** | Business Profile data | `credentials/gbp_api_config.json` |
+| **AWS SES Credentials** | Venterra email sending | Configured in email_config.json |
 
 ### 3. Property Data Structure
 
-**39 Spotlight Properties** (`properties_registry.json`):
-- Key properties with detailed tracking
-- Includes: GA4 ID, URL, location, manager, tags
-- Used by: Weekly Spotlight Report
+**OFFICIAL REGISTRY: 93 Properties** (`venterra_properties_official.json`):
+- **Single source of truth** for all property data
+- Created: January 2026
+- Includes: Property ID, canonical name, GA4 ID, URL, location, status
+- Used by: Data_Collection system, all new projects
+- Status: 92 properties collecting data, 1 new property not yet configured
 
-**91 Full Portfolio** (`venterra_all_properties_ga4.json`):
-- Complete property list
-- Includes: GA4 ID, name, location, active status
-- Used by: Portfolio Monitoring, ad-hoc reports
+**Legacy Configurations** (deprecated but still referenced by older systems):
+- `properties_registry.json` - 39 spotlight properties (used by Spotlight Report)
+- `venterra_all_properties_ga4.json` - 91 properties (old Portfolio Monitoring)
 
 ### 4. Database Infrastructure
 
-**Portfolio Monitoring Database** (`Portfolio_Monitoring/data/portfolio_monitoring.db`):
-- **20 tables**: GA4 metrics, performance, SEO, health scores
-- **3 views**: Latest metrics, trends, active issues
-- **Historical data**: 30+ days of daily metrics
-- **Query-ready**: Optimized indexes for fast analysis
+**PRIMARY DATABASE**: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+- **Status**: PRODUCTION - Mission Critical
+- **Created**: January 27, 2026 (unified system)
+- **Last Validated**: January 29, 2026 at 11:23 AM CST
+
+**Schema Overview**:
+- **Core Tables**: properties, ga4_daily_metrics, gsc_daily_data, psi_daily_metrics
+- **Additional Sources**: google_ads_daily, semrush_rankings, gbp_reviews, gbp_insights, gtmetrix_reports, property_floorplans, unit_availability
+- **Monitoring Tables**: data_collections, collection_errors, data_quality_checks, data_quality_scores, validation_rules
+- **Historical Data**: 30+ days across all sources
+- **Audit Trail**: Complete collection history with timestamps, API metrics, success rates
+
+**Validation & Quality**:
+- **9 data sources** monitored
+- **45+ validation rules** active
+- **94.5% quality score** (as of Jan 29, 2026)
+- **Full audit trail** for corporate scrutiny
+
+**Legacy Database** (deprecated): `Portfolio_Monitoring/data/portfolio_monitoring.db`
+- No longer maintained as of January 27, 2026
+- Replaced by unified `portfolio_analytics.db`
 
 ## Creating Ad-Hoc Reports
 
@@ -126,11 +212,13 @@ When a user requests an analytics report, follow this pattern:
 - Output format? (CSV, PDF, email, dashboard, database query)
 
 ### Step 2: Choose Data Sources
-Use existing patterns from `Spotlight_Properties_Report/` or `Portfolio_Monitoring/`:
-- **GA4 traffic**: See `portfolio_daily_monitor.py` for API calls
-- **Performance**: See `gtmetrix_collector.py` in Spotlight repo
-- **SEO**: See `semrush_collector.py` in Spotlight repo
-- **Historical data**: Query `Portfolio_Monitoring/data/portfolio_monitoring.db`
+Use the unified `Data_Collection/` system:
+- **GA4 traffic**: `Data_Collection/collectors/ga4_collector.py`
+- **GSC data**: `Data_Collection/collectors/gsc_collector.py`
+- **Performance**: `Data_Collection/collectors/psi_collector.py` or `gtmetrix_collector.py`
+- **SEO**: `Data_Collection/collectors/semrush_collector.py`
+- **Historical data**: Query `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+- **All collectors**: See `Data_Collection/collectors/` directory
 
 ### Step 3: Create Report Script
 Store in a new directory or temporary location:
@@ -156,8 +244,12 @@ GA4_CREDS = PARENT_DIR / "credentials" / "authentic-reach-*.json"
 PROPERTY_CONFIG = PARENT_DIR / "config" / "venterra_all_properties_ga4.json"
 EMAIL_CONFIG = PARENT_DIR / "credentials" / "email_config.json"
 
-# Access database
-DB_PATH = PARENT_DIR / "Portfolio_Monitoring" / "data" / "portfolio_monitoring.db"
+# Access unified database
+DB_PATH = PARENT_DIR / "data" / "portfolio_analytics.db"
+
+# Or use DatabaseManager
+from Data_Collection.db.database_manager import DatabaseManager
+db = DatabaseManager(str(DB_PATH))
 ```
 
 ### Step 5: Document and Store
@@ -252,7 +344,7 @@ from datetime import date, timedelta
 
 # Database path
 PARENT_DIR = Path(__file__).parent.parent
-DB_PATH = PARENT_DIR / "Portfolio_Monitoring" / "data" / "portfolio_monitoring.db"
+DB_PATH = PARENT_DIR / "data" / "portfolio_analytics.db"
 
 # Connect to database
 conn = sqlite3.connect(DB_PATH)
@@ -401,19 +493,37 @@ print("✅ Email sent")
 - Modify report templates in `src/report_generator/`
 - See `Spotlight_Properties_Report/WARP.md` for details
 
-### Portfolio Monitoring
+### Data Collection System (NEW - January 2026)
+
+**Status**: PRODUCTION - Mission Critical - Corporate Scrutiny Ready
 
 **When to use**:
-- Need real-time health monitoring
-- Want automated daily alerts
-- Tracking all 91 properties
-- Building dashboards on historical data
+- Need daily data collection for any/all 9 sources
+- Want monitored, validated data with audit trail
+- Tracking all 93 properties
+- Building dashboards or reports on fresh data
+
+**Features**:
+- ✅ 9 data sources (GA4, GSC, PSI, SEMRush, Google Ads, GBP Reviews/Insights, ThirtyLines, GTMetrix)
+- ✅ 45+ validation rules with quality scoring
+- ✅ Full audit trail (collection tracking, API metrics, performance data)
+- ✅ Automated email alerts (mlaufhutte@venterraliving.com)
+- ✅ CollectionMonitor for bulletproof tracking
+- ✅ 94.5% quality score (validated Jan 29, 2026)
 
 **How to extend**:
-- Add new metrics to database schema
-- Create custom email alert templates
-- Build new queries/views
-- See `Portfolio_Monitoring/README.md` for details
+- Add new collectors in `Data_Collection/collectors/`
+- Add validation rules to database `validation_rules` table
+- Extend `DataQualityValidator` in `Data_Collection/utils/`
+- See `Data_Collection/README.md` and `Data_Collection/BULLETPROOF_MONITORING_SYSTEM.md`
+
+### Portfolio Monitoring (DEPRECATED)
+
+**Status**: ⚠️ Legacy system, no longer maintained as of January 27, 2026
+
+**Replaced by**: `Data_Collection/` unified system
+
+**Reason**: Import path conflicts caused 3-day data collection outage (Jan 25-27, 2026). The unified system eliminates these conflicts with single import paths.
 
 ## AI Assistant Guidelines
 
@@ -455,11 +565,16 @@ High-priority properties with detailed tracking:
 - Structure: Detailed metadata including URLs, locations, managers, tags
 - Used by: Weekly Spotlight Report
 
-### Full Portfolio (91)
-Complete property list:
-- Located in: `config/venterra_all_properties_ga4.json`
-- Structure: GA4 IDs, names, locations, active status
-- Used by: Portfolio Monitoring, ad-hoc reports
+### Full Portfolio (93)
+Complete property list (OFFICIAL REGISTRY):
+- Located in: `config/venterra_properties_official.json`
+- Structure: Property ID, canonical name, GA4 ID, URL, location, active status
+- Used by: Data_Collection system, all new projects
+- Status: 92 properties collecting, 1 new (Sundara at Spring Cypress)
+
+### Legacy Configurations (deprecated):
+- `config/venterra_all_properties_ga4.json` - 91 properties (old system)
+- Used by: Spotlight Report (until migrated)
 
 ### Key Property Fields
 ```json
@@ -476,15 +591,29 @@ Complete property list:
 
 ## Database Schema Reference
 
-The Portfolio Monitoring database contains:
+**Database**: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
 
 ### Core Tables
-- `properties` - Property master list
-- `ga4_daily_metrics` - Daily traffic data
-- `property_health` - Health scores and status
-- `health_issues` - Detected problems
+- `properties` - Official property registry (93 properties)
+- `ga4_daily_metrics` - Daily GA4 traffic data
+- `gsc_daily_data` - Google Search Console data
+- `psi_daily_metrics` - PageSpeed Insights scores
+- `google_ads_daily` - Google Ads performance
+- `semrush_rankings` - SEO keyword rankings
+- `gbp_reviews` - Google Business Profile reviews
+- `gbp_insights` - GBP views and actions
+- `property_floorplans` - ThirtyLines floor plan data
+- `unit_availability` - ThirtyLines unit availability
+- `gtmetrix_reports` - GTMetrix performance tests
 
-### Useful Views
+### Monitoring & Quality Tables
+- `data_collections` - Collection execution tracking (start/end times, success rates, API metrics)
+- `collection_errors` - Error logs with stack traces
+- `data_quality_checks` - Per-property validation results
+- `data_quality_scores` - Quality scores by property/source/date
+- `validation_rules` - 45+ active validation rules
+
+### Legacy Views (from old Portfolio Monitoring)
 - `v_latest_property_metrics` - Most recent data for all properties
 - `v_property_trends_7d` - 7-day rolling statistics
 - `v_active_issues` - Current problems across portfolio
@@ -522,8 +651,14 @@ All credentials are in `credentials/` directory (NOT in Git):
 |------|---------|---------|
 | `authentic-reach-*.json` | GA4 service account (read-only) | All GA4 data collection |
 | `client_secret*.json` | Google OAuth tokens | GSC, GBP, OAuth flows |
-| `email_config.json` | SMTP settings | Automated emails |
+| `email_config.json` | **AWS SES SMTP** (PRIMARY) | All automated emails from @venterraliving.com |
+| `email_config.json.gmail_backup` | Gmail SMTP (BACKUP) | Fallback email configuration |
 | `gbp_api_config.json` | Google Business Profile | Location data, reviews |
+
+**Email Configuration**:
+- **Primary**: AWS SES (`email_config.json`) - Sends from `mlaufhutte@venterraliving.com`
+- **Backup**: Gmail (`email_config.json.gmail_backup`) - Can be restored if AWS SES fails
+- **Location**: All scripts use `from Data_Collection.utils.email_sender import EmailSender`
 
 **Never commit credentials to Git!** Always reference via `../credentials/`.
 
@@ -596,11 +731,17 @@ When creating a new recurring system (like a monthly dashboard):
 **Property Analytics is a platform, not an application.**
 
 It provides:
-- ✅ Shared data collectors and credentials
+- ✅ **Unified data collection system** (Data_Collection/) - Mission Critical, Corporate Scrutiny Ready
+- ✅ **9 data sources** with daily collection: GA4, GSC, PSI, SEMRush, Google Ads, GBP (Reviews/Insights), ThirtyLines, GTMetrix
+- ✅ **93 properties** tracked in official registry
+- ✅ **94.5% quality score** with 45+ validation rules and full audit trail
+- ✅ **Single database** (`portfolio_analytics.db`) - no more import conflicts
+- ✅ Shared credentials and configurations
 - ✅ Reusable code patterns
-- ✅ Common property configurations
-- ✅ Historical database of metrics
-- ✅ Two production systems (Spotlight, Portfolio)
+- ✅ Three production reporting systems:
+  - Data Collection (daily monitoring)
+  - Spotlight Properties Report (weekly deep-dive)
+  - Property Intelligence Brief (on-demand executive reports) ⭐ NEW
 - ✅ Framework for ad-hoc reports and dashboards
 
 **When working in this directory:**
@@ -616,11 +757,21 @@ It provides:
 ---
 
 **For AI Assistants**: When you return to this directory and read this document, you should understand:
-- This is a modular analytics platform for 91 properties
-- Two production systems exist (Spotlight weekly, Portfolio daily)
+- This is a modular analytics platform for **93 properties** (updated from 91)
+- **Data_Collection/** is the primary system - MISSION CRITICAL, Corporate Scrutiny Ready
+- **9 data sources** collecting daily with 94.5% quality score and full audit trail
+- **Single database** (`data/portfolio_analytics.db`) - single source of truth
+- **Official registry** (`config/venterra_properties_official.json`) - 93 properties
+- **Portfolio_Monitoring/** is DEPRECATED (replaced by Data_Collection as of Jan 27, 2026)
+- Three production reporting systems:
+  - Data_Collection (daily monitoring)
+  - Spotlight Properties Report (weekly deep-dive)
+  - Property Intelligence Brief v2.0.0 (on-demand executive reports) ⭐ NEW
 - Shared resources enable rapid ad-hoc report creation
 - You can build new analytics on-demand using existing patterns
 - Everything is documented and follows consistent structure
 - New projects reference shared credentials/config via relative paths
 
-You are now equipped to create any analytics report the user requests by drawing from available data sources and following established patterns.
+**IMPORTANT**: Always use `Data_Collection/` for data access. The unified system eliminates import conflicts and provides bulletproof monitoring with audit trail suitable for corporate scrutiny.
+
+You are now equipped to create any analytics report the user requests by drawing from the validated, monitored data sources in the unified collection system.

@@ -1,7 +1,7 @@
 # Property Analytics Project State
 
 **Purpose:** Track production status and health of all active projects.  
-**Last Updated:** January 4, 2026
+**Last Updated:** February 12, 2026
 
 ---
 
@@ -35,6 +35,36 @@
 
 #### Upcoming Work
 - None scheduled (system stable)
+
+---
+
+### GBP Naming Discrepancy Report
+**Status:** 🟢 Operational (Ad Hoc / Governance)  
+**Version:** 1.0  
+**Authority:** Canonical Operational Reference
+
+#### Health Indicators
+- **Data Source:** ✅ Available (`all_properties_gbp_matched.json`)
+- **Report Generator:** ✅ Implemented (`generate_gbp_discrepancy_report.py`)
+- **Email Delivery:** ✅ Implemented (PIB-style + Excel attachment)
+- **Baseline Run:** February 11, 2026
+
+#### Key Metrics
+- **Properties Covered:** 93
+- **Exact Matches:** 70 (75.3%)
+- **Discrepancies:** 23 (24.7%)
+- **Primary Pattern:** Missing `"Apartments"` suffix (19 properties)
+
+#### Recent Changes
+- **2026-02-11:** Built discrepancy generator and report outputs
+- **2026-02-12:** Added canonical documentation and memory indexing
+
+#### Known Issues
+1. **Naming Standard Ambiguity:** Not all properties currently enforce consistent suffix conventions
+2. **Mode:** Ad hoc execution (not yet scheduled)
+
+#### Upcoming Work
+- Quarterly re-run and closure verification after GBP listing updates
 
 ---
 
@@ -200,6 +230,7 @@ All docs establish Portfolio Pulse as first-class, contract-governed project."
 
 | Date | Project | Change | Impact |
 |------|---------|--------|--------|
+| 2026-02-12 | GBP Naming Discrepancy Report | Canon doc + memory registration | Makes governance report discoverable and durable |
 | 2026-01-04 | Portfolio Pulse | Documentation baseline (v1.0) | Complete governance framework |
 | 2025-12-29 | Portfolio Pulse | Credential fix (file-based) | Resolved email authentication failures |
 | 2025-12-21 | Portfolio Pulse | Production launch | Daily automated reporting begins |
