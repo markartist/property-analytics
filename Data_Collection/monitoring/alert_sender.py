@@ -118,7 +118,11 @@ class DataAlertEmailer:
             'gsc': {'missing': [], 'stale': []},
             'google_ads': {'missing': [], 'stale': []},
             'psi': {'missing': [], 'stale': []},
-            'semrush': {'missing': [], 'stale': []}
+            'semrush': {'missing': [], 'stale': []},
+            'gbp_reviews': {'missing': [], 'stale': []},
+            'gbp_insights': {'missing': [], 'stale': []},
+            'gtmetrix': {'missing': [], 'stale': []},
+            'thirtylines': {'missing': [], 'stale': []}
         }
         
         # Check GA4 data
@@ -216,6 +220,86 @@ class DataAlertEmailer:
             # Table doesn't exist yet
             pass
         
+        # Check GBP Reviews data
+        try:
+            cursor.execute("""
+                SELECT property_id, MAX(DATE(collected_at)) as last_collection
+                FROM gbp_reviews
+                GROUP BY property_id
+            """)
+            gbp_review_data = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # GBP reviews should be collected daily
+            three_days_ago = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+            for prop_id, last_collection in gbp_review_data.items():
+                if last_collection < yesterday:
+                    prop_name = self.properties.get(prop_id, prop_id)
+                    if last_collection < three_days_ago:
+                        issues['gbp_reviews']['stale'].append((prop_name, last_collection))
+                    else:
+                        issues['gbp_reviews']['missing'].append((prop_name, last_collection))
+        except sqlite3.OperationalError:
+            pass
+        
+        # Check GBP Insights data
+        try:
+            cursor.execute("""
+                SELECT property_id, MAX(metric_date) as last_date
+                FROM gbp_daily_insights
+                GROUP BY property_id
+            """)
+            gbp_insights_data = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # GBP insights should be daily, with 2-day lag like GSC
+            gbp_expected = (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d')
+            for prop_id, last_date in gbp_insights_data.items():
+                if last_date < gbp_expected:
+                    prop_name = self.properties.get(prop_id, prop_id)
+                    if last_date < two_days_ago:
+                        issues['gbp_insights']['stale'].append((prop_name, last_date))
+                    else:
+                        issues['gbp_insights']['missing'].append((prop_name, last_date))
+        except sqlite3.OperationalError:
+            pass
+        
+        # Check GTMetrix data
+        try:
+            cursor.execute("""
+                SELECT property_id, MAX(metric_date) as last_date
+                FROM gtmetrix_metrics
+                GROUP BY property_id
+            """)
+            gtmetrix_data = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # GTMetrix runs less frequently (weekly/monthly), only flag if > 30 days
+            month_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+            for prop_id, last_date in gtmetrix_data.items():
+                if last_date < month_ago:
+                    prop_name = self.properties.get(prop_id, prop_id)
+                    issues['gtmetrix']['stale'].append((prop_name, last_date))
+        except sqlite3.OperationalError:
+            pass
+        
+        # Check ThirtyLines data
+        try:
+            cursor.execute("""
+                SELECT property_id, MAX(DATE(updated_at)) as last_update
+                FROM property_floorplans
+                GROUP BY property_id
+            """)
+            thirtylines_data = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # ThirtyLines should update daily
+            for prop_id, last_update in thirtylines_data.items():
+                if last_update < yesterday:
+                    prop_name = self.properties.get(prop_id, prop_id)
+                    if last_update < two_days_ago:
+                        issues['thirtylines']['stale'].append((prop_name, last_update))
+                    else:
+                        issues['thirtylines']['missing'].append((prop_name, last_update))
+        except sqlite3.OperationalError:
+            pass
+        
         conn.close()
         
         # Filter out issues with no problems
@@ -249,7 +333,7 @@ class DataAlertEmailer:
     <meta charset="UTF-8">
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; }}
+        .header {{ background: #15284B; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; }}
         .header h1 {{ margin: 0; font-size: 24px; }}
         .header .subtitle {{ opacity: 0.9; margin-top: 8px; font-size: 14px; }}
         .severity {{ display: inline-block; padding: 6px 12px; background: #ff4444; color: white; border-radius: 4px; font-weight: bold; margin-top: 10px; }}
@@ -340,7 +424,11 @@ class DataAlertEmailer:
             'gsc': '🔍 Google Search Console',
             'google_ads': '📢 Google Ads',
             'psi': '⚡ PageSpeed Insights',
-            'semrush': '📈 SEMRush'
+            'semrush': '📈 SEMRush',
+            'gbp_reviews': '⭐ Google Business Profile Reviews',
+            'gbp_insights': '📍 Google Business Profile Insights',
+            'gtmetrix': '⚡ GTMetrix Performance',
+            'thirtylines': '🏢 ThirtyLines Availability'
         }
         
         for source, data in issues.items():
@@ -405,7 +493,7 @@ class DataAlertEmailer:
     <meta charset="UTF-8">
     <style>
         body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }}
+        .header {{ background: #15284B; color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }}
         .header h1 {{ margin: 0; font-size: 24px; }}
         .header .subtitle {{ opacity: 0.9; margin-top: 8px; font-size: 14px; }}
         .message {{ background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; font-size: 18px; }}

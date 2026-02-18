@@ -54,8 +54,24 @@ def build_report_from_data(data: dict) -> ReportBuilder:
         date_range=data.get('date_range')
     )
     
-    # Add KPI tiles if present
-    if 'kpi_tiles' in data:
+    # Add KPI tiles (single row or multiple rows)
+    if 'kpi_rows' in data:
+        for row in data['kpi_rows']:
+            tiles = []
+            for tile_data in row.get('tiles', []):
+                tiles.append(KPITile(
+                    label=tile_data['label'],
+                    value=tile_data['value'],
+                    sublabel=tile_data.get('sublabel'),
+                    trend=tile_data.get('trend'),
+                    comparison=tile_data.get('comparison'),
+                    percentile=tile_data.get('percentile'),
+                    is_primary=tile_data.get('is_primary', False),
+                    grade=tile_data.get('grade'),
+                    grade_label=tile_data.get('grade_label')
+                ))
+            builder.add_kpi_tiles(tiles, columns=row.get('columns', 3))
+    elif 'kpi_tiles' in data:
         tiles = []
         for tile_data in data['kpi_tiles']:
             tiles.append(KPITile(

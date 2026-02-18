@@ -5,7 +5,7 @@ Unified Email Sender Utility
 Central email solution for all Property Analytics reporting systems.
 
 Features:
-- Supports Gmail and Office 365 SMTP providers
+- Supports AWS SES, Gmail, and Office 365 SMTP providers
 - Automatic provider detection from config
 - Multiple recipient support
 - HTML and plain text email support
@@ -16,9 +16,22 @@ Features:
 Configuration:
     Uses /Users/mark/Property_Analytics/credentials/email_config.json
     
-    Gmail format:
+    **PRIMARY METHOD - AWS SES** (Recommended for @venterraliving.com emails):
     {
-        "provider": "gmail",  // or "office365"
+        "provider": "aws_ses",
+        "smtp_server": "email-smtp.us-east-2.amazonaws.com",
+        "smtp_port": 587,
+        "smtp_username": "AKIAYJAGT54HEDH7GXFV",
+        "smtp_password": "<AWS_SES_SMTP_PASSWORD>",
+        "sender_email": "mlaufhutte@venterraliving.com",
+        "sender_display_name": "Mark Laufhutte - Venterra Analytics",
+        "default_recipients": ["mlaufhutte@venterraliving.com"]
+    }
+    
+    **BACKUP METHOD - Gmail** (Fallback option):
+    Backup config saved at: credentials/email_config.json.gmail_backup
+    {
+        "provider": "gmail",
         "smtp_server": "smtp.gmail.com",
         "smtp_port": 587,
         "sender_email": "sender@gmail.com",
@@ -37,7 +50,7 @@ Configuration:
     }
 
 Usage:
-    from utils.email_sender import EmailSender
+    from Data_Collection.utils.email_sender import EmailSender
     
     # Simple usage
     sender = EmailSender()
@@ -103,6 +116,11 @@ class EmailSender:
             'smtp_server': 'smtp.office365.com',
             'smtp_port': 587,
             'display_name': 'Office 365'
+        },
+        'aws_ses': {
+            'smtp_server': 'email-smtp.us-east-2.amazonaws.com',
+            'smtp_port': 587,
+            'display_name': 'AWS SES'
         }
     }
     
@@ -151,7 +169,15 @@ class EmailSender:
         self.smtp_server = self.config.get('smtp_server', provider_config['smtp_server'])
         self.smtp_port = self.config.get('smtp_port', provider_config['smtp_port'])
         self.sender_email = self.config['sender_email']
-        self.sender_password = self.config['sender_password']
+        
+        # AWS SES uses separate username/password
+        if self.provider == 'aws_ses':
+            self.smtp_username = self.config.get('smtp_username', self.config['sender_email'])
+            self.smtp_password = self.config['smtp_password']
+        else:
+            self.smtp_username = self.sender_email
+            self.smtp_password = self.config['sender_password']
+        
         self.default_recipients = self.config.get('default_recipients', [])
         
         # Optional display name for From header
@@ -270,7 +296,7 @@ class EmailSender:
             
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
-                server.login(self.sender_email, self.sender_password)
+                server.login(self.smtp_username, self.smtp_password)
                 server.send_message(msg, to_addrs=all_recipients)
             
             if self.verbose:

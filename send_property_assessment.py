@@ -15,7 +15,7 @@ from pathlib import Path
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from utils.email_sender import EmailSender
+from Data_Collection.utils.email_sender import EmailSender
 
 
 def main():

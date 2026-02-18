@@ -124,6 +124,58 @@ class DatabaseManager:
             cursor.executescript(schema_sql)
         
         logger.info("Database schema initialized successfully")
+
+    # =========================================================================
+    # SEMRUSH COMPETITOR SNAPSHOTS
+    # =========================================================================
+
+    def ensure_semrush_competitor_snapshots_table(self) -> None:
+        """Create SEMRush competitor snapshots table if it doesn't exist."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS semrush_competitor_snapshots (
+                    snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    competitor_name TEXT,
+                    competitor_domain TEXT NOT NULL,
+                    competitor_rank INTEGER,
+                    data_source TEXT,
+                    snapshot_date DATE NOT NULL,
+                    analysis_json TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, competitor_domain, snapshot_date)
+                )
+            """)
+
+    def insert_semrush_competitor_snapshot(
+        self,
+        property_id: str,
+        competitor_domain: str,
+        snapshot_date: date,
+        analysis_json: str,
+        competitor_name: Optional[str] = None,
+        competitor_rank: Optional[int] = None,
+        data_source: Optional[str] = None
+    ) -> None:
+        """Insert SEMRush competitor snapshot for a property."""
+        self.ensure_semrush_competitor_snapshots_table()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR REPLACE INTO semrush_competitor_snapshots (
+                    property_id, competitor_name, competitor_domain,
+                    competitor_rank, data_source, snapshot_date, analysis_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                property_id,
+                competitor_name,
+                competitor_domain,
+                competitor_rank,
+                data_source,
+                snapshot_date,
+                analysis_json
+            ))
     
     # =========================================================================
     # PROPERTY MANAGEMENT
@@ -282,10 +334,20 @@ class DatabaseManager:
                 ON CONFLICT(property_id, metric_date) DO UPDATE SET
                     sessions = excluded.sessions,
                     engaged_sessions = excluded.engaged_sessions,
+                    total_users = excluded.total_users,
+                    new_users = excluded.new_users,
+                    returning_users = excluded.returning_users,
+                    engagement_rate = excluded.engagement_rate,
+                    engaged_sessions_per_user = excluded.engaged_sessions_per_user,
+                    events_per_session = excluded.events_per_session,
                     conversions = excluded.conversions,
                     conversion_rate = excluded.conversion_rate,
+                    conversions_per_user = excluded.conversions_per_user,
+                    total_revenue = excluded.total_revenue,
+                    average_revenue_per_user = excluded.average_revenue_per_user,
                     pageviews = excluded.pageviews,
                     avg_session_duration = excluded.avg_session_duration,
+                    bounce_rate = excluded.bounce_rate,
                     collected_at = CURRENT_TIMESTAMP
             """, (
                 property_id, metric_date, collection_id,

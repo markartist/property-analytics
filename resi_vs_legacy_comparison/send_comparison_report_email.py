@@ -15,7 +15,7 @@ from pathlib import Path
 
 # Add parent for unified email sender
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from utils.email_sender import EmailSender
+from Data_Collection.utils.email_sender import EmailSender
 
 
 

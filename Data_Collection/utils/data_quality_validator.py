@@ -131,7 +131,7 @@ class DataQualityValidator:
         # Get GSC data (aggregated by property and date)
         cursor.execute("""
             SELECT SUM(clicks) as clicks, SUM(impressions) as impressions,
-                   AVG(ctr) as ctr, AVG(avg_position) as avg_position
+                   AVG(ctr) as ctr, AVG(average_position) as avg_position
             FROM gsc_daily_metrics
             WHERE property_id = ? AND metric_date = ?
         """, (property_id, metric_date))
@@ -247,6 +247,276 @@ class DataQualityValidator:
         
         return results
     
+    def validate_gbp_reviews_data(self, property_id: str, days_back: int = 7) -> Dict:
+        """
+        Validate GBP reviews data for a property (checks recent reviews).
+        
+        Args:
+            property_id: Property ID
+            days_back: Check reviews from last N days
+            
+        Returns:
+            Validation results dictionary
+        """
+        from datetime import timedelta
+        
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get recent reviews
+        cursor.execute("""
+            SELECT review_id, star_rating_numeric
+            FROM gbp_reviews
+            WHERE property_id = ? 
+            AND review_create_time >= datetime('now', ? || ' days')
+        """, (property_id, -days_back))
+        
+        rows = cursor.fetchall()
+        if not rows:
+            conn.close()
+            return {'exists': False, 'checks': []}
+        
+        # Run validation rules
+        results = {'exists': True, 'checks': [], 'passed': 0, 'failed': 0}
+        
+        for rule in self.rules_cache.get('gbp_reviews', []):
+            if rule['rule_type'] == 'existence':
+                check_result = {
+                    'rule_id': rule['rule_id'],
+                    'rule_name': rule['rule_name'],
+                    'passed': len(rows) > 0,
+                    'severity': rule['severity'],
+                    'metric_value': f"{len(rows)} reviews",
+                    'expected_value': rule['description'],
+                    'failure_reason': None if len(rows) > 0 else 'No reviews found'
+                }
+            else:
+                # Check all reviews
+                all_passed = True
+                failed_reviews = 0
+                
+                for review_id, rating in rows:
+                    data = {'star_rating': rating}
+                    passed = self._evaluate_sql(data, rule['validation_sql'])
+                    
+                    if not passed:
+                        all_passed = False
+                        failed_reviews += 1
+                
+                check_result = {
+                    'rule_id': rule['rule_id'],
+                    'rule_name': rule['rule_name'],
+                    'passed': all_passed,
+                    'severity': rule['severity'],
+                    'metric_value': f"{failed_reviews}/{len(rows)} failed" if failed_reviews else 'All passed',
+                    'expected_value': rule['description'],
+                    'failure_reason': None if all_passed else f"{failed_reviews} reviews failed validation"
+                }
+            
+            results['checks'].append(check_result)
+            
+            if check_result['passed']:
+                results['passed'] += 1
+            else:
+                results['failed'] += 1
+            
+            # Log to database (use today as metric_date)
+            self._log_check(cursor, check_result, property_id, 'gbp_reviews', date.today())
+        
+        conn.commit()
+        conn.close()
+        
+        return results
+    
+    def validate_gbp_insights_data(self, property_id: str, metric_date: date) -> Dict:
+        """
+        Validate GBP insights data for a property and date.
+        
+        Args:
+            property_id: Property ID
+            metric_date: Date of data to validate
+            
+        Returns:
+            Validation results dictionary
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get GBP insights data
+        cursor.execute("""
+            SELECT total_profile_views, total_actions, action_rate
+            FROM gbp_daily_insights
+            WHERE property_id = ? AND metric_date = ?
+        """, (property_id, metric_date))
+        
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return {'exists': False, 'checks': []}
+        
+        views, actions, action_rate = row
+        
+        # Run validation rules
+        results = {'exists': True, 'checks': [], 'passed': 0, 'failed': 0}
+        
+        for rule in self.rules_cache.get('gbp_insights', []):
+            check_result = self._run_validation(
+                cursor, rule, property_id, metric_date,
+                data={'total_profile_views': views, 'total_actions': actions,
+                      'action_rate': action_rate if action_rate else 0}
+            )
+            results['checks'].append(check_result)
+            
+            if check_result['passed']:
+                results['passed'] += 1
+            else:
+                results['failed'] += 1
+            
+            # Log to database
+            self._log_check(cursor, check_result, property_id, 'gbp_insights', metric_date)
+        
+        conn.commit()
+        conn.close()
+        
+        return results
+    
+    def validate_gtmetrix_data(self, property_id: str, metric_date: date) -> Dict:
+        """
+        Validate GTMetrix data for a property and date.
+        
+        Args:
+            property_id: Property ID
+            metric_date: Date of data to validate
+            
+        Returns:
+            Validation results dictionary
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get GTMetrix data
+        cursor.execute("""
+            SELECT pagespeed_score, onload_time_ms
+            FROM gtmetrix_metrics
+            WHERE property_id = ? AND metric_date = ?
+        """, (property_id, metric_date))
+        
+        row = cursor.fetchone()
+        if not row:
+            conn.close()
+            return {'exists': False, 'checks': []}
+        
+        score, load_time = row
+        
+        # Run validation rules
+        results = {'exists': True, 'checks': [], 'passed': 0, 'failed': 0}
+        
+        for rule in self.rules_cache.get('gtmetrix', []):
+            check_result = self._run_validation(
+                cursor, rule, property_id, metric_date,
+                data={'pagespeed_score': score, 'onload_time': load_time / 1000.0 if load_time else 0}
+            )
+            results['checks'].append(check_result)
+            
+            if check_result['passed']:
+                results['passed'] += 1
+            else:
+                results['failed'] += 1
+            
+            # Log to database
+            self._log_check(cursor, check_result, property_id, 'gtmetrix', metric_date)
+        
+        conn.commit()
+        conn.close()
+        
+        return results
+    
+    def validate_thirtylines_data(self, property_id: str, metric_date: date) -> Dict:
+        """
+        Validate ThirtyLines data for a property (checks recent data).
+        
+        Args:
+            property_id: Property ID
+            metric_date: Date to check (uses most recent data near this date)
+            
+        Returns:
+            Validation results dictionary
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get recent floorplan data for this property
+        cursor.execute("""
+            SELECT f.id, f.bedrooms, f.rent_from, u.units_available_now
+            FROM property_floorplans f
+            LEFT JOIN unit_availability u 
+                ON f.property_id = u.property_id 
+                AND f.floorplan_name = u.floorplan_name
+                AND date(u.snapshot_date) = ?
+            WHERE f.property_id = ?
+        """, (metric_date, property_id))
+        
+        rows = cursor.fetchall()
+        if not rows:
+            conn.close()
+            return {'exists': False, 'checks': []}
+        
+        # Run validation rules
+        results = {'exists': True, 'checks': [], 'passed': 0, 'failed': 0}
+        
+        for rule in self.rules_cache.get('thirtylines', []):
+            if rule['rule_type'] == 'existence':
+                check_result = {
+                    'rule_id': rule['rule_id'],
+                    'rule_name': rule['rule_name'],
+                    'passed': len(rows) > 0,
+                    'severity': rule['severity'],
+                    'metric_value': f"{len(rows)} floorplans",
+                    'expected_value': rule['description'],
+                    'failure_reason': None if len(rows) > 0 else 'No floorplan data found'
+                }
+            else:
+                # Check all floorplans
+                all_passed = True
+                failed_count = 0
+                
+                for floorplan_id, bedrooms, rent, available_units in rows:
+                    data = {
+                        'bedrooms': bedrooms if bedrooms else 0,
+                        'min_rent': rent if rent else 0,
+                        'available_units': available_units if available_units is not None else 0
+                    }
+                    passed = self._evaluate_sql(data, rule['validation_sql'])
+                    
+                    if not passed:
+                        all_passed = False
+                        failed_count += 1
+                
+                check_result = {
+                    'rule_id': rule['rule_id'],
+                    'rule_name': rule['rule_name'],
+                    'passed': all_passed,
+                    'severity': rule['severity'],
+                    'metric_value': f"{failed_count}/{len(rows)} failed" if failed_count else 'All passed',
+                    'expected_value': rule['description'],
+                    'failure_reason': None if all_passed else f"{failed_count} floorplans failed validation"
+                }
+            
+            results['checks'].append(check_result)
+            
+            if check_result['passed']:
+                results['passed'] += 1
+            else:
+                results['failed'] += 1
+            
+            # Log to database
+            self._log_check(cursor, check_result, property_id, 'thirtylines', metric_date)
+        
+        conn.commit()
+        conn.close()
+        
+        return results
+    
     def validate_all_recent_data(self, days_back: int = 1) -> Dict:
         """
         Validate all recent data across all sources.
@@ -259,77 +529,160 @@ class DataQualityValidator:
         """
         from datetime import timedelta
         
-        target_date = date.today() - timedelta(days=days_back)
+        # Different data sources have different API delays
+        target_date_ga4 = date.today() - timedelta(days=days_back)  # GA4: yesterday
+        target_date_gsc = date.today() - timedelta(days=3)  # GSC: 3-day delay
+        target_date_gbp = date.today() - timedelta(days=2)  # GBP: 2-day delay
+        target_date_psi = date.today() - timedelta(days=days_back)  # PSI: yesterday
         
         results = {
-            'date': target_date,
-            'ga4': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0},
-            'gsc': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0},
-            'psi': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0}
+            'date': target_date_ga4,
+            'ga4': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': str(target_date_ga4)},
+            'gsc': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': str(target_date_gsc)},
+            'psi': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': str(target_date_psi)},
+            'gbp_reviews': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': 'last 7 days'},
+            'gbp_insights': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': str(target_date_gbp)},
+            'gtmetrix': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': str(target_date_ga4)},
+            'thirtylines': {'properties_checked': 0, 'total_checks': 0, 'failed_checks': 0, 'quality_score': 0, 'target_date': str(target_date_ga4)}
         }
         
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        # Get all properties with GA4 data
+        # Get all properties with GA4 data (using GA4 target date)
         cursor.execute("""
             SELECT DISTINCT property_id
             FROM ga4_daily_metrics
             WHERE metric_date = ?
-        """, (target_date,))
+        """, (target_date_ga4,))
         
         ga4_properties = [row[0] for row in cursor.fetchall()]
         
         for prop_id in ga4_properties:
-            val_result = self.validate_ga4_data(prop_id, target_date)
+            val_result = self.validate_ga4_data(prop_id, target_date_ga4)
             if val_result['exists']:
                 results['ga4']['properties_checked'] += 1
                 results['ga4']['total_checks'] += val_result['passed'] + val_result['failed']
                 results['ga4']['failed_checks'] += val_result['failed']
                 
                 # Calculate and store quality score
-                self._calculate_quality_score(prop_id, 'ga4', target_date, val_result)
+                self._calculate_quality_score(prop_id, 'ga4', target_date_ga4, val_result)
         
-        # Get all properties with GSC data
+        # Get all properties with GSC data (using GSC target date with 3-day delay)
         cursor.execute("""
             SELECT DISTINCT property_id
             FROM gsc_daily_metrics
             WHERE metric_date = ?
-        """, (target_date,))
+        """, (target_date_gsc,))
         
         gsc_properties = [row[0] for row in cursor.fetchall()]
         
         for prop_id in gsc_properties:
-            val_result = self.validate_gsc_data(prop_id, target_date)
+            val_result = self.validate_gsc_data(prop_id, target_date_gsc)
             if val_result['exists']:
                 results['gsc']['properties_checked'] += 1
                 results['gsc']['total_checks'] += val_result['passed'] + val_result['failed']
                 results['gsc']['failed_checks'] += val_result['failed']
                 
                 # Calculate and store quality score
-                self._calculate_quality_score(prop_id, 'gsc', target_date, val_result)
+                self._calculate_quality_score(prop_id, 'gsc', target_date_gsc, val_result)
         
-        # Get all properties with PSI data
+        # Get all properties with PSI data (using PSI target date)
         cursor.execute("""
             SELECT DISTINCT property_id
             FROM pagespeed_metrics
             WHERE metric_date = ?
-        """, (target_date,))
+        """, (target_date_psi,))
         
         psi_properties = [row[0] for row in cursor.fetchall()]
         
         for prop_id in psi_properties:
-            val_result = self.validate_psi_data(prop_id, target_date)
+            val_result = self.validate_psi_data(prop_id, target_date_psi)
             if val_result['exists']:
                 results['psi']['properties_checked'] += 1
                 results['psi']['total_checks'] += val_result['passed'] + val_result['failed']
                 results['psi']['failed_checks'] += val_result['failed']
                 
                 # Calculate and store quality score
-                self._calculate_quality_score(prop_id, 'psi', target_date, val_result)
+                self._calculate_quality_score(prop_id, 'psi', target_date_psi, val_result)
+        
+        # Get all properties with GBP Reviews data (last 7 days)
+        cursor.execute("""
+            SELECT DISTINCT property_id
+            FROM gbp_reviews
+            WHERE review_create_time >= datetime('now', '-7 days')
+        """)
+        
+        gbp_review_properties = [row[0] for row in cursor.fetchall()]
+        
+        for prop_id in gbp_review_properties:
+            val_result = self.validate_gbp_reviews_data(prop_id, days_back=7)
+            if val_result['exists']:
+                results['gbp_reviews']['properties_checked'] += 1
+                results['gbp_reviews']['total_checks'] += val_result['passed'] + val_result['failed']
+                results['gbp_reviews']['failed_checks'] += val_result['failed']
+                
+                # Calculate and store quality score
+                self._calculate_quality_score(prop_id, 'gbp_reviews', target_date_ga4, val_result)
+        
+        # Get all properties with GBP Insights data (using GBP target date with 2-day delay)
+        cursor.execute("""
+            SELECT DISTINCT property_id
+            FROM gbp_daily_insights
+            WHERE metric_date = ?
+        """, (target_date_gbp,))
+        
+        gbp_insights_properties = [row[0] for row in cursor.fetchall()]
+        
+        for prop_id in gbp_insights_properties:
+            val_result = self.validate_gbp_insights_data(prop_id, target_date_gbp)
+            if val_result['exists']:
+                results['gbp_insights']['properties_checked'] += 1
+                results['gbp_insights']['total_checks'] += val_result['passed'] + val_result['failed']
+                results['gbp_insights']['failed_checks'] += val_result['failed']
+                
+                # Calculate and store quality score
+                self._calculate_quality_score(prop_id, 'gbp_insights', target_date_gbp, val_result)
+        
+        # Get all properties with GTMetrix data (using GA4 target date)
+        cursor.execute("""
+            SELECT DISTINCT property_id
+            FROM gtmetrix_metrics
+            WHERE metric_date = ?
+        """, (target_date_ga4,))
+        
+        gtmetrix_properties = [row[0] for row in cursor.fetchall()]
+        
+        for prop_id in gtmetrix_properties:
+            val_result = self.validate_gtmetrix_data(prop_id, target_date_ga4)
+            if val_result['exists']:
+                results['gtmetrix']['properties_checked'] += 1
+                results['gtmetrix']['total_checks'] += val_result['passed'] + val_result['failed']
+                results['gtmetrix']['failed_checks'] += val_result['failed']
+                
+                # Calculate and store quality score
+                self._calculate_quality_score(prop_id, 'gtmetrix', target_date_ga4, val_result)
+        
+        # Get all properties with ThirtyLines data
+        cursor.execute("""
+            SELECT DISTINCT property_id
+            FROM property_floorplans
+        """)
+        
+        thirtylines_properties = [row[0] for row in cursor.fetchall()]
+        
+        for prop_id in thirtylines_properties:
+            val_result = self.validate_thirtylines_data(prop_id, target_date_ga4)
+            if val_result['exists']:
+                results['thirtylines']['properties_checked'] += 1
+                results['thirtylines']['total_checks'] += val_result['passed'] + val_result['failed']
+                results['thirtylines']['failed_checks'] += val_result['failed']
+                
+                # Calculate and store quality score
+                self._calculate_quality_score(prop_id, 'thirtylines', target_date_ga4, val_result)
         
         # Calculate overall quality scores
-        for source in ['ga4', 'gsc', 'psi']:
+        for source in ['ga4', 'gsc', 'psi', 'gbp_reviews', 'gbp_insights', 'gtmetrix', 'thirtylines']:
             if results[source]['total_checks'] > 0:
                 passed = results[source]['total_checks'] - results[source]['failed_checks']
                 results[source]['quality_score'] = int((passed / results[source]['total_checks']) * 100)

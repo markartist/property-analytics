@@ -13,6 +13,7 @@ Key Features:
 
 import sqlite3
 import logging
+import json
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Optional, Tuple
 from pathlib import Path
@@ -36,6 +37,15 @@ class AnomalyDetector:
     # Detection thresholds
     DEVIATION_THRESHOLD = 0.50  # 50% drop triggers alert
     BASELINE_WINDOW_DAYS = 7     # Use 7-day average as baseline
+    MIN_BASELINE_THRESHOLDS = {
+        'sessions': 20,
+        'users': 20,
+        'pageviews': 50,
+        'clicks': 10,
+        'impressions': 100
+    }
+    GUEST_CARD_DROP_THRESHOLD = 0.40  # 40% drop vs previous period
+    GUEST_CARD_MIN_PREV = 5           # ignore very small baselines
     
     def __init__(self, db: 'DatabaseManager'):
         """Initialize anomaly detector.
@@ -44,7 +54,26 @@ class AnomalyDetector:
             db: Database manager instance
         """
         self.db = db
+        self.prelaunch_property_ids = self._load_prelaunch_properties()
         logger.info("AnomalyDetector initialized")
+
+    def _load_prelaunch_properties(self) -> set:
+        """Load prelaunch property IDs from registry (lifecycle = prelaunch)."""
+        try:
+            registry_path = Path('/Users/mark/Property_Analytics/config/venterra_properties_official.json')
+            with open(registry_path) as f:
+                registry = json.load(f)
+            prelaunch = {
+                p.get('ga4_property_id')
+                for p in registry.get('properties', [])
+                if p.get('lifecycle') == 'prelaunch' and p.get('ga4_property_id')
+            }
+            if prelaunch:
+                logger.info(f"Prelaunch properties excluded from anomalies: {len(prelaunch)}")
+            return prelaunch
+        except Exception as e:
+            logger.warning(f"Failed to load prelaunch properties: {e}")
+            return set()
     
     def calculate_baselines(self, metric_date: date) -> int:
         """Calculate 7-day rolling baselines for all active properties.
@@ -178,7 +207,7 @@ class AnomalyDetector:
             gsc_baselines: GSC average values
         """
         # Get property name for baseline record
-        cursor.execute("SELECT canonical_name FROM properties WHERE property_id = ?", (property_id,))
+        cursor.execute("SELECT property_name FROM properties WHERE property_id = ?", (property_id,))
         row = cursor.fetchone()
         prop_name = row[0] if row else property_id
         
@@ -240,6 +269,8 @@ class AnomalyDetector:
             
             for row in cursor.fetchall():
                 prop_id = row[0]
+                if prop_id in self.prelaunch_property_ids:
+                    continue
                 baselines = {
                     'sessions': row[1],
                     'users': row[2],
@@ -255,6 +286,8 @@ class AnomalyDetector:
                     # Compare each metric
                     for metric, baseline in baselines.items():
                         if baseline is None or baseline == 0:
+                            continue
+                        if baseline < self.MIN_BASELINE_THRESHOLDS.get(metric, 0):
                             continue
                         
                         actual = actuals.get(metric)
@@ -295,10 +328,76 @@ class AnomalyDetector:
                     logger.error(f"Failed to detect anomalies for {prop_id}: {e}")
             
             conn.commit()
+
+            # Guest Card anomaly detection is based on file-level "this vs prev period"
+            # values in guest_card_metrics (not on property_baselines).
+            self._detect_guest_card_anomalies(cursor, metric_date, anomalies)
+            conn.commit()
         
         logger.info(f"Found {len(anomalies['critical'])} critical anomalies, "
                    f"{len(anomalies['warnings'])} warnings")
         return anomalies
+
+    def _detect_guest_card_anomalies(
+        self,
+        cursor: sqlite3.Cursor,
+        metric_date: date,
+        anomalies: Dict[str, List[Dict]]
+    ) -> None:
+        """Detect Guest Card drops by property vs previous period."""
+        run_date = metric_date.isoformat() if isinstance(metric_date, date) else str(metric_date)
+
+        try:
+            cursor.execute("""
+                SELECT
+                    property_code,
+                    property_name,
+                    COALESCE(gc_this_period, 0) AS gc_this_period,
+                    COALESCE(gc_prev_period, 0) AS gc_prev_period
+                FROM guest_card_metrics
+                WHERE run_date = ?
+            """, (run_date,))
+        except sqlite3.OperationalError:
+            # Table may not exist yet in older environments.
+            return
+
+        for row in cursor.fetchall():
+            property_code, property_name, current_value, expected_value = row
+            if expected_value < self.GUEST_CARD_MIN_PREV:
+                continue
+
+            deviation_pct = (expected_value - current_value) / expected_value if expected_value else 0.0
+            if deviation_pct <= self.GUEST_CARD_DROP_THRESHOLD:
+                continue
+
+            severity = 'critical' if deviation_pct > 0.70 else 'high'
+            metric_name = 'guest_card_gc_this_period'
+
+            self._insert_anomaly_alert(
+                cursor=cursor,
+                property_id=property_code,
+                metric_date=metric_date,
+                metric_name=metric_name,
+                baseline_value=float(expected_value),
+                actual_value=float(current_value),
+                deviation_pct=float(deviation_pct),
+                severity=severity,
+                property_name_override=property_name
+            )
+
+            anomaly = {
+                'property_id': property_code,
+                'property_name': property_name,
+                'metric': metric_name,
+                'baseline': float(expected_value),
+                'actual': float(current_value),
+                'deviation_pct': float(deviation_pct),
+                'severity': severity
+            }
+            if severity == 'critical':
+                anomalies['critical'].append(anomaly)
+            else:
+                anomalies['warnings'].append(anomaly)
     
     def _get_actual_values(self, cursor: sqlite3.Cursor, property_id: str,
                           metric_date: date) -> Dict[str, float]:
@@ -344,7 +443,8 @@ class AnomalyDetector:
     def _insert_anomaly_alert(self, cursor: sqlite3.Cursor, property_id: str,
                              metric_date: date, metric_name: str,
                              baseline_value: float, actual_value: float,
-                             deviation_pct: float, severity: str) -> None:
+                             deviation_pct: float, severity: str,
+                             property_name_override: Optional[str] = None) -> None:
         """Insert anomaly alert into database.
         
         Args:
@@ -358,9 +458,28 @@ class AnomalyDetector:
             severity: 'critical' or 'high'
         """
         # Get property name
-        cursor.execute("SELECT canonical_name FROM properties WHERE property_id = ?", (property_id,))
-        row = cursor.fetchone()
-        prop_name = row[0] if row else property_id
+        if property_name_override:
+            prop_name = property_name_override
+        else:
+            cursor.execute("SELECT property_name FROM properties WHERE property_id = ?", (property_id,))
+            row = cursor.fetchone()
+            prop_name = row[0] if row else property_id
+
+        # Avoid duplicate unresolved alerts with identical values in a short window.
+        cursor.execute("""
+            SELECT 1
+            FROM anomaly_alerts
+            WHERE property_id = ?
+              AND metric_name = ?
+              AND ABS(current_value - ?) < 0.0001
+              AND ABS(expected_value - ?) < 0.0001
+              AND severity = ?
+              AND resolved = 0
+              AND detected_at >= datetime('now', '-1 day')
+            LIMIT 1
+        """, (property_id, metric_name, actual_value, baseline_value, severity))
+        if cursor.fetchone():
+            return
         
         cursor.execute("""
             INSERT INTO anomaly_alerts (
