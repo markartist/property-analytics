@@ -3,7 +3,7 @@
 **System Owner:** Mark Laufhutte  
 **Portfolio:** Venterra Living (91 properties)  
 **Database:** SQLite (`data/portfolio_analytics.db`)  
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-02-18
 
 ---
 
@@ -12,6 +12,8 @@
 ### Essential References
 1. **[DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md)** - Database schema, table structures, join patterns, common pitfalls
 2. **[RESI_COMPARISON_ANALYSIS.md](RESI_COMPARISON_ANALYSIS.md)** - Resi vs Portfolio comparative analysis project documentation
+3. **[LAYOUT_GOVERNANCE_COMPLIANCE_PROJECT_CHARTER.md](LAYOUT_GOVERNANCE_COMPLIANCE_PROJECT_CHARTER.md)** - Project charter for layout governance platform and nightly compliance audits
+4. **[LAYOUT_GOVERNANCE_EXECUTION_BACKLOG.md](LAYOUT_GOVERNANCE_EXECUTION_BACKLOG.md)** - Sprint-ready execution backlog with epics, stories, and acceptance criteria
 
 ### Critical Knowledge
 Before working with this system, **READ THESE FIRST:**
@@ -267,7 +269,9 @@ Expected: ≥85% for GA4, ≥80% for PSI/GBP
 ├── docs/
 │   ├── README.md                       # This file
 │   ├── DATABASE_SCHEMA_REFERENCE.md    # Schema documentation
-│   └── RESI_COMPARISON_ANALYSIS.md     # Resi project docs
+│   ├── RESI_COMPARISON_ANALYSIS.md     # Resi project docs
+│   ├── LAYOUT_GOVERNANCE_COMPLIANCE_PROJECT_CHARTER.md  # Layout governance project charter
+│   └── LAYOUT_GOVERNANCE_EXECUTION_BACKLOG.md  # Layout governance implementation backlog
 ├── Data_Collection/
 │   └── orchestration/
 │       └── daily_master_collection.py  # Master collector
@@ -302,6 +306,14 @@ Expected: ≥85% for GA4, ≥80% for PSI/GBP
 
 ## Version History
 
+- **2026-02-18:** Added layout governance execution backlog
+  - Converted charter into sprint-based epics and implementation stories
+  - Added acceptance criteria, dependencies, and MVP sprint cut
+  - Included initial top-10 implementation ticket list
+- **2026-02-18:** Added layout governance project charter
+  - Documented plan to build independent governance platform outside Figma
+  - Defined nightly compliance audit workflow and deterministic drift reporting
+  - Captured AI-assisted extension path with mandatory human approval gate
 - **2026-01-27:** Initial documentation created
   - Master README established
   - DATABASE_SCHEMA_REFERENCE.md created with critical ID normalization issues
