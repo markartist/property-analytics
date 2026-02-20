@@ -21,6 +21,14 @@ This project follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 - 
 ### Removed
 - 
+## [1.0.1] - 2026-02-20
+### Added
+- ADR directory structure with governance README (`ADR/README.md`).
+- ADR-0001: Cloudflare Hosting Standard — locked hosting platform decisions.
+- ADR-0002: Friday Week-Ending Rule — enforced weekly date boundary standard.
+- ADR-0003: Admin-Only Destructive Actions — locked permission model for deletions.
+- ADR-0004: Unified Weekly Metrics Table — locked T7/T30 schema design.
+
 ## [1.0.0] - 2026-02-20
 ### Added
 - Established project memory pack and v1 contract artifacts.
