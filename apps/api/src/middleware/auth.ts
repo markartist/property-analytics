@@ -1,12 +1,20 @@
 import { Context, Next } from "hono";
 import type { Env, AuthUser } from "../env";
+import { hashToken } from "../lib/crypto";
+import { queryFirst } from "../lib/db";
 
-/**
- * Variables set by middleware, available via c.get().
- */
 export type AuthVariables = {
   user: AuthUser;
 };
+
+interface SessionRow {
+  user_id: string;
+  email: string;
+  role: "admin" | "user";
+  is_active: number;
+  expires_at: string;
+  revoked_at: string | null;
+}
 
 /**
  * Require a valid session cookie. Returns 401 if absent or invalid.
@@ -14,21 +22,14 @@ export type AuthVariables = {
  */
 export async function requireAuth(c: Context<{ Bindings: Env; Variables: AuthVariables }>, next: Next) {
   const sessionToken = getCookie(c, "pop_session");
-
   if (!sessionToken) {
     return c.json({ error: { code: "UNAUTHORIZED", message: "Authentication required", details: [] } }, 401);
   }
 
-  // TODO: Hash sessionToken and look up in sessions table.
-  // TODO: Validate expiry, check revoked_at is null.
-  // TODO: Join to users table to get role and is_active.
-  // Stub: return 401 until session lookup is implemented.
   const user = await resolveSession(c.env.POP_BRIEF_DB, sessionToken);
-
   if (!user) {
     return c.json({ error: { code: "UNAUTHORIZED", message: "Invalid or expired session", details: [] } }, 401);
   }
-
   if (!user.isActive) {
     return c.json({ error: { code: "USER_INACTIVE", message: "Account is inactive", details: [] } }, 403);
   }
@@ -49,22 +50,27 @@ export async function requireAdmin(c: Context<{ Bindings: Env; Variables: AuthVa
   await next();
 }
 
-/**
- * Extract cookie value by name from Cookie header.
- */
 function getCookie(c: Context, name: string): string | undefined {
   const header = c.req.header("cookie") ?? "";
   const match = header.split(";").map((s) => s.trim()).find((s) => s.startsWith(`${name}=`));
   return match ? match.slice(name.length + 1) : undefined;
 }
 
-/**
- * Stub: resolve session token to user. Returns null until implemented.
- */
+/** Hash the raw session token and look up against sessions + users via D1. */
 async function resolveSession(
-  _db: D1Database,
-  _token: string
+  db: D1Database,
+  rawToken: string
 ): Promise<{ id: string; email: string; role: "admin" | "user"; isActive: boolean } | null> {
-  // TODO: Implement session lookup against D1
-  return null;
+  const tokenHash = await hashToken(rawToken);
+  const row = await queryFirst<SessionRow>(
+    db,
+    `SELECT s.user_id, s.expires_at, s.revoked_at, u.email, u.role, u.is_active
+     FROM sessions s JOIN users u ON s.user_id = u.id
+     WHERE s.session_token_hash = ?`,
+    [tokenHash]
+  );
+  if (!row) return null;
+  if (row.revoked_at) return null;
+  if (new Date(row.expires_at) <= new Date()) return null;
+  return { id: row.user_id, email: row.email, role: row.role, isActive: row.is_active === 1 };
 }
