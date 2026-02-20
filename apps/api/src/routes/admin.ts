@@ -8,6 +8,7 @@ import { generateToken } from "../lib/crypto";
 import { sendEmail } from "../email/resend";
 import { newId } from "../lib/id";
 import { nowISO, errJson } from "../lib/validate";
+import { writeAuditLog } from "../lib/audit";
 
 const CreateInviteBody = z.object({
   email: z.string().email().transform((v) => v.toLowerCase().trim()),
@@ -57,6 +58,11 @@ admin.post("/invites", async (c) => {
     });
   }
 
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "invite.create", entityType: "invite", entityId: inviteId,
+    after: { email, role, expires_at: expiresAt },
+  });
+
   return c.json({ invite_id: inviteId, email, expires_at: expiresAt });
 });
 
@@ -75,8 +81,10 @@ admin.patch("/users/:id", async (c) => {
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
   const body = parse.data;
 
-  const user = await queryFirst(c.env.POP_BRIEF_DB, "SELECT id FROM users WHERE id = ? AND deleted_at IS NULL", [id]);
-  if (!user) return c.json(errJson("USER_NOT_FOUND", "User not found"), 404);
+  const userBefore = await queryFirst<{ id: string; role: string; is_active: number }>(c.env.POP_BRIEF_DB,
+    "SELECT id, role, is_active FROM users WHERE id = ? AND deleted_at IS NULL", [id]
+  );
+  if (!userBefore) return c.json(errJson("USER_NOT_FOUND", "User not found"), 404);
 
   const sets: string[] = [];
   const params: unknown[] = [];
@@ -94,6 +102,12 @@ admin.patch("/users/:id", async (c) => {
   const updated = await queryFirst(c.env.POP_BRIEF_DB,
     "SELECT id, email, role, is_active FROM users WHERE id = ?", [id]
   );
+
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "user.update", entityType: "user", entityId: id,
+    before: userBefore, after: updated,
+  });
+
   return c.json(updated);
 });
 

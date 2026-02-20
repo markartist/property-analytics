@@ -5,7 +5,8 @@ import type { AuthVariables } from "../middleware/auth";
 import { requireAuth, requireAdmin } from "../middleware/auth";
 import { queryAll, queryFirst, run, stmt, batch } from "../lib/db";
 import { newId } from "../lib/id";
-import { isFriday, nowISO, errJson } from "../lib/validate";
+import { isFriday, nowISO, errJson, validateSafeText } from "../lib/validate";
+import { writeAuditLog } from "../lib/audit";
 
 const MetricRow = z.object({
   metric_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -84,6 +85,9 @@ metrics.post("/import/paste", requireAdmin, async (c) => {
     if (r.type === "portfolio" && r.community_id) {
       validationErrors.push(`Row ${i}: community_id must be null when type=portfolio`);
     }
+    // HTML sanitization on notes_text
+    const textErr = validateSafeText(r.notes_text, `Row ${i} notes_text`);
+    if (textErr) validationErrors.push(textErr);
   }
 
   // Log import_run (queued)
@@ -144,6 +148,11 @@ metrics.post("/import/paste", requireAdmin, async (c) => {
       [rows.length, fin, fin, importRunId]
     );
 
+    await writeAuditLog(db, {
+      actorUserId: actor.id, action: "metrics.import", entityType: "import_run", entityId: importRunId,
+      after: { status: "applied", rows_applied: rows.length },
+    });
+
     return c.json({ import_run_id: importRunId, status: "applied", rows_applied: rows.length });
   } catch (err) {
     const fin = nowISO();
@@ -183,6 +192,13 @@ metrics.delete("/", requireAdmin, async (c) => {
     "DELETE FROM weekly_metrics WHERE metric_date = ? AND window_days = ? AND type = ?",
     [metric_date, window_days, type]
   );
+
+  const actor = c.get("user");
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "metrics.delete", entityType: "weekly_metrics", entityId: `${metric_date}|${window_days}|${type}`,
+    before: { metric_date, window_days, type, deleted_count: result.meta?.changes ?? 0 },
+  });
+
   return c.json({ ok: true, deleted_count: result.meta?.changes ?? 0 });
 });
 

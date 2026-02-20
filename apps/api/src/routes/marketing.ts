@@ -6,7 +6,9 @@ import { requireAuth } from "../middleware/auth";
 import { queryAll, queryFirst, run } from "../lib/db";
 import { sendEmail } from "../email/resend";
 import { newId } from "../lib/id";
-import { isFriday, nowISO, errJson, EMAIL_REGEX } from "../lib/validate";
+import { isFriday, nowISO, errJson, EMAIL_REGEX, validateSafeText } from "../lib/validate";
+import { scanMentionsLimiter, emailSendLimiter } from "../lib/rate-limit";
+import { writeAuditLog } from "../lib/audit";
 
 const PatchBody = z.object({
   community_id: z.string().optional(),
@@ -85,6 +87,12 @@ marketing.patch("/:id", async (c) => {
 
   if (!record) return c.json(errJson("NOT_FOUND", "Marketing record not found"), 404);
 
+  // Validate user-supplied text fields for dangerous HTML content
+  const notesErr = validateSafeText(body.notes_text, "notes_text");
+  if (notesErr) return c.json(errJson("VALIDATION_ERROR", notesErr), 400);
+  const mentionsErr = validateSafeText(body.mentions_json, "mentions_json");
+  if (mentionsErr) return c.json(errJson("VALIDATION_ERROR", mentionsErr), 400);
+
   // Update existing record
   const sets: string[] = [];
   const params: unknown[] = [];
@@ -109,6 +117,14 @@ marketing.patch("/:id", async (c) => {
  * Email sending gated by ENABLE_EMAIL_SEND env var.
  */
 marketing.post("/scan-mentions", async (c) => {
+  // Rate limit scan-mentions per user (dev-only in-memory; TODO: Durable Objects for prod)
+  const actor = c.get("user");
+  const rl = scanMentionsLimiter.check(actor.id);
+  if (!rl.allowed) {
+    c.header("Retry-After", String(rl.retryAfterSeconds));
+    return c.json(errJson("RATE_LIMITED", "Too many scan requests. Try again later."), 429);
+  }
+
   const parse = ScanBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
   const { week_ending } = parse.data;
@@ -118,7 +134,6 @@ marketing.post("/scan-mentions", async (c) => {
   }
 
   const db = c.env.POP_BRIEF_DB;
-  const actor = c.get("user");
   const now = nowISO();
   const emailSendEnabled = c.env.ENABLE_EMAIL_SEND === "true";
 
@@ -155,6 +170,18 @@ marketing.post("/scan-mentions", async (c) => {
       let errorText: string | null = null;
 
       if (emailSendEnabled) {
+        // Rate limit email sends globally (dev-only in-memory; TODO: Durable Objects for prod)
+        const emailRl = emailSendLimiter.check("global");
+        if (!emailRl.allowed) {
+          status = "rate_limited";
+          errorText = "Email send rate limit exceeded";
+          await run(db,
+            `INSERT INTO notification_events (id, event_type, recipient_email, dedupe_key, status, provider_message_id, attempted_at, error_text, created_at, created_by, updated_at, updated_by)
+             VALUES (?, 'mention_alert', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [eventId, email, dedupeKey, status, null, now, errorText, now, actor.id, now, actor.id]
+          );
+          continue;
+        }
         const result = await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
           to: email,
           subject: `POP Brief: Mention alert for week ending ${week_ending}`,

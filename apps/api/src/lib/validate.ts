@@ -44,3 +44,39 @@ export class AppError extends Error {
 
 /** Email regex for mention scanning. */
 export const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+
+/**
+ * Reject strings containing <script> tags or inline event handlers (on*=).
+ * This is a server-side allowlist approach per security hardening.
+ * Full HTML sanitization is deferred — no heavy dependency added.
+ * Instead, we reject dangerous patterns at write time.
+ */
+const DANGEROUS_HTML = /<script[\s>]/i;
+const EVENT_HANDLER = /\bon\w+\s*=/i;
+
+export function containsDangerousHtml(value: string): boolean {
+  return DANGEROUS_HTML.test(value) || EVENT_HANDLER.test(value);
+}
+
+/**
+ * Validate a user-supplied text field for dangerous content.
+ * Returns an error message or null if clean.
+ */
+export function validateSafeText(value: string | null | undefined, fieldName: string): string | null {
+  if (!value) return null;
+  if (containsDangerousHtml(value)) {
+    return `${fieldName} contains disallowed HTML (script tags or event handlers are not permitted)`;
+  }
+  return null;
+}
+
+/**
+ * Escape a CSV cell value to prevent formula injection.
+ * Cells starting with =, +, -, @ are prefixed with a single quote.
+ */
+export function escapeCsvCell(value: string): string {
+  if (value.length > 0 && "=+-@".includes(value[0])) {
+    return "'" + value;
+  }
+  return value;
+}
