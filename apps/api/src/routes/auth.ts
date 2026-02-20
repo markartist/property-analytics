@@ -7,8 +7,15 @@ import { queryFirst, run } from "../lib/db";
 import { verifyPassword, hashPassword, generateToken, hashToken } from "../lib/crypto";
 import { newId } from "../lib/id";
 import { nowISO, errJson } from "../lib/validate";
+import { loginLimiter } from "../lib/rate-limit";
 
 const SESSION_TTL_HOURS = 72;
+
+/**
+ * Cookie posture: HttpOnly (no JS access), Secure (HTTPS only),
+ * SameSite=Lax (CSRF protection while allowing top-level navigation),
+ * Path=/ (scoped to entire API). Max-Age set per-use.
+ */
 const COOKIE_OPTS = "HttpOnly; Secure; SameSite=Lax; Path=/";
 
 const LoginBody = z.object({
@@ -26,6 +33,14 @@ const auth = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
 /** POST /v1/auth/login — establish session */
 auth.post("/login", async (c) => {
+  // Rate limit by IP to protect against brute force (dev-only in-memory; TODO: Durable Objects for prod)
+  const clientIp = c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for") ?? "unknown";
+  const rl = loginLimiter.check(clientIp);
+  if (!rl.allowed) {
+    c.header("Retry-After", String(rl.retryAfterSeconds));
+    return c.json(errJson("RATE_LIMITED", "Too many login attempts. Try again later."), 429);
+  }
+
   const parse = LoginBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
   const { email, password } = parse.data;

@@ -3,7 +3,8 @@ import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
 import { requireAuth, requireAdmin } from "../middleware/auth";
 import { queryAll } from "../lib/db";
-import { errJson } from "../lib/validate";
+import { errJson, escapeCsvCell } from "../lib/validate";
+import { writeAuditLog } from "../lib/audit";
 
 const ALLOWED_ENTITIES = ["communities", "weekly_metrics", "marketing_weekly", "import_runs", "notification_events"] as const;
 type ExportEntity = (typeof ALLOWED_ENTITIES)[number];
@@ -23,14 +24,20 @@ exports_.get("/csv", async (c) => {
     return new Response("", { status: 200, headers: { "Content-Type": "text/csv" } });
   }
 
-  // Build CSV
+  const actor = c.get("user");
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "export.csv", entityType: entity, entityId: "*",
+    after: { row_count: rows.length },
+  });
+
+  // Build CSV with formula injection protection (prefix =, +, -, @ with single quote)
   const headers = Object.keys(rows[0]);
   const csvLines = [headers.join(",")];
   for (const row of rows) {
     csvLines.push(headers.map((h) => {
       const val = row[h];
       if (val === null || val === undefined) return "";
-      const str = String(val);
+      const str = escapeCsvCell(String(val));
       return str.includes(",") || str.includes('"') || str.includes("\n")
         ? `"${str.replace(/"/g, '""')}"`
         : str;

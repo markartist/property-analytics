@@ -6,6 +6,7 @@ import { requireAuth, requireAdmin } from "../middleware/auth";
 import { queryAll, queryFirst, run } from "../lib/db";
 import { newId } from "../lib/id";
 import { nowISO, errJson } from "../lib/validate";
+import { writeAuditLog } from "../lib/audit";
 
 const CreateBody = z.object({
   name: z.string().min(1),
@@ -55,6 +56,11 @@ communities.post("/", requireAdmin, async (c) => {
     [id, name, external_key ?? null, region ?? null, now, actor.id, now, actor.id]
   );
 
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "community.create", entityType: "community", entityId: id,
+    after: { id, name, external_key: external_key ?? null, region: region ?? null },
+  });
+
   return c.json({ id, name, external_key: external_key ?? null, region: region ?? null, status: "active" }, 201);
 });
 
@@ -83,10 +89,20 @@ communities.patch("/:id", requireAdmin, async (c) => {
   sets.push("updated_at = ?", "updated_by = ?");
   params.push(now, actor.id, id);
 
+  const before = await queryFirst(c.env.POP_BRIEF_DB,
+    "SELECT id, name, external_key, region, status FROM communities WHERE id = ?", [id]
+  );
+
   await run(c.env.POP_BRIEF_DB, `UPDATE communities SET ${sets.join(", ")} WHERE id = ?`, params);
   const updated = await queryFirst(c.env.POP_BRIEF_DB,
     "SELECT id, name, external_key, region, status FROM communities WHERE id = ?", [id]
   );
+
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "community.update", entityType: "community", entityId: id,
+    before, after: updated,
+  });
+
   return c.json(updated);
 });
 
@@ -100,10 +116,21 @@ communities.delete("/:id", requireAdmin, async (c) => {
 
   const now = nowISO();
   const actor = c.get("user");
+
+  const before = await queryFirst(c.env.POP_BRIEF_DB,
+    "SELECT id, name, external_key, region, status FROM communities WHERE id = ?", [id]
+  );
+
   await run(c.env.POP_BRIEF_DB,
     "UPDATE communities SET deleted_at = ?, deleted_by = ?, status = 'inactive', updated_at = ?, updated_by = ? WHERE id = ?",
     [now, actor.id, now, actor.id, id]
   );
+
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "community.delete", entityType: "community", entityId: id,
+    before, after: { status: "inactive", deleted_at: now },
+  });
+
   return c.json({ ok: true, deleted_at: now });
 });
 
