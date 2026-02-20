@@ -3,7 +3,7 @@ import { z } from "zod";
 // -- Shared validators --
 
 /** Validates that a date string (YYYY-MM-DD) falls on a Friday. Per ADR-0002. */
-const fridayDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD format").refine(
+export const fridayDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD format").refine(
   (val) => new Date(val + "T00:00:00Z").getUTCDay() === 5,
   { message: "Date must be a Friday (ADR-0002)" }
 );
@@ -57,8 +57,24 @@ export type UpdateCommunityPayload = z.infer<typeof UpdateCommunityPayload>;
 
 // -- Metrics import schemas --
 
+export const MetricsImportRow = z.object({
+  metric_date: fridayDate,
+  window_days: z.union([z.literal(7), z.literal(30)]),
+  type: z.enum(["community", "portfolio"]),
+  community_id: z.string().nullable().optional(),
+  occupancy_rate: z.number().nullable().optional(),
+  leased_rate: z.number().nullable().optional(),
+  traffic_count: z.number().int().nullable().optional(),
+  applications_count: z.number().int().nullable().optional(),
+  move_ins: z.number().int().nullable().optional(),
+  move_outs: z.number().int().nullable().optional(),
+  delinquency_rate: z.number().nullable().optional(),
+  notes_text: z.string().nullable().optional(),
+});
+export type MetricsImportRow = z.infer<typeof MetricsImportRow>;
+
 export const MetricsImportPastePayload = z.object({
-  tsv: z.string().min(1, "TSV data is required"),
+  rows: z.array(MetricsImportRow).min(1, "At least one row is required"),
 });
 export type MetricsImportPastePayload = z.infer<typeof MetricsImportPastePayload>;
 
@@ -107,7 +123,7 @@ export type AnalysisQueryParams = z.infer<typeof AnalysisQueryParams>;
 // -- Export schemas --
 
 export const ExportCsvParams = z.object({
-  entity: z.enum(["weekly_metrics", "marketing_weekly"]),
+  entity: z.enum(["communities", "weekly_metrics", "marketing_weekly", "import_runs", "notification_events"]),
   week_ending: fridayDate.optional(),
 });
 export type ExportCsvParams = z.infer<typeof ExportCsvParams>;

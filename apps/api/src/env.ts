@@ -8,6 +8,7 @@ export interface Env {
   RESEND_API_KEY: string;
   EMAIL_FROM: string;
   SESSION_SIGNING_SECRET: string;
+  ENABLE_EMAIL_SEND: string; // "true" | "false" — feature flag for email delivery
 }
 
 /**

@@ -16,6 +16,10 @@ database_id = "PLACEHOLDER_D1_DATABASE_ID"
 binding = "POP_BRIEF_UPLOADS"
 bucket_name = "pop-brief-uploads"
 
+# Environment variables
+[vars]
+ENABLE_EMAIL_SEND = "false"
+
 # Secrets (set via `wrangler secret put <NAME>`)
 # RESEND_API_KEY
 # EMAIL_FROM
