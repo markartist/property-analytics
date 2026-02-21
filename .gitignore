@@ -51,3 +51,7 @@ exports/
 
 # Logs
 **/*.log
+/Portfolio_Dashboard/
+/Portfolio_Monitoring/
+/Property_Intelligence_Brief/
+/Spotlight_Properties_Report/
