@@ -1,0 +1,26 @@
+name = "pop-brief-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Custom domain (ADR-0001: api.venterradev.com)
+# routes = [{ pattern = "api.venterradev.com", custom_domain = true }]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "POP_BRIEF_DB"
+database_name = "pop-brief-db"
+database_id = "PLACEHOLDER_D1_DATABASE_ID"
+
+# R2 Object Storage binding
+[[r2_buckets]]
+binding = "POP_BRIEF_UPLOADS"
+bucket_name = "pop-brief-uploads"
+
+# Environment variables
+[vars]
+ENABLE_EMAIL_SEND = "false"
+
+# Secrets (set via `wrangler secret put <NAME>`)
+# RESEND_API_KEY
+# EMAIL_FROM
+# SESSION_SIGNING_SECRET
