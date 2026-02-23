@@ -9,6 +9,13 @@ import { metrics } from "./routes/metrics";
 import { marketing } from "./routes/marketing";
 import { analysis } from "./routes/analysis";
 import { exports_ } from "./routes/exports";
+import { createLeasingMetricsRouter } from "./routes/leasing-metrics";
+import { marketingData } from "./routes/marketing-data";
+import { pib } from "./routes/pib";
+
+// Phase 2 leasing funnel metric routers
+const t7Metrics = createLeasingMetricsRouter("t7_metrics", "t7_metrics");
+const t30Metrics = createLeasingMetricsRouter("t30_metrics", "t30_metrics");
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
@@ -32,6 +39,12 @@ app.route("/v1/metrics", metrics);
 app.route("/v1/marketing", marketing);
 app.route("/v1/analysis", analysis);
 app.route("/v1/exports", exports_);
+
+// Phase 2: leasing funnel metrics + marketing data
+app.route("/v1/t7-metrics", t7Metrics);
+app.route("/v1/t30-metrics", t30Metrics);
+app.route("/v1/marketing-data", marketingData);
+app.route("/v1/pib", pib);
 
 // 404 fallback
 app.notFound((c) =>
