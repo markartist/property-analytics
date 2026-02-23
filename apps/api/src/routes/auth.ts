@@ -16,7 +16,7 @@ const SESSION_TTL_HOURS = 72;
  * SameSite=Lax (CSRF protection while allowing top-level navigation),
  * Path=/ (scoped to entire API). Max-Age set per-use.
  */
-const COOKIE_OPTS = "HttpOnly; Secure; SameSite=Lax; Path=/";
+const COOKIE_OPTS = "HttpOnly; Secure; SameSite=None; Path=/; Domain=.venterradev.com";
 
 const LoginBody = z.object({
   email: z.string().email().transform((v) => v.toLowerCase().trim()),

@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Venterra corporate blue: #15284B → hsl(219, 56%, 19%) */
+  --background: 0 0% 100%;
+  --foreground: 219 56% 19%;
+  --card: 0 0% 100%;
+  --card-foreground: 219 56% 19%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 219 56% 19%;
+  --primary: 219 56% 19%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 214 32% 95%;
+  --secondary-foreground: 219 56% 19%;
+  --muted: 214 32% 95%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 214 32% 95%;
+  --accent-foreground: 219 56% 19%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 219 56% 19%;
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}

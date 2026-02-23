@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
+import "./globals.css";
+import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-  title: "POP Brief",
-  description: "Property Ops Performance Brief",
+  title: "POP Brief — Venterra WebOps",
+  description: "Property Ops Performance Brief by Venterra WebOps",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0, padding: "1rem" }}>
-        <header style={{ borderBottom: "1px solid #ccc", paddingBottom: "0.5rem", marginBottom: "1rem" }}>
-          <strong>POP Brief</strong>
-        </header>
-        <main>{children}</main>
+      <body className="min-h-screen bg-slate-50 antialiased">
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
