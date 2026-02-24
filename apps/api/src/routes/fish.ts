@@ -1,5 +1,5 @@
 /**
- * The Fishing Hole — AI Chat powered by Claude
+ * The Fishing Hole — AI Chat powered by OpenAI (GPT-4o)
  *
  * Endpoints:
  *   POST /cast         — Submit a question, receive SSE stream of events
@@ -15,7 +15,7 @@ import { queryAll, queryFirst } from "../lib/db";
 const fish = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 fish.use("*", requireAuth);
 
-// ── D1 Schema (included in Claude system prompt) ────────────────────────────
+// ── D1 Schema (included in system prompt) ───────────────────────────────────
 
 const D1_SCHEMA = `
 -- Database: Venterra Property Analytics (D1 / SQLite)
@@ -160,58 +160,70 @@ RULES:
 PERSONALITY:
 You're a friendly, knowledgeable guide at The Data Pond resort. Keep fishing metaphors light and occasional — focus on delivering clear, accurate analytics insights.`;
 
-// ── Tool definitions ────────────────────────────────────────────────────────
+// ── Tool definitions (OpenAI function-calling format) ────────────────────────
 
 const TOOLS = [
   {
-    name: "query_pond",
-    description:
-      "Execute a read-only SQL query against the Venterra analytics database. Only SELECT statements allowed. Always JOIN with communities to get property names. Use snapshot_date or week_date for date filtering.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        sql: { type: "string" as const, description: "A SELECT SQL query." },
-        explanation: { type: "string" as const, description: "Brief explanation of what this query does." },
-      },
-      required: ["sql", "explanation"],
-    },
-  },
-  {
-    name: "get_property_detail",
-    description: "Look up a specific property by name (fuzzy match) and return its latest PIB data across all tables.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        property_name: { type: "string" as const, description: "Property name or partial name to search for." },
-      },
-      required: ["property_name"],
-    },
-  },
-  {
-    name: "get_portfolio_summary",
-    description: "Get a high-level portfolio summary with latest metrics across all properties.",
-    input_schema: {
-      type: "object" as const,
-      properties: {},
-      required: [] as string[],
-    },
-  },
-  {
-    name: "generate_csv",
-    description:
-      "Convert tabular data to a CSV file for download. Use after query_pond when the user wants an export.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        filename: { type: "string" as const, description: "Name for the CSV (without extension)." },
-        columns: { type: "array" as const, items: { type: "string" as const }, description: "Column headers." },
-        rows: {
-          type: "array" as const,
-          items: { type: "array" as const, items: { type: "string" as const } },
-          description: "Array of row arrays.",
+    type: "function" as const,
+    function: {
+      name: "query_pond",
+      description:
+        "Execute a read-only SQL query against the Venterra analytics database. Only SELECT statements allowed. Always JOIN with communities to get property names. Use snapshot_date or week_date for date filtering.",
+      parameters: {
+        type: "object",
+        properties: {
+          sql: { type: "string", description: "A SELECT SQL query." },
+          explanation: { type: "string", description: "Brief explanation of what this query does." },
         },
+        required: ["sql", "explanation"],
       },
-      required: ["filename", "columns", "rows"],
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "get_property_detail",
+      description: "Look up a specific property by name (fuzzy match) and return its latest PIB data across all tables.",
+      parameters: {
+        type: "object",
+        properties: {
+          property_name: { type: "string", description: "Property name or partial name to search for." },
+        },
+        required: ["property_name"],
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "get_portfolio_summary",
+      description: "Get a high-level portfolio summary with latest metrics across all properties.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "generate_csv",
+      description:
+        "Convert tabular data to a CSV file for download. Use after query_pond when the user wants an export.",
+      parameters: {
+        type: "object",
+        properties: {
+          filename: { type: "string", description: "Name for the CSV (without extension)." },
+          columns: { type: "array", items: { type: "string" }, description: "Column headers." },
+          rows: {
+            type: "array",
+            items: { type: "array", items: { type: "string" } },
+            description: "Array of row arrays.",
+          },
+        },
+        required: ["filename", "columns", "rows"],
+      },
     },
   },
 ];
@@ -407,50 +419,65 @@ function encodeSSE(event: SSEEvent): string {
   return `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
 }
 
-// ── Claude API types ────────────────────────────────────────────────────────
+// ── OpenAI API types ────────────────────────────────────────────────────────
 
-interface ClaudeMessage {
-  role: "user" | "assistant";
-  content: string | ClaudeBlock[];
+interface ChatMessage {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string | null;
+  tool_calls?: ToolCall[];
+  tool_call_id?: string;
 }
 
-interface ClaudeBlock {
-  type: "text" | "tool_use" | "tool_result";
-  text?: string;
-  id?: string;
-  name?: string;
-  input?: Record<string, unknown>;
-  tool_use_id?: string;
-  content?: string;
-  is_error?: boolean;
+interface ToolCall {
+  id: string;
+  type: "function";
+  function: {
+    name: string;
+    arguments: string;
+  };
 }
 
-async function callClaude(
+interface ChatResponse {
+  choices: {
+    message: {
+      role: "assistant";
+      content: string | null;
+      tool_calls?: ToolCall[];
+    };
+    finish_reason: string;
+  }[];
+}
+
+async function callOpenAI(
   apiKey: string,
-  messages: ClaudeMessage[],
-): Promise<{ content: ClaudeBlock[]; stop_reason: string }> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  messages: ChatMessage[],
+): Promise<{ content: string | null; tool_calls: ToolCall[]; finish_reason: string }> {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "gpt-4o",
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      tools: TOOLS,
       messages,
+      tools: TOOLS,
     }),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Claude API ${res.status}: ${text}`);
+    throw new Error(`OpenAI API ${res.status}: ${text}`);
   }
 
-  return (await res.json()) as { content: ClaudeBlock[]; stop_reason: string };
+  const data = (await res.json()) as ChatResponse;
+  const choice = data.choices[0];
+  return {
+    content: choice.message.content,
+    tool_calls: choice.message.tool_calls ?? [],
+    finish_reason: choice.finish_reason,
+  };
 }
 
 // ── POST /cast — Main chat endpoint ─────────────────────────────────────────
@@ -463,7 +490,7 @@ fish.post("/cast", async (c) => {
     return c.json({ error: { code: "BAD_REQUEST", message: "Question is required", details: [] } }, 400);
   }
 
-  const apiKey = c.env.ANTHROPIC_API_KEY;
+  const apiKey = c.env.OPENAI_API_KEY;
   if (!apiKey) {
     return c.json({ error: { code: "CONFIG_ERROR", message: "AI service not configured", details: [] } }, 503);
   }
@@ -471,8 +498,10 @@ fish.post("/cast", async (c) => {
   const db = c.env.POP_BRIEF_DB;
   const r2 = c.env.POP_BRIEF_UPLOADS;
 
-  // Build conversation messages (keep last 10 history entries)
-  const messages: ClaudeMessage[] = [];
+  // Build conversation messages with system prompt
+  const messages: ChatMessage[] = [
+    { role: "system", content: SYSTEM_PROMPT },
+  ];
   if (body.history) {
     for (const msg of body.history.slice(-10)) {
       messages.push({ role: msg.role as "user" | "assistant", content: msg.content });
@@ -499,43 +528,42 @@ fish.post("/cast", async (c) => {
 
       while (iterations < MAX_LOOPS) {
         iterations++;
-        const response = await callClaude(apiKey, convo);
-
-        const toolBlocks = response.content.filter((b) => b.type === "tool_use");
-        const textBlocks = response.content.filter((b) => b.type === "text");
+        const response = await callOpenAI(apiKey, convo);
 
         // If no tool calls, emit the final text and break
-        if (toolBlocks.length === 0 || response.stop_reason === "end_turn") {
-          const text = textBlocks.map((b) => b.text ?? "").join("\n");
-          if (text) await write({ type: "text", data: { content: text } });
+        if (response.tool_calls.length === 0 || response.finish_reason === "stop") {
+          if (response.content) {
+            await write({ type: "text", data: { content: response.content } });
+          }
           break;
         }
 
-        // Add assistant message (with tool_use blocks) to conversation
-        convo.push({ role: "assistant", content: response.content });
+        // Add assistant message (with tool_calls) to conversation
+        convo.push({
+          role: "assistant",
+          content: response.content,
+          tool_calls: response.tool_calls,
+        });
 
-        // Execute each tool and collect results
-        const toolResults: ClaudeBlock[] = [];
-
-        for (const block of toolBlocks) {
+        // Execute each tool and append results as tool messages
+        for (const tc of response.tool_calls) {
+          const args = JSON.parse(tc.function.arguments) as Record<string, unknown>;
           const { result, events } = await executeTool(
-            block.name!,
-            block.input as Record<string, unknown>,
+            tc.function.name,
+            args,
             db,
             r2,
           );
 
           for (const evt of events) await write(evt);
 
-          toolResults.push({
-            type: "tool_result",
-            tool_use_id: block.id,
+          convo.push({
+            role: "tool",
+            tool_call_id: tc.id,
             content: JSON.stringify(result),
           });
         }
 
-        // Feed tool results back to Claude
-        convo.push({ role: "user", content: toolResults });
         await write({ type: "thinking", data: { message: "Analyzing the catch..." } });
       }
 
