@@ -10,7 +10,7 @@ import { Hono } from "hono";
 import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
 import { requireAuth } from "../middleware/auth";
-import { queryAll, queryFirst } from "../lib/db";
+import { queryAll, queryFirst, run } from "../lib/db";
 
 const fish = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 fish.use("*", requireAuth);
@@ -81,6 +81,7 @@ CREATE TABLE pib_cir (
   total_sessions INTEGER, intent_events INTEGER,
   cir_value REAL, cir_status TEXT,  -- 'strong'|'moderate'|'low'|'critical'
   prior_cir_value REAL, cir_trend_pct REAL,
+  -- CIR = Customer Intent Rate (intent_events / total_sessions)
   UNIQUE(community_id, snapshot_date)
 );
 
@@ -480,10 +481,30 @@ async function callOpenAI(
   };
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function uid(): string {
+  return crypto.randomUUID();
+}
+
+function now(): string {
+  return new Date().toISOString();
+}
+
+/** Generate a short title from the first question. */
+function titleFromQuestion(q: string): string {
+  const clean = q.replace(/\n/g, " ").trim();
+  return clean.length > 80 ? clean.slice(0, 77) + "..." : clean;
+}
+
 // ── POST /cast — Main chat endpoint ─────────────────────────────────────────
 
 fish.post("/cast", async (c) => {
-  const body = await c.req.json<{ question: string; history?: { role: string; content: string }[] }>();
+  const body = await c.req.json<{
+    question: string;
+    conversation_id?: string;
+    history?: { role: string; content: string }[];
+  }>();
   const question = body.question?.trim();
 
   if (!question) {
@@ -497,17 +518,55 @@ fish.post("/cast", async (c) => {
 
   const db = c.env.POP_BRIEF_DB;
   const r2 = c.env.POP_BRIEF_UPLOADS;
+  const user = c.get("user");
+  const startTime = Date.now();
 
-  // Build conversation messages with system prompt
+  // ── Resolve or create conversation ──
+  let conversationId = body.conversation_id ?? null;
+
+  if (conversationId) {
+    // Verify it belongs to this user
+    const existing = await queryFirst<{ id: string }>(db,
+      `SELECT id FROM fish_conversations WHERE id = ? AND user_id = ?`,
+      [conversationId, user.id],
+    );
+    if (!existing) conversationId = null; // fall through to create
+  }
+
+  if (!conversationId) {
+    conversationId = uid();
+    const ts = now();
+    await run(db,
+      `INSERT INTO fish_conversations (id, user_id, user_email, title, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [conversationId, user.id, user.email, titleFromQuestion(question), ts, ts],
+    );
+  } else {
+    await run(db, `UPDATE fish_conversations SET updated_at = ? WHERE id = ?`, [now(), conversationId]);
+  }
+
+  // Save user message
+  await run(db,
+    `INSERT INTO fish_messages (id, conversation_id, role, content, created_at)
+     VALUES (?, ?, 'user', ?, ?)`,
+    [uid(), conversationId, question, now()],
+  );
+
+  // Build OpenAI messages — load history from DB if conversation exists
   const messages: ChatMessage[] = [
     { role: "system", content: SYSTEM_PROMPT },
   ];
-  if (body.history) {
-    for (const msg of body.history.slice(-10)) {
-      messages.push({ role: msg.role as "user" | "assistant", content: msg.content });
-    }
+
+  // Load prior messages from this conversation for context
+  const priorMsgs = await queryAll<{ role: string; content: string }>(db,
+    `SELECT role, content FROM fish_messages
+     WHERE conversation_id = ? AND content IS NOT NULL
+     ORDER BY created_at ASC`,
+    [conversationId],
+  );
+  for (const msg of priorMsgs.slice(-20)) {
+    messages.push({ role: msg.role as "user" | "assistant", content: msg.content });
   }
-  messages.push({ role: "user", content: question });
 
   // SSE stream
   const { readable, writable } = new TransformStream();
@@ -519,8 +578,15 @@ fish.post("/cast", async (c) => {
   };
 
   const process = async () => {
+    // Collect data for persistence
+    const allToolEvents: Record<string, unknown>[] = [];
+    const allTables: Record<string, unknown>[] = [];
+    const allCsvs: Record<string, unknown>[] = [];
+    let finalText = "";
+
     try {
-      await write({ type: "thinking", data: { message: "Casting into the data pond..." } });
+      // Send conversation_id first so frontend can track it
+      await write({ type: "thinking", data: { message: "Casting into the data pond...", conversation_id: conversationId } });
 
       let convo = [...messages];
       let iterations = 0;
@@ -533,6 +599,7 @@ fish.post("/cast", async (c) => {
         // If no tool calls, emit the final text and break
         if (response.tool_calls.length === 0 || response.finish_reason === "stop") {
           if (response.content) {
+            finalText = response.content;
             await write({ type: "text", data: { content: response.content } });
           }
           break;
@@ -555,26 +622,56 @@ fish.post("/cast", async (c) => {
             r2,
           );
 
-          for (const evt of events) await write(evt);
+          for (const evt of events) {
+            await write(evt);
+            if (evt.type === "tool") allToolEvents.push(evt.data as Record<string, unknown>);
+            if (evt.type === "table") allTables.push(evt.data as Record<string, unknown>);
+            if (evt.type === "csv") allCsvs.push(evt.data as Record<string, unknown>);
+          }
 
           convo.push({
             role: "tool",
             tool_call_id: tc.id,
             content: JSON.stringify(result),
           });
+
+          // Audit log for each tool call
+          const resultObj = result as Record<string, unknown>;
+          await run(db,
+            `INSERT INTO fish_audit_log (id, user_id, user_email, conversation_id, question, tool_name, tool_input_json, row_count, error, duration_ms, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uid(), user.id, user.email, conversationId, question,
+              tc.function.name, tc.function.arguments,
+              (resultObj.row_count as number) ?? null,
+              (resultObj.error as string) ?? null,
+              Date.now() - startTime, now(),
+            ],
+          );
         }
 
         await write({ type: "thinking", data: { message: "Analyzing the catch..." } });
       }
 
       if (iterations >= MAX_LOOPS) {
-        await write({
-          type: "text",
-          data: { content: "I hit the analysis depth limit. Try breaking your question into smaller parts for more detail." },
-        });
+        finalText = "I hit the analysis depth limit. Try breaking your question into smaller parts for more detail.";
+        await write({ type: "text", data: { content: finalText } });
       }
 
-      await write({ type: "done", data: {} });
+      // Save assistant message
+      await run(db,
+        `INSERT INTO fish_messages (id, conversation_id, role, content, tables_json, csvs_json, tool_events_json, created_at)
+         VALUES (?, ?, 'assistant', ?, ?, ?, ?, ?)`,
+        [
+          uid(), conversationId, finalText || null,
+          allTables.length ? JSON.stringify(allTables) : null,
+          allCsvs.length ? JSON.stringify(allCsvs) : null,
+          allToolEvents.length ? JSON.stringify(allToolEvents) : null,
+          now(),
+        ],
+      );
+
+      await write({ type: "done", data: { conversation_id: conversationId } });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "An unexpected error occurred";
       console.error("Fish error:", err);
@@ -593,6 +690,90 @@ fish.post("/cast", async (c) => {
       Connection: "keep-alive",
     },
   });
+});
+
+// ── GET /conversations — List user's conversations ──────────────────────────
+
+fish.get("/conversations", async (c) => {
+  const user = c.get("user");
+  const db = c.env.POP_BRIEF_DB;
+
+  const conversations = await queryAll<{
+    id: string; title: string; created_at: string; updated_at: string; message_count: number;
+  }>(db,
+    `SELECT fc.id, fc.title, fc.created_at, fc.updated_at,
+       (SELECT COUNT(*) FROM fish_messages fm WHERE fm.conversation_id = fc.id) as message_count
+     FROM fish_conversations fc
+     WHERE fc.user_id = ?
+     ORDER BY fc.updated_at DESC
+     LIMIT 50`,
+    [user.id],
+  );
+
+  return c.json({ conversations });
+});
+
+// ── GET /conversations/:id/messages — Load conversation messages ────────────
+
+fish.get("/conversations/:id/messages", async (c) => {
+  const user = c.get("user");
+  const db = c.env.POP_BRIEF_DB;
+  const convId = c.req.param("id");
+
+  // Verify ownership
+  const conv = await queryFirst<{ id: string; title: string }>(db,
+    `SELECT id, title FROM fish_conversations WHERE id = ? AND user_id = ?`,
+    [convId, user.id],
+  );
+  if (!conv) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Conversation not found", details: [] } }, 404);
+  }
+
+  const messages = await queryAll<{
+    id: string; role: string; content: string | null;
+    tables_json: string | null; csvs_json: string | null; tool_events_json: string | null;
+    created_at: string;
+  }>(db,
+    `SELECT id, role, content, tables_json, csvs_json, tool_events_json, created_at
+     FROM fish_messages WHERE conversation_id = ? ORDER BY created_at ASC`,
+    [convId],
+  );
+
+  // Parse JSON fields
+  const parsed = messages.map((m) => ({
+    id: m.id,
+    role: m.role,
+    content: m.content ?? "",
+    tables: m.tables_json ? JSON.parse(m.tables_json) : [],
+    csvs: m.csvs_json ? JSON.parse(m.csvs_json) : [],
+    events: m.tool_events_json ? JSON.parse(m.tool_events_json) : [],
+    created_at: m.created_at,
+  }));
+
+  return c.json({ conversation: conv, messages: parsed });
+});
+
+// ── DELETE /conversations/:id — Delete a conversation ───────────────────────
+
+fish.delete("/conversations/:id", async (c) => {
+  const user = c.get("user");
+  const db = c.env.POP_BRIEF_DB;
+  const convId = c.req.param("id");
+
+  // Verify ownership
+  const conv = await queryFirst<{ id: string }>(db,
+    `SELECT id FROM fish_conversations WHERE id = ? AND user_id = ?`,
+    [convId, user.id],
+  );
+  if (!conv) {
+    return c.json({ error: { code: "NOT_FOUND", message: "Conversation not found", details: [] } }, 404);
+  }
+
+  // CASCADE should handle messages, but be explicit
+  await run(db, `DELETE FROM fish_messages WHERE conversation_id = ?`, [convId]);
+  await run(db, `DELETE FROM fish_conversations WHERE id = ?`, [convId]);
+
+  return c.json({ deleted: true });
 });
 
 // ── GET /export/:key — CSV download ─────────────────────────────────────────

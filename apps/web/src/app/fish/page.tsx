@@ -4,11 +4,12 @@ import React from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useFishStream, type ChatMessage, type FishTableEvent, type FishCsvEvent } from "@/hooks/use-fish-stream";
+import { useFishStream, type ChatMessage, type FishTableEvent, type FishCsvEvent, type Conversation } from "@/hooks/use-fish-stream";
 import {
   Fish, ArrowLeft, Send, Loader2, Database, Download, Trash2,
-  Square, Sparkles, ChevronDown,
+  Square, Sparkles, ChevronDown, MessageSquare, Plus, Clock, X,
 } from "lucide-react";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
 
@@ -234,10 +235,18 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 // ── Main page ───────────────────────────────────────────────────
 
 export default function FishingHolePage() {
-  const { messages, isLoading, status, cast, stop, clear } = useFishStream();
+  const {
+    messages, isLoading, status, conversationId,
+    conversations, cast, stop, clear,
+    loadConversations, loadConversation, deleteConversation,
+  } = useFishStream();
   const [input, setInput] = React.useState("");
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Load conversations on mount
+  React.useEffect(() => { loadConversations(); }, [loadConversations]);
 
   // Auto-scroll on new messages
   React.useEffect(() => {
@@ -260,29 +269,83 @@ export default function FishingHolePage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50">
+    <div className="flex h-screen bg-slate-50">
+      {/* Conversation sidebar */}
+      {sidebarOpen && (
+        <div className="shrink-0 w-72 flex flex-col border-r border-slate-200 bg-white">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+            <span className="text-sm font-semibold text-slate-700">Conversations</span>
+            <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <button
+              onClick={() => { clear(); setSidebarOpen(false); }}
+              className="flex w-full items-center gap-2 px-4 py-3 text-sm text-[#15803D] font-medium hover:bg-slate-50 border-b border-slate-50"
+            >
+              <Plus className="h-4 w-4" />
+              New Conversation
+            </button>
+            {conversations.map((conv) => (
+              <div
+                key={conv.id}
+                className={`group flex items-start gap-2 px-4 py-3 cursor-pointer hover:bg-slate-50 border-b border-slate-50 ${
+                  conversationId === conv.id ? "bg-[#15803D]/5" : ""
+                }`}
+              >
+                <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <div className="min-w-0 flex-1" onClick={() => { loadConversation(conv.id); setSidebarOpen(false); }}>
+                  <p className="text-xs font-medium text-slate-700 truncate">{conv.title}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {formatDistanceToNow(parseISO(conv.updated_at), { addSuffix: true })}
+                    {" · "}{conv.message_count} msgs
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteConversation(conv.id); }}
+                  className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {conversations.length === 0 && (
+              <p className="px-4 py-8 text-center text-xs text-slate-400">No conversations yet</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main chat area */}
+      <div className="flex flex-1 flex-col min-w-0">
       {/* Header */}
       <div className="shrink-0 border-b border-slate-200 bg-[#15803D] px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center gap-4">
           <Link href="/" className="text-white/60 hover:text-white transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Link>
+          <button
+            onClick={() => { setSidebarOpen(!sidebarOpen); if (!sidebarOpen) loadConversations(); }}
+            className="text-white/60 hover:text-white transition-colors"
+            title="Past conversations"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </button>
           <Fish className="h-6 w-6 text-white/70" />
           <div className="flex-1">
             <h1 className="text-lg font-bold text-white">The Fishing Hole</h1>
             <p className="text-xs text-white/50">Cast a question into the data pond</p>
           </div>
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clear}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clear}
+            className="text-white/60 hover:text-white hover:bg-white/10"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            New
+          </Button>
         </div>
       </div>
 
@@ -370,6 +433,7 @@ export default function FishingHolePage() {
           )}
         </form>
       </div>
+    </div>
     </div>
   );
 }

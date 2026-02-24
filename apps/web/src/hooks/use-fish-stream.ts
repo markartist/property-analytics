@@ -64,12 +64,24 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+// ── Conversation types ──────────────────────────────────────────
+
+export interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
 // ── Hook ────────────────────────────────────────────────────────
 
 export function useFishStream() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const cast = useCallback(async (question: string) => {
@@ -100,11 +112,6 @@ export function useFishStream() {
     setIsLoading(true);
     setStatus("Casting into the data pond...");
 
-    // Build history from previous messages (text only)
-    const history = messages
-      .filter((m) => m.content)
-      .map((m) => ({ role: m.role, content: m.content }));
-
     const abort = new AbortController();
     abortRef.current = abort;
 
@@ -113,7 +120,7 @@ export function useFishStream() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, history }),
+        body: JSON.stringify({ question, conversation_id: conversationId }),
         signal: abort.signal,
       });
 
@@ -187,6 +194,7 @@ export function useFishStream() {
         switch (type) {
           case "thinking":
             setStatus(data.message);
+            if (data.conversation_id) setConversationId(data.conversation_id);
             break;
 
           case "tool":
@@ -234,14 +242,16 @@ export function useFishStream() {
             break;
 
           case "done":
-            // Final event — no action needed, stream will close
+            if (data.conversation_id) setConversationId(data.conversation_id);
+            // Refresh conversation list
+            loadConversations();
             break;
         }
       } catch {
         // Ignore malformed events
       }
     }
-  }, [messages, isLoading]);
+  }, [conversationId, isLoading]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -251,8 +261,62 @@ export function useFishStream() {
 
   const clear = useCallback(() => {
     setMessages([]);
+    setConversationId(null);
     setStatus(null);
   }, []);
 
-  return { messages, isLoading, status, cast, stop, clear };
+  // ── Conversation management ───────────────────────────────────
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/v1/fish/conversations`, { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setConversations(data.conversations ?? []);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const loadConversation = useCallback(async (convId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/v1/fish/conversations/${convId}/messages`, { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setConversationId(convId);
+
+      // Convert API messages to ChatMessage format
+      const msgs: ChatMessage[] = data.messages.map((m: {
+        id: string; role: string; content: string;
+        tables: FishTableEvent[]; csvs: FishCsvEvent[]; events: FishEvent[];
+      }) => ({
+        id: m.id,
+        role: m.role as "user" | "assistant",
+        content: m.content,
+        events: (m.events ?? []) as FishEvent[],
+        tables: m.tables,
+        csvs: m.csvs,
+      }));
+      setMessages(msgs);
+    } catch { /* ignore */ }
+  }, []);
+
+  const deleteConversation = useCallback(async (convId: string) => {
+    try {
+      await fetch(`${API_BASE}/v1/fish/conversations/${convId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      if (conversationId === convId) {
+        setMessages([]);
+        setConversationId(null);
+      }
+    } catch { /* ignore */ }
+  }, [conversationId]);
+
+  return {
+    messages, isLoading, status, conversationId,
+    conversations, cast, stop, clear,
+    loadConversations, loadConversation, deleteConversation,
+  };
 }
