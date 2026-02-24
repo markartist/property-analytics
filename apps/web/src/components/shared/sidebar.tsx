@@ -26,6 +26,7 @@ import {
 
 const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; adminOnly?: boolean; section?: string }[] = [
   { href: "/", label: "The Pond", icon: Waves },
+  { href: "/watchtower", label: "Watchtower", icon: Eye },
 
   // The Dock — reports
   { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "The Dock" },

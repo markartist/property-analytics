@@ -290,3 +290,36 @@ export async function getPondInsights(): Promise<PondInsightsResponse> {
   if (!res.ok) throw new Error("Failed to load pond insights");
   return res.json();
 }
+
+// ── Watchtower (Health) ──
+
+export interface TableStat {
+  key: string;
+  label: string;
+  row_count: number;
+  latest_date: string | null;
+  distinct_weeks: number;
+  latest_coverage: number;
+}
+
+export interface CoverageRow {
+  community_id: string;
+  community_name: string;
+  sources: Record<string, boolean>;
+}
+
+export interface HealthStatusResponse {
+  community_count: number;
+  health_score: number;
+  filled_cells: number;
+  total_cells: number;
+  table_stats: TableStat[];
+  coverage_matrix: CoverageRow[];
+  data_sources: { key: string; label: string }[];
+}
+
+export async function getHealthStatus(): Promise<HealthStatusResponse> {
+  const res = await apiFetch("/v1/health/status");
+  if (!res.ok) throw new Error("Failed to load health status");
+  return res.json();
+}

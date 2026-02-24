@@ -59,14 +59,13 @@ const ZONES = [
   },
   {
     key: "watchtower",
-    href: "/",
+    href: "/watchtower",
     icon: Eye,
     title: "The Watchtower",
     subtitle: "Check the pulse",
     description: "System health, data freshness, coverage matrix, and pipeline status at a glance.",
     gradient: "from-[#0D5E6D] to-[#0a4a56]",
     iconBg: "bg-white/20",
-    badge: "Coming Soon",
   },
   {
     key: "fish",
