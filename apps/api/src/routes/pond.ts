@@ -175,4 +175,73 @@ pond.get("/insights", async (c) => {
   return c.json({ week_date: weekDate, insights: insights.slice(0, 5), surface });
 });
 
+/** GET /dock-preview — lightweight headline metrics for the dock hub cards */
+pond.get("/dock-preview", async (c) => {
+  const db = c.env.POP_BRIEF_DB;
+
+  // Latest snapshot date
+  const latest = await queryFirst<{ snapshot_date: string }>(
+    db, `SELECT MAX(snapshot_date) as snapshot_date FROM pib_ga4_metrics`
+  );
+  const weekDate = latest?.snapshot_date ?? null;
+  if (!weekDate) {
+    return c.json({ week_date: null, pib: null, leasing: null, marketing: null, analysis: null });
+  }
+
+  // PIB metrics
+  const pibAgg = await queryFirst<{ communities: number; avg_cir: number; total_sessions: number; avg_mobile: number; avg_rating: number }>(
+    db,
+    `SELECT
+       COUNT(DISTINCT g.community_id) as communities,
+       AVG(cir.cir_value) as avg_cir,
+       SUM(g.total_sessions) as total_sessions,
+       AVG(sp.mobile_score) as avg_mobile,
+       AVG(rv.avg_rating) as avg_rating
+     FROM pib_ga4_metrics g
+     LEFT JOIN pib_cir cir ON cir.community_id = g.community_id AND cir.snapshot_date = g.snapshot_date
+     LEFT JOIN pib_site_performance sp ON sp.community_id = g.community_id AND sp.snapshot_date = g.snapshot_date
+     LEFT JOIN pib_reviews rv ON rv.community_id = g.community_id AND rv.snapshot_date = g.snapshot_date
+     WHERE g.snapshot_date = ?`,
+    [weekDate]
+  );
+
+  // Leasing
+  const leasingAgg = await queryFirst<{ t7_communities: number; total_gc: number; avg_v_gc: number }>(
+    db,
+    `SELECT COUNT(DISTINCT community_id) as t7_communities, SUM(g_cards) as total_gc, AVG(v_gc_conv) as avg_v_gc
+     FROM t7_metrics WHERE week_date = ? AND type = 'community'`,
+    [weekDate]
+  );
+
+  // Marketing
+  const mktAgg = await queryFirst<{ communities: number; avg_occ: number; total_ad_spend: number }>(
+    db,
+    `SELECT COUNT(*) as communities, AVG(occupancy) as avg_occ,
+       SUM(COALESCE(google_ppc,0) + COALESCE(google_remarketing,0)) as total_ad_spend
+     FROM marketing_data WHERE week_date = ?`,
+    [weekDate]
+  );
+
+  return c.json({
+    week_date: weekDate,
+    pib: pibAgg ? {
+      communities: pibAgg.communities,
+      avg_cir: pibAgg.avg_cir != null ? Math.round(pibAgg.avg_cir * 10) / 10 : null,
+      total_sessions: pibAgg.total_sessions,
+      avg_mobile_score: pibAgg.avg_mobile != null ? Math.round(pibAgg.avg_mobile) : null,
+      avg_rating: pibAgg.avg_rating != null ? Math.round(pibAgg.avg_rating * 100) / 100 : null,
+    } : null,
+    leasing: leasingAgg ? {
+      communities: leasingAgg.t7_communities,
+      total_guest_cards: leasingAgg.total_gc,
+      avg_visit_conv: leasingAgg.avg_v_gc != null ? Math.round(leasingAgg.avg_v_gc * 10) / 10 : null,
+    } : null,
+    marketing: mktAgg ? {
+      communities: mktAgg.communities,
+      avg_occupancy: mktAgg.avg_occ != null ? Math.round(mktAgg.avg_occ * 10) / 10 : null,
+      total_ad_spend: Math.round(mktAgg.total_ad_spend ?? 0),
+    } : null,
+  });
+});
+
 export { pond };

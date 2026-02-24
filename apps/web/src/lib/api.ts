@@ -323,3 +323,18 @@ export async function getHealthStatus(): Promise<HealthStatusResponse> {
   if (!res.ok) throw new Error("Failed to load health status");
   return res.json();
 }
+
+// ── Dock Preview ──
+
+export interface DockPreviewResponse {
+  week_date: string | null;
+  pib: { communities: number; avg_cir: number | null; total_sessions: number; avg_mobile_score: number | null; avg_rating: number | null } | null;
+  leasing: { communities: number; total_guest_cards: number; avg_visit_conv: number | null } | null;
+  marketing: { communities: number; avg_occupancy: number | null; total_ad_spend: number } | null;
+}
+
+export async function getDockPreview(): Promise<DockPreviewResponse> {
+  const res = await apiFetch("/v1/pond/dock-preview");
+  if (!res.ok) throw new Error("Failed to load dock preview");
+  return res.json();
+}

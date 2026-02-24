@@ -27,9 +27,10 @@ import {
 const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; adminOnly?: boolean; section?: string }[] = [
   { href: "/", label: "The Pond", icon: Waves },
   { href: "/watchtower", label: "Watchtower", icon: Eye },
+  { href: "/dock", label: "The Dock", icon: Anchor },
 
-  // The Dock — reports
-  { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "The Dock" },
+  // Reports
+  { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "Reports" },
   { href: "/analysis", label: "Analysis", icon: BarChart2 },
   { href: "/marketing", label: "Marketing Data", icon: Megaphone },
   { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar },

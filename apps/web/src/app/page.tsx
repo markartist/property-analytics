@@ -49,7 +49,7 @@ const INSIGHT_ICON_COLORS: Record<string, string> = {
 const ZONES = [
   {
     key: "dock",
-    href: "/pib",
+    href: "/dock",
     icon: Anchor,
     title: "The Dock",
     subtitle: "Browse your reports",
