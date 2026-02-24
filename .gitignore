@@ -15,6 +15,18 @@ Thumbs.db
 *.swp
 *.swo
 
+# Node / build artifacts
+**/node_modules/
+**/.next/
+**/.wrangler/
+**/out/
+
+# Generated SQL (D1 sync artifacts)
+apps/api/scripts/generated/
+
+# Misc
+cookies.txt
+
 # Python
 __pycache__/
 *.py[cod]

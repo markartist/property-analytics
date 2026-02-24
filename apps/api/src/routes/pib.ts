@@ -2,8 +2,9 @@
  * PIB (Property Intelligence Brief) dashboard routes.
  *
  * Endpoints:
- *   GET /portfolio?week_date=YYYY-MM-DD  — portfolio rollup with all KPIs
- *   GET /weeks                           — available snapshot dates
+ *   GET /portfolio?week_date=YYYY-MM-DD       — portfolio rollup with all KPIs
+ *   GET /weeks                                — available snapshot dates
+ *   GET /:communityId?week_date=YYYY-MM-DD    — single-property full detail
  */
 
 import { Hono } from "hono";
@@ -167,6 +168,149 @@ pib.get("/portfolio", async (c) => {
   };
 
   return c.json({ summary, communities });
+});
+
+/** GET /:communityId?week_date=YYYY-MM-DD — single-property full PIB detail */
+pib.get("/:communityId", async (c) => {
+  const db = c.env.POP_BRIEF_DB;
+  const communityId = c.req.param("communityId");
+  let weekDate = c.req.query("week_date");
+
+  // Default to latest available snapshot for this community
+  if (!weekDate) {
+    const latest = await queryFirst<{ snapshot_date: string }>(
+      db,
+      `SELECT MAX(snapshot_date) as snapshot_date FROM pib_ga4_metrics WHERE community_id = ?`,
+      [communityId]
+    );
+    weekDate = latest?.snapshot_date ?? null;
+    if (!weekDate) {
+      return c.json(errJson("NOT_FOUND", "No PIB data for this community"), 404);
+    }
+  }
+
+  // Community info
+  const community = await queryFirst(
+    db,
+    `SELECT id, name, ga4_property_id, unit_count, full_url, city, state, region
+     FROM communities WHERE id = ? AND deleted_at IS NULL`,
+    [communityId]
+  );
+  if (!community) {
+    return c.json(errJson("NOT_FOUND", "Community not found"), 404);
+  }
+
+  // GA4 metrics (full detail)
+  const ga4 = await queryFirst(
+    db,
+    `SELECT * FROM pib_ga4_metrics WHERE community_id = ? AND snapshot_date = ?`,
+    [communityId, weekDate]
+  );
+
+  // Site performance (full CWV)
+  const sitePerf = await queryFirst(
+    db,
+    `SELECT * FROM pib_site_performance WHERE community_id = ? AND snapshot_date = ?`,
+    [communityId, weekDate]
+  );
+
+  // Local presence (GBP)
+  const localPresence = await queryFirst(
+    db,
+    `SELECT * FROM pib_local_presence WHERE community_id = ? AND snapshot_date = ?`,
+    [communityId, weekDate]
+  );
+
+  // Search performance (GSC + keywords)
+  const searchPerf = await queryFirst<Record<string, unknown>>(
+    db,
+    `SELECT * FROM pib_search_performance WHERE community_id = ? AND snapshot_date = ?`,
+    [communityId, weekDate]
+  );
+  // Parse JSON fields
+  let topKeywords: unknown[] = [];
+  if (searchPerf?.top_keywords_json) {
+    try { topKeywords = JSON.parse(searchPerf.top_keywords_json as string); } catch {}
+  }
+
+  // CIR
+  const cir = await queryFirst(
+    db,
+    `SELECT * FROM pib_cir WHERE community_id = ? AND snapshot_date = ?`,
+    [communityId, weekDate]
+  );
+
+  // Reviews & sentiment
+  const reviews = await queryFirst<Record<string, unknown>>(
+    db,
+    `SELECT * FROM pib_reviews WHERE community_id = ? AND snapshot_date = ?`,
+    [communityId, weekDate]
+  );
+  let themes: Record<string, number> = {};
+  let criticalReviews: unknown[] = [];
+  if (reviews?.themes_json) {
+    try { themes = JSON.parse(reviews.themes_json as string); } catch {}
+  }
+  if (reviews?.critical_reviews_json) {
+    try { criticalReviews = JSON.parse(reviews.critical_reviews_json as string); } catch {}
+  }
+
+  // Marketing data (occupancy, ads, GC per door)
+  const marketing = await queryFirst(
+    db,
+    `SELECT * FROM marketing_data WHERE community_id = ? AND week_date = ?`,
+    [communityId, weekDate]
+  );
+
+  // T7 + T30 leasing metrics
+  const t7 = await queryFirst(
+    db,
+    `SELECT * FROM t7_metrics WHERE community_id = ? AND week_date = ? AND type = 'community'`,
+    [communityId, weekDate]
+  );
+  const t7Portfolio = await queryFirst(
+    db,
+    `SELECT * FROM t7_metrics WHERE community_id = ? AND week_date = ? AND type = 'portfolio'`,
+    [communityId, weekDate]
+  );
+  const t30 = await queryFirst(
+    db,
+    `SELECT * FROM t30_metrics WHERE community_id = ? AND week_date = ? AND type = 'community'`,
+    [communityId, weekDate]
+  );
+  const t30Portfolio = await queryFirst(
+    db,
+    `SELECT * FROM t30_metrics WHERE community_id = ? AND week_date = ? AND type = 'portfolio'`,
+    [communityId, weekDate]
+  );
+
+  return c.json({
+    week_date: weekDate,
+    community,
+    ga4: ga4 ?? null,
+    site_performance: sitePerf ?? null,
+    local_presence: localPresence ?? null,
+    search_performance: searchPerf ? {
+      ...searchPerf,
+      top_keywords_json: undefined,
+      top_keywords: topKeywords,
+    } : null,
+    cir: cir ?? null,
+    reviews: reviews ? {
+      ...reviews,
+      themes_json: undefined,
+      critical_reviews_json: undefined,
+      themes,
+      critical_reviews: criticalReviews,
+    } : null,
+    marketing: marketing ?? null,
+    leasing: {
+      t7: t7 ?? null,
+      t7_portfolio: t7Portfolio ?? null,
+      t30: t30 ?? null,
+      t30_portfolio: t30Portfolio ?? null,
+    },
+  });
 });
 
 export { pib };

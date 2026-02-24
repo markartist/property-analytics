@@ -178,7 +178,7 @@ class AnomalyDetector:
             gsc_baselines: GSC average values
         """
         # Get property name for baseline record
-        cursor.execute("SELECT canonical_name FROM properties WHERE property_id = ?", (property_id,))
+        cursor.execute("SELECT COALESCE(property_name, property_id) FROM properties WHERE property_id = ?", (property_id,))
         row = cursor.fetchone()
         prop_name = row[0] if row else property_id
         
@@ -358,7 +358,7 @@ class AnomalyDetector:
             severity: 'critical' or 'high'
         """
         # Get property name
-        cursor.execute("SELECT canonical_name FROM properties WHERE property_id = ?", (property_id,))
+        cursor.execute("SELECT COALESCE(property_name, property_id) FROM properties WHERE property_id = ?", (property_id,))
         row = cursor.fetchone()
         prop_name = row[0] if row else property_id
         

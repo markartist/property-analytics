@@ -35,6 +35,7 @@ from Data_Collection.monitoring.anomaly_detector import AnomalyDetector
 from Data_Collection.utils.preflight import validate_preflight, record_job_run
 from Data_Collection.collectors.gbp_collector import GoogleBusinessProfileCollector
 from Data_Collection.collectors.gsc_collector import GoogleSearchConsoleCollector
+from Data_Collection.collectors.guest_card_collector import GuestCardCollector
 from Data_Collection.monitoring.alert_sender import DataAlertEmailer
 
 # Preflight validation
@@ -79,6 +80,7 @@ class PortfolioDataCollector:
             'gtmetrix': {'success': 0, 'failed': 0, 'skipped': 0},
             'gbp_reviews': {'success': 0, 'failed': 0, 'skipped': 0},
             'gbp_insights': {'success': 0, 'failed': 0, 'skipped': 0},
+            'guest_card': {'success': 0, 'failed': 0, 'skipped': 0},
             'errors': []
         }
         
@@ -108,6 +110,12 @@ class PortfolioDataCollector:
         """Initialize GSC service with main Venterra credentials (not Cendana)"""
         try:
             creds = None
+            # In unattended launchd runs we must never trigger browser-based OAuth.
+            interactive_oauth_allowed = (
+                os.getenv('DISABLE_INTERACTIVE_OAUTH', '').lower() not in ('1', 'true', 'yes')
+                and sys.stdin.isatty()
+                and sys.stdout.isatty()
+            )
             
             # Check if we have a saved token
             if self.main_gsc_token_path.exists():
@@ -131,7 +139,12 @@ class PortfolioDataCollector:
                     if not self.main_gsc_creds_path.exists():
                         print(f'\n   ❌ GSC credentials not found at {self.main_gsc_creds_path}')
                         return None
-                    
+
+                    if not interactive_oauth_allowed:
+                        print('\n   ❌ Interactive OAuth disabled (non-interactive runtime).')
+                        print('   ❌ GSC token could not be refreshed automatically; skipping GSC initialization.')
+                        return None
+
                     try:
                         print('\n   🔐 Starting OAuth authentication for main GSC access...')
                         flow = InstalledAppFlow.from_client_secrets_file(
@@ -1342,6 +1355,56 @@ class PortfolioDataCollector:
                 'error': str(e)[:100]
             })
             print()
+
+    def collect_guest_card_data(self):
+        """Collect Guest Card CSV data from OneDrive source and archive processed files."""
+        print('=' * 80)
+        print('🗂️  COLLECTING GUEST CARD METRICS')
+        print('=' * 80)
+        print()
+
+        try:
+            collector = GuestCardCollector(db_path=self.db_path)
+            result = collector.ingest_pending_files(collection_id=None)
+
+            if result.files_found == 0:
+                print('   ⚠️  No guest card CSV files found (nothing to process)')
+                self.results['guest_card']['skipped'] = 1
+                print()
+                return
+
+            self.results['guest_card']['success'] = result.files_processed
+            self.results['guest_card']['failed'] = result.files_failed
+            self.results['guest_card']['skipped'] = max(
+                0, result.files_found - result.files_processed - result.files_failed
+            )
+
+            print(f'   📄 Files found: {result.files_found}')
+            print(f'   ✅ Files processed: {result.files_processed}')
+            print(f'   🔢 Rows upserted: {result.rows_upserted}')
+            if result.files_failed:
+                print(f'   ❌ Failed files: {result.files_failed}')
+
+            for err in result.errors:
+                self.results['errors'].append({
+                    'property': 'Guest Card CSV',
+                    'collector': 'Guest Card',
+                    'error': err[:100]
+                })
+
+            print()
+            print(f'Guest Card Summary: ✅ {self.results["guest_card"]["success"]} | ⚠️  {self.results["guest_card"]["skipped"]} | ❌ {self.results["guest_card"]["failed"]}')
+            print()
+
+        except Exception as e:
+            print(f'   ❌ Error collecting Guest Card data: {e}')
+            self.results['guest_card']['failed'] = 1
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'Guest Card',
+                'error': str(e)[:100]
+            })
+            print()
     
     def print_final_summary(self):
         """Print final collection summary"""
@@ -1362,9 +1425,10 @@ class PortfolioDataCollector:
         print(f'  GTMetrix:     ✅ {self.results["gtmetrix"]["success"]} | ⚠️  {self.results["gtmetrix"]["skipped"]} | ❌ {self.results["gtmetrix"]["failed"]}')
         print(f'  GBP Reviews:  ✅ {self.results["gbp_reviews"]["success"]} | ⚠️  {self.results["gbp_reviews"]["skipped"]} | ❌ {self.results["gbp_reviews"]["failed"]}')
         print(f'  GBP Insights: ✅ {self.results["gbp_insights"]["success"]} | ⚠️  {self.results["gbp_insights"]["skipped"]} | ❌ {self.results["gbp_insights"]["failed"]}')
+        print(f'  Guest Card:   ✅ {self.results["guest_card"]["success"]} | ⚠️  {self.results["guest_card"]["skipped"]} | ❌ {self.results["guest_card"]["failed"]}')
         print()
         
-        total_success = sum(self.results[cat]["success"] for cat in ['ga4', 'gsc', 'google_ads', 'psi', 'semrush', 'gtmetrix', 'gbp_reviews', 'gbp_insights'])
+        total_success = sum(self.results[cat]["success"] for cat in ['ga4', 'gsc', 'google_ads', 'psi', 'semrush', 'gtmetrix', 'gbp_reviews', 'gbp_insights', 'guest_card'])
         print(f'Total successful collections: {total_success}')
         
         if self.results['errors']:
@@ -1426,6 +1490,12 @@ class PortfolioDataCollector:
             
             # Collect GBP insights (runs in both quick and full mode)
             self.collect_gbp_insights()
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect Guest Card CSV (runs in both quick and full mode)
+            self.collect_guest_card_data()
             
             # Skip SEMRush and GTMetrix in quick mode
             if not self.quick_mode:

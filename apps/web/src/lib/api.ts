@@ -227,3 +227,37 @@ export async function getPibWeeks(): Promise<string[]> {
   if (!res.ok) throw new Error("Failed to load PIB weeks");
   return (await res.json()).weeks;
 }
+
+export interface PibDetailResponse {
+  week_date: string;
+  community: {
+    id: string;
+    name: string;
+    ga4_property_id: string;
+    unit_count: number | null;
+    full_url: string | null;
+    city: string | null;
+    state: string | null;
+    region: string | null;
+  };
+  ga4: Record<string, unknown> | null;
+  site_performance: Record<string, unknown> | null;
+  local_presence: Record<string, unknown> | null;
+  search_performance: (Record<string, unknown> & { top_keywords: { query: string; clicks: number; impressions: number; ctr: number; position: number }[] }) | null;
+  cir: Record<string, unknown> | null;
+  reviews: (Record<string, unknown> & { themes: Record<string, number>; critical_reviews: { reviewer: string; rating: number; comment: string; date: string }[] }) | null;
+  marketing: Record<string, unknown> | null;
+  leasing: {
+    t7: Record<string, unknown> | null;
+    t7_portfolio: Record<string, unknown> | null;
+    t30: Record<string, unknown> | null;
+    t30_portfolio: Record<string, unknown> | null;
+  };
+}
+
+export async function getPibDetail(communityId: string, weekDate?: string): Promise<PibDetailResponse> {
+  const q = weekDate ? `?week_date=${weekDate}` : "";
+  const res = await apiFetch(`/v1/pib/${communityId}${q}`);
+  if (!res.ok) throw new Error("Failed to load PIB detail");
+  return res.json();
+}

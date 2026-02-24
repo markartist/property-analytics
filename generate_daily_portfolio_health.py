@@ -133,7 +133,7 @@ class PortfolioHealthReport:
                 pm_prev.performance_score as prev_score,
                 pm_prev.lcp_value as prev_lcp
             FROM pagespeed_metrics pm_curr
-            LEFT JOIN property_metadata p ON pm_curr.property_id = p.property_id
+            LEFT JOIN properties p ON pm_curr.property_id = p.property_id
             LEFT JOIN pagespeed_metrics pm_prev ON pm_curr.property_id = pm_prev.property_id 
                 AND pm_prev.strategy = 'mobile' 
                 AND pm_prev.metric_date = '{prev_date if prev_date else latest_date}'
@@ -165,7 +165,7 @@ class PortfolioHealthReport:
                 pm_prev.performance_score as prev_score,
                 pm_prev.lcp_value as prev_lcp
             FROM pagespeed_metrics pm_curr
-            LEFT JOIN property_metadata p ON pm_curr.property_id = p.property_id
+            LEFT JOIN properties p ON pm_curr.property_id = p.property_id
             LEFT JOIN pagespeed_metrics pm_prev ON pm_curr.property_id = pm_prev.property_id 
                 AND pm_prev.strategy = 'mobile' 
                 AND pm_prev.metric_date = '{prev_date if prev_date else latest_date}'

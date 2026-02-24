@@ -13,7 +13,7 @@
 # Date: 2026-01-27
 #
 
-set -e  # Exit on error
+set -euo pipefail  # Exit on error, unset vars, and pipeline failures
 
 # Change to script directory
 cd "$(dirname "$0")"

@@ -5,7 +5,7 @@ Unified Email Sender Utility
 Central email solution for all Property Analytics reporting systems.
 
 Features:
-- Supports Gmail and Office 365 SMTP providers
+- Supports Gmail, Office 365, and AWS SES SMTP providers
 - Automatic provider detection from config
 - Multiple recipient support
 - HTML and plain text email support
@@ -103,6 +103,11 @@ class EmailSender:
             'smtp_server': 'smtp.office365.com',
             'smtp_port': 587,
             'display_name': 'Office 365'
+        },
+        'aws_ses': {
+            'smtp_server': 'email-smtp.us-east-1.amazonaws.com',
+            'smtp_port': 587,
+            'display_name': 'AWS SES'
         }
     }
     
@@ -117,7 +122,7 @@ class EmailSender:
         
         Args:
             config_path: Path to email config JSON. Defaults to credentials/email_config.json
-            provider: Override provider from config ('gmail' or 'office365')
+            provider: Override provider from config ('gmail', 'office365', or 'aws_ses')
             verbose: Print status messages
         """
         self.verbose = verbose
@@ -151,7 +156,11 @@ class EmailSender:
         self.smtp_server = self.config.get('smtp_server', provider_config['smtp_server'])
         self.smtp_port = self.config.get('smtp_port', provider_config['smtp_port'])
         self.sender_email = self.config['sender_email']
-        self.sender_password = self.config['sender_password']
+        # Support both legacy and current key names.
+        self.smtp_username = self.config.get('smtp_username', self.sender_email)
+        self.smtp_password = self.config.get('smtp_password', self.config.get('sender_password'))
+        if not self.smtp_password:
+            raise EmailConfigError("Missing SMTP password in config (smtp_password or sender_password)")
         self.default_recipients = self.config.get('default_recipients', [])
         
         # Optional display name for From header
@@ -162,6 +171,7 @@ class EmailSender:
             print(f"   Provider: {provider_config['display_name']} ({self.provider})")
             print(f"   SMTP Server: {self.smtp_server}:{self.smtp_port}")
             print(f"   From: {self.sender_email}")
+            print(f"   SMTP User: {self.smtp_username}")
             if self.default_recipients:
                 print(f"   Default Recipients: {', '.join(self.default_recipients)}")
             print()
@@ -270,7 +280,7 @@ class EmailSender:
             
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
-                server.login(self.sender_email, self.sender_password)
+                server.login(self.smtp_username, self.smtp_password)
                 server.send_message(msg, to_addrs=all_recipients)
             
             if self.verbose:
@@ -341,7 +351,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument('--provider', choices=['gmail', 'office365'],
+    parser.add_argument('--provider', choices=['gmail', 'office365', 'aws_ses'],
                        help='Override email provider')
     parser.add_argument('--subject', required=True, help='Email subject')
     parser.add_argument('--body', required=True, help='Email body')
