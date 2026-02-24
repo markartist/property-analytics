@@ -152,17 +152,17 @@ const HUB_SECTIONS: { key: string; label: string; icon: React.ElementType; color
   { key: "traffic", label: "Traffic & Engagement", icon: Activity, color: "bg-indigo-600",
     metric: (d) => ({ value: d.ga4 ? Number((d.ga4 as any).total_sessions ?? 0).toLocaleString() : "—", label: "Total Sessions", trend: d.ga4 ? (d.ga4 as any).sessions_trend_pct : null }) },
   { key: "search", label: "Search Performance", icon: Search, color: "bg-teal-600",
-    metric: (d) => ({ value: d.search_performance ? Number((d.search_performance as any).gsc_avg_position ?? 0).toFixed(1) : "—", label: "Avg Position" }) },
+    metric: (d) => ({ value: d.search_performance ? Number((d.search_performance as any).avg_position ?? 0).toFixed(1) : "—", label: "Avg Position" }) },
   { key: "ads", label: "Advertising", icon: DollarSign, color: "bg-rose-600",
     metric: (d) => { const t = Number((d.marketing as any)?.google_ppc ?? 0) + Number((d.marketing as any)?.google_remarketing ?? 0); return { value: t > 0 ? `$${t.toLocaleString()}` : "—", label: "Total Ad Spend" }; } },
   { key: "local-presence", label: "Local Presence", icon: MapPin, color: "bg-amber-600",
-    metric: (d) => ({ value: d.local_presence ? Number((d.local_presence as any).gbp_total_views ?? 0).toLocaleString() : "—", label: "GBP Views" }) },
+    metric: (d) => ({ value: d.local_presence ? Number((d.local_presence as any).total_profile_views ?? 0).toLocaleString() : "—", label: "GBP Views" }) },
   { key: "conversion", label: "Conversion & Leasing", icon: Zap, color: "bg-green-600",
     metric: (d) => ({ value: d.cir ? `${Number((d.cir as any).cir_value ?? 0).toFixed(1)}%` : "—", label: "CIR" }) },
   { key: "reviews", label: "Reviews & Reputation", icon: Star, color: "bg-yellow-500",
     metric: (d) => ({ value: d.reviews ? Number((d.reviews as any).avg_rating ?? 0).toFixed(2) : "—", label: "Avg Rating" }) },
   { key: "guest-cards", label: "Guest Cards", icon: Users, color: "bg-sky-600",
-    metric: (d) => { const gc = d.leasing.t7 as any; return { value: gc ? String(gc.total_guest_cards ?? "—") : "—", label: "T7 Guest Cards" }; } },
+    metric: (d) => { const gc = d.leasing.t7 as any; return { value: gc ? String(gc.g_cards ?? "—") : "—", label: "T7 Guest Cards" }; } },
 ];
 
 function Hub({ communityId, ctx }: { communityId: string; ctx: ReturnType<typeof usePibDetail> }) {
@@ -418,10 +418,10 @@ function SearchSection({ communityId, ctx }: { communityId: string; ctx: ReturnT
     <SectionShell communityId={communityId} {...ctx} title="Search Performance" icon={Search}>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[
-          { l: "Avg Position", v: sp?.gsc_avg_position != null ? Number(sp.gsc_avg_position).toFixed(1) : "—" },
-          { l: "Total Clicks", v: sp?.gsc_total_clicks != null ? Number(sp.gsc_total_clicks).toLocaleString() : "—" },
-          { l: "Impressions", v: sp?.gsc_total_impressions != null ? Number(sp.gsc_total_impressions).toLocaleString() : "—" },
-          { l: "CTR", v: sp?.gsc_avg_ctr != null ? `${(Number(sp.gsc_avg_ctr) * 100).toFixed(1)}%` : "—" },
+          { l: "Avg Position", v: sp?.avg_position != null ? Number(sp.avg_position).toFixed(1) : "—" },
+          { l: "Total Clicks", v: sp?.total_clicks != null ? Number(sp.total_clicks).toLocaleString() : "—" },
+          { l: "Impressions", v: sp?.total_impressions != null ? Number(sp.total_impressions).toLocaleString() : "—" },
+          { l: "CTR", v: sp?.avg_ctr != null ? `${Number(sp.avg_ctr).toFixed(1)}%` : "—" },
         ].map(({ l, v }) => (
           <div key={l} className="rounded-lg border p-4 text-center"><p className="text-2xl font-bold text-slate-900">{v}</p><p className="mt-1 text-xs text-slate-500">{l}</p></div>
         ))}
@@ -501,25 +501,25 @@ function AdsSection({ communityId, ctx }: { communityId: string; ctx: ReturnType
 
 function LocalPresenceSection({ communityId, ctx }: { communityId: string; ctx: ReturnType<typeof usePibDetail> }) {
   const lp = ctx.data?.local_presence as Record<string, any> | null;
-  const totalViews = Number(lp?.gbp_total_views ?? 0);
-  const mapViews = Number(lp?.gbp_maps_views ?? 0);
-  const searchViews = Number(lp?.gbp_search_views ?? 0);
-  const websiteClicks = Number(lp?.gbp_website_clicks ?? 0);
-  const phoneClicks = Number(lp?.gbp_phone_clicks ?? 0);
-  const directionClicks = Number(lp?.gbp_direction_clicks ?? 0);
+  const totalViews = Number(lp?.total_profile_views ?? 0);
+  const mapViews = Number(lp?.maps_views ?? 0);
+  const searchViews = Number(lp?.search_views ?? 0);
+  const websiteClicks = Number(lp?.website_clicks ?? 0);
+  const phoneClicks = Number(lp?.phone_calls ?? 0);
+  const directionClicks = Number(lp?.direction_requests ?? 0);
   const totalActions = websiteClicks + phoneClicks + directionClicks;
-  const actionRate = Number(lp?.gbp_action_rate ?? 0);
+  const actionRate = Number(lp?.action_rate ?? 0);
 
   return (
     <SectionShell communityId={communityId} {...ctx} title="Local Presence" icon={MapPin}>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg border p-4 text-center">
           <p className="text-2xl font-bold text-slate-900">{totalViews.toLocaleString()}</p><p className="mt-1 text-xs text-slate-500">Total Views</p>
-          {lp?.gbp_views_trend_pct != null && <div className="mt-1 flex justify-center"><TrendIndicator value={lp.gbp_views_trend_pct} isPercentage decimalPlaces={1} /></div>}
+          {lp?.views_trend_pct != null && <div className="mt-1 flex justify-center"><TrendIndicator value={lp.views_trend_pct} isPercentage decimalPlaces={1} /></div>}
         </div>
         <div className="rounded-lg border p-4 text-center"><p className="text-2xl font-bold text-slate-900">{totalActions.toLocaleString()}</p><p className="mt-1 text-xs text-slate-500">Total Actions</p></div>
         <div className="rounded-lg border p-4 text-center"><p className="text-2xl font-bold text-slate-900">{actionRate.toFixed(1)}%</p><p className="mt-1 text-xs text-slate-500">Action Rate</p></div>
-        <div className="rounded-lg border p-4 text-center"><p className="text-2xl font-bold text-slate-900">{lp?.gbp_avg_rating != null ? Number(lp.gbp_avg_rating).toFixed(2) : "—"}</p><p className="mt-1 text-xs text-slate-500">GBP Rating</p></div>
+        <div className="rounded-lg border p-4 text-center"><p className="text-2xl font-bold text-slate-900">{"—"}</p><p className="mt-1 text-xs text-slate-500">GBP Rating</p></div>
       </div>
       <Card><CardContent className="p-6">
         <h2 className="mb-4 text-lg font-semibold text-slate-900">Views Breakdown</h2>
@@ -569,7 +569,7 @@ function ConversionSection({ communityId, ctx }: { communityId: string; ctx: Ret
         {[
           { l: "Occupancy", v: mkt?.occupancy != null ? `${Number(mkt.occupancy).toFixed(1)}%` : "—" },
           { l: "ATR", v: mkt?.atr != null ? `${Number(mkt.atr).toFixed(1)}%` : "—" },
-          { l: "GC / Door", v: mkt?.gc_per_door != null ? Number(mkt.gc_per_door).toFixed(3) : "—" },
+          { l: "GC / Door", v: mkt?.t7_community_gc_per_door != null ? Number(mkt.t7_community_gc_per_door).toFixed(3) : "—" },
           { l: "Total Units", v: String(ctx.data?.community?.unit_count ?? "—") },
         ].map(({ l, v }) => (
           <div key={l} className="rounded-lg border p-4 text-center"><p className="text-2xl font-bold text-slate-900">{v}</p><p className="mt-1 text-xs text-slate-500">{l}</p></div>
@@ -588,13 +588,13 @@ function ConversionSection({ communityId, ctx }: { communityId: string; ctx: Ret
             </TableRow></TableHeader>
             <TableBody>
               {[
-                { label: "Total Guest Cards", key: "total_guest_cards" },
-                { label: "Approved", key: "approved" },
-                { label: "Denied", key: "denied" },
-                { label: "Cancelled", key: "cancelled" },
-                { label: "Notice to Vacate", key: "ntv" },
+                { label: "Guest Cards", key: "g_cards" },
+                { label: "Visits", key: "visits" },
+                { label: "First Tours", key: "first_tours" },
+                { label: "Applications", key: "apps" },
+                { label: "Leases", key: "leases" },
+                { label: "C&Ds", key: "c_and_ds" },
                 { label: "Move-ins", key: "move_ins" },
-                { label: "Move-outs", key: "move_outs" },
               ].map(({ label, key }) => (
                 <TableRow key={key}>
                   <TableCell className="font-medium text-slate-900">{label}</TableCell>
