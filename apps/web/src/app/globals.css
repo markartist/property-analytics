@@ -24,6 +24,13 @@
   --input: 214 32% 91%;
   --ring: 219 56% 19%;
   --radius: 0.5rem;
+
+  /* Data Pond theme colors */
+  --pond-teal: 189 80% 24%;       /* #0D5E6D */
+  --pond-teal-light: 189 60% 94%; /* light teal bg */
+  --sunset-amber: 38 92% 50%;     /* #D97706 */
+  --pine-green: 142 64% 24%;      /* #15803D */
+  --mist: 215 17% 60%;            /* #94A3B8 */
 }
 
 * {

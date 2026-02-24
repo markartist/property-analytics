@@ -12,6 +12,7 @@ import { exports_ } from "./routes/exports";
 import { createLeasingMetricsRouter } from "./routes/leasing-metrics";
 import { marketingData } from "./routes/marketing-data";
 import { pib } from "./routes/pib";
+import { pond } from "./routes/pond";
 
 // Phase 2 leasing funnel metric routers
 const t7Metrics = createLeasingMetricsRouter("t7_metrics", "t7_metrics");
@@ -45,6 +46,7 @@ app.route("/v1/t7-metrics", t7Metrics);
 app.route("/v1/t30-metrics", t30Metrics);
 app.route("/v1/marketing-data", marketingData);
 app.route("/v1/pib", pib);
+app.route("/v1/pond", pond);
 
 // 404 fallback
 app.notFound((c) =>

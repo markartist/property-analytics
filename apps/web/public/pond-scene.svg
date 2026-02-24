@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" fill="none">
+  <!-- Sky gradient -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#15284B" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0D5E6D" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D5E6D" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0D5E6D" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="mountain1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#15284B" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#15284B" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="mountain2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#15284B" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#15284B" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="320" fill="url(#sky)"/>
+
+  <!-- Stars -->
+  <circle cx="120" cy="40" r="1.5" fill="white" opacity="0.6"/>
+  <circle cx="280" cy="25" r="1" fill="white" opacity="0.4"/>
+  <circle cx="450" cy="50" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="600" cy="35" r="1" fill="white" opacity="0.3"/>
+  <circle cx="700" cy="55" r="1.5" fill="white" opacity="0.5"/>
+  <circle cx="180" cy="65" r="1" fill="white" opacity="0.3"/>
+  <circle cx="520" cy="20" r="1" fill="white" opacity="0.4"/>
+
+  <!-- Far mountains -->
+  <path d="M0 180 L100 110 L200 150 L320 90 L420 140 L500 100 L600 130 L700 95 L800 145 L800 200 L0 200Z" fill="url(#mountain2)"/>
+
+  <!-- Near mountains -->
+  <path d="M0 200 L80 150 L160 180 L260 130 L360 170 L440 140 L540 165 L650 125 L750 160 L800 145 L800 220 L0 220Z" fill="url(#mountain1)"/>
+
+  <!-- Tree line (pines) -->
+  <g fill="#15284B" opacity="0.5">
+    <polygon points="50,195 55,170 60,195"/>
+    <polygon points="70,198 76,168 82,198"/>
+    <polygon points="100,192 107,160 114,192"/>
+    <polygon points="140,198 145,175 150,198"/>
+    <polygon points="200,195 206,165 212,195"/>
+    <polygon points="250,198 255,178 260,198"/>
+    <polygon points="320,192 327,158 334,192"/>
+    <polygon points="380,198 385,175 390,198"/>
+    <polygon points="460,195 466,168 472,195"/>
+    <polygon points="530,198 535,180 540,198"/>
+    <polygon points="590,192 597,160 604,192"/>
+    <polygon points="650,198 655,175 660,198"/>
+    <polygon points="710,195 716,170 722,195"/>
+    <polygon points="760,198 765,178 770,198"/>
+  </g>
+
+  <!-- Water surface -->
+  <path d="M0 210 Q200 205 400 210 Q600 215 800 210 L800 320 L0 320Z" fill="url(#water)"/>
+
+  <!-- Water ripples -->
+  <g stroke="white" stroke-width="0.8" fill="none" opacity="0.15">
+    <path d="M150 240 Q200 237 250 240"/>
+    <path d="M350 255 Q420 251 490 255"/>
+    <path d="M500 235 Q550 232 600 235"/>
+    <path d="M100 270 Q160 267 220 270"/>
+    <path d="M400 280 Q450 277 500 280"/>
+    <path d="M600 265 Q660 262 720 265"/>
+    <path d="M200 295 Q280 291 360 295"/>
+  </g>
+
+  <!-- Moon reflection on water -->
+  <circle cx="400" cy="70" r="20" fill="white" opacity="0.12"/>
+  <ellipse cx="400" cy="240" rx="25" ry="4" fill="white" opacity="0.08"/>
+  <ellipse cx="400" cy="260" rx="18" ry="3" fill="white" opacity="0.05"/>
+</svg>

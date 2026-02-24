@@ -39,6 +39,19 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        pond: {
+          DEFAULT: "hsl(var(--pond-teal))",
+          light: "hsl(var(--pond-teal-light))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--sunset-amber))",
+        },
+        pine: {
+          DEFAULT: "hsl(var(--pine-green))",
+        },
+        mist: {
+          DEFAULT: "hsl(var(--mist))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

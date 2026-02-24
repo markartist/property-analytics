@@ -3,8 +3,8 @@ import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-  title: "POP Brief — Venterra WebOps",
-  description: "Property Ops Performance Brief by Venterra WebOps",
+  title: "The Data Pond — Venterra WebOps",
+  description: "Analytics resort for Venterra property data — reports, monitoring, and AI-powered insights.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

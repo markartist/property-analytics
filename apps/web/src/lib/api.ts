@@ -261,3 +261,32 @@ export async function getPibDetail(communityId: string, weekDate?: string): Prom
   if (!res.ok) throw new Error("Failed to load PIB detail");
   return res.json();
 }
+
+// ── Data Pond ──
+
+export interface PondInsight {
+  id: string;
+  icon: "trending-up" | "trending-down" | "alert" | "trophy" | "zap" | "bar-chart";
+  color: "green" | "amber" | "red" | "teal" | "blue";
+  title: string;
+  detail: string;
+}
+
+export interface PondSurface {
+  latest_snapshot: string;
+  prev_snapshot: string | null;
+  community_count: number;
+  freshness: Record<string, string | null>;
+}
+
+export interface PondInsightsResponse {
+  week_date: string | null;
+  insights: PondInsight[];
+  surface: PondSurface | null;
+}
+
+export async function getPondInsights(): Promise<PondInsightsResponse> {
+  const res = await apiFetch("/v1/pond/insights");
+  if (!res.ok) throw new Error("Failed to load pond insights");
+  return res.json();
+}

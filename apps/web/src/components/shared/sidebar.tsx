@@ -18,16 +18,24 @@ import {
   X,
   LogOut,
   FileText,
+  Waves,
+  Anchor,
+  Eye,
+  Fish,
 } from "lucide-react";
 
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: BarChart3 },
+const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; adminOnly?: boolean; section?: string }[] = [
+  { href: "/", label: "The Pond", icon: Waves },
+
+  // The Dock — reports
+  { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "The Dock" },
+  { href: "/analysis", label: "Analysis", icon: BarChart2 },
+  { href: "/marketing", label: "Marketing Data", icon: Megaphone },
   { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar },
   { href: "/t30-metrics", label: "T30 Metrics", icon: TrendingUp },
-  { href: "/marketing", label: "Marketing Data", icon: Megaphone },
-  { href: "/analysis", label: "Analysis", icon: BarChart2 },
-  { href: "/pib", label: "PIB Dashboard", icon: FileText },
-  { href: "/backup", label: "Backup & Export", icon: Download },
+
+  // Utilities
+  { href: "/backup", label: "Backup & Export", icon: Download, section: "Utilities" },
   { href: "/admin/users", label: "Admin", icon: Shield, adminOnly: true },
 ];
 
@@ -68,7 +76,7 @@ export function Sidebar() {
             <Image src="/venterra-text.svg" alt="Venterra" width={100} height={10} className="shrink-0" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-base font-bold tracking-tight text-white">POP Brief</span>
+            <span className="text-base font-bold tracking-tight text-white">The Data Pond</span>
             <span className="text-[10px] font-medium uppercase tracking-wider text-white/50">
               WebOps
             </span>
@@ -77,27 +85,34 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map((item) => {
-            if ((item as any).adminOnly && user?.role !== "admin") return null;
+          {NAV_ITEMS.map((item, idx) => {
+            if (item.adminOnly && user?.role !== "admin") return null;
             const isActive =
               item.href === "/"
                 ? pathname === "/"
                 : pathname?.startsWith(item.href);
+            const showSection = item.section && (idx === 0 || NAV_ITEMS[idx - 1]?.section !== item.section);
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-[#15284B]/10 text-[#15284B]"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-[#15284B]"
+              <React.Fragment key={item.href}>
+                {showSection && (
+                  <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    {item.section}
+                  </p>
                 )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
+                <Link
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-[#0D5E6D]/10 text-[#0D5E6D]"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-[#0D5E6D]"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              </React.Fragment>
             );
           })}
         </nav>

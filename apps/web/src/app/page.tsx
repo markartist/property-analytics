@@ -3,216 +3,310 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { format, previousFriday, isFriday } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { WeekDatePicker } from "@/components/shared/week-date-picker";
+import { getPondInsights, type PondInsight, type PondSurface } from "@/lib/api";
 import {
-  getCommunities, getT7Metrics, getT30Metrics, getMarketingData,
-  type Community, type LeasingMetric, type MarketingData,
-} from "@/lib/api";
-import {
-  CheckCircle2, XCircle, Calendar, TrendingUp, Megaphone,
-  BarChart3, ArrowRight, Loader2,
+  Anchor, Eye, Fish,
+  TrendingUp, TrendingDown, AlertTriangle, Trophy, Zap, BarChart3,
+  Loader2, Waves, Clock, Database,
 } from "lucide-react";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
-interface CommunityStatus {
-  community: Community;
-  hasT7: boolean;
-  hasT30: boolean;
-  hasMktg: boolean;
-  complete: boolean;
+// ────────────────────────────────────────────────────────────────
+// Insight icon resolver
+// ────────────────────────────────────────────────────────────────
+
+const INSIGHT_ICONS: Record<string, React.ElementType> = {
+  "trending-up": TrendingUp,
+  "trending-down": TrendingDown,
+  alert: AlertTriangle,
+  trophy: Trophy,
+  zap: Zap,
+  "bar-chart": BarChart3,
+};
+
+const INSIGHT_COLORS: Record<string, string> = {
+  green: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  amber: "bg-amber-100 text-amber-700 border-amber-200",
+  red: "bg-red-100 text-red-700 border-red-200",
+  teal: "bg-teal-100 text-teal-700 border-teal-200",
+  blue: "bg-blue-100 text-blue-700 border-blue-200",
+};
+
+const INSIGHT_ICON_COLORS: Record<string, string> = {
+  green: "text-emerald-600",
+  amber: "text-amber-600",
+  red: "text-red-600",
+  teal: "text-teal-600",
+  blue: "text-blue-600",
+};
+
+// ────────────────────────────────────────────────────────────────
+// Zone cards config
+// ────────────────────────────────────────────────────────────────
+
+const ZONES = [
+  {
+    key: "dock",
+    href: "/pib",
+    icon: Anchor,
+    title: "The Dock",
+    subtitle: "Browse your reports",
+    description: "PIB dashboards, leasing funnels, marketing data, and portfolio analysis — all in one place.",
+    gradient: "from-[#15284B] to-[#1e3a5f]",
+    iconBg: "bg-white/20",
+  },
+  {
+    key: "watchtower",
+    href: "/",
+    icon: Eye,
+    title: "The Watchtower",
+    subtitle: "Check the pulse",
+    description: "System health, data freshness, coverage matrix, and pipeline status at a glance.",
+    gradient: "from-[#0D5E6D] to-[#0a4a56]",
+    iconBg: "bg-white/20",
+    badge: "Coming Soon",
+  },
+  {
+    key: "fish",
+    href: "/",
+    icon: Fish,
+    title: "The Fishing Hole",
+    subtitle: "Ask anything",
+    description: "Cast a question into the pond — get answers, reports, CSVs, or email summaries powered by AI.",
+    gradient: "from-[#15803D] to-[#166534]",
+    iconBg: "bg-white/20",
+    badge: "Coming Soon",
+  },
+];
+
+// ────────────────────────────────────────────────────────────────
+// Freshness helpers
+// ────────────────────────────────────────────────────────────────
+
+function freshnessAge(dateStr: string | null): { label: string; color: string } {
+  if (!dateStr) return { label: "No data", color: "text-red-500" };
+  const age = Date.now() - parseISO(dateStr).getTime();
+  const days = Math.floor(age / 86400000);
+  if (days <= 7) return { label: `${days}d ago`, color: "text-emerald-600" };
+  if (days <= 14) return { label: `${days}d ago`, color: "text-amber-600" };
+  return { label: `${days}d ago`, color: "text-red-600" };
 }
 
-function getMostRecentFriday(): Date {
-  const now = new Date();
-  if (isFriday(now)) return now;
-  return previousFriday(now);
-}
+const TABLE_LABELS: Record<string, string> = {
+  ga4: "GA4 Traffic",
+  site_perf: "Site Perf",
+  local_presence: "GBP",
+  search: "Search (GSC)",
+  cir: "CIR",
+  reviews: "Reviews",
+  marketing: "Marketing",
+  t7: "T7 Leasing",
+  t30: "T30 Leasing",
+};
 
-export default function DashboardPage() {
-  const [weekDate, setWeekDate] = React.useState<Date | null>(getMostRecentFriday);
-  const [statuses, setStatuses] = React.useState<CommunityStatus[]>([]);
+// ────────────────────────────────────────────────────────────────
+// Page
+// ────────────────────────────────────────────────────────────────
+
+export default function DataPondLanding() {
+  const [insights, setInsights] = React.useState<PondInsight[]>([]);
+  const [surface, setSurface] = React.useState<PondSurface | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!weekDate) return;
-    setLoading(true);
-    setError(null);
-    const d = format(weekDate, "yyyy-MM-dd");
-
-    Promise.all([
-      getCommunities(),
-      getT7Metrics({ week_date: d, type: "community" }),
-      getT30Metrics({ week_date: d, type: "community" }),
-      getMarketingData({ week_date: d }),
-    ])
-      .then(([comms, t7, t30, mktg]) => {
-        const t7Set = new Set(t7.map((m) => m.community_id));
-        const t30Set = new Set(t30.map((m) => m.community_id));
-        const mktgSet = new Set(mktg.map((m) => m.community_id));
-
-        const rows: CommunityStatus[] = comms
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((c) => {
-            const hasT7 = t7Set.has(c.id);
-            const hasT30 = t30Set.has(c.id);
-            const hasMktg = mktgSet.has(c.id);
-            return { community: c, hasT7, hasT30, hasMktg, complete: hasT7 && hasT30 && hasMktg };
-          });
-        setStatuses(rows);
+    getPondInsights()
+      .then((data) => {
+        setInsights(data.insights);
+        setSurface(data.surface);
       })
-      .catch((err) => setError((err as Error).message))
+      .catch(() => {})
       .finally(() => setLoading(false));
-  }, [weekDate]);
-
-  const total = statuses.length;
-  const t7Count = statuses.filter((s) => s.hasT7).length;
-  const t30Count = statuses.filter((s) => s.hasT30).length;
-  const mktgCount = statuses.filter((s) => s.hasMktg).length;
-  const completeCount = statuses.filter((s) => s.complete).length;
-  const pct = total > 0 ? Math.round((completeCount / total) * 100) : 0;
-
-  const dateStr = weekDate ? format(weekDate, "yyyy-MM-dd") : "";
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <Image src="/velo-current.svg" alt="" width={32} height={19} className="text-[#15284B]" />
-            <div>
-              <h1 className="text-3xl font-bold text-[#15284B]">POP Brief</h1>
-              <p className="text-sm text-slate-600">Property Ops Performance Brief — Venterra WebOps</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-600">Week Ending:</span>
-            <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-          </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden">
+        {/* Pond scene background */}
+        <div className="absolute inset-0">
+          <Image
+            src="/pond-scene.svg"
+            alt=""
+            fill
+            className="object-cover object-bottom"
+            priority
+          />
         </div>
 
-        {loading ? (
-          <Card><CardContent className="flex items-center justify-center gap-3 p-12">
-            <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-            <span className="text-slate-600">Loading dashboard data…</span>
-          </CardContent></Card>
-        ) : error ? (
-          <Card><CardContent className="p-12 text-center">
-            <p className="text-red-600">{error}</p>
-          </CardContent></Card>
-        ) : (
-          <>
-            {/* Summary cards */}
-            <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-5">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm font-medium text-slate-500">Communities</p>
-                  <p className="mt-1 text-3xl font-bold text-[#15284B]">{total}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm font-medium text-slate-500">T7 Data</p>
-                  <p className="mt-1 text-3xl font-bold text-[#15284B]">{t7Count}<span className="text-lg text-slate-400">/{total}</span></p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm font-medium text-slate-500">T30 Data</p>
-                  <p className="mt-1 text-3xl font-bold text-[#15284B]">{t30Count}<span className="text-lg text-slate-400">/{total}</span></p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm font-medium text-slate-500">Marketing</p>
-                  <p className="mt-1 text-3xl font-bold text-[#15284B]">{mktgCount}<span className="text-lg text-slate-400">/{total}</span></p>
-                </CardContent>
-              </Card>
-              <Card className="col-span-2 md:col-span-1">
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm font-medium text-slate-500">Complete</p>
-                  <p className={`mt-1 text-3xl font-bold ${pct === 100 ? "text-green-600" : pct >= 50 ? "text-amber-600" : "text-red-600"}`}>
-                    {pct}%
-                  </p>
-                </CardContent>
-              </Card>
+        {/* Content overlay */}
+        <div className="relative z-10 px-6 pb-10 pt-10 md:px-12 md:pb-14 md:pt-14">
+          <div className="mx-auto max-w-[1400px]">
+            {/* Branding */}
+            <div className="flex items-center gap-3 mb-1">
+              <Image src="/velo.svg" alt="Venterra" width={24} height={14} className="shrink-0 opacity-80" />
+              <span className="text-xs font-medium uppercase tracking-widest text-white/50">
+                Venterra WebOps
+              </span>
             </div>
 
-            {/* Progress bar */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>Weekly data completeness</span>
-                <span>{completeCount} of {total} communities fully entered</span>
-              </div>
-              <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-200">
-                <div
-                  className={`h-full rounded-full transition-all ${pct === 100 ? "bg-green-500" : pct >= 50 ? "bg-amber-500" : "bg-red-500"}`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
+            <h1 className="text-4xl font-bold tracking-tight text-white md:text-5xl">
+              The Data Pond
+            </h1>
+            <p className="mt-2 max-w-xl text-base text-white/70 md:text-lg">
+              Your analytics resort. Browse reports, monitor system health, or cast a question into the pond and reel in an answer.
+            </p>
 
-            {/* Community status table */}
+            {/* Surface conditions strip */}
+            {surface && (
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Badge className="border-white/20 bg-white/10 text-white/90 text-xs py-1 px-3 backdrop-blur-sm">
+                  <Database className="mr-1.5 h-3 w-3" />
+                  {surface.community_count} Properties
+                </Badge>
+                <Badge className="border-white/20 bg-white/10 text-white/90 text-xs py-1 px-3 backdrop-blur-sm">
+                  <Clock className="mr-1.5 h-3 w-3" />
+                  Latest: {surface.latest_snapshot
+                    ? formatDistanceToNow(parseISO(surface.latest_snapshot), { addSuffix: true })
+                    : "—"}
+                </Badge>
+                <Badge className="border-white/20 bg-white/10 text-white/90 text-xs py-1 px-3 backdrop-blur-sm">
+                  <Waves className="mr-1.5 h-3 w-3" />
+                  9 Data Sources
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main content ─────────────────────────────────── */}
+      <div className="mx-auto max-w-[1400px] space-y-8 px-6 py-8 md:px-12">
+
+        {/* Zone Cards */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          {ZONES.map((zone) => (
+            <Link key={zone.key} href={zone.href} className="group">
+              <div
+                className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${zone.gradient} p-6 shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02]`}
+              >
+                {zone.badge && (
+                  <Badge className="absolute right-4 top-4 bg-white/20 text-white/80 text-[10px] uppercase tracking-wider border-white/10">
+                    {zone.badge}
+                  </Badge>
+                )}
+                <div className={`inline-flex rounded-xl ${zone.iconBg} p-3 mb-4`}>
+                  <zone.icon className="h-7 w-7 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-white">{zone.title}</h2>
+                <p className="mt-0.5 text-sm font-medium text-white/70">{zone.subtitle}</p>
+                <p className="mt-3 text-sm leading-relaxed text-white/50">{zone.description}</p>
+                <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-white/40 group-hover:text-white/70 transition-colors">
+                  Explore →
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Catch of the Day */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Fish className="h-5 w-5 text-[#0D5E6D]" />
+            <h2 className="text-lg font-bold text-slate-900">Catch of the Day</h2>
+            <span className="text-xs text-slate-400 ml-1">Auto-generated insights from your latest data</span>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+            </div>
+          ) : insights.length === 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Community Data Status — {weekDate ? format(weekDate, "MMM d, yyyy") : ""}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                        <th className="px-6 py-3">Community</th>
-                        <th className="px-4 py-3">Region</th>
-                        <th className="px-4 py-3 text-center">T7</th>
-                        <th className="px-4 py-3 text-center">T30</th>
-                        <th className="px-4 py-3 text-center">Marketing</th>
-                        <th className="px-4 py-3 text-center">Status</th>
-                        <th className="px-4 py-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {statuses.map((s) => (
-                        <tr key={s.community.id} className={s.complete ? "" : "bg-amber-50/40"}>
-                          <td className="px-6 py-3 text-sm font-medium text-slate-900">{s.community.name}</td>
-                          <td className="px-4 py-3 text-sm text-slate-500">{s.community.region ?? "—"}</td>
-                          <td className="px-4 py-3 text-center">
-                            {s.hasT7
-                              ? <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" />
-                              : <Link href="/t7-metrics" className="inline-block"><XCircle className="mx-auto h-4 w-4 text-red-400 hover:text-red-600" /></Link>}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {s.hasT30
-                              ? <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" />
-                              : <Link href="/t30-metrics" className="inline-block"><XCircle className="mx-auto h-4 w-4 text-red-400 hover:text-red-600" /></Link>}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {s.hasMktg
-                              ? <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" />
-                              : <Link href="/marketing" className="inline-block"><XCircle className="mx-auto h-4 w-4 text-red-400 hover:text-red-600" /></Link>}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {s.complete
-                              ? <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Complete</Badge>
-                              : <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">Incomplete</Badge>}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <Link href="/analysis" className="text-[#15284B] hover:underline">
-                              <ArrowRight className="inline h-4 w-4" />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              <CardContent className="py-10 text-center text-slate-400">
+                No insights yet — data will appear after your first PIB snapshot.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {insights.map((insight) => {
+                const Icon = INSIGHT_ICONS[insight.icon] ?? Zap;
+                const colorCls = INSIGHT_COLORS[insight.color] ?? INSIGHT_COLORS.teal;
+                const iconColor = INSIGHT_ICON_COLORS[insight.color] ?? "text-teal-600";
+                return (
+                  <Card key={insight.id} className="transition-shadow hover:shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <div className={`mt-0.5 rounded-lg border p-2 ${colorCls}`}>
+                          <Icon className={`h-4 w-4 ${iconColor}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-slate-900 leading-snug">
+                            {insight.title}
+                          </p>
+                          <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+                            {insight.detail}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Data Freshness */}
+        {surface && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Waves className="h-5 w-5 text-[#0D5E6D]" />
+              <h2 className="text-lg font-bold text-slate-900">Surface Conditions</h2>
+              <span className="text-xs text-slate-400 ml-1">Data freshness across all sources</span>
+            </div>
+            <Card>
+              <CardContent className="p-5">
+                <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-9">
+                  {Object.entries(TABLE_LABELS).map(([key, label]) => {
+                    const dateStr = surface.freshness[key] ?? null;
+                    const { label: ageLabel, color } = freshnessAge(dateStr);
+                    return (
+                      <div key={key} className="text-center">
+                        <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
+                        <p className={`mt-1 text-sm font-bold tabular-nums ${color}`}>
+                          {ageLabel}
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
-          </>
+          </div>
         )}
+
+        {/* Quick links footer */}
+        <div className="border-t border-slate-200 pt-6 pb-4">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+            <Link href="/pib" className="hover:text-[#0D5E6D] transition-colors">PIB Dashboard</Link>
+            <span>·</span>
+            <Link href="/marketing" className="hover:text-[#0D5E6D] transition-colors">Marketing Data</Link>
+            <span>·</span>
+            <Link href="/analysis" className="hover:text-[#0D5E6D] transition-colors">Analysis</Link>
+            <span>·</span>
+            <Link href="/t7-metrics" className="hover:text-[#0D5E6D] transition-colors">T7 Metrics</Link>
+            <span>·</span>
+            <Link href="/t30-metrics" className="hover:text-[#0D5E6D] transition-colors">T30 Metrics</Link>
+            <span>·</span>
+            <Link href="/backup" className="hover:text-[#0D5E6D] transition-colors">Backup & Export</Link>
+            <div className="ml-auto flex items-center gap-2">
+              <Image src="/velo-current.svg" alt="" width={12} height={7} className="shrink-0 opacity-40" />
+              <span>Produced by Venterra WebOps</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
