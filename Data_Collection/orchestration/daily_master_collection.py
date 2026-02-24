@@ -20,6 +20,7 @@ import json
 import time
 import sqlite3
 import traceback
+import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -81,6 +82,7 @@ class PortfolioDataCollector:
             'gbp_reviews': {'success': 0, 'failed': 0, 'skipped': 0},
             'gbp_insights': {'success': 0, 'failed': 0, 'skipped': 0},
             'guest_card': {'success': 0, 'failed': 0, 'skipped': 0},
+            'd1_mirror': {'success': 0, 'failed': 0, 'skipped': 0},
             'errors': []
         }
         
@@ -1426,9 +1428,24 @@ class PortfolioDataCollector:
         print(f'  GBP Reviews:  ✅ {self.results["gbp_reviews"]["success"]} | ⚠️  {self.results["gbp_reviews"]["skipped"]} | ❌ {self.results["gbp_reviews"]["failed"]}')
         print(f'  GBP Insights: ✅ {self.results["gbp_insights"]["success"]} | ⚠️  {self.results["gbp_insights"]["skipped"]} | ❌ {self.results["gbp_insights"]["failed"]}')
         print(f'  Guest Card:   ✅ {self.results["guest_card"]["success"]} | ⚠️  {self.results["guest_card"]["skipped"]} | ❌ {self.results["guest_card"]["failed"]}')
+        print(f'  D1 Mirror:    ✅ {self.results["d1_mirror"]["success"]} | ⚠️  {self.results["d1_mirror"]["skipped"]} | ❌ {self.results["d1_mirror"]["failed"]}')
         print()
         
-        total_success = sum(self.results[cat]["success"] for cat in ['ga4', 'gsc', 'google_ads', 'psi', 'semrush', 'gtmetrix', 'gbp_reviews', 'gbp_insights', 'guest_card'])
+        total_success = sum(
+            self.results[cat]["success"]
+            for cat in [
+                'ga4',
+                'gsc',
+                'google_ads',
+                'psi',
+                'semrush',
+                'gtmetrix',
+                'gbp_reviews',
+                'gbp_insights',
+                'guest_card',
+                'd1_mirror'
+            ]
+        )
         print(f'Total successful collections: {total_success}')
         
         if self.results['errors']:
@@ -1442,6 +1459,61 @@ class PortfolioDataCollector:
         print()
         print(f'📊 Database: {self.db_path}')
         print('=' * 80)
+
+    def sync_d1_mirror(self):
+        """Run deterministic D1 mirror sync after local collection + validation."""
+        print()
+        print('=' * 80)
+        print('☁️  PHASE 9: D1 MIRROR SYNC')
+        print('=' * 80)
+        print()
+
+        try:
+            d1_script = self.base_dir / 'apps' / 'api' / 'scripts' / 'd1_mirror_sync.py'
+            if not d1_script.exists():
+                print(f'❌ D1 mirror script not found: {d1_script}')
+                self.results['d1_mirror']['failed'] = 1
+                self.results['errors'].append({
+                    'property': 'All Properties',
+                    'collector': 'D1 Mirror',
+                    'error': 'd1_mirror_sync.py missing'
+                })
+                return
+
+            # Keep daily mirror aligned to the most recent common Friday.
+            result = subprocess.run(
+                [sys.executable, str(d1_script)],
+                timeout=2700  # 45 min
+            )
+
+            if result.returncode == 0:
+                self.results['d1_mirror']['success'] = 1
+                print('✅ D1 mirror sync completed successfully')
+            else:
+                self.results['d1_mirror']['failed'] = 1
+                print(f'❌ D1 mirror sync failed (exit code {result.returncode})')
+                self.results['errors'].append({
+                    'property': 'All Properties',
+                    'collector': 'D1 Mirror',
+                    'error': f'd1_mirror_sync.py exited {result.returncode}'
+                })
+
+        except subprocess.TimeoutExpired:
+            self.results['d1_mirror']['failed'] = 1
+            print('❌ D1 mirror sync timed out after 45 minutes')
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'D1 Mirror',
+                'error': 'D1 mirror sync timed out'
+            })
+        except Exception as e:
+            self.results['d1_mirror']['failed'] = 1
+            print(f'❌ Error running D1 mirror sync: {e}')
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'D1 Mirror',
+                'error': str(e)[:100]
+            })
     
     def run(self):
         """Main collection workflow"""
@@ -1626,11 +1698,14 @@ class PortfolioDataCollector:
                 print('❌ Data quality validation timed out')
             except Exception as e:
                 print(f'⚠️  Data quality validation error: {e}')
-            
-            # PHASE 8: SEND DATA INTEGRITY ALERTS
+
+            # Phase 9: D1 mirror sync (post-validation source-of-truth push)
+            self.sync_d1_mirror()
+
+            # PHASE 10: SEND DATA INTEGRITY ALERTS
             print()
             print('=' * 80)
-            print('📧 PHASE 8: DATA INTEGRITY MONITORING & ALERTS')
+            print('📧 PHASE 10: DATA INTEGRITY MONITORING & ALERTS')
             print('=' * 80)
             print()
             

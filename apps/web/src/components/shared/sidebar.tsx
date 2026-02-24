@@ -28,6 +28,7 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; adminOn
   { href: "/", label: "The Pond", icon: Waves },
   { href: "/watchtower", label: "Watchtower", icon: Eye },
   { href: "/dock", label: "The Dock", icon: Anchor },
+  { href: "/fish", label: "Fishing Hole", icon: Fish },
 
   // Reports
   { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "Reports" },

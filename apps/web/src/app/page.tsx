@@ -69,14 +69,13 @@ const ZONES = [
   },
   {
     key: "fish",
-    href: "/",
+    href: "/fish",
     icon: Fish,
     title: "The Fishing Hole",
     subtitle: "Ask anything",
     description: "Cast a question into the pond — get answers, reports, CSVs, or email summaries powered by AI.",
     gradient: "from-[#15803D] to-[#166534]",
     iconBg: "bg-white/20",
-    badge: "Coming Soon",
   },
 ];
 
@@ -190,11 +189,6 @@ export default function DataPondLanding() {
               <div
                 className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${zone.gradient} p-6 shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02]`}
               >
-                {zone.badge && (
-                  <Badge className="absolute right-4 top-4 bg-white/20 text-white/80 text-[10px] uppercase tracking-wider border-white/10">
-                    {zone.badge}
-                  </Badge>
-                )}
                 <div className={`inline-flex rounded-xl ${zone.iconBg} p-3 mb-4`}>
                   <zone.icon className="h-7 w-7 text-white" />
                 </div>

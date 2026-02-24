@@ -110,9 +110,9 @@ def _connect_canonical() -> sqlite3.Connection:
 
 
 def get_available_fridays(conn: sqlite3.Connection) -> List[str]:
-    """Return all Fridays in the ga4_daily_rollup date range."""
+    """Return all Fridays in the ga4_daily_metrics date range."""
     row = conn.execute(
-        "SELECT MIN(event_date) as min_d, MAX(event_date) as max_d FROM ga4_daily_rollup"
+        "SELECT MIN(metric_date) as min_d, MAX(metric_date) as max_d FROM ga4_daily_metrics"
     ).fetchone()
     if not row or not row["min_d"]:
         return []
@@ -147,7 +147,12 @@ def fetch_ga4_metrics(
     conn: sqlite3.Connection, friday: str
 ) -> Dict[str, dict]:
     """
-    Aggregate GA4 daily rollup data for the 30-day window ending on Friday.
+    Aggregate GA4 metrics for the 30-day window ending on Friday.
+    Uses canonical GA4 source tables directly:
+      - ga4_daily_metrics
+      - ga4_traffic_sources
+      - ga4_device_metrics
+      - ga4_event_facts
     Also compute trends vs prior 30-day window.
 
     Returns: { ga4_property_id: { ...metrics } }
@@ -158,35 +163,89 @@ def fetch_ga4_metrics(
     prior_end = (f - timedelta(days=30)).isoformat()
 
     def _agg_window(start: str, end: str) -> Dict[str, dict]:
-        query = """
+        base_query = """
             SELECT
                 property_id,
                 SUM(sessions) AS total_sessions,
-                SUM(users) AS total_users,
+                SUM(total_users) AS total_users,
                 SUM(new_users) AS new_users,
                 CASE WHEN SUM(sessions) > 0
-                    THEN ROUND(SUM(total_engagement_time_msec) * 1.0 / SUM(sessions) / 1000, 1)
-                    ELSE NULL END AS avg_session_duration,
-                SUM(organic_search_events) AS organic_sessions,
-                SUM(direct_events) AS direct_sessions,
-                SUM(paid_events) AS paid_sessions,
-                SUM(referral_events) AS referral_sessions,
-                SUM(social_events) AS social_sessions,
-                SUM(desktop_events) AS desktop_sessions,
-                SUM(mobile_events) AS mobile_sessions,
-                SUM(tablet_events) AS tablet_sessions,
-                SUM(scheduletour_click_events) AS tour_clicks,
-                SUM(phonecall_events) AS phone_calls,
-                SUM(applyonline_click_events) AS apply_clicks,
-                SUM(pricequote_click_events) AS price_quotes,
-                SUM(form_start_events) AS form_starts,
-                SUM(COALESCE(form_start_events, 0)) AS form_submits
-            FROM ga4_daily_rollup
+                    THEN ROUND(SUM(COALESCE(avg_session_duration, 0) * sessions) / SUM(sessions), 1)
+                    ELSE NULL END AS avg_session_duration
+            FROM ga4_daily_metrics
+            WHERE metric_date BETWEEN ? AND ?
+            GROUP BY property_id
+        """
+        traffic_query = """
+            SELECT
+                property_id,
+                SUM(CASE WHEN LOWER(channel_group) LIKE '%organic%' THEN sessions ELSE 0 END) AS organic_sessions,
+                SUM(CASE WHEN LOWER(channel_group) LIKE '%direct%' THEN sessions ELSE 0 END) AS direct_sessions,
+                SUM(CASE
+                    WHEN LOWER(channel_group) LIKE '%paid%'
+                      OR LOWER(channel_group) LIKE '%display%'
+                      OR LOWER(channel_group) LIKE '%cross-network%'
+                    THEN sessions ELSE 0 END) AS paid_sessions,
+                SUM(CASE WHEN LOWER(channel_group) LIKE '%referral%' THEN sessions ELSE 0 END) AS referral_sessions,
+                SUM(CASE WHEN LOWER(channel_group) LIKE '%social%' THEN sessions ELSE 0 END) AS social_sessions
+            FROM ga4_traffic_sources
+            WHERE metric_date BETWEEN ? AND ?
+            GROUP BY property_id
+        """
+        device_query = """
+            SELECT
+                property_id,
+                SUM(CASE WHEN LOWER(device_category) = 'desktop' THEN sessions ELSE 0 END) AS desktop_sessions,
+                SUM(CASE WHEN LOWER(device_category) = 'mobile' THEN sessions ELSE 0 END) AS mobile_sessions,
+                SUM(CASE WHEN LOWER(device_category) = 'tablet' THEN sessions ELSE 0 END) AS tablet_sessions
+            FROM ga4_device_metrics
+            WHERE metric_date BETWEEN ? AND ?
+            GROUP BY property_id
+        """
+        event_query = """
+            SELECT
+                property_id,
+                SUM(CASE WHEN event_name IN ('scheduletour_click', 'resi_apt_tour_click') THEN event_count ELSE 0 END) AS tour_clicks,
+                SUM(CASE WHEN event_name IN ('phonecall', 'resi_phone_click') THEN event_count ELSE 0 END) AS phone_calls,
+                SUM(CASE WHEN event_name IN ('applyonline_click', 'resi_application_start') THEN event_count ELSE 0 END) AS apply_clicks,
+                SUM(CASE WHEN event_name IN ('pricequote_click', 'resi_price_quote') THEN event_count ELSE 0 END) AS price_quotes,
+                SUM(CASE WHEN event_name = 'form_start' THEN event_count ELSE 0 END) AS form_starts,
+                SUM(CASE WHEN event_name IN ('form_submit', 'lease_magnet_submission') THEN event_count ELSE 0 END) AS form_submits
+            FROM ga4_event_facts
             WHERE event_date BETWEEN ? AND ?
             GROUP BY property_id
         """
-        rows = conn.execute(query, (start, end)).fetchall()
-        return {r["property_id"]: dict(r) for r in rows}
+
+        base_rows = conn.execute(base_query, (start, end)).fetchall()
+        traffic_rows = conn.execute(traffic_query, (start, end)).fetchall()
+        device_rows = conn.execute(device_query, (start, end)).fetchall()
+        event_rows = conn.execute(event_query, (start, end)).fetchall()
+
+        data = {}
+        for r in base_rows:
+            data[r["property_id"]] = dict(r)
+
+        for rows in (traffic_rows, device_rows, event_rows):
+            for r in rows:
+                pid = r["property_id"]
+                if pid not in data:
+                    data[pid] = {"property_id": pid}
+                for k in r.keys():
+                    if k != "property_id":
+                        data[pid][k] = r[k]
+
+        # Normalize missing fields to 0 for stable downstream calculations.
+        fields = [
+            "organic_sessions", "direct_sessions", "paid_sessions", "referral_sessions", "social_sessions",
+            "desktop_sessions", "mobile_sessions", "tablet_sessions",
+            "tour_clicks", "phone_calls", "apply_clicks", "price_quotes", "form_starts", "form_submits",
+        ]
+        for pid in data:
+            for f in fields:
+                if data[pid].get(f) is None:
+                    data[pid][f] = 0
+
+        return data
 
     current = _agg_window(cur_start, friday)
     prior = _agg_window(prior_start, prior_end)
@@ -795,24 +854,31 @@ def sync_friday(
 
 def execute_sql(sql_file: Path) -> bool:
     """Execute a SQL file against D1 via wrangler."""
-    print(f"🚀 Executing against D1...")
-    result = subprocess.run(
-        [
-            "npx", "wrangler", "d1", "execute", "pop-brief-db", "--remote",
-            f"--file={sql_file}",
-            "--config", str(WRANGLER_TOML),
-        ],
-        capture_output=True, text=True, timeout=120,
-        input="y\n",
-    )
+    for attempt in range(1, 4):
+        print(f"🚀 Executing against D1... (attempt {attempt}/3)")
+        result = subprocess.run(
+            [
+                "npx", "wrangler", "d1", "execute", "pop-brief-db", "--remote",
+                f"--file={sql_file}",
+                "--config", str(WRANGLER_TOML),
+            ],
+            capture_output=True, text=True, timeout=300,
+            input="y\n",
+        )
 
-    if result.returncode == 0:
-        print(f"✅ D1 execute succeeded")
-        return True
-    else:
-        print(f"❌ D1 execute failed: {result.stderr[:300]}")
-        print(f"   SQL file saved at: {sql_file}")
-        return False
+        if result.returncode == 0:
+            print("✅ D1 execute succeeded")
+            return True
+
+        stderr_tail = (result.stderr or "")[-800:]
+        stdout_tail = (result.stdout or "")[-400:]
+        print(f"❌ D1 execute failed: {stderr_tail or stdout_tail}")
+        if attempt < 3:
+            print("   Retrying in 5s...")
+            time.sleep(5)
+
+    print(f"   SQL file saved at: {sql_file}")
+    return False
 
 
 def main():
@@ -903,7 +969,29 @@ def main():
         print(f"   Review: {sql_file}")
         return
 
-    success = execute_sql(sql_file)
+    data_lines = [l for l in all_sql if l.startswith(("INSERT", "UPDATE"))]
+    header = [l for l in all_sql if not l.startswith(("INSERT", "UPDATE"))]
+
+    # D1 statement/time limits: execute in batches when payload is large.
+    BATCH_SIZE = 400  # upserts per batch (= 800 SQL statements)
+    if len(data_lines) <= BATCH_SIZE * 2:
+        success = execute_sql(sql_file)
+    else:
+        batch_num = 0
+        success = True
+        for i in range(0, len(data_lines), BATCH_SIZE * 2):
+            batch_num += 1
+            batch_lines = header + data_lines[i:i + BATCH_SIZE * 2]
+            batch_file = GENERATED_DIR / f"pib_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}_batch{batch_num}.sql"
+            with open(batch_file, "w") as f:
+                f.write("\n".join(batch_lines))
+            print(f"\n📦 Batch {batch_num}: {len(data_lines[i:i + BATCH_SIZE * 2]) // 2} upserts")
+            if batch_num > 1:
+                time.sleep(3)
+            if not execute_sql(batch_file):
+                success = False
+                break
+
     if not success:
         sys.exit(1)
 

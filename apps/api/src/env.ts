@@ -9,6 +9,7 @@ export interface Env {
   EMAIL_FROM: string;
   SESSION_SIGNING_SECRET: string;
   ENABLE_EMAIL_SEND: string; // "true" | "false" — feature flag for email delivery
+  ANTHROPIC_API_KEY: string; // Claude API key for The Fishing Hole
 }
 
 /**
