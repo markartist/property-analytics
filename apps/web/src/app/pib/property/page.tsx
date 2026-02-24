@@ -18,26 +18,15 @@ import {
 } from "lucide-react";
 
 // ────────────────────────────────────────────────────────────────
-// Pathname parser: /pib/property/<communityId>[/<section>]
+// Query-param routing: /pib/property?id=<communityId>&section=<section>
 // ────────────────────────────────────────────────────────────────
 
-function usePathSegments() {
-  const [segments, setSegments] = React.useState<{ communityId: string; section: string | null }>({
-    communityId: "",
-    section: null,
-  });
-
-  React.useEffect(() => {
-    const p = window.location.pathname.replace(/\/+$/, "");
-    // expected: /pib/property/<communityId>[/<section>]
-    const parts = p.split("/").filter(Boolean); // ["pib","property","<id>","<section>?"]
-    setSegments({
-      communityId: parts[2] ?? "",
-      section: parts[3] ?? null,
-    });
-  }, []);
-
-  return segments;
+function useRouteParams() {
+  const searchParams = useSearchParams();
+  return {
+    communityId: searchParams.get("id") ?? "",
+    section: searchParams.get("section"),
+  };
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -46,7 +35,7 @@ function usePathSegments() {
 
 function usePibDetail(communityId: string) {
   const searchParams = useSearchParams();
-  const weekParam = searchParams.get("week");
+  const weekParam = searchParams.get("week") ?? searchParams.get("w");
 
   const [data, setData] = React.useState<PibDetailResponse | null>(null);
   const [weeks, setWeeks] = React.useState<string[]>([]);
@@ -104,7 +93,13 @@ function SectionShell({
 }) {
   const router = useRouter();
   const community = data?.community;
-  const weekQ = selectedWeek ? `?week=${selectedWeek}` : "";
+  const mkQ = (extra?: Record<string, string>) => {
+    const p = new URLSearchParams();
+    p.set("id", communityId);
+    if (selectedWeek) p.set("week", selectedWeek);
+    if (extra) Object.entries(extra).forEach(([k, v]) => p.set(k, v));
+    return `?${p.toString()}`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -112,7 +107,7 @@ function SectionShell({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm"
-              onClick={() => router.push(`/pib/property/${communityId}${weekQ}`)}
+              onClick={() => router.push(`/pib/property${mkQ()}`)}
               className="text-white/70 hover:bg-white/10 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 mr-1" /> {community?.name ?? "Back"}
@@ -174,7 +169,13 @@ function Hub({ communityId, ctx }: { communityId: string; ctx: ReturnType<typeof
   const router = useRouter();
   const { data, loading, error, selectedWeek, canPrev, canNext, prevWeek, nextWeek } = ctx;
   const community = data?.community;
-  const weekQ = selectedWeek ? `?week=${selectedWeek}` : "";
+  const mkQ = (extra?: Record<string, string>) => {
+    const p = new URLSearchParams();
+    p.set("id", communityId);
+    if (selectedWeek) p.set("week", selectedWeek);
+    if (extra) Object.entries(extra).forEach(([k, v]) => p.set(k, v));
+    return `?${p.toString()}`;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -225,9 +226,8 @@ function Hub({ communityId, ctx }: { communityId: string; ctx: ReturnType<typeof
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {HUB_SECTIONS.map((sec) => {
                 const m = sec.metric(data);
-                const href = sec.key === "guest-cards"
-                  ? `/pib/property/${communityId}/conversion${weekQ}`
-                  : `/pib/property/${communityId}/${sec.key}${weekQ}`;
+                const sectionKey = sec.key === "guest-cards" ? "conversion" : sec.key;
+                const href = `/pib/property${mkQ({ section: sectionKey })}`;
                 return (
                   <Card key={sec.key} className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => router.push(href)}>
                     <CardContent className="p-4">
@@ -695,7 +695,7 @@ function ReviewsSection({ communityId, ctx }: { communityId: string; ctx: Return
 // ────────────────────────────────────────────────────────────────
 
 export default function PropertyPage() {
-  const { communityId, section } = usePathSegments();
+  const { communityId, section } = useRouteParams();
   const ctx = usePibDetail(communityId);
 
   if (!communityId) {

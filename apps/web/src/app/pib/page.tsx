@@ -346,7 +346,7 @@ export default function PibDashboard() {
                         {/* Property Name — clickable for future drill-down */}
                         <TableCell className="whitespace-nowrap font-medium text-slate-900">
                           <a
-                            href={`/pib/property/${row.community_id}`}
+                            href={`/pib/property?id=${row.community_id}`}
                             className="text-[#15284B] hover:underline"
                           >
                             {row.community_name}
