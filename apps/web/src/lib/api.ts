@@ -308,12 +308,22 @@ export interface CoverageRow {
   sources: Record<string, boolean>;
 }
 
+export interface SourceFreshness {
+  source_key: string;
+  source_label: string;
+  latest_date: string | null;
+  row_count: number;
+  property_count: number;
+  updated_at: string;
+}
+
 export interface HealthStatusResponse {
   community_count: number;
   health_score: number;
   filled_cells: number;
   total_cells: number;
   table_stats: TableStat[];
+  source_freshness: SourceFreshness[];
   coverage_matrix: CoverageRow[];
   data_sources: { key: string; label: string }[];
 }

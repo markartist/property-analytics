@@ -92,6 +92,21 @@ function freshnessAge(dateStr: string | null): { label: string; color: string } 
   return { label: `${days}d ago`, color: "text-red-600" };
 }
 
+// Labels for source freshness keys (from data_freshness table)
+const SOURCE_LABELS: Record<string, string> = {
+  ga4: "GA4 Traffic",
+  ga4_sources: "Traffic Sources",
+  gsc: "Search (GSC)",
+  google_ads: "Google Ads",
+  ads_keywords: "Ads Keywords",
+  pagespeed: "PageSpeed",
+  semrush: "SEMRush",
+  gbp_reviews: "GBP Reviews",
+  availability: "Availability",
+  guest_cards: "Guest Cards",
+};
+
+// Fallback labels for D1 table keys
 const TABLE_LABELS: Record<string, string> = {
   ga4: "GA4 Traffic",
   site_perf: "Site Perf",
@@ -257,13 +272,13 @@ export default function DataPondLanding() {
             <div className="flex items-center gap-2 mb-4">
               <Waves className="h-5 w-5 text-[#0D5E6D]" />
               <h2 className="text-lg font-bold text-slate-900">Surface Conditions</h2>
-              <span className="text-xs text-slate-400 ml-1">Data freshness across all sources</span>
+              <span className="text-xs text-slate-400 ml-1">Actual data freshness across all sources</span>
             </div>
             <Card>
               <CardContent className="p-5">
-                <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-9">
-                  {Object.entries(TABLE_LABELS).map(([key, label]) => {
-                    const dateStr = surface.freshness[key] ?? null;
+                <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-5">
+                  {Object.entries(surface.freshness).map(([key, dateStr]) => {
+                    const label = SOURCE_LABELS[key] ?? TABLE_LABELS[key] ?? key;
                     const { label: ageLabel, color } = freshnessAge(dateStr);
                     return (
                       <div key={key} className="text-center">

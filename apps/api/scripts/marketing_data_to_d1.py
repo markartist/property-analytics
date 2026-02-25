@@ -925,6 +925,62 @@ def sync_friday(
     return sql_lines, len(rows)
 
 
+# ---------------------------------------------------------------------------
+# Data freshness: push actual collection dates from canonical DB to D1
+# ---------------------------------------------------------------------------
+
+# Maps canonical DB tables → user-visible source labels
+FRESHNESS_SOURCES = [
+    ("ga4",         "GA4 Traffic",        "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM ga4_daily_metrics"),
+    ("ga4_sources", "GA4 Traffic Sources", "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM ga4_traffic_sources"),
+    ("gsc",         "Search (GSC)",       "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM gsc_daily_metrics"),
+    ("google_ads",  "Google Ads",         "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM google_ads_campaigns"),
+    ("ads_keywords","Google Ads Keywords","SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM google_ads_keywords"),
+    ("pagespeed",   "PageSpeed Insights", "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM pagespeed_metrics"),
+    ("semrush",     "SEMRush",            "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM semrush_domain_metrics"),
+    ("gbp_reviews", "GBP Reviews",        "SELECT MAX(DATE(review_create_time)) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM gbp_reviews"),
+    ("availability","Unit Availability",  "SELECT MAX(snapshot_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM unit_availability"),
+    ("guest_cards", "Guest Cards",        "SELECT MAX(run_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_code) as props FROM guest_card_metrics"),
+]
+
+
+def push_data_freshness(now: str) -> bool:
+    """Query canonical DB for latest dates per source and push to D1."""
+    print(f"\n🕐 Updating data freshness...")
+    conn = _connect_canonical()
+
+    sql_lines = [f"-- Data freshness update: {now}"]
+    for key, label, query in FRESHNESS_SOURCES:
+        try:
+            row = conn.execute(query).fetchone()
+            latest = row["latest"] if row else None
+            cnt = row["cnt"] if row else 0
+            props = row["props"] if row else 0
+            lbl = label.replace("'", "''")
+            lat_val = f"'{latest}'" if latest else "NULL"
+
+            sql_lines.append(
+                f"INSERT INTO data_freshness (source_key, source_label, latest_date, row_count, property_count, updated_at) "
+                f"VALUES ('{key}', '{lbl}', {lat_val}, {cnt}, {props}, '{now}') "
+                f"ON CONFLICT(source_key) DO UPDATE SET "
+                f"source_label = '{lbl}', latest_date = {lat_val}, row_count = {cnt}, "
+                f"property_count = {props}, updated_at = '{now}';"
+            )
+            print(f"  {label:25s} → {latest or 'N/A':12s} ({cnt:,} rows, {props} properties)")
+        except Exception as e:
+            print(f"  ⚠️ {label}: {e}")
+
+    conn.close()
+
+    # Write and execute
+    GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+    sql_file = GENERATED_DIR / f"data_freshness_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+    with open(sql_file, "w") as f:
+        f.write("\n".join(sql_lines))
+
+    return execute_sql(sql_file)
+
+
 def execute_sql(sql_file: Path) -> bool:
     """Execute a SQL file against D1 via wrangler."""
     print(f"🚀 Executing against D1...")
@@ -1056,6 +1112,9 @@ def main():
                 break
 
     if success:
+        # Push actual data freshness from canonical DB
+        push_data_freshness(now)
+
         print(f"\n{'='*60}")
         print(f"🏁 Done — {upsert_count} community-weeks pushed to D1")
         print(f"{'='*60}")

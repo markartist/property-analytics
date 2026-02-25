@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   getHealthStatus,
-  type HealthStatusResponse, type TableStat, type CoverageRow,
+  type HealthStatusResponse, type TableStat, type CoverageRow, type SourceFreshness,
 } from "@/lib/api";
 import {
   Eye, Loader2, ArrowLeft, CheckCircle2, XCircle,
@@ -154,53 +154,77 @@ export default function WatchtowerPage() {
               </Card>
             </div>
 
-            {/* ── Data Freshness ─── */}
+            {/* ── Data Freshness (actual collection dates) ─── */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="h-5 w-5 text-[#0D5E6D]" />
                 <h2 className="text-lg font-bold text-slate-900">Data Freshness</h2>
+                <span className="text-xs text-slate-400 ml-1">Actual collection dates from source systems</span>
               </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-3">
-                {data.table_stats.map((stat) => {
-                  const f = freshnessInfo(stat.latest_date);
-                  return (
-                    <Card key={stat.key} className="transition-shadow hover:shadow-md">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-slate-900">{stat.label}</p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {stat.latest_date
-                                ? format(parseISO(stat.latest_date), "MMM d, yyyy")
-                                : "No data yet"}
-                            </p>
-                            <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                              <span>{stat.row_count.toLocaleString()} rows</span>
-                              <span>·</span>
-                              <span>{stat.distinct_weeks} weeks</span>
-                              <span>·</span>
-                              <span>{stat.latest_coverage}/{data.community_count} properties</span>
+              {data.source_freshness && data.source_freshness.length > 0 ? (
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-3">
+                  {data.source_freshness.map((src) => {
+                    const f = freshnessInfo(src.latest_date);
+                    return (
+                      <Card key={src.source_key} className="transition-shadow hover:shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900">{src.source_label}</p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {src.latest_date
+                                  ? format(parseISO(src.latest_date), "MMM d, yyyy")
+                                  : "No data yet"}
+                              </p>
+                              <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
+                                <span>{src.row_count.toLocaleString()} rows</span>
+                                <span>·</span>
+                                <span>{src.property_count} properties</span>
+                              </div>
                             </div>
+                            <Badge className={`${f.bg} ${f.color} border-0 text-xs font-bold`}>
+                              {f.label}
+                            </Badge>
                           </div>
-                          <Badge className={`${f.bg} ${f.color} border-0 text-xs font-bold`}>
-                            {f.label}
-                          </Badge>
-                        </div>
-                        {/* Coverage bar */}
-                        <div className="mt-3 h-1.5 rounded-full bg-slate-100">
-                          <div
-                            className={`h-1.5 rounded-full transition-all ${
-                              stat.latest_coverage / data.community_count >= 0.9 ? "bg-emerald-500" :
-                              stat.latest_coverage / data.community_count >= 0.5 ? "bg-amber-500" : "bg-red-500"
-                            }`}
-                            style={{ width: `${data.community_count > 0 ? (stat.latest_coverage / data.community_count) * 100 : 0}%` }}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Fallback to D1 table stats if no source freshness data */
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-3">
+                  {data.table_stats.map((stat) => {
+                    const f = freshnessInfo(stat.latest_date);
+                    return (
+                      <Card key={stat.key} className="transition-shadow hover:shadow-md">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900">{stat.label}</p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {stat.latest_date
+                                  ? format(parseISO(stat.latest_date), "MMM d, yyyy")
+                                  : "No data yet"}
+                              </p>
+                              <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
+                                <span>{stat.row_count.toLocaleString()} rows</span>
+                                <span>·</span>
+                                <span>{stat.distinct_weeks} weeks</span>
+                                <span>·</span>
+                                <span>{stat.latest_coverage}/{data.community_count} properties</span>
+                              </div>
+                            </div>
+                            <Badge className={`${f.bg} ${f.color} border-0 text-xs font-bold`}>
+                              {f.label}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* ── Coverage Matrix ─── */}

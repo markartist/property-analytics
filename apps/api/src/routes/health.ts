@@ -127,12 +127,23 @@ health.get("/status", async (c) => {
   // 5. Communities table count
   const communityCount = communities.length;
 
+  // 6. Actual source freshness from canonical DB (pushed by sync script)
+  const sourceFreshness = await queryAll<{
+    source_key: string;
+    source_label: string;
+    latest_date: string | null;
+    row_count: number;
+    property_count: number;
+    updated_at: string;
+  }>(db, `SELECT * FROM data_freshness ORDER BY latest_date DESC`);
+
   return c.json({
     community_count: communityCount,
     health_score: healthScore,
     filled_cells: filledCells,
     total_cells: totalCells,
     table_stats: Object.values(tableStats),
+    source_freshness: sourceFreshness,
     coverage_matrix: matrix,
     data_sources: DATA_SOURCES.map((s) => ({ key: s.key, label: s.label })),
   });

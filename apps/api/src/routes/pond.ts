@@ -152,24 +152,30 @@ pond.get("/insights", async (c) => {
     `SELECT COUNT(*) as cnt FROM communities WHERE deleted_at IS NULL AND ga4_property_id IS NOT NULL`
   );
 
-  const tableFreshness = await queryAll<{ tbl: string; latest: string }>(
-    db,
-    `SELECT 'ga4' as tbl, MAX(snapshot_date) as latest FROM pib_ga4_metrics
-     UNION ALL SELECT 'site_perf', MAX(snapshot_date) FROM pib_site_performance
-     UNION ALL SELECT 'local_presence', MAX(snapshot_date) FROM pib_local_presence
-     UNION ALL SELECT 'search', MAX(snapshot_date) FROM pib_search_performance
-     UNION ALL SELECT 'cir', MAX(snapshot_date) FROM pib_cir
-     UNION ALL SELECT 'reviews', MAX(snapshot_date) FROM pib_reviews
-     UNION ALL SELECT 'marketing', MAX(week_date) FROM marketing_data
-     UNION ALL SELECT 't7', MAX(week_date) FROM t7_metrics
-     UNION ALL SELECT 't30', MAX(week_date) FROM t30_metrics`
-  );
+  // Try actual source freshness first (from canonical DB sync), fall back to D1 table dates
+  const sourceFreshness = await queryAll<{ source_key: string; latest_date: string }>(
+    db, `SELECT source_key, latest_date FROM data_freshness`
+  ).catch(() => [] as { source_key: string; latest_date: string }[]);
+
+  let freshness: Record<string, string | null>;
+  if (sourceFreshness.length > 0) {
+    freshness = Object.fromEntries(sourceFreshness.map((r) => [r.source_key, r.latest_date]));
+  } else {
+    // Fallback to D1 table dates
+    const tableFreshness = await queryAll<{ tbl: string; latest: string }>(
+      db,
+      `SELECT 'ga4' as tbl, MAX(snapshot_date) as latest FROM pib_ga4_metrics
+       UNION ALL SELECT 'gsc', MAX(snapshot_date) FROM pib_search_performance
+       UNION ALL SELECT 'marketing', MAX(week_date) FROM marketing_data`
+    );
+    freshness = Object.fromEntries(tableFreshness.map((r) => [r.tbl, r.latest]));
+  }
 
   const surface = {
     latest_snapshot: weekDate,
     prev_snapshot: prevDate,
     community_count: communityCount?.cnt ?? 0,
-    freshness: Object.fromEntries(tableFreshness.map((r) => [r.tbl, r.latest])),
+    freshness,
   };
 
   return c.json({ week_date: weekDate, insights: insights.slice(0, 5), surface });
