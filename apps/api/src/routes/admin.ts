@@ -188,8 +188,7 @@ async function sendMagicLinkForUser(
     [tokenId, email, hash, expiresAt, now]
   );
 
-  const apiBase = new URL(c.req.url).origin;
-  const verifyUrl = `${apiBase}/v1/auth/verify?token=${raw}`;
+  const verifyUrl = `${adminFrontendUrl(c)}/login/verify?token=${raw}`;
 
   if (c.env.ENABLE_EMAIL_SEND === "true") {
     const result = await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
@@ -219,6 +218,13 @@ async function sendMagicLinkForUser(
     console.log(`[DEV] Magic link for ${email}: ${verifyUrl}`);
     return verifyUrl;
   }
+}
+
+/** Derive frontend URL from the API request for email links. */
+function adminFrontendUrl(c: { req: { url: string } }): string {
+  const url = new URL(c.req.url);
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return "http://localhost:3000";
+  return "https://app.venterradev.com";
 }
 
 export { admin };

@@ -134,9 +134,8 @@ auth.post("/magic-link", async (c) => {
     [tokenId, email, hash, expiresAt, now]
   );
 
-  // Build verify URL from request origin
-  const apiBase = new URL(c.req.url).origin;
-  const verifyUrl = `${apiBase}/v1/auth/verify?token=${raw}`;
+  // Build verify URL pointing to frontend (not API) to defeat email link scanners
+  const verifyUrl = `${frontendUrl(c)}/login/verify?token=${raw}`;
 
   // Send email
   if (c.env.ENABLE_EMAIL_SEND === "true") {
@@ -170,10 +169,19 @@ auth.post("/magic-link", async (c) => {
   return c.json({ ok: true, message: "If that email exists, a login link has been sent." });
 });
 
-/** GET /v1/auth/verify — verify magic link token and create session */
+/** GET /v1/auth/verify — redirect to frontend (backwards compat, safe from email scanners) */
 auth.get("/verify", async (c) => {
   const raw = c.req.query("token");
   if (!raw) return c.redirect(frontendUrl(c) + "/login?error=missing_token");
+  // Redirect to frontend verify page — does NOT consume the token
+  return c.redirect(frontendUrl(c) + `/login/verify?token=${raw}`);
+});
+
+/** POST /v1/auth/verify — consume magic link token and create session (requires user click) */
+auth.post("/verify", async (c) => {
+  const body = z.object({ token: z.string().min(1) }).safeParse(await c.req.json());
+  if (!body.success) return c.json(errJson("VALIDATION_ERROR", "Missing token"), 400);
+  const raw = body.data.token;
 
   const tokenHash = await hashToken(raw);
   const token = await queryFirst<{ id: string; email: string; expires_at: string; used_at: string | null }>(
@@ -182,9 +190,9 @@ auth.get("/verify", async (c) => {
     [tokenHash]
   );
 
-  if (!token) return c.redirect(frontendUrl(c) + "/login?error=invalid_token");
-  if (token.used_at) return c.redirect(frontendUrl(c) + "/login?error=token_used");
-  if (new Date(token.expires_at) <= new Date()) return c.redirect(frontendUrl(c) + "/login?error=token_expired");
+  if (!token) return c.json(errJson("INVALID_TOKEN", "This login link is invalid."), 400);
+  if (token.used_at) return c.json(errJson("TOKEN_USED", "This login link has already been used."), 400);
+  if (new Date(token.expires_at) <= new Date()) return c.json(errJson("TOKEN_EXPIRED", "This login link has expired."), 400);
 
   // Mark token as used
   const now = nowISO();
@@ -196,7 +204,7 @@ auth.get("/verify", async (c) => {
     "SELECT id, email, role, is_active FROM users WHERE email = ? AND deleted_at IS NULL",
     [token.email]
   );
-  if (!user || !user.is_active) return c.redirect(frontendUrl(c) + "/login?error=user_inactive");
+  if (!user || !user.is_active) return c.json(errJson("USER_INACTIVE", "Account is inactive."), 403);
 
   // Create session
   const session = await generateToken();
@@ -213,7 +221,7 @@ auth.get("/verify", async (c) => {
   await run(c.env.POP_BRIEF_DB, "UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?", [now, now, user.id]);
 
   c.header("Set-Cookie", `pop_session=${session.raw}; ${COOKIE_OPTS}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
-  return c.redirect(frontendUrl(c) + "/");
+  return c.json({ user: { id: user.id, email: user.email, role: user.role } });
 });
 
 /** GET /v1/auth/me — current user context */
