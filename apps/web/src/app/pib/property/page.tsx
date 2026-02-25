@@ -302,26 +302,26 @@ function SitePerformanceSection({ communityId, ctx }: { communityId: string; ctx
           <ScoreGauge label="Desktop" score={sp?.desktop_score ?? null} />
         </div>
       </CardContent></Card>
-      <Card><CardContent className="p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Core Web Vitals</h2>
-        <div className="space-y-3">
-          <CwvRow label="Largest Contentful Paint (LCP)" value={sp?.lcp_ms ?? null} unit="ms" threshold="Good ≤ 2500ms" good={2500} poor={4000} />
-          <CwvRow label="Cumulative Layout Shift (CLS)" value={sp?.cls != null ? Math.round(sp.cls * 1000) / 1000 : null} unit="" threshold="Good ≤ 0.1" good={0.1} poor={0.25} />
-          <CwvRow label="First Input Delay (FID)" value={sp?.fid_ms ?? null} unit="ms" threshold="Good ≤ 100ms" good={100} poor={300} />
-          <CwvRow label="First Contentful Paint (FCP)" value={sp?.fcp_ms ?? null} unit="ms" threshold="Good ≤ 1800ms" good={1800} poor={3000} />
-          <CwvRow label="Time to First Byte (TTFB)" value={sp?.ttfb_ms ?? null} unit="ms" threshold="Good ≤ 800ms" good={800} poor={1800} />
-        </div>
-      </CardContent></Card>
-      {(sp?.gtmetrix_grade || sp?.gtmetrix_performance != null || sp?.gtmetrix_structure != null) && (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card><CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">GTMetrix</h2>
-          <div className="grid grid-cols-3 gap-6 text-center">
-            {sp?.gtmetrix_grade && <div><p className="text-3xl font-bold text-slate-900">{sp.gtmetrix_grade}</p><p className="text-xs text-slate-500">Grade</p></div>}
-            {sp?.gtmetrix_performance != null && <div><p className="text-3xl font-bold text-slate-900">{sp.gtmetrix_performance}%</p><p className="text-xs text-slate-500">Performance</p></div>}
-            {sp?.gtmetrix_structure != null && <div><p className="text-3xl font-bold text-slate-900">{sp.gtmetrix_structure}%</p><p className="text-xs text-slate-500">Structure</p></div>}
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Mobile Core Web Vitals</h2>
+          <div className="space-y-3">
+            <CwvRow label="Largest Contentful Paint (LCP)" value={sp?.mobile_lcp ?? null} unit="s" threshold="Good ≤ 2.5s" good={2.5} poor={4.0} />
+            <CwvRow label="Cumulative Layout Shift (CLS)" value={sp?.mobile_cls != null ? Math.round(sp.mobile_cls * 1000) / 1000 : null} unit="" threshold="Good ≤ 0.1" good={0.1} poor={0.25} />
+            <CwvRow label="First Input Delay (FID)" value={sp?.mobile_fid ?? null} unit="ms" threshold="Good ≤ 100ms" good={100} poor={300} />
+            <CwvRow label="First Contentful Paint (FCP)" value={sp?.mobile_fcp ?? null} unit="s" threshold="Good ≤ 1.8s" good={1.8} poor={3.0} />
           </div>
         </CardContent></Card>
-      )}
+        <Card><CardContent className="p-6">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Desktop Core Web Vitals</h2>
+          <div className="space-y-3">
+            <CwvRow label="Largest Contentful Paint (LCP)" value={sp?.desktop_lcp ?? null} unit="s" threshold="Good ≤ 2.5s" good={2.5} poor={4.0} />
+            <CwvRow label="Cumulative Layout Shift (CLS)" value={sp?.desktop_cls != null ? Math.round(sp.desktop_cls * 1000) / 1000 : null} unit="" threshold="Good ≤ 0.1" good={0.1} poor={0.25} />
+            <CwvRow label="First Input Delay (FID)" value={sp?.desktop_fid ?? null} unit="ms" threshold="Good ≤ 100ms" good={100} poor={300} />
+            <CwvRow label="First Contentful Paint (FCP)" value={sp?.desktop_fcp ?? null} unit="s" threshold="Good ≤ 1.8s" good={1.8} poor={3.0} />
+          </div>
+        </CardContent></Card>
+      </div>
     </SectionShell>
   );
 }
@@ -367,15 +367,20 @@ function TrafficSection({ communityId, ctx }: { communityId: string; ctx: Return
         <Stat label="Total Sessions" value={ga4?.total_sessions} />
         <Stat label="Total Users" value={ga4?.total_users} />
         <Stat label="New Users" value={ga4?.new_users} />
-        <Stat label="Engagement Rate" value={ga4?.engagement_rate} fmt={(v) => `${(v * 100).toFixed(1)}%`} />
+        <Stat label="Avg Session Duration" value={ga4?.avg_session_duration} fmt={(v) => `${v.toFixed(1)}s`} />
       </div>
-      {(ga4?.sessions_trend_pct != null || ga4?.sessions_prev_period != null) && (
+      {ga4?.sessions_trend_pct != null && (
         <Card><CardContent className="p-6">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Session Trend</h2>
           <div className="flex items-center gap-6">
-            <div><p className="text-sm text-slate-500">Current Period</p><p className="text-2xl font-bold">{sessions.toLocaleString()}</p></div>
-            {ga4?.sessions_prev_period != null && <div><p className="text-sm text-slate-500">Previous Period</p><p className="text-2xl font-bold text-slate-500">{Number(ga4.sessions_prev_period).toLocaleString()}</p></div>}
-            {ga4?.sessions_trend_pct != null && <TrendIndicator value={ga4.sessions_trend_pct} isPercentage decimalPlaces={1} />}
+            <div><p className="text-sm text-slate-500">Total Sessions</p><p className="text-2xl font-bold">{sessions.toLocaleString()}</p></div>
+            <TrendIndicator value={ga4.sessions_trend_pct} isPercentage decimalPlaces={1} />
+            {ga4?.users_trend_pct != null && (
+              <div className="ml-4">
+                <p className="text-sm text-slate-500">Users Trend</p>
+                <TrendIndicator value={ga4.users_trend_pct} isPercentage decimalPlaces={1} />
+              </div>
+            )}
           </div>
         </CardContent></Card>
       )}
@@ -398,6 +403,24 @@ function TrafficSection({ communityId, ctx }: { communityId: string; ctx: Return
               <p className="text-2xl font-bold text-slate-900">{v.toLocaleString()}</p>
               <p className="text-xs text-slate-500">{l}</p>
               {sessions > 0 && <p className="text-xs text-slate-400">{((v / sessions) * 100).toFixed(1)}%</p>}
+            </div>
+          ))}
+        </div>
+      </CardContent></Card>
+      <Card><CardContent className="p-6">
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Conversion Events</h2>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          {[
+            { l: "Tour Clicks", v: ga4?.tour_clicks },
+            { l: "Phone Calls", v: ga4?.phone_calls },
+            { l: "Apply Clicks", v: ga4?.apply_clicks },
+            { l: "Price Quotes", v: ga4?.price_quotes },
+            { l: "Form Starts", v: ga4?.form_starts },
+            { l: "Form Submits", v: ga4?.form_submits },
+          ].map(({ l, v }) => (
+            <div key={l} className="rounded-lg border p-3 text-center">
+              <p className="text-xl font-bold text-slate-900">{v != null ? Number(v).toLocaleString() : "\u2014"}</p>
+              <p className="text-xs text-slate-500">{l}</p>
             </div>
           ))}
         </div>
@@ -557,7 +580,7 @@ function ConversionSection({ communityId, ctx }: { communityId: string; ctx: Ret
   return (
     <SectionShell communityId={communityId} {...ctx} title="Conversion & Leasing" icon={Zap}>
       <Card><CardContent className="p-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900">Conversion Impact Rate (CIR)</h2>
+        <h2 className="mb-4 text-lg font-semibold text-slate-900">Customer Intent Rate (CIR)</h2>
         <div className="flex items-center gap-6">
           <p className="text-4xl font-bold text-slate-900">{cir?.cir_value != null ? `${Number(cir.cir_value).toFixed(1)}%` : "—"}</p>
           {cir?.cir_status && <Badge variant="outline" className={`text-sm py-1 px-3 ${cirColor(cir.cir_status)}`}>{String(cir.cir_status).toUpperCase()}</Badge>}
@@ -628,63 +651,169 @@ function ReviewsSection({ communityId, ctx }: { communityId: string; ctx: Return
   const rev = ctx.data?.reviews as Record<string, any> | null;
   const themes: Record<string, number> = (rev as any)?.themes ?? {};
   const criticalReviews: { reviewer: string; rating: number; comment: string; date: string }[] = (rev as any)?.critical_reviews ?? [];
+
   const avgRating = Number(rev?.avg_rating ?? 0);
-  const reviewCount = Number(rev?.review_count ?? 0);
+  const totalReviews = Number(rev?.total_reviews ?? 0);
+  const fiveStarCount = Number(rev?.five_star_count ?? 0);
+  const oneStarCount = Number(rev?.one_star_count ?? 0);
+  const midStarCount = Math.max(0, totalReviews - fiveStarCount - oneStarCount);
+  const recentCount = rev?.recent_30d_count != null ? Number(rev.recent_30d_count) : null;
+  const ratingTrend = rev?.avg_rating_trend != null ? Number(rev.avg_rating_trend) : null;
   const sentimentScore = rev?.sentiment_score != null ? Number(rev.sentiment_score) : null;
-  const stars: { star: number; count: number }[] = [];
-  for (let i = 5; i >= 1; i--) stars.push({ star: i, count: Number(rev?.[`star_${i}_count`] ?? 0) });
-  const totalStarCount = stars.reduce((s, r) => s + r.count, 0);
+  const sentimentPct = sentimentScore != null ? Math.round(sentimentScore * 100) : null;
+  const sentimentLabel = sentimentPct != null ? (sentimentPct >= 60 ? "Positive" : sentimentPct >= 40 ? "Mixed" : "Negative") : null;
+  const sentimentColor = sentimentPct != null ? (sentimentPct >= 60 ? "text-green-600" : sentimentPct >= 40 ? "text-amber-600" : "text-red-600") : "";
+  const sentimentBg = sentimentPct != null ? (sentimentPct >= 60 ? "bg-green-500" : sentimentPct >= 40 ? "bg-amber-500" : "bg-red-500") : "bg-slate-300";
+  const positiveRatio = totalReviews > 0 ? (fiveStarCount / totalReviews) * 100 : 0;
+
   const sortedThemes = Object.entries(themes).sort((a, b) => b[1] - a[1]);
+  const maxThemeCount = sortedThemes.length > 0 ? sortedThemes[0][1] : 1;
+  const themeLabels: Record<string, string> = {
+    staff: "Staff & Service", maintenance: "Maintenance", amenities: "Amenities",
+    location: "Location", value: "Value for Money", noise: "Noise",
+    move_in: "Move-in Experience", move_out: "Move-out Experience",
+    pets: "Pet-Friendliness", parking: "Parking",
+  };
 
   return (
     <SectionShell communityId={communityId} {...ctx} title="Reviews & Reputation" icon={Star}>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="rounded-lg border p-4 text-center">
-          <p className="text-3xl font-bold text-slate-900">{avgRating ? avgRating.toFixed(2) : "—"}</p>
-          <div className="mt-1 flex justify-center"><StarRating rating={avgRating} /></div>
-          <p className="mt-1 text-xs text-slate-500">Avg Rating</p>
-        </div>
-        <div className="rounded-lg border p-4 text-center"><p className="text-3xl font-bold text-slate-900">{reviewCount.toLocaleString()}</p><p className="mt-1 text-xs text-slate-500">Total Reviews</p></div>
-        <div className="rounded-lg border p-4 text-center"><p className="text-3xl font-bold text-slate-900">{sentimentScore != null ? `${(sentimentScore * 100).toFixed(0)}%` : "—"}</p><p className="mt-1 text-xs text-slate-500">Sentiment Score</p></div>
-        <div className="rounded-lg border p-4 text-center"><p className="text-3xl font-bold text-slate-900">{rev?.response_rate != null ? `${(Number(rev.response_rate) * 100).toFixed(0)}%` : "—"}</p><p className="mt-1 text-xs text-slate-500">Response Rate</p></div>
-      </div>
-      {totalStarCount > 0 && (
+      {/* Hero: Rating + Sentiment */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card><CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Star Distribution</h2>
-          <div className="space-y-2">
-            {stars.map(({ star, count }) => {
-              const pct = totalStarCount > 0 ? (count / totalStarCount) * 100 : 0;
+          <div className="flex items-start gap-6">
+            <div>
+              <p className="text-5xl font-bold text-slate-900">{avgRating ? avgRating.toFixed(2) : "\u2014"}</p>
+              <div className="mt-2"><StarRating rating={avgRating} /></div>
+              <p className="mt-2 text-sm text-slate-500">{totalReviews.toLocaleString()} total reviews</p>
+            </div>
+            <div className="flex-1 space-y-3 pt-1">
+              {ratingTrend != null && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-500">Rating Trend</span>
+                  <span className={`text-sm font-bold ${ratingTrend >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {ratingTrend >= 0 ? "+" : ""}{ratingTrend.toFixed(2)}
+                  </span>
+                  <span className="text-xs text-slate-400">vs prior</span>
+                </div>
+              )}
+              {recentCount != null && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-500">Last 30 Days</span>
+                  <span className="text-sm font-bold text-slate-700">{recentCount} new</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">5\u2605 Ratio</span>
+                <span className={`text-sm font-bold ${positiveRatio >= 70 ? "text-green-600" : positiveRatio >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                  {positiveRatio.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent></Card>
+
+        <Card><CardContent className="p-6">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-500">Sentiment Analysis</h3>
+          <div className="mt-3 flex items-center gap-4">
+            <p className={`text-4xl font-bold ${sentimentColor}`}>{sentimentPct != null ? `${sentimentPct}%` : "\u2014"}</p>
+            {sentimentLabel && (
+              <Badge variant="outline" className={`text-sm py-1 px-3 ${
+                sentimentPct! >= 60 ? "border-green-300 text-green-700 bg-green-50" :
+                sentimentPct! >= 40 ? "border-amber-300 text-amber-700 bg-amber-50" :
+                "border-red-300 text-red-700 bg-red-50"
+              }`}>{sentimentLabel}</Badge>
+            )}
+          </div>
+          {sentimentPct != null && (
+            <div className="mt-4">
+              <div className="h-3 w-full rounded-full bg-slate-100">
+                <div className={`h-3 rounded-full ${sentimentBg}`} style={{ width: `${sentimentPct}%`, transition: "width 0.6s ease" }} />
+              </div>
+              <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                <span>Negative</span><span>Neutral</span><span>Positive</span>
+              </div>
+            </div>
+          )}
+        </CardContent></Card>
+      </div>
+
+      {/* Rating Distribution */}
+      {totalReviews > 0 && (
+        <Card><CardContent className="p-6">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Rating Distribution</h2>
+          <div className="space-y-3">
+            {[
+              { label: "5 Star", count: fiveStarCount, color: "bg-green-500", icon: "\u2605" },
+              { label: "2\u20134 Star", count: midStarCount, color: "bg-amber-400", icon: "\u2605" },
+              { label: "1 Star", count: oneStarCount, color: "bg-red-500", icon: "\u2605" },
+            ].map(({ label, count, color }) => {
+              const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
               return (
-                <div key={star} className="flex items-center gap-3">
-                  <span className="w-8 text-right text-sm font-medium text-slate-600">{star}★</span>
-                  <div className="flex-1 h-4 rounded-full bg-slate-100"><div className="h-4 rounded-full bg-amber-400" style={{ width: `${pct}%`, transition: "width 0.4s ease" }} /></div>
-                  <span className="w-12 text-right text-sm tabular-nums text-slate-600">{count}</span>
-                  <span className="w-12 text-right text-xs text-slate-400">{pct.toFixed(0)}%</span>
+                <div key={label} className="flex items-center gap-3">
+                  <span className="w-20 text-right text-sm font-medium text-slate-600">{label}</span>
+                  <div className="flex-1 h-5 rounded-full bg-slate-100">
+                    <div className={`h-5 rounded-full ${color} flex items-center justify-end pr-2`}
+                      style={{ width: `${Math.max(pct, 2)}%`, transition: "width 0.4s ease" }}>
+                      {pct > 12 && <span className="text-[10px] font-medium text-white">{pct.toFixed(0)}%</span>}
+                    </div>
+                  </div>
+                  <span className="w-14 text-right text-sm tabular-nums font-semibold text-slate-700">{count.toLocaleString()}</span>
+                  <span className="w-14 text-right text-xs text-slate-400">{pct.toFixed(1)}%</span>
                 </div>
               );
             })}
           </div>
         </CardContent></Card>
       )}
+
+      {/* Review Themes */}
       {sortedThemes.length > 0 && (
         <Card><CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Review Themes</h2>
-          <div className="flex flex-wrap gap-2">{sortedThemes.map(([theme, count]) => <Badge key={theme} variant="outline" className="text-sm py-1 px-3">{theme} <span className="ml-1 text-slate-400">({count})</span></Badge>)}</div>
+          <h2 className="mb-2 text-lg font-semibold text-slate-900">Review Themes</h2>
+          <p className="mb-4 text-xs text-slate-500">Topics mentioned across all reviews — higher counts indicate more frequent discussion.</p>
+          <div className="space-y-3">
+            {sortedThemes.map(([theme, count]) => {
+              const pct = maxThemeCount > 0 ? (count / maxThemeCount) * 100 : 0;
+              const label = themeLabels[theme] ?? theme.charAt(0).toUpperCase() + theme.slice(1).replace(/_/g, " ");
+              return (
+                <div key={theme} className="flex items-center gap-3">
+                  <span className="w-36 text-right text-sm font-medium text-slate-600 truncate">{label}</span>
+                  <div className="flex-1 h-4 rounded-full bg-slate-100">
+                    <div className="h-4 rounded-full bg-indigo-500" style={{ width: `${Math.max(pct, 3)}%`, transition: "width 0.4s ease" }} />
+                  </div>
+                  <span className="w-10 text-right text-sm tabular-nums font-semibold text-slate-700">{count}</span>
+                </div>
+              );
+            })}
+          </div>
         </CardContent></Card>
       )}
+
+      {/* Critical Reviews */}
       {criticalReviews.length > 0 && (
         <Card><CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Critical Reviews</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <h2 className="text-lg font-semibold text-slate-900">Critical Reviews</h2>
+            <Badge variant="outline" className="border-red-200 text-red-600 bg-red-50 text-xs">{criticalReviews.length}</Badge>
+          </div>
           <div className="space-y-4">
             {criticalReviews.map((cr, i) => (
-              <div key={i} className="rounded-lg border border-red-100 bg-red-50/50 p-4">
-                <div className="flex items-center gap-3"><StarRating rating={cr.rating} /><span className="text-sm font-medium text-slate-700">{cr.reviewer}</span>{cr.date && <span className="text-xs text-slate-400">{cr.date}</span>}</div>
-                <p className="mt-2 text-sm text-slate-700">{cr.comment}</p>
+              <div key={i} className="rounded-lg border border-red-200 bg-red-50/50 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <StarRating rating={cr.rating} />
+                    <span className="text-sm font-semibold text-slate-700">{cr.reviewer}</span>
+                  </div>
+                  {cr.date && <span className="text-xs text-slate-400">{cr.date}</span>}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{cr.comment}</p>
               </div>
             ))}
           </div>
         </CardContent></Card>
       )}
+
       {!rev && <Card><CardContent className="py-10 text-center text-slate-400">No review data available for this week.</CardContent></Card>}
     </SectionShell>
   );
