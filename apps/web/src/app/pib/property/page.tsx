@@ -153,8 +153,13 @@ const HUB_SECTIONS: { key: string; label: string; icon: React.ElementType; color
     metric: (d) => ({ value: d.ga4 ? Number((d.ga4 as any).total_sessions ?? 0).toLocaleString() : "—", label: "Total Sessions", trend: d.ga4 ? (d.ga4 as any).sessions_trend_pct : null }) },
   { key: "search", label: "Search Performance", icon: Search, color: "bg-teal-600",
     metric: (d) => ({ value: d.search_performance ? Number((d.search_performance as any).avg_position ?? 0).toFixed(1) : "—", label: "Avg Position" }) },
-  { key: "ads", label: "Advertising", icon: DollarSign, color: "bg-rose-600",
-    metric: (d) => { const t = Number((d.marketing as any)?.google_ppc ?? 0) + Number((d.marketing as any)?.google_remarketing ?? 0); return { value: t > 0 ? `$${t.toLocaleString()}` : "—", label: "Total Ad Spend" }; } },
+  { key: "ads", label: "Advertising & Marketing", icon: DollarSign, color: "bg-rose-600",
+    metric: (d) => {
+      const m = d.marketing as any;
+      const channels = ["google_ppc", "google_remarketing", "apartments_com", "social", "zillow", "mailers", "kurie_video", "other"];
+      const t = channels.reduce((s, k) => s + Number(m?.[k] ?? 0), 0);
+      return { value: t > 0 ? `$${t.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : "\u2014", label: "Total Ad Spend" };
+    } },
   { key: "local-presence", label: "Local Presence", icon: MapPin, color: "bg-amber-600",
     metric: (d) => ({ value: d.local_presence ? Number((d.local_presence as any).total_profile_views ?? 0).toLocaleString() : "—", label: "GBP Views" }) },
   { key: "conversion", label: "Conversion & Leasing", icon: Zap, color: "bg-green-600",
@@ -486,34 +491,180 @@ function SearchSection({ communityId, ctx }: { communityId: string; ctx: ReturnT
 
 function AdsSection({ communityId, ctx }: { communityId: string; ctx: ReturnType<typeof usePibDetail> }) {
   const mkt = ctx.data?.marketing as Record<string, any> | null;
-  const ppc = Number(mkt?.google_ppc ?? 0);
-  const rm = Number(mkt?.google_remarketing ?? 0);
-  const total = ppc + rm;
-  const ppcPct = total > 0 ? (ppc / total) * 100 : 0;
-  const rmPct = total > 0 ? (rm / total) * 100 : 0;
   const fmtD = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtD0 = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+  // All spend channels
+  const channels: { key: string; label: string; color: string }[] = [
+    { key: "google_ppc", label: "Google PPC", color: "bg-indigo-500" },
+    { key: "google_remarketing", label: "Remarketing", color: "bg-purple-500" },
+    { key: "apartments_com", label: "Apartments.com", color: "bg-teal-500" },
+    { key: "social", label: "Social", color: "bg-pink-500" },
+    { key: "zillow", label: "Zillow", color: "bg-amber-500" },
+    { key: "mailers", label: "Mailers", color: "bg-sky-500" },
+    { key: "kurie_video", label: "Kurie Video", color: "bg-rose-500" },
+    { key: "other", label: "Other", color: "bg-slate-500" },
+  ];
+
+  const spendItems = channels.map((ch) => ({ ...ch, value: Number(mkt?.[ch.key] ?? 0) })).filter((s) => s.value > 0);
+  const totalSpend = spendItems.reduce((s, i) => s + i.value, 0);
+  const monthlyBudget = mkt?.monthly_budget != null ? Number(mkt.monthly_budget) : null;
+
+  // Property performance
+  const occupancy = mkt?.occupancy != null ? Number(mkt.occupancy) : null;
+  const atr = mkt?.atr != null ? Number(mkt.atr) : null;
+  const floorplans = mkt?.most_common_floorplans as string | null;
+
+  // Session deltas
+  const t7Engaged = mkt?.t7_engaged_sessions_delta != null ? Number(mkt.t7_engaged_sessions_delta) : null;
+  const t7Organic = mkt?.t7_organic_sessions_delta != null ? Number(mkt.t7_organic_sessions_delta) : null;
+  const t30Engaged = mkt?.t30_engaged_sessions_delta != null ? Number(mkt.t30_engaged_sessions_delta) : null;
+  const t30Organic = mkt?.t30_organic_sessions_delta != null ? Number(mkt.t30_organic_sessions_delta) : null;
+
+  // GC per door
+  const gcMetrics = [
+    { label: "T7 Community", gcd: mkt?.t7_community_gc_per_door, gcad: mkt?.t7_community_gc_per_avail_door },
+    { label: "T7 Portfolio", gcd: mkt?.t7_portfolio_gc_per_door, gcad: mkt?.t7_portfolio_gc_per_avail_door },
+    { label: "T30 Community", gcd: mkt?.t30_community_gc_per_door, gcad: mkt?.t30_community_gc_per_avail_door },
+    { label: "T30 Portfolio", gcd: mkt?.t30_portfolio_gc_per_door, gcad: mkt?.t30_portfolio_gc_per_avail_door },
+  ];
+  const hasGcData = gcMetrics.some((m) => m.gcd != null);
+
+  // Notes
+  const adNotes = mkt?.advertising_notes as string | null;
+  const hasSessionDeltas = t7Engaged != null || t7Organic != null;
 
   return (
-    <SectionShell communityId={communityId} {...ctx} title="Advertising" icon={DollarSign}>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-lg border p-6 text-center"><p className="text-3xl font-bold text-slate-900">{fmtD(total)}</p><p className="mt-1 text-sm text-slate-500">Total Ad Spend</p></div>
-        <div className="rounded-lg border p-6 text-center"><p className="text-3xl font-bold text-indigo-600">{fmtD(ppc)}</p><p className="mt-1 text-sm text-slate-500">Google PPC</p>{total > 0 && <p className="text-xs text-slate-400">{ppcPct.toFixed(1)}% of total</p>}</div>
-        <div className="rounded-lg border p-6 text-center"><p className="text-3xl font-bold text-purple-600">{fmtD(rm)}</p><p className="mt-1 text-sm text-slate-500">Remarketing</p>{total > 0 && <p className="text-xs text-slate-400">{rmPct.toFixed(1)}% of total</p>}</div>
+    <SectionShell communityId={communityId} {...ctx} title="Advertising & Marketing" icon={DollarSign}>
+      {/* Hero stats */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="rounded-lg border p-4 text-center">
+          <p className="text-2xl font-bold text-slate-900">{totalSpend > 0 ? fmtD0(totalSpend) : "\u2014"}</p>
+          <p className="mt-1 text-xs text-slate-500">Total Ad Spend</p>
+        </div>
+        <div className="rounded-lg border p-4 text-center">
+          <p className="text-2xl font-bold text-slate-900">{monthlyBudget != null ? fmtD0(monthlyBudget) : "\u2014"}</p>
+          <p className="mt-1 text-xs text-slate-500">Monthly Budget</p>
+        </div>
+        <div className={`rounded-lg border p-4 text-center`}>
+          <p className={`text-2xl font-bold ${occupancy != null ? (occupancy >= 95 ? "text-green-600" : occupancy >= 90 ? "text-amber-600" : "text-red-600") : "text-slate-900"}`}>
+            {occupancy != null ? `${occupancy.toFixed(1)}%` : "\u2014"}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Occupancy</p>
+        </div>
+        <div className="rounded-lg border p-4 text-center">
+          <p className="text-2xl font-bold text-slate-900">{atr != null ? `${atr.toFixed(1)}%` : "\u2014"}</p>
+          <p className="mt-1 text-xs text-slate-500">ATR</p>
+        </div>
       </div>
-      {total > 0 && (
+
+      {/* Full Spend Breakdown */}
+      {spendItems.length > 0 && (
         <Card><CardContent className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Spend Breakdown</h2>
-          <div className="flex h-8 overflow-hidden rounded-full">
-            {ppc > 0 && <div className="bg-indigo-500 flex items-center justify-center text-xs font-medium text-white" style={{ width: `${ppcPct}%` }}>{ppcPct > 15 ? `PPC ${ppcPct.toFixed(0)}%` : ""}</div>}
-            {rm > 0 && <div className="bg-purple-500 flex items-center justify-center text-xs font-medium text-white" style={{ width: `${rmPct}%` }}>{rmPct > 15 ? `RM ${rmPct.toFixed(0)}%` : ""}</div>}
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Spend by Channel</h2>
+          <div className="space-y-3">
+            {spendItems.sort((a, b) => b.value - a.value).map(({ key, label, value, color }) => {
+              const pct = totalSpend > 0 ? (value / totalSpend) * 100 : 0;
+              return (
+                <div key={key} className="flex items-center gap-3">
+                  <span className="w-28 text-right text-sm font-medium text-slate-600 truncate">{label}</span>
+                  <div className="flex-1 h-5 rounded-full bg-slate-100">
+                    <div className={`h-5 rounded-full ${color} flex items-center justify-end pr-2`}
+                      style={{ width: `${Math.max(pct, 3)}%`, transition: "width 0.4s ease" }}>
+                      {pct > 10 && <span className="text-[10px] font-medium text-white">{pct.toFixed(0)}%</span>}
+                    </div>
+                  </div>
+                  <span className="w-20 text-right text-sm tabular-nums font-semibold text-slate-700">{fmtD(value)}</span>
+                </div>
+              );
+            })}
           </div>
-          <div className="mt-3 flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-indigo-500" /><span className="text-slate-600">PPC</span></div>
-            <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full bg-purple-500" /><span className="text-slate-600">Remarketing</span></div>
+          {/* Stacked bar */}
+          <div className="mt-4 flex h-6 overflow-hidden rounded-full">
+            {spendItems.sort((a, b) => b.value - a.value).map(({ key, color, value }) => {
+              const pct = totalSpend > 0 ? (value / totalSpend) * 100 : 0;
+              return <div key={key} className={`${color}`} style={{ width: `${pct}%` }} />;
+            })}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            {spendItems.sort((a, b) => b.value - a.value).map(({ key, label, color }) => (
+              <div key={key} className="flex items-center gap-1.5 text-xs text-slate-500">
+                <div className={`h-2.5 w-2.5 rounded-full ${color}`} />{label}
+              </div>
+            ))}
           </div>
         </CardContent></Card>
       )}
-      {total === 0 && <Card><CardContent className="py-10 text-center text-slate-400">No advertising spend data for this week.</CardContent></Card>}
+      {spendItems.length === 0 && (
+        <Card><CardContent className="py-8 text-center text-slate-400">No advertising spend data for this week.</CardContent></Card>
+      )}
+
+      {/* Session Deltas */}
+      {hasSessionDeltas && (
+        <Card><CardContent className="p-6">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Session Performance</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[
+              { l: "T7 Engaged \u0394", v: t7Engaged },
+              { l: "T7 Organic \u0394", v: t7Organic },
+              { l: "T30 Engaged \u0394", v: t30Engaged },
+              { l: "T30 Organic \u0394", v: t30Organic },
+            ].map(({ l, v }) => (
+              <div key={l} className="rounded-lg border p-3 text-center">
+                {v != null ? (
+                  <p className={`text-xl font-bold ${v >= 0 ? "text-green-600" : "text-red-600"}`}>{v >= 0 ? "+" : ""}{v.toFixed(1)}%</p>
+                ) : (
+                  <p className="text-xl font-bold text-slate-300">\u2014</p>
+                )}
+                <p className="mt-1 text-xs text-slate-500">{l}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent></Card>
+      )}
+
+      {/* GC per Door */}
+      {hasGcData && (
+        <Card><CardContent className="p-0">
+          <div className="border-b px-6 py-4"><h2 className="text-lg font-semibold text-slate-900">Guest Cards per Door</h2></div>
+          <Table>
+            <TableHeader><TableRow className="bg-slate-50">
+              <TableHead className="text-xs">Period</TableHead>
+              <TableHead className="text-right text-xs">GC / Door</TableHead>
+              <TableHead className="text-right text-xs">GC / Avail Door</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {gcMetrics.map(({ label, gcd, gcad }) => (
+                <TableRow key={label}>
+                  <TableCell className="font-medium text-slate-900">{label}</TableCell>
+                  <TableCell className="text-right tabular-nums">{gcd != null ? Number(gcd).toFixed(4) : "\u2014"}</TableCell>
+                  <TableCell className="text-right tabular-nums">{gcad != null ? Number(gcad).toFixed(4) : "\u2014"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent></Card>
+      )}
+
+      {/* Most Available Floorplans */}
+      {floorplans && (
+        <Card><CardContent className="p-6">
+          <h2 className="mb-3 text-lg font-semibold text-slate-900">Most Available Unit Types</h2>
+          <div className="flex flex-wrap gap-2">
+            {floorplans.split(",").map((fp) => fp.trim()).filter(Boolean).map((fp) => (
+              <Badge key={fp} variant="outline" className="text-sm py-1.5 px-3 font-mono">{fp}</Badge>
+            ))}
+          </div>
+        </CardContent></Card>
+      )}
+
+      {/* Advertising Notes */}
+      {adNotes && (
+        <Card><CardContent className="p-6">
+          <h2 className="mb-3 text-lg font-semibold text-slate-900">Advertising Notes</h2>
+          <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-line">{adNotes}</p>
+        </CardContent></Card>
+      )}
     </SectionShell>
   );
 }
