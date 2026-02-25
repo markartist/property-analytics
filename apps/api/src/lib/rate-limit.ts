@@ -72,6 +72,9 @@ export class RateLimiter {
 /** Login: 5 attempts per 15 minutes per IP. */
 export const loginLimiter = new RateLimiter({ maxRequests: 5, windowSeconds: 900 });
 
+/** Magic link: 3 requests per 15 minutes per email. */
+export const magicLinkLimiter = new RateLimiter({ maxRequests: 3, windowSeconds: 900 });
+
 /** Scan-mentions: 10 requests per minute per user. */
 export const scanMentionsLimiter = new RateLimiter({ maxRequests: 10, windowSeconds: 60 });
 

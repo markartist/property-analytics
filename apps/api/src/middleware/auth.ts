@@ -10,7 +10,8 @@ export type AuthVariables = {
 interface SessionRow {
   user_id: string;
   email: string;
-  role: "admin" | "user";
+  full_name: string | null;
+  role: "admin" | "editor" | "viewer";
   is_active: number;
   expires_at: string;
   revoked_at: string | null;
@@ -50,6 +51,20 @@ export async function requireAdmin(c: Context<{ Bindings: Env; Variables: AuthVa
   await next();
 }
 
+/**
+ * Require one of the specified roles. Must be used AFTER requireAuth.
+ * Usage: requireRole("admin", "editor")
+ */
+export function requireRole(...roles: AuthUser["role"][]) {
+  return async (c: Context<{ Bindings: Env; Variables: AuthVariables }>, next: Next) => {
+    const user = c.get("user");
+    if (!user || !roles.includes(user.role)) {
+      return c.json({ error: { code: "FORBIDDEN", message: `Requires one of: ${roles.join(", ")}`, details: [] } }, 403);
+    }
+    await next();
+  };
+}
+
 function getCookie(c: Context, name: string): string | undefined {
   const header = c.req.header("cookie") ?? "";
   const match = header.split(";").map((s) => s.trim()).find((s) => s.startsWith(`${name}=`));
@@ -64,7 +79,7 @@ async function resolveSession(
   const tokenHash = await hashToken(rawToken);
   const row = await queryFirst<SessionRow>(
     db,
-    `SELECT s.user_id, s.expires_at, s.revoked_at, u.email, u.role, u.is_active
+    `SELECT s.user_id, s.expires_at, s.revoked_at, u.email, u.full_name, u.role, u.is_active
      FROM sessions s JOIN users u ON s.user_id = u.id
      WHERE s.session_token_hash = ?`,
     [tokenHash]

@@ -24,7 +24,9 @@ import {
   Fish,
 } from "lucide-react";
 
-const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; adminOnly?: boolean; section?: string }[] = [
+type NavRole = "admin" | "editor" | "viewer";
+
+const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; minRole?: NavRole; section?: string }[] = [
   { href: "/", label: "The Pond", icon: Waves },
   { href: "/watchtower", label: "Watchtower", icon: Eye },
   { href: "/dock", label: "The Dock", icon: Anchor },
@@ -32,15 +34,22 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; adminOn
 
   // Reports
   { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "Reports" },
-  { href: "/analysis", label: "Analysis", icon: BarChart2 },
-  { href: "/marketing", label: "Marketing Data", icon: Megaphone },
-  { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar },
-  { href: "/t30-metrics", label: "T30 Metrics", icon: TrendingUp },
+  { href: "/analysis", label: "Analysis", icon: BarChart2, minRole: "editor" },
+  { href: "/marketing", label: "Marketing Data", icon: Megaphone, minRole: "editor" },
+  { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar, minRole: "editor" },
+  { href: "/t30-metrics", label: "T30 Metrics", icon: TrendingUp, minRole: "editor" },
 
   // Utilities
-  { href: "/backup", label: "Backup & Export", icon: Download, section: "Utilities" },
-  { href: "/admin/users", label: "Admin", icon: Shield, adminOnly: true },
+  { href: "/backup", label: "Backup & Export", icon: Download, section: "Utilities", minRole: "editor" },
+  { href: "/admin/users", label: "Admin", icon: Shield, minRole: "admin" },
 ];
+
+/** Role hierarchy: admin > editor > viewer */
+const ROLE_LEVEL: Record<NavRole, number> = { viewer: 0, editor: 1, admin: 2 };
+function hasRole(userRole: NavRole | undefined, minRole: NavRole): boolean {
+  if (!userRole) return false;
+  return ROLE_LEVEL[userRole] >= ROLE_LEVEL[minRole];
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -89,7 +98,7 @@ export function Sidebar() {
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">
           {NAV_ITEMS.map((item, idx) => {
-            if (item.adminOnly && user?.role !== "admin") return null;
+            if (item.minRole && !hasRole(user?.role, item.minRole)) return null;
             const isActive =
               item.href === "/"
                 ? pathname === "/"

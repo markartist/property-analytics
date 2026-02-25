@@ -18,5 +18,5 @@ export interface Env {
 export interface AuthUser {
   id: string;
   email: string;
-  role: "admin" | "user";
+  role: "admin" | "editor" | "viewer";
 }

@@ -348,3 +348,71 @@ export async function getDockPreview(): Promise<DockPreviewResponse> {
   if (!res.ok) throw new Error("Failed to load dock preview");
   return res.json();
 }
+
+// ── Admin ──
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: "admin" | "editor" | "viewer";
+  is_active: number;
+  last_login_at: string | null;
+  created_at: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  before_json: string | null;
+  after_json: string | null;
+  created_at: string;
+  actor_email: string | null;
+  actor_name: string | null;
+}
+
+export async function getAdminUsers(): Promise<AdminUser[]> {
+  const res = await apiFetch("/v1/admin/users");
+  if (!res.ok) throw new Error("Failed to load users");
+  return (await res.json()).items;
+}
+
+export async function createAdminUser(body: { email: string; full_name: string; role: string }): Promise<AdminUser> {
+  const res = await apiFetch("/v1/admin/users", { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message ?? "Failed to create user"); }
+  return res.json();
+}
+
+export async function patchAdminUser(id: string, body: Record<string, unknown>): Promise<AdminUser> {
+  const res = await apiFetch(`/v1/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message ?? "Failed to update user"); }
+  return res.json();
+}
+
+export async function sendMagicLink(userId: string): Promise<void> {
+  const res = await apiFetch(`/v1/admin/users/${userId}/send-magic-link`, { method: "POST" });
+  if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message ?? "Failed to send magic link"); }
+}
+
+export async function revokeUserSessions(userId: string): Promise<void> {
+  const res = await apiFetch(`/v1/admin/users/${userId}/sessions`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to revoke sessions");
+}
+
+export async function getAuditLog(params?: { action?: string; limit?: number; offset?: number }): Promise<AuditLogEntry[]> {
+  const qp = new URLSearchParams();
+  if (params?.action) qp.set("action", params.action);
+  if (params?.limit) qp.set("limit", String(params.limit));
+  if (params?.offset) qp.set("offset", String(params.offset));
+  const q = qp.toString();
+  const res = await apiFetch(`/v1/admin/audit-log${q ? `?${q}` : ""}`);
+  if (!res.ok) throw new Error("Failed to load audit log");
+  return (await res.json()).items;
+}
+
+export async function requestMagicLink(email: string): Promise<{ ok: boolean; message: string }> {
+  const res = await apiFetch("/v1/auth/magic-link", { method: "POST", body: JSON.stringify({ email }) });
+  return res.json();
+}

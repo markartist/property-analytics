@@ -4,66 +4,61 @@ import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
 import { requireAuth, requireAdmin } from "../middleware/auth";
 import { queryFirst, queryAll, run } from "../lib/db";
-import { generateToken } from "../lib/crypto";
+import { generateToken, hashToken } from "../lib/crypto";
 import { sendEmail } from "../email/resend";
 import { newId } from "../lib/id";
 import { nowISO, errJson } from "../lib/validate";
 import { writeAuditLog } from "../lib/audit";
 
-const CreateInviteBody = z.object({
+const MAGIC_LINK_TTL_MINUTES = 15;
+
+const CreateUserBody = z.object({
   email: z.string().email().transform((v) => v.toLowerCase().trim()),
-  role: z.enum(["admin", "user"]),
-  expires_in_days: z.number().int().min(1).max(90).default(7),
+  full_name: z.string().min(1),
+  role: z.enum(["admin", "editor", "viewer"]),
 });
 
 const PatchUserBody = z.object({
-  role: z.enum(["admin", "user"]).optional(),
+  role: z.enum(["admin", "editor", "viewer"]).optional(),
   is_active: z.boolean().optional(),
+  full_name: z.string().min(1).optional(),
 });
 
 const admin = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 admin.use("*", requireAuth, requireAdmin);
 
-/** POST /v1/admin/invites — create invite */
-admin.post("/invites", async (c) => {
-  const parse = CreateInviteBody.safeParse(await c.req.json());
+/** POST /v1/admin/users — create user and send magic link */
+admin.post("/users", async (c) => {
+  const parse = CreateUserBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
-  const { email, role, expires_in_days } = parse.data;
+  const { email, full_name, role } = parse.data;
 
-  // Check for existing active invite
+  // Check for existing user
   const existing = await queryFirst(c.env.POP_BRIEF_DB,
-    "SELECT id FROM invites WHERE email = ? AND redeemed_at IS NULL AND expires_at > ?",
-    [email, nowISO()]
+    "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", [email]
   );
-  if (existing) return c.json(errJson("INVITE_EXISTS", "Active invite already exists for this email"), 409);
+  if (existing) return c.json(errJson("USER_EXISTS", "A user with this email already exists"), 409);
 
-  const { raw, hash } = await generateToken();
-  const inviteId = newId();
+  const userId = newId();
   const now = nowISO();
   const actor = c.get("user");
-  const expiresAt = new Date(Date.now() + expires_in_days * 86_400_000).toISOString();
 
+  // Create user record (no password — magic link only)
   await run(c.env.POP_BRIEF_DB,
-    `INSERT INTO invites (id, email, role, token_hash, expires_at, created_at, created_by, updated_at, updated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [inviteId, email, role, hash, expiresAt, now, actor.id, now, actor.id]
+    `INSERT INTO users (id, email, full_name, role, is_active, created_at, created_by, updated_at, updated_by)
+     VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+    [userId, email, full_name, role, now, actor.id, now, actor.id]
   );
 
-  // Send invite email if enabled
-  if (c.env.ENABLE_EMAIL_SEND === "true") {
-    await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
-      to: email,
-      subject: "You're invited to POP Brief",
-      html: `<p>You've been invited to POP Brief. Use this token to create your account:</p><p><strong>${raw}</strong></p>`,
-    });
-  }
+  // Generate and send magic link
+  const magicLinkUrl = await sendMagicLinkForUser(c, email);
 
   await writeAuditLog(c.env.POP_BRIEF_DB, {
-    actorUserId: actor.id, action: "invite.create", entityType: "invite", entityId: inviteId,
-    after: { email, role, expires_at: expiresAt },
+    actorUserId: actor.id, action: "user.create", entityType: "user", entityId: userId,
+    after: { email, full_name, role },
   });
 
-  return c.json({ invite_id: inviteId, email, expires_at: expiresAt });
+  return c.json({ id: userId, email, full_name, role, is_active: true, magic_link_sent: !!magicLinkUrl }, 201);
 });
 
 /** GET /v1/admin/users — list users */
@@ -74,15 +69,15 @@ admin.get("/users", async (c) => {
   return c.json({ items: users });
 });
 
-/** PATCH /v1/admin/users/:id — update role or active state */
+/** PATCH /v1/admin/users/:id — update role, active state, or name */
 admin.patch("/users/:id", async (c) => {
   const id = c.req.param("id");
   const parse = PatchUserBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
   const body = parse.data;
 
-  const userBefore = await queryFirst<{ id: string; role: string; is_active: number }>(c.env.POP_BRIEF_DB,
-    "SELECT id, role, is_active FROM users WHERE id = ? AND deleted_at IS NULL", [id]
+  const userBefore = await queryFirst<{ id: string; role: string; is_active: number; full_name: string | null }>(c.env.POP_BRIEF_DB,
+    "SELECT id, role, is_active, full_name FROM users WHERE id = ? AND deleted_at IS NULL", [id]
   );
   if (!userBefore) return c.json(errJson("USER_NOT_FOUND", "User not found"), 404);
 
@@ -90,6 +85,7 @@ admin.patch("/users/:id", async (c) => {
   const params: unknown[] = [];
   if (body.role !== undefined) { sets.push("role = ?"); params.push(body.role); }
   if (body.is_active !== undefined) { sets.push("is_active = ?"); params.push(body.is_active ? 1 : 0); }
+  if (body.full_name !== undefined) { sets.push("full_name = ?"); params.push(body.full_name); }
   if (sets.length === 0) return c.json(errJson("VALIDATION_ERROR", "No fields to update"), 400);
 
   const now = nowISO();
@@ -100,7 +96,7 @@ admin.patch("/users/:id", async (c) => {
   await run(c.env.POP_BRIEF_DB, `UPDATE users SET ${sets.join(", ")} WHERE id = ?`, params);
 
   const updated = await queryFirst(c.env.POP_BRIEF_DB,
-    "SELECT id, email, role, is_active FROM users WHERE id = ?", [id]
+    "SELECT id, email, full_name, role, is_active FROM users WHERE id = ?", [id]
   );
 
   await writeAuditLog(c.env.POP_BRIEF_DB, {
@@ -110,5 +106,114 @@ admin.patch("/users/:id", async (c) => {
 
   return c.json(updated);
 });
+
+/** POST /v1/admin/users/:id/send-magic-link — (re)send a login link */
+admin.post("/users/:id/send-magic-link", async (c) => {
+  const id = c.req.param("id");
+  const user = await queryFirst<{ id: string; email: string; is_active: number }>(c.env.POP_BRIEF_DB,
+    "SELECT id, email, is_active FROM users WHERE id = ? AND deleted_at IS NULL", [id]
+  );
+  if (!user) return c.json(errJson("USER_NOT_FOUND", "User not found"), 404);
+  if (!user.is_active) return c.json(errJson("USER_INACTIVE", "Cannot send link to inactive user"), 400);
+
+  await sendMagicLinkForUser(c, user.email);
+
+  const actor = c.get("user");
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "magic_link.send", entityType: "user", entityId: id,
+    after: { email: user.email },
+  });
+
+  return c.json({ ok: true, email: user.email });
+});
+
+/** DELETE /v1/admin/users/:id/sessions — revoke all sessions for a user */
+admin.delete("/users/:id/sessions", async (c) => {
+  const id = c.req.param("id");
+  const user = await queryFirst<{ id: string }>(c.env.POP_BRIEF_DB,
+    "SELECT id FROM users WHERE id = ? AND deleted_at IS NULL", [id]
+  );
+  if (!user) return c.json(errJson("USER_NOT_FOUND", "User not found"), 404);
+
+  const now = nowISO();
+  await run(c.env.POP_BRIEF_DB,
+    "UPDATE sessions SET revoked_at = ?, updated_at = ? WHERE user_id = ? AND revoked_at IS NULL AND expires_at > ?",
+    [now, now, id, now]
+  );
+
+  const actor = c.get("user");
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id, action: "sessions.revoke_all", entityType: "user", entityId: id,
+  });
+
+  return c.json({ ok: true });
+});
+
+/** GET /v1/admin/audit-log — paginated audit log */
+admin.get("/audit-log", async (c) => {
+  const limit = Math.min(parseInt(c.req.query("limit") ?? "50", 10), 200);
+  const offset = parseInt(c.req.query("offset") ?? "0", 10);
+  const action = c.req.query("action"); // optional filter
+
+  let sql = `SELECT a.id, a.action, a.entity_type, a.entity_id, a.before_json, a.after_json, a.created_at,
+    u.email as actor_email, u.full_name as actor_name
+    FROM audit_log a LEFT JOIN users u ON a.actor_user_id = u.id`;
+  const params: unknown[] = [];
+
+  if (action) {
+    sql += " WHERE a.action = ?";
+    params.push(action);
+  }
+
+  sql += " ORDER BY a.created_at DESC LIMIT ? OFFSET ?";
+  params.push(limit, offset);
+
+  const rows = await queryAll(c.env.POP_BRIEF_DB, sql, params);
+  return c.json({ items: rows });
+});
+
+// --- Helper: generate magic token and send email ---
+
+async function sendMagicLinkForUser(
+  c: { env: Env; req: { url: string } },
+  email: string
+): Promise<string | null> {
+  const { raw, hash } = await generateToken();
+  const tokenId = newId();
+  const now = nowISO();
+  const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_MINUTES * 60_000).toISOString();
+
+  await run(c.env.POP_BRIEF_DB,
+    "INSERT INTO magic_tokens (id, email, token_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?)",
+    [tokenId, email, hash, expiresAt, now]
+  );
+
+  const apiBase = new URL(c.req.url).origin;
+  const verifyUrl = `${apiBase}/v1/auth/verify?token=${raw}`;
+
+  if (c.env.ENABLE_EMAIL_SEND === "true") {
+    await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
+      to: email,
+      subject: "Sign in to The Data Pond",
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+          <div style="text-align: center; margin-bottom: 32px;">
+            <h1 style="color: #15284B; font-size: 24px; margin: 0;">The Data Pond</h1>
+            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Venterra WebOps</p>
+          </div>
+          <p style="color: #334155; font-size: 16px; line-height: 1.5;">Click the button below to sign in. This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${verifyUrl}" style="background-color: #15284B; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block;">Sign In</a>
+          </div>
+          <p style="color: #94a3b8; font-size: 12px; line-height: 1.5;">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+    return verifyUrl;
+  } else {
+    console.log(`[DEV] Magic link for ${email}: ${verifyUrl}`);
+    return verifyUrl;
+  }
+}
 
 export { admin };

@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api";
 export interface AuthUser {
   id: string;
   email: string;
-  role: "admin" | "user";
+  role: "admin" | "editor" | "viewer";
 }
 
 interface AuthContextValue {
