@@ -918,3 +918,80 @@ v_latest_availability - View for current data
 
 **Next PIB Work:** v2.0 development (separate template file)
 
+---
+
+## Session: February 24-25, 2026 - The Data Pond: Admin Auth, Email Delivery & Sidebar Redesign
+
+**Duration:** ~4 hours
+**Status:** Complete — Magic link auth working, sidebar redesigned
+**Agent:** Oz (Warp)
+**Commits:** `9002de4`, `e8b16ec`, `5e9d815`, `58cbeab`
+
+### Context
+
+The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
+- **API Worker:** `api.venterradev.com` (Hono on Cloudflare Workers)
+- **Frontend:** `app.venterradev.com` (Next.js on Cloudflare Pages, project `property-analytics`)
+- **Database:** D1 `pop-brief-db` (ID: `dad3e7d1-147b-438d-8cd0-2cbf537a87b2`)
+- **Git Remote:** `origin` → `git@github.com:markartist/property-analytics.git`
+
+### Major Accomplishments
+
+#### 1. Data Freshness Fix (commit `9002de4`)
+- Replaced D1 Friday-snapshot-based freshness display with actual source collection dates from canonical DB
+- Created `data_freshness` table (migration 0017)
+- Updated sync script, health endpoint, pond insights endpoint
+- All 10 sources now show real dates (GA4, GSC, Google Ads, PageSpeed, SEMRush, GBP Reviews, etc.)
+
+#### 2. Admin Section with Magic Link Auth (commit `e8b16ec`)
+- **Migration 0018:** `magic_tokens` table, recreated `users`/`invites`/`sessions`/`audit_log` with expanded roles (`admin`/`editor`/`viewer`), nullable `password_hash`
+- **D1 FK constraint lesson:** Must recreate child tables WITHOUT FK references before dropping/recreating parent tables; `PRAGMA defer_foreign_keys = ON` doesn't work in D1
+- **API endpoints added:** `POST /auth/magic-link`, `GET /auth/verify`, `POST /users`, `PATCH /users/:id`, `POST /users/:id/send-magic-link`, `DELETE /users/:id/sessions`, `GET /audit-log`
+- **Frontend:** Admin console page with Users + Audit Log tabs, role-based sidebar filtering using `ROLE_LEVEL` hierarchy
+- **Rate limiting:** `magicLinkLimiter` (3 per 15min per email)
+
+#### 3. Login Page Redesign (commit `5e9d815`)
+- Full pond-themed overhaul: gradient background (navy→teal→green), pond-scene.svg, animated ripple circles, glassmorphism card with backdrop-blur
+- **Tailwind v4 fix:** `text-primary-foreground` CSS variable doesn't render in production; all buttons use explicit `text-white` with native `<button>` elements
+
+#### 4. Resend Email Integration & Domain Verification
+- Verified `app.venterradev.com` AND `venterradev.com` in Resend (DKIM + SPF green)
+- Set `EMAIL_FROM` secret to `noreply@venterradev.com` (root domain for better deliverability)
+- Set `RESEND_API_KEY` secret on Worker
+- Added error logging to all `sendEmail()` calls in `auth.ts` and `admin.ts`
+- **Tested:** Gmail delivery works. Corporate `venterraliving.com` blocks — needs IT whitelist or switch to AWS SES HTTP API
+- Resend account email: `marklaufhutte@gmail.com`
+
+#### 5. Sidebar Gradient (commit `58cbeab`)
+- Navy→teal→green gradient background matching pond theme
+- All text switched to white with opacity levels for hierarchy
+- Active state: `bg-white/15`, hover: `bg-white/10`
+- Borders: `border-white/15`
+
+### Key Technical Details
+
+**User in D1:** id `bac3e169226046bf8ec9`, email `mlaufhutte@venterraliving.com`, role `admin`
+
+**Git remotes:**
+- `origin` → `git@github.com:markartist/property-analytics.git` (correct — triggers Cloudflare Pages)
+- `figma` → `git@github.com:markartist/figma.git` (wrong repo, do NOT push here)
+
+**Cloudflare deployment:**
+- API: `npx wrangler deploy --config apps/api/wrangler.toml`
+- Frontend: `git push origin main` triggers Cloudflare Pages build (project `property-analytics`, NOT `pop-brief-web`)
+
+**AWS SES credentials (in email_config.json):**
+- SMTP username (= Access Key ID): `AKIAYJAGT54HEDH7GXFV`
+- SMTP password is derived, NOT the raw IAM Secret Access Key
+- Cannot use for SES HTTP API without the actual IAM secret key
+- Region: us-east-2
+
+### Outstanding / Next Steps
+
+1. **Corporate email delivery:** `venterraliving.com` blocks emails from `venterradev.com`. Options:
+   - Whitelist `venterradev.com` in corporate mail admin
+   - Switch to AWS SES HTTP API (needs IAM Secret Access Key, not just SMTP password)
+   - Keep using Gmail for login
+2. **ENABLE_EMAIL_SEND** is set to `"true"` in `wrangler.toml` and deployed
+3. **Future:** Build out remaining admin features, add more reporting pages
+
