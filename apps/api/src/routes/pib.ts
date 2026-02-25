@@ -262,6 +262,26 @@ pib.get("/:communityId", async (c) => {
     [communityId, weekDate]
   );
 
+  // Ad keyword performance by unit type
+  const adKeywordRows = await queryAll<Record<string, unknown>>(
+    db,
+    `SELECT * FROM ad_keyword_performance
+     WHERE community_id = ? AND week_date = ?
+     ORDER BY spend DESC`,
+    [communityId, weekDate]
+  );
+  const adKeywords = adKeywordRows.map((row) => {
+    let topKeywords: unknown[] = [];
+    if (row.top_keywords_json) {
+      try { topKeywords = JSON.parse(row.top_keywords_json as string); } catch {}
+    }
+    return {
+      ...row,
+      top_keywords_json: undefined,
+      top_keywords: topKeywords,
+    };
+  });
+
   // T7 + T30 leasing metrics
   const t7 = await queryFirst(
     db,
@@ -304,6 +324,7 @@ pib.get("/:communityId", async (c) => {
       critical_reviews: criticalReviews,
     } : null,
     marketing: marketing ?? null,
+    ad_keywords: adKeywords,
     leasing: {
       t7: t7 ?? null,
       t7_portfolio: t7Portfolio ?? null,

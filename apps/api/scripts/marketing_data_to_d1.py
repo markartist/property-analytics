@@ -33,11 +33,13 @@ Usage:
 import argparse
 import json
 import os
+import re
 import sqlite3
 import subprocess
 import sys
 import time
 import uuid
+from collections import defaultdict
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -499,6 +501,219 @@ def fetch_gc_per_door(
 # Source 6: SEMRush visibility + SERP traffic
 # ---------------------------------------------------------------------------
 
+
+# ---------------------------------------------------------------------------
+# Source 7: Google Ads keyword performance (unit-type classification)
+# ---------------------------------------------------------------------------
+
+# Classification logic mirrors paid_media_workbook/scripts/generate_paid_media_workbook.py
+
+def _classify_keyword(keyword: str) -> str:
+    """Classify keyword into unit type: Studio, 1BR, 2BR, or Unclassified."""
+    kw = keyword.lower()
+    if any(t in kw for t in ["studio", "efficiency"]):
+        return "Studio"
+    for pat in [r"\bone\s*bedroom", r"\b1\s*bedroom", r"\b1\s*br\b", r"\b1-bedroom"]:
+        if re.search(pat, kw):
+            return "1BR"
+    for pat in [r"\btwo\s*bedroom", r"\b2\s*bedroom", r"\b2\s*br\b", r"\b2-bedroom"]:
+        if re.search(pat, kw):
+            return "2BR"
+    return "Unclassified"
+
+
+def _classify_unclassified(keyword: str, property_name: str) -> str:
+    """Sub-classify an Unclassified keyword: Brand, Local Generic, or Other Generic."""
+    kw = keyword.lower()
+    prop_words = set(property_name.lower().split()) - {"the", "at", "on", "of", "apartments"}
+    if any(w in kw for w in prop_words if len(w) > 3):
+        return "Brand"
+    geo = ["near me", "in ", " tx", " fl", " nc", " ga", " sc", " al", " tn",
+           "austin", "dallas", "houston", "orlando", "tampa", "jacksonville",
+           "charlotte", "raleigh", "atlanta", "nashville", "san antonio",
+           "clearwater", "fort worth"]
+    apt = ["apartment", "apt", "rental", "lease", "housing", "complex"]
+    if any(g in kw for g in geo) and any(a in kw for a in apt):
+        return "Local Generic"
+    return "Other Generic"
+
+
+def _get_property_names(conn: sqlite3.Connection) -> Dict[str, str]:
+    """Load property_id → property_name from canonical DB."""
+    rows = conn.execute("SELECT property_id, property_name FROM properties").fetchall()
+    return {r["property_id"]: r["property_name"] or "" for r in rows}
+
+
+def fetch_keyword_performance(
+    conn: sqlite3.Connection,
+    friday: str,
+    community_map: Dict[str, dict],
+) -> Tuple[Dict[str, dict], Dict[str, List[dict]]]:
+    """
+    Aggregate Google Ads keyword data by property and unit_type for the
+    T30 window ending on Friday.
+
+    Returns:
+      summaries: { ga4_id: { ads_total_clicks, ads_total_conversions,
+                             ads_cost_per_conversion, ads_classified_pct } }
+      breakdowns: { ga4_id: [ { unit_type, spend, clicks, conversions,
+                                impressions, keyword_count, top_keywords } ] }
+    """
+    f = date.fromisoformat(friday)
+    start = (f - timedelta(days=29)).isoformat()
+
+    query = """
+        SELECT property_id, keyword_text, cost_micros, clicks,
+               conversions, impressions
+        FROM google_ads_keywords
+        WHERE metric_date BETWEEN ? AND ?
+    """
+    rows = conn.execute(query, (start, friday)).fetchall()
+    if not rows:
+        return {}, {}
+
+    prop_names = _get_property_names(conn)
+
+    # Accumulate per (property_id, unit_type)
+    # Also track per-keyword spend for top-5 selection
+    agg: Dict[str, Dict[str, dict]] = defaultdict(lambda: defaultdict(lambda: {
+        "spend": 0.0, "clicks": 0, "conversions": 0.0,
+        "impressions": 0, "keywords": defaultdict(lambda: {
+            "spend": 0.0, "clicks": 0, "conversions": 0.0,
+        })
+    }))
+
+    for r in rows:
+        pid = r["property_id"]
+        if pid not in community_map:
+            continue
+
+        kw = r["keyword_text"]
+        spend = (r["cost_micros"] or 0) / 1_000_000
+        clicks = r["clicks"] or 0
+        convs = r["conversions"] or 0.0
+        imps = r["impressions"] or 0
+
+        unit = _classify_keyword(kw)
+        if unit == "Unclassified":
+            pname = prop_names.get(pid, "")
+            unit = _classify_unclassified(kw, pname)
+
+        bucket = agg[pid][unit]
+        bucket["spend"] += spend
+        bucket["clicks"] += clicks
+        bucket["conversions"] += convs
+        bucket["impressions"] += imps
+        kw_agg = bucket["keywords"][kw]
+        kw_agg["spend"] += spend
+        kw_agg["clicks"] += clicks
+        kw_agg["conversions"] += convs
+
+    # Build outputs
+    summaries: Dict[str, dict] = {}
+    breakdowns: Dict[str, List[dict]] = {}
+
+    for pid, types in agg.items():
+        total_spend = sum(t["spend"] for t in types.values())
+        total_clicks = sum(t["clicks"] for t in types.values())
+        total_convs = sum(t["conversions"] for t in types.values())
+        classified_spend = sum(
+            t["spend"] for ut, t in types.items()
+            if ut in ("Studio", "1BR", "2BR")
+        )
+
+        summaries[pid] = {
+            "ads_total_clicks": total_clicks if total_clicks else None,
+            "ads_total_conversions": round(total_convs, 2) if total_convs else None,
+            "ads_cost_per_conversion": (
+                round(total_spend / total_convs, 2) if total_convs > 0 else None
+            ),
+            "ads_classified_pct": (
+                round(classified_spend / total_spend * 100, 1)
+                if total_spend > 0 else None
+            ),
+        }
+
+        type_rows = []
+        for ut, bucket in types.items():
+            # Top 5 keywords by spend
+            sorted_kws = sorted(
+                bucket["keywords"].items(),
+                key=lambda x: x[1]["spend"],
+                reverse=True,
+            )[:5]
+            top_kws = [
+                {
+                    "keyword": kw,
+                    "spend": round(data["spend"], 2),
+                    "clicks": data["clicks"],
+                    "conversions": round(data["conversions"], 2),
+                }
+                for kw, data in sorted_kws
+            ]
+
+            type_rows.append({
+                "unit_type": ut,
+                "spend": round(bucket["spend"], 2),
+                "clicks": bucket["clicks"],
+                "conversions": round(bucket["conversions"], 2),
+                "impressions": bucket["impressions"],
+                "keyword_count": len(bucket["keywords"]),
+                "top_keywords": top_kws,
+            })
+
+        breakdowns[pid] = type_rows
+
+    return summaries, breakdowns
+
+
+def generate_keyword_upserts(
+    breakdowns: Dict[str, List[dict]],
+    community_map: Dict[str, dict],
+    friday: str,
+    now: str,
+) -> List[str]:
+    """Generate INSERT-or-UPDATE SQL for ad_keyword_performance rows."""
+    sql_lines: List[str] = []
+
+    for ga4_id, type_rows in breakdowns.items():
+        cid = community_map[ga4_id]["id"]
+        for row in type_rows:
+            rid = str(uuid.uuid4())
+            ut = row["unit_type"].replace("'", "''")
+            top_json = json.dumps(row["top_keywords"]).replace("'", "''")
+
+            # INSERT if not exists
+            sql_lines.append(
+                f"INSERT INTO ad_keyword_performance "
+                f"(id, community_id, week_date, unit_type, spend, clicks, "
+                f"conversions, impressions, keyword_count, top_keywords_json, "
+                f"created_at, updated_at) "
+                f"SELECT '{rid}', '{cid}', '{friday}', '{ut}', "
+                f"{row['spend']}, {row['clicks']}, {row['conversions']}, "
+                f"{row['impressions']}, {row['keyword_count']}, "
+                f"'{top_json}', '{now}', '{now}' "
+                f"WHERE NOT EXISTS ("
+                f"SELECT 1 FROM ad_keyword_performance "
+                f"WHERE community_id = '{cid}' AND week_date = '{friday}' "
+                f"AND unit_type = '{ut}');"
+            )
+
+            # UPDATE if exists
+            sql_lines.append(
+                f"UPDATE ad_keyword_performance SET "
+                f"spend = {row['spend']}, clicks = {row['clicks']}, "
+                f"conversions = {row['conversions']}, "
+                f"impressions = {row['impressions']}, "
+                f"keyword_count = {row['keyword_count']}, "
+                f"top_keywords_json = '{top_json}', "
+                f"updated_at = '{now}' "
+                f"WHERE community_id = '{cid}' AND week_date = '{friday}' "
+                f"AND unit_type = '{ut}';"
+            )
+
+    return sql_lines
+
 def fetch_semrush(
     conn: sqlite3.Connection, friday: str
 ) -> Dict[str, dict]:
@@ -544,6 +759,9 @@ def _sql_val(v) -> str:
 AUTOMATED_FIELDS = [
     # Section 1: Advertising (partial)
     "google_ppc", "google_remarketing",
+    # Section 1b: Keyword performance summaries
+    "ads_total_clicks", "ads_total_conversions",
+    "ads_cost_per_conversion", "ads_classified_pct",
     # Section 2: Property Performance
     "occupancy", "atr", "most_common_floorplans",
     # Section 3: GC per door
@@ -639,6 +857,7 @@ def sync_friday(
     session_data = fetch_session_deltas(conn, friday)
     gc_data = fetch_gc_per_door(conn, friday, community_map, occ_data)
     semrush_data = fetch_semrush(conn, friday)
+    kw_summaries, kw_breakdowns = fetch_keyword_performance(conn, friday, community_map)
 
     # Merge all sources into per-community rows
     rows = []
@@ -674,6 +893,10 @@ def sync_friday(
         if ga4_id in semrush_data:
             merged.update(semrush_data[ga4_id])
 
+        # Merge keyword performance summaries
+        if ga4_id in kw_summaries:
+            merged.update(kw_summaries[ga4_id])
+
         # Only create a row if we have at least one non-null automated field
         has_data = any(
             merged.get(f) is not None for f in AUTOMATED_FIELDS
@@ -683,6 +906,10 @@ def sync_friday(
 
     sql_lines = generate_upserts(rows, now)
 
+    # Generate ad_keyword_performance upserts
+    kw_sql = generate_keyword_upserts(kw_breakdowns, community_map, friday, now)
+    sql_lines.extend(kw_sql)
+
     sources = {
         "occupancy": len(occ_data),
         "reviews": len(review_data),
@@ -690,6 +917,7 @@ def sync_friday(
         "sessions": len(session_data),
         "gc_door": len(gc_data),
         "semrush": len(semrush_data),
+        "ad_keywords": len(kw_breakdowns),
     }
     src_str = " | ".join(f"{k}={v}" for k, v in sources.items())
     print(f"  📊 {friday}: {len(rows)} communities [{src_str}]")

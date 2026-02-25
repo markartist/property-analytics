@@ -13,7 +13,7 @@ import { TrendIndicator } from "@/components/shared/trend-indicator";
 import { getPibDetail, getPibWeeks, type PibDetailResponse } from "@/lib/api";
 import {
   Gauge, Activity, Search, DollarSign, MapPin, Zap, Star, Users,
-  ChevronLeft, ChevronRight, Loader2, AlertCircle, ExternalLink,
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, AlertCircle, ExternalLink,
   ArrowLeft,
 } from "lucide-react";
 
@@ -486,6 +486,145 @@ function SearchSection({ communityId, ctx }: { communityId: string; ctx: ReturnT
 }
 
 // ────────────────────────────────────────────────────────────────
+// ADS — Keyword Performance sub-component
+// ────────────────────────────────────────────────────────────────
+
+const UNIT_TYPE_COLORS: Record<string, string> = {
+  "Studio": "bg-violet-500",
+  "1BR": "bg-blue-500",
+  "2BR": "bg-emerald-500",
+  "Brand": "bg-amber-500",
+  "Local Generic": "bg-cyan-500",
+  "Other Generic": "bg-slate-400",
+};
+
+function AdKeywordPerformance({ ctx }: { ctx: ReturnType<typeof usePibDetail> }) {
+  const mkt = ctx.data?.marketing as Record<string, any> | null;
+  const adKeywords = (ctx.data as any)?.ad_keywords as { unit_type: string; spend: number; clicks: number; conversions: number; impressions: number; keyword_count: number; top_keywords: { keyword: string; spend: number; clicks: number; conversions: number }[] }[] | undefined;
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+
+  if (!adKeywords || adKeywords.length === 0) return null;
+
+  const adsSpend = adKeywords.reduce((s, r) => s + (r.spend ?? 0), 0);
+  const adsClicks = mkt?.ads_total_clicks != null ? Number(mkt.ads_total_clicks) : adKeywords.reduce((s, r) => s + (r.clicks ?? 0), 0);
+  const adsConversions = mkt?.ads_total_conversions != null ? Number(mkt.ads_total_conversions) : adKeywords.reduce((s, r) => s + (r.conversions ?? 0), 0);
+  const adsCpc = adsConversions > 0 ? adsSpend / adsConversions : null;
+  const classifiedPct = mkt?.ads_classified_pct != null ? Number(mkt.ads_classified_pct) : null;
+
+  const fmtD = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtD0 = (v: number) => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+  // Separate classified (Studio/1BR/2BR) from unclassified
+  const classified = adKeywords.filter((r) => ["Studio", "1BR", "2BR"].includes(r.unit_type));
+  const unclassified = adKeywords.filter((r) => !["Studio", "1BR", "2BR"].includes(r.unit_type));
+  const sortedRows = [...classified.sort((a, b) => b.spend - a.spend), ...unclassified.sort((a, b) => b.spend - a.spend)];
+
+  return (
+    <Card><CardContent className="p-0">
+      {/* Header with summary stats */}
+      <div className="border-b px-6 py-4">
+        <h2 className="text-lg font-semibold text-slate-900">Google Ads Keyword Performance</h2>
+        <p className="mt-1 text-xs text-slate-500">Last 30 days · Keywords classified by unit type targeting</p>
+      </div>
+
+      {/* Summary hero */}
+      <div className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-slate-900">{fmtD0(adsSpend)}</p>
+          <p className="mt-1 text-xs text-slate-500">Google Ads Spend</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-slate-900">{adsCpc != null ? fmtD(adsCpc) : "\u2014"}</p>
+          <p className="mt-1 text-xs text-slate-500">Cost / Conversion</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className="text-xl font-bold text-slate-900">{adsClicks.toLocaleString()}</p>
+          <p className="mt-1 text-xs text-slate-500">Total Clicks</p>
+        </div>
+        <div className="rounded-lg border p-3 text-center">
+          <p className={`text-xl font-bold ${classifiedPct != null && classifiedPct >= 15 ? "text-green-600" : "text-amber-600"}`}>
+            {classifiedPct != null ? `${classifiedPct.toFixed(1)}%` : "\u2014"}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">Unit Type Classified</p>
+        </div>
+      </div>
+
+      {/* Unit Type Distribution table */}
+      <div className="px-6 pb-2">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead className="text-xs">Unit Type</TableHead>
+              <TableHead className="text-right text-xs">Spend</TableHead>
+              <TableHead className="text-right text-xs">% Total</TableHead>
+              <TableHead className="text-right text-xs">Clicks</TableHead>
+              <TableHead className="text-right text-xs">Conversions</TableHead>
+              <TableHead className="text-right text-xs">Keywords</TableHead>
+              <TableHead className="w-8" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedRows.map((row) => {
+              const pct = adsSpend > 0 ? (row.spend / adsSpend) * 100 : 0;
+              const isClassified = ["Studio", "1BR", "2BR"].includes(row.unit_type);
+              const isExpanded = expanded === row.unit_type;
+              const color = UNIT_TYPE_COLORS[row.unit_type] ?? "bg-slate-400";
+
+              return (
+                <React.Fragment key={row.unit_type}>
+                  <TableRow
+                    className="cursor-pointer hover:bg-slate-50"
+                    onClick={() => setExpanded(isExpanded ? null : row.unit_type)}
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
+                        <span className={`font-medium ${isClassified ? "text-slate-900" : "text-slate-600"}`}>
+                          {row.unit_type}
+                        </span>
+                        {isClassified && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-normal">Classified</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">{fmtD(row.spend)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{pct.toFixed(1)}%</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.clicks.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums">{row.conversions > 0 ? row.conversions.toFixed(1) : "\u2014"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-slate-500">{row.keyword_count}</TableCell>
+                    <TableCell className="text-right">
+                      {row.top_keywords?.length > 0 && (
+                        isExpanded
+                          ? <ChevronUp className="h-4 w-4 text-slate-400" />
+                          : <ChevronDown className="h-4 w-4 text-slate-400" />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  {/* Expandable keyword detail rows */}
+                  {isExpanded && row.top_keywords?.map((kw, i) => (
+                    <TableRow key={`${row.unit_type}-kw-${i}`} className="bg-slate-50/50">
+                      <TableCell className="pl-10 text-sm text-slate-600 italic">{kw.keyword}</TableCell>
+                      <TableCell className="text-right tabular-nums text-sm text-slate-500">{fmtD(kw.spend)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-sm text-slate-400">
+                        {adsSpend > 0 ? `${((kw.spend / adsSpend) * 100).toFixed(1)}%` : "—"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-sm text-slate-500">{kw.clicks.toLocaleString()}</TableCell>
+                      <TableCell className="text-right tabular-nums text-sm text-slate-500">{kw.conversions > 0 ? kw.conversions.toFixed(1) : "\u2014"}</TableCell>
+                      <TableCell />
+                      <TableCell />
+                    </TableRow>
+                  ))}
+                </React.Fragment>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </CardContent></Card>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────
 // ADS
 // ────────────────────────────────────────────────────────────────
 
@@ -598,6 +737,9 @@ function AdsSection({ communityId, ctx }: { communityId: string; ctx: ReturnType
       {spendItems.length === 0 && (
         <Card><CardContent className="py-8 text-center text-slate-400">No advertising spend data for this week.</CardContent></Card>
       )}
+
+      {/* Google Ads Keyword Performance */}
+      <AdKeywordPerformance ctx={ctx} />
 
       {/* Session Deltas */}
       {hasSessionDeltas && (
