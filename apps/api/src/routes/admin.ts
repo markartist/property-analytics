@@ -192,7 +192,7 @@ async function sendMagicLinkForUser(
   const verifyUrl = `${apiBase}/v1/auth/verify?token=${raw}`;
 
   if (c.env.ENABLE_EMAIL_SEND === "true") {
-    await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
+    const result = await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
       to: email,
       subject: "Sign in to The Data Pond",
       html: `
@@ -209,6 +209,11 @@ async function sendMagicLinkForUser(
         </div>
       `,
     });
+    if (!result.ok) {
+      console.error(`[RESEND] Failed to send magic link to ${email}: ${result.error}`);
+    } else {
+      console.log(`[RESEND] Magic link sent to ${email}, messageId=${result.messageId}`);
+    }
     return verifyUrl;
   } else {
     console.log(`[DEV] Magic link for ${email}: ${verifyUrl}`);

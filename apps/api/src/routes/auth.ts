@@ -140,7 +140,7 @@ auth.post("/magic-link", async (c) => {
 
   // Send email
   if (c.env.ENABLE_EMAIL_SEND === "true") {
-    await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
+    const result = await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
       to: email,
       subject: "Sign in to The Data Pond",
       html: `
@@ -157,6 +157,11 @@ auth.post("/magic-link", async (c) => {
         </div>
       `,
     });
+    if (!result.ok) {
+      console.error(`[RESEND] Failed to send magic link to ${email}: ${result.error}`);
+    } else {
+      console.log(`[RESEND] Magic link sent to ${email}, messageId=${result.messageId}`);
+    }
   } else {
     // Dev mode: log the link
     console.log(`[DEV] Magic link for ${email}: ${verifyUrl}`);

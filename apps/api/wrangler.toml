@@ -18,7 +18,7 @@ bucket_name = "pop-brief-uploads"
 
 # Environment variables
 [vars]
-ENABLE_EMAIL_SEND = "false"
+ENABLE_EMAIL_SEND = "true"
 
 # Secrets (set via `wrangler secret put <NAME>`)
 # RESEND_API_KEY
