@@ -171,8 +171,13 @@ pond.get("/insights", async (c) => {
     freshness = Object.fromEntries(tableFreshness.map((r) => [r.tbl, r.latest]));
   }
 
+  // Use the most recent date across all data sources for the "Latest" badge
+  const latestAcrossSources = sourceFreshness.length > 0
+    ? sourceFreshness.reduce((max, r) => (r.latest_date > max ? r.latest_date : max), "")
+    : weekDate;
+
   const surface = {
-    latest_snapshot: weekDate,
+    latest_snapshot: latestAcrossSources || weekDate,
     prev_snapshot: prevDate,
     community_count: communityCount?.cnt ?? 0,
     freshness,
