@@ -23,6 +23,8 @@ import traceback
 import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
+from urllib.parse import urlparse
+import xml.etree.ElementTree as ET
 
 # Add Data_Collection to path for clean imports
 _data_collection_root = str(Path(__file__).parent.parent.parent)
@@ -49,6 +51,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 import pickle
+import requests
 
 
 class PortfolioDataCollector:
@@ -75,6 +78,7 @@ class PortfolioDataCollector:
         self.results = {
             'ga4': {'success': 0, 'failed': 0, 'skipped': 0},
             'gsc': {'success': 0, 'failed': 0, 'skipped': 0},
+            'gsc_inspection': {'success': 0, 'failed': 0, 'skipped': 0},
             'google_ads': {'success': 0, 'failed': 0, 'skipped': 0},
             'psi': {'success': 0, 'failed': 0, 'skipped': 0},
             'semrush': {'success': 0, 'failed': 0, 'skipped': 0},
@@ -621,6 +625,222 @@ class PortfolioDataCollector:
         
         print()
         print(f'GSC Summary (Main): ✅ {self.results["gsc"]["success"]} | ⚠️  {self.results["gsc"]["skipped"]} | ❌ {self.results["gsc"]["failed"]}')
+        print()
+
+    def _build_url_inspection_targets(self, property_info: dict, max_urls: int = 10):
+        """Build URL list for GSC URL Inspection.
+
+        URL Inspection is per-URL. This method uses homepage + top known URLs from
+        SEMRush URL rankings when available.
+        """
+        full_url = (property_info.get('full_url') or '').strip()
+        domain = (property_info.get('domain') or '').strip().lower()
+        ga4_id = str(property_info.get('ga4_property_id') or '').strip()
+
+        targets = []
+        if full_url:
+            base = full_url.rstrip('/')
+            # Always include the 3 canonical property URLs we care about for PIB:
+            # home, reviews, and gallery.
+            targets.extend([
+                base + '/',
+                base + '/reviews/',
+                base + '/gallery/',
+            ])
+
+        if not ga4_id:
+            return targets[:max_urls]
+
+        # Pull sitemap URLs first to get indexation coverage across real pages.
+        sitemap_urls = []
+        try:
+            if full_url:
+                sitemap_endpoint = full_url.rstrip('/') + '/sitemap.xml'
+                resp = requests.get(sitemap_endpoint, timeout=8)
+                if resp.status_code == 200 and resp.text:
+                    root = ET.fromstring(resp.text)
+                    ns = {'sm': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+                    # urlset: direct URLs
+                    for loc in root.findall('.//sm:url/sm:loc', ns):
+                        if loc.text:
+                            sitemap_urls.append(loc.text.strip())
+                    # sitemapindex: fetch children (best effort)
+                    child_sitemaps = [loc.text.strip() for loc in root.findall('.//sm:sitemap/sm:loc', ns) if loc.text]
+                    for child in child_sitemaps[:5]:
+                        try:
+                            child_resp = requests.get(child, timeout=8)
+                            if child_resp.status_code != 200 or not child_resp.text:
+                                continue
+                            child_root = ET.fromstring(child_resp.text)
+                            for loc in child_root.findall('.//sm:url/sm:loc', ns):
+                                if loc.text:
+                                    sitemap_urls.append(loc.text.strip())
+                        except Exception:
+                            continue
+        except Exception:
+            pass
+
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT url
+                    FROM semrush_keyword_rankings
+                    WHERE property_id = ?
+                      AND url IS NOT NULL
+                      AND url != ''
+                    ORDER BY metric_date DESC, traffic_percent DESC, search_volume DESC
+                    LIMIT 250
+                """, (ga4_id,))
+                rows = [r[0] for r in cursor.fetchall()]
+        except Exception:
+            rows = []
+
+        seen = set()
+        for url in targets + sitemap_urls + rows:
+            if not url:
+                continue
+            url = url.strip()
+            if not url.startswith('http'):
+                continue
+            host = (urlparse(url).hostname or '').lower()
+            if domain and domain not in host:
+                continue
+            key = url.rstrip('/')
+            if key in seen:
+                continue
+            seen.add(key)
+            targets.append(url)
+            if len(targets) >= max_urls:
+                break
+
+        return targets[:max_urls]
+
+    def _parse_url_inspection_result(self, payload: dict) -> dict:
+        """Flatten GSC URL inspection payload into reportable fields."""
+        result = (payload or {}).get('inspectionResult', {})
+        idx = result.get('indexStatusResult', {}) or {}
+        mobile = result.get('mobileUsabilityResult', {}) or {}
+        rich = result.get('richResultsResult', {}) or {}
+
+        return {
+            'verdict': idx.get('verdict'),
+            'coverage_state': idx.get('coverageState'),
+            'indexing_state': idx.get('indexingState'),
+            'page_fetch_state': idx.get('pageFetchState'),
+            'robots_txt_state': idx.get('robotsTxtState'),
+            'crawled_as': idx.get('crawledAs'),
+            'last_crawl_time': idx.get('lastCrawlTime'),
+            'google_canonical': idx.get('googleCanonical'),
+            'user_canonical': idx.get('userCanonical'),
+            'mobile_usability_verdict': mobile.get('verdict'),
+            'rich_results_verdict': rich.get('verdict'),
+            'referring_urls_count': len(idx.get('referringUrls') or []),
+            'sitemaps_count': len(idx.get('sitemap') or []),
+            'raw_response_json': json.dumps(payload, separators=(',', ':'))
+        }
+
+    def collect_gsc_url_inspection_data(self, properties, max_urls_per_property: int = 10):
+        """Collect GSC URL Inspection data for reportable index coverage status."""
+        print('=' * 80)
+        print('🔎 COLLECTING GSC URL INSPECTION DATA')
+        print('=' * 80)
+        print()
+
+        if not self.gsc_service:
+            print('⚠️  GSC service not available; skipping URL inspection')
+            self.results['gsc_inspection']['skipped'] += len(properties)
+            print()
+            return
+
+        inspection_date = datetime.now().strftime('%Y-%m-%d')
+        gsc_properties = [p for p in properties if p.get('gsc_access') and p['gsc_access'] != 'none']
+        print(f'Properties with GSC access: {len(gsc_properties)}/{len(properties)}')
+        print(f'Max URLs per property: {max_urls_per_property}')
+        print()
+
+        collection_id = self.db.start_data_collection(
+            collection_date=datetime.now().date(),
+            collection_type='daily',
+            data_source='gsc_url_inspection'
+        )
+        success = 0
+        failed = 0
+
+        for i, prop in enumerate(gsc_properties, 1):
+            prop_name = prop.get('name', 'Unknown')
+            gsc_url = (prop.get('gsc_url') or '').strip()
+            ga4_id = str(prop.get('ga4_property_id') or '').strip()
+
+            if not gsc_url or not ga4_id:
+                print(f'{i}/{len(gsc_properties)}. {prop_name}')
+                print('   ⚠️  Missing gsc_url or ga4_property_id')
+                self.results['gsc_inspection']['skipped'] += 1
+                continue
+
+            targets = self._build_url_inspection_targets(prop, max_urls=max_urls_per_property)
+            if not targets:
+                print(f'{i}/{len(gsc_properties)}. {prop_name}')
+                print('   ⚠️  No URL targets')
+                self.results['gsc_inspection']['skipped'] += 1
+                continue
+
+            print(f'{i}/{len(gsc_properties)}. {prop_name}')
+            print(f'   Targets: {len(targets)}')
+
+            prop_errors = 0
+            inserted = 0
+            for url in targets:
+                try:
+                    payload = self.gsc_service.urlInspection().index().inspect(
+                        body={
+                            'inspectionUrl': url,
+                            'siteUrl': gsc_url,
+                            'languageCode': 'en-US'
+                        }
+                    ).execute()
+                    parsed = self._parse_url_inspection_result(payload)
+                    self.db.insert_gsc_url_inspection(
+                        property_id=ga4_id,
+                        gsc_site_url=gsc_url,
+                        inspected_url=url,
+                        inspection_date=inspection_date,
+                        inspection_data=parsed,
+                        collection_id=collection_id
+                    )
+                    inserted += 1
+                    time.sleep(0.2)
+                except Exception as e:
+                    prop_errors += 1
+                    if prop_errors <= 3:
+                        print(f'   ⚠️  {url}: {str(e)[:80]}')
+
+            if inserted > 0:
+                success += 1
+                self.results['gsc_inspection']['success'] += 1
+                print(f'   ✅ Inspected {inserted} URLs')
+            else:
+                failed += 1
+                self.results['gsc_inspection']['failed'] += 1
+                self.results['errors'].append({
+                    'property': prop_name,
+                    'collector': 'GSC URL Inspection',
+                    'error': 'No URLs successfully inspected'
+                })
+                print('   ❌ No URLs inspected successfully')
+
+        self.db.complete_data_collection(
+            collection_id=collection_id,
+            properties_collected=success,
+            properties_failed=failed
+        )
+
+        print()
+        print(
+            f'GSC URL Inspection Summary: ✅ {self.results["gsc_inspection"]["success"]} | '
+            f'⚠️  {self.results["gsc_inspection"]["skipped"]} | '
+            f'❌ {self.results["gsc_inspection"]["failed"]}'
+        )
         print()
     
     def collect_cendana_gsc_data(self, properties):
@@ -1421,6 +1641,7 @@ class PortfolioDataCollector:
         print('Results:')
         print(f'  GA4:          ✅ {self.results["ga4"]["success"]} | ⚠️  {self.results["ga4"]["skipped"]} | ❌ {self.results["ga4"]["failed"]}')
         print(f'  GSC:          ✅ {self.results["gsc"]["success"]} | ⚠️  {self.results["gsc"]["skipped"]} | ❌ {self.results["gsc"]["failed"]}')
+        print(f'  GSC Inspect:  ✅ {self.results["gsc_inspection"]["success"]} | ⚠️  {self.results["gsc_inspection"]["skipped"]} | ❌ {self.results["gsc_inspection"]["failed"]}')
         print(f'  Google Ads:   ✅ {self.results["google_ads"]["success"]} | ⚠️  {self.results["google_ads"]["skipped"]} | ❌ {self.results["google_ads"]["failed"]}')
         print(f'  PSI:          ✅ {self.results["psi"]["success"]} | ⚠️  {self.results["psi"]["skipped"]} | ❌ {self.results["psi"]["failed"]}')
         print(f'  SEMRush:      ✅ {self.results["semrush"]["success"]} | ⚠️  {self.results["semrush"]["skipped"]} | ❌ {self.results["semrush"]["failed"]}')
@@ -1532,7 +1753,13 @@ class PortfolioDataCollector:
             
             # Collect GSC data (main properties, excluding Cendana)
             self.collect_gsc_data(properties)
-            
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect URL inspection/index coverage signals
+            self.collect_gsc_url_inspection_data(properties, max_urls_per_property=10)
+
             # Small pause
             time.sleep(2)
             

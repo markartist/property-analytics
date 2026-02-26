@@ -58,8 +58,76 @@ class DatabaseManager:
         
         # Load GSC URL → GA4 ID mapping for dual-write
         self._gsc_url_to_ga4_map = self._load_gsc_mapping()
+
+        # Ensure runtime-added tables exist for existing databases.
+        self._ensure_runtime_tables()
         
         logger.info(f"Database manager initialized: {self.db_path}")
+
+    def _ensure_runtime_tables(self) -> None:
+        """Create runtime tables that may not exist in older databases."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS gsc_url_inspection (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    gsc_site_url TEXT NOT NULL,
+                    inspected_url TEXT NOT NULL,
+                    inspection_date DATE NOT NULL,
+                    collection_id INTEGER,
+                    verdict TEXT,
+                    coverage_state TEXT,
+                    indexing_state TEXT,
+                    page_fetch_state TEXT,
+                    robots_txt_state TEXT,
+                    crawled_as TEXT,
+                    last_crawl_time TEXT,
+                    google_canonical TEXT,
+                    user_canonical TEXT,
+                    mobile_usability_verdict TEXT,
+                    rich_results_verdict TEXT,
+                    referring_urls_count INTEGER DEFAULT 0,
+                    sitemaps_count INTEGER DEFAULT 0,
+                    raw_response_json TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, inspected_url, inspection_date),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_gsc_url_inspection_property_date
+                ON gsc_url_inspection(property_id, inspection_date)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_gsc_url_inspection_site_url
+                ON gsc_url_inspection(gsc_site_url)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS crux_history_metrics (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    property_url TEXT NOT NULL,
+                    form_factor TEXT NOT NULL,
+                    metric_name TEXT NOT NULL,
+                    period_start_date DATE NOT NULL,
+                    period_end_date DATE NOT NULL,
+                    p75_value REAL,
+                    collection_id INTEGER,
+                    raw_value TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, form_factor, metric_name, period_end_date),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_crux_history_property_date
+                ON crux_history_metrics(property_id, period_end_date)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_crux_history_metric_ff
+                ON crux_history_metrics(metric_name, form_factor)
+            """)
     
     @contextmanager
     def get_connection(self):
@@ -529,6 +597,146 @@ class DatabaseManager:
             ))
         
         logger.debug(f"Inserted GSC query '{query}' for {property_id} on {metric_date}")
+
+    def insert_gsc_url_inspection(
+        self,
+        property_id: str,
+        gsc_site_url: str,
+        inspected_url: str,
+        inspection_date: str,
+        inspection_data: Dict[str, Any],
+        collection_id: Optional[int] = None
+    ) -> None:
+        """Insert URL inspection result from GSC URL Inspection API.
+
+        Args:
+            property_id: GA4 Property ID
+            gsc_site_url: GSC property URL used for inspection
+            inspected_url: URL inspected
+            inspection_date: Date of inspection run (YYYY-MM-DD)
+            inspection_data: Parsed index/mobile/rich-result status fields
+            collection_id: Optional collection ID
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO gsc_url_inspection
+                (property_id, gsc_site_url, inspected_url, inspection_date, collection_id,
+                 verdict, coverage_state, indexing_state, page_fetch_state, robots_txt_state,
+                 crawled_as, last_crawl_time, google_canonical, user_canonical,
+                 mobile_usability_verdict, rich_results_verdict,
+                 referring_urls_count, sitemaps_count, raw_response_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, inspected_url, inspection_date) DO UPDATE SET
+                    collection_id = excluded.collection_id,
+                    verdict = excluded.verdict,
+                    coverage_state = excluded.coverage_state,
+                    indexing_state = excluded.indexing_state,
+                    page_fetch_state = excluded.page_fetch_state,
+                    robots_txt_state = excluded.robots_txt_state,
+                    crawled_as = excluded.crawled_as,
+                    last_crawl_time = excluded.last_crawl_time,
+                    google_canonical = excluded.google_canonical,
+                    user_canonical = excluded.user_canonical,
+                    mobile_usability_verdict = excluded.mobile_usability_verdict,
+                    rich_results_verdict = excluded.rich_results_verdict,
+                    referring_urls_count = excluded.referring_urls_count,
+                    sitemaps_count = excluded.sitemaps_count,
+                    raw_response_json = excluded.raw_response_json,
+                    collected_at = CURRENT_TIMESTAMP
+            """, (
+                property_id,
+                gsc_site_url,
+                inspected_url,
+                inspection_date,
+                collection_id,
+                inspection_data.get('verdict'),
+                inspection_data.get('coverage_state'),
+                inspection_data.get('indexing_state'),
+                inspection_data.get('page_fetch_state'),
+                inspection_data.get('robots_txt_state'),
+                inspection_data.get('crawled_as'),
+                inspection_data.get('last_crawl_time'),
+                inspection_data.get('google_canonical'),
+                inspection_data.get('user_canonical'),
+                inspection_data.get('mobile_usability_verdict'),
+                inspection_data.get('rich_results_verdict'),
+                inspection_data.get('referring_urls_count', 0),
+                inspection_data.get('sitemaps_count', 0),
+                inspection_data.get('raw_response_json')
+            ))
+
+    def get_gsc_url_inspection_history(self, property_id: str, days: int = 90) -> List[Dict]:
+        """Get URL inspection history for a property.
+
+        Args:
+            property_id: GA4 Property ID
+            days: Number of days to return
+
+        Returns:
+            URL inspection records newest first
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM gsc_url_inspection
+                WHERE property_id = ?
+                  AND inspection_date >= DATE('now', ? || ' days')
+                ORDER BY inspection_date DESC, inspected_url ASC
+            """, (property_id, -days))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def insert_crux_history_metric(
+        self,
+        property_id: str,
+        property_url: str,
+        form_factor: str,
+        metric_name: str,
+        period_start_date: str,
+        period_end_date: str,
+        p75_value: Optional[float],
+        raw_value: Optional[str] = None,
+        collection_id: Optional[int] = None
+    ) -> None:
+        """Insert one CrUX History API metric timeseries point."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO crux_history_metrics
+                (property_id, property_url, form_factor, metric_name,
+                 period_start_date, period_end_date, p75_value, collection_id, raw_value)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, form_factor, metric_name, period_end_date) DO UPDATE SET
+                    property_url = excluded.property_url,
+                    period_start_date = excluded.period_start_date,
+                    p75_value = excluded.p75_value,
+                    collection_id = excluded.collection_id,
+                    raw_value = excluded.raw_value,
+                    collected_at = CURRENT_TIMESTAMP
+            """, (
+                property_id,
+                property_url,
+                form_factor,
+                metric_name,
+                period_start_date,
+                period_end_date,
+                p75_value,
+                collection_id,
+                raw_value
+            ))
+
+    def get_crux_history(self, property_id: str, days: int = 400) -> List[Dict]:
+        """Get CrUX history rows for a property."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT *
+                FROM crux_history_metrics
+                WHERE property_id = ?
+                  AND period_end_date >= DATE('now', ? || ' days')
+                ORDER BY period_end_date DESC, metric_name ASC, form_factor ASC
+            """, (property_id, -days))
+            return [dict(row) for row in cursor.fetchall()]
     
     # =========================================================================
     # SEMRUSH DATA INSERTION
