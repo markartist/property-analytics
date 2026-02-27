@@ -6,8 +6,7 @@ import { format, parseISO } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { getGscSnapshot, type GscSnapshotResponse, type GscSnapshotProperty } from "@/lib/api";
 import {
-  Loader2, Search, TrendingUp, TrendingDown, MousePointerClick, Eye, Percent,
-  ArrowUp, ArrowDown, Minus,
+  Loader2, Search, MousePointerClick, Eye, Percent,
 } from "lucide-react";
 
 // ── Helpers ──
@@ -37,26 +36,16 @@ function fmtDeltaPct(n: number | null): React.ReactNode {
 }
 
 function ctrColor(ctr: number): string {
-  if (ctr >= 5) return "text-emerald-600";
+  if (ctr > 5) return "text-emerald-600";
   if (ctr >= 3) return "text-amber-600";
   return "text-red-500";
 }
 
-function ctrGrade(ctr: number): { label: string; cls: string } {
-  if (ctr >= 5) return { label: "Excellent", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
-  if (ctr >= 3) return { label: "Good", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-  return { label: "Needs Improvement", cls: "bg-red-50 text-red-600 border-red-200" };
-}
-
-function PositionDelta({ delta }: { delta: number | null }) {
-  if (delta == null) return <span className="text-xs text-slate-400">—</span>;
-  // Lower position is better, so negative delta = improvement
-  const improved = delta < 0;
-  const worse = delta > 0;
+function fmtPct(n: number): React.ReactNode {
+  const sign = n > 0 ? "+" : "";
   return (
-    <span className={`text-xs font-medium ${improved ? "text-emerald-600" : worse ? "text-red-500" : "text-slate-400"}`}>
-      {improved ? <ArrowUp className="inline h-3 w-3" /> : worse ? <ArrowDown className="inline h-3 w-3" /> : <Minus className="inline h-3 w-3" />}
-      {Math.abs(delta).toFixed(1)}
+    <span className={n > 0 ? "text-emerald-600" : n < 0 ? "text-red-500" : "text-slate-400"}>
+      {sign}{n.toFixed(1)}%
     </span>
   );
 }
@@ -86,9 +75,9 @@ function KpiCard({ label, value, delta, icon: Icon }: {
 // ── Property Row ──
 
 function PropertyRow({ p }: { p: GscSnapshotProperty }) {
-  const grade = ctrGrade(p.avg_ctr);
+  const borderColor = p.ctr > 5 ? "border-l-emerald-500" : p.ctr >= 3 ? "border-l-amber-500" : "border-l-red-500";
   return (
-    <div className="flex items-center gap-4 border-b border-slate-100 px-4 py-4 last:border-0 hover:bg-slate-50 transition-colors">
+    <div className={`flex items-center gap-4 border-b border-slate-100 border-l-4 ${borderColor} px-4 py-4 last:border-b-0 hover:bg-slate-50 transition-colors`}>
       {/* Rank + Name */}
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
@@ -97,29 +86,25 @@ function PropertyRow({ p }: { p: GscSnapshotProperty }) {
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
           <span>
-            Clicks: <strong className="text-slate-700">{fmtNum(p.clicks)}</strong>
-            {p.clicks_delta != null && <> <span className="text-slate-300">|</span> {fmtDelta(p.clicks_delta)}</>}
+            Clicks: <strong className="text-blue-600">{fmtNum(p.clicks)}</strong>
+            <> <span className="text-slate-300">|</span> {fmtDelta(p.clicks_delta)}</>
           </span>
           <span>
             Impressions: <strong className="text-slate-700">{fmtNum(p.impressions)}</strong>
-            {p.impressions_delta != null && <> <span className="text-slate-300">|</span> {fmtDelta(p.impressions_delta)}</>}
+            <> <span className="text-slate-300">|</span> {fmtDelta(p.impressions_delta)}</>
           </span>
           <span>
-            CTR: <strong className={ctrColor(p.avg_ctr)}>{p.avg_ctr.toFixed(1)}%</strong>
-            {p.ctr_delta != null && <> <span className="text-slate-300">|</span> {fmtDeltaPct(p.ctr_delta)}</>}
-          </span>
-          <span>
-            Avg Position: <strong className="text-slate-700">{p.avg_position.toFixed(1)}</strong>
-            {p.position_delta != null && <> <span className="text-slate-300">|</span> <PositionDelta delta={p.position_delta} /></>}
+            CTR: <strong className={ctrColor(p.ctr)}>{p.ctr.toFixed(2)}%</strong>
+            <> <span className="text-slate-300">|</span> {fmtDeltaPct(p.ctr_delta)}</>
           </span>
         </div>
       </div>
 
-      {/* Big position number on right */}
+      {/* Big clicks number on right */}
       <div className="text-right shrink-0 w-20">
-        <p className="text-2xl font-bold text-slate-900">{Math.round(p.avg_position)}</p>
-        <p className="text-[10px] text-slate-400">avg pos</p>
-        <PositionDelta delta={p.position_delta} />
+        <p className="text-2xl font-bold text-blue-600">{fmtNum(p.clicks)}</p>
+        <p className="text-[10px] text-slate-400">clicks</p>
+        <p className="text-xs">{fmtDelta(p.clicks_delta)}</p>
       </div>
     </div>
   );
@@ -154,9 +139,9 @@ export default function GscSnapshotPage() {
     );
   }
 
-  const { portfolio, grades, properties, snapshot_date, prev_date } = data;
-  const dateLabel = snapshot_date ? format(parseISO(snapshot_date), "MMM d, yyyy") : "—";
-  const prevLabel = prev_date ? format(parseISO(prev_date), "MMM d") : null;
+  const { portfolio, grades, properties, current_start, current_end } = data;
+  const startLabel = current_start ? format(parseISO(current_start), "MMM d") : "";
+  const endLabel = current_end ? format(parseISO(current_end), "MMM d, yyyy") : "—";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -170,11 +155,11 @@ export default function GscSnapshotPage() {
           <h1 className="text-2xl font-bold text-slate-900 md:text-3xl">
             Portfolio Google Search Console Snapshot
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Complete property listing sorted by organic clicks (30 days)
+          <p className="mt-1 text-sm text-blue-600 font-semibold uppercase tracking-wide">
+            Complete Property Listing Sorted by Organic Clicks (30 Days)
           </p>
           <p className="mt-0.5 text-xs text-slate-400">
-            Snapshot: {dateLabel}{prevLabel && <> · Compared to {prevLabel}</>}
+            {startLabel} – {endLabel} (30 days)
           </p>
         </div>
       </div>
@@ -185,13 +170,13 @@ export default function GscSnapshotPage() {
           <KpiCard
             label="Total Clicks"
             value={fmtNum(portfolio.total_clicks)}
-            delta={fmtDelta(portfolio.clicks_delta)}
+            delta={fmtPct(portfolio.clicks_pct)}
             icon={MousePointerClick}
           />
           <KpiCard
             label="Total Impressions"
             value={fmtNum(portfolio.total_impressions)}
-            delta={fmtDelta(portfolio.impressions_delta)}
+            delta={fmtPct(portfolio.impressions_pct)}
             icon={Eye}
           />
           <KpiCard

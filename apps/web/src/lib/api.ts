@@ -424,25 +424,26 @@ export interface GscSnapshotProperty {
   community_id: string;
   name: string;
   clicks: number;
-  clicks_delta: number | null;
+  clicks_delta: number;
   impressions: number;
-  impressions_delta: number | null;
-  avg_ctr: number;
-  ctr_delta: number | null;
-  avg_position: number;
-  position_delta: number | null;
+  impressions_delta: number;
+  ctr: number;
+  ctr_delta: number;
 }
 
 export interface GscSnapshotResponse {
-  snapshot_date: string | null;
-  prev_date: string | null;
+  current_start: string | null;
+  current_end: string | null;
+  prev_start: string | null;
+  prev_end: string | null;
+  property_count: number;
   portfolio: {
     total_clicks: number;
     total_impressions: number;
     avg_ctr: number;
-    clicks_delta: number | null;
-    impressions_delta: number | null;
-    ctr_delta: number | null;
+    clicks_pct: number;
+    impressions_pct: number;
+    ctr_delta: number;
   } | null;
   grades: { excellent: number; good: number; needs_improvement: number } | null;
   properties: GscSnapshotProperty[];
