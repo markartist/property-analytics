@@ -416,3 +416,40 @@ export async function requestMagicLink(email: string): Promise<{ ok: boolean; me
   const res = await apiFetch("/v1/auth/magic-link", { method: "POST", body: JSON.stringify({ email }) });
   return res.json();
 }
+
+// ── GSC Snapshot ──
+
+export interface GscSnapshotProperty {
+  rank: number;
+  community_id: string;
+  name: string;
+  clicks: number;
+  clicks_delta: number | null;
+  impressions: number;
+  impressions_delta: number | null;
+  avg_ctr: number;
+  ctr_delta: number | null;
+  avg_position: number;
+  position_delta: number | null;
+}
+
+export interface GscSnapshotResponse {
+  snapshot_date: string | null;
+  prev_date: string | null;
+  portfolio: {
+    total_clicks: number;
+    total_impressions: number;
+    avg_ctr: number;
+    clicks_delta: number | null;
+    impressions_delta: number | null;
+    ctr_delta: number | null;
+  } | null;
+  grades: { excellent: number; good: number; needs_improvement: number } | null;
+  properties: GscSnapshotProperty[];
+}
+
+export async function getGscSnapshot(): Promise<GscSnapshotResponse> {
+  const res = await apiFetch("/v1/gsc-snapshot");
+  if (!res.ok) throw new Error("Failed to load GSC snapshot");
+  return res.json();
+}
