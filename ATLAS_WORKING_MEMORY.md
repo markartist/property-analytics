@@ -974,7 +974,6 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 
 **Git remotes:**
 - `origin` → `git@github.com:markartist/property-analytics.git` (correct — triggers Cloudflare Pages)
-- `figma` → `git@github.com:markartist/figma.git` (wrong repo, do NOT push here)
 
 **Cloudflare deployment:**
 - API: `npx wrangler deploy --config apps/api/wrangler.toml`
@@ -994,4 +993,3 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
    - Keep using Gmail for login
 2. **ENABLE_EMAIL_SEND** is set to `"true"` in `wrangler.toml` and deployed
 3. **Future:** Build out remaining admin features, add more reporting pages
-
