@@ -36,7 +36,8 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; minRole
   // Reports
   { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "Reports" },
   { href: "/analysis", label: "Analysis", icon: BarChart2, minRole: "editor" },
-  { href: "/analysis/gsc", label: "GSC Snapshot", icon: Search, minRole: "editor" },
+  { href: "/analysis/pib", label: "PIB Builder", icon: FileText, minRole: "editor" },
+  { href: "/analysis/gsc", label: "GSC Report", icon: Search, minRole: "editor" },
   { href: "/marketing", label: "Marketing Data", icon: Megaphone, minRole: "editor" },
   { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar, minRole: "editor" },
   { href: "/t30-metrics", label: "T30 Metrics", icon: TrendingUp, minRole: "editor" },
