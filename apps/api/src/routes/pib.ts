@@ -8,14 +8,100 @@
  */
 
 import { Hono } from "hono";
+import { z } from "zod";
 import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
 import { requireAuth } from "../middleware/auth";
 import { queryAll, queryFirst } from "../lib/db";
 import { errJson } from "../lib/validate";
+import { sendEmail } from "../email/resend";
 
 const pib = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 pib.use("*", requireAuth);
+
+const PibReportBody = z.object({
+  community_id: z.string().min(1),
+  start_date: z.string(),
+  end_date: z.string(),
+  email: z.string().email().optional(),
+});
+
+function isIsoDate(v: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(v);
+}
+
+function daySpanInclusive(startIso: string, endIso: string): number {
+  const s = new Date(startIso + "T00:00:00Z").getTime();
+  const e = new Date(endIso + "T00:00:00Z").getTime();
+  return Math.floor((e - s) / 86400000) + 1;
+}
+
+function dateOffset(iso: string, days: number): string {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function num(v: unknown): number | null {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function fmtSigned(v: number | null, decimals = 0): string {
+  if (v == null) return "n/a";
+  const sign = v > 0 ? "+" : "";
+  return `${sign}${v.toFixed(decimals)}`;
+}
+
+function buildPibEmailHtml(report: {
+  property: string;
+  current_start: string;
+  current_end: string;
+  previous_start: string;
+  previous_end: string;
+  sessions: { value: number | null; delta: number | null };
+  gsc_clicks: { value: number | null; delta: number | null };
+  cir: { value: number | null; delta: number | null; status: string | null };
+  avg_rating: { value: number | null; delta: number | null };
+  occupancy: { value: number | null; delta: number | null };
+  ad_spend: { value: number | null; delta: number | null };
+  action_rate: number | null;
+}): string {
+  const money = (v: number | null) => (v == null ? "$n/a" : `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`);
+  const n0 = (v: number | null) => (v == null ? "n/a" : v.toLocaleString(undefined, { maximumFractionDigits: 0 }));
+  const n2 = (v: number | null) => (v == null ? "n/a" : v.toFixed(2));
+  const pct2 = (v: number | null) => (v == null ? "n/a" : `${v.toFixed(2)}%`);
+  const status = report.cir.status ?? "unknown";
+
+  return `<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f8fafc;padding:20px;">
+  <div style="max-width:860px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;">
+    <h1 style="margin:0;color:#0f172a;font-size:44px;line-height:1.05;font-weight:800;">Property Intelligence Brief</h1>
+    <h2 style="margin:8px 0 4px 0;color:#1e293b;font-size:28px;">${report.property}</h2>
+    <p style="margin:0 0 18px 0;color:#64748b;font-size:14px;">
+      Current: ${report.current_start} to ${report.current_end} | Previous: ${report.previous_start} to ${report.previous_end}
+    </p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tr>
+        <td style="padding:12px;border:1px solid #dbe2ea;"><strong>Sessions</strong><br>${n0(report.sessions.value)} (${fmtSigned(report.sessions.delta)})</td>
+        <td style="padding:12px;border:1px solid #dbe2ea;"><strong>GSC Clicks</strong><br>${n0(report.gsc_clicks.value)} (${fmtSigned(report.gsc_clicks.delta)})</td>
+        <td style="padding:12px;border:1px solid #dbe2ea;"><strong>CIR</strong><br>${n2(report.cir.value)} (${fmtSigned(report.cir.delta, 2)})</td>
+      </tr>
+      <tr>
+        <td style="padding:12px;border:1px solid #dbe2ea;"><strong>Avg Rating</strong><br>${n2(report.avg_rating.value)} (${fmtSigned(report.avg_rating.delta, 2)})</td>
+        <td style="padding:12px;border:1px solid #dbe2ea;"><strong>Occupancy %</strong><br>${n2(report.occupancy.value)} (${fmtSigned(report.occupancy.delta, 2)})</td>
+        <td style="padding:12px;border:1px solid #dbe2ea;"><strong>Ad Spend</strong><br>${money(report.ad_spend.value)} (${money(report.ad_spend.delta)})</td>
+      </tr>
+    </table>
+    <p style="margin:16px 0 0 0;color:#334155;font-size:16px;">
+      CIR Status: <strong>${status}</strong> | Action Rate: <strong>${pct2(report.action_rate)}</strong>
+    </p>
+  </div>
+</body>
+</html>`;
+}
 
 /** GET /weeks — available snapshot dates */
 pib.get("/weeks", async (c) => {
@@ -331,6 +417,173 @@ pib.get("/:communityId", async (c) => {
       t30: t30 ?? null,
       t30_portfolio: t30Portfolio ?? null,
     },
+  });
+});
+
+/**
+ * POST /report — single-property PIB report with configurable date window.
+ */
+pib.post("/report", async (c) => {
+  const parsed = PibReportBody.safeParse(await c.req.json());
+  if (!parsed.success) {
+    return c.json(errJson("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Invalid request"), 400);
+  }
+  const body = parsed.data;
+
+  if (!isIsoDate(body.start_date) || !isIsoDate(body.end_date)) {
+    return c.json(errJson("VALIDATION_ERROR", "Dates must be YYYY-MM-DD"), 400);
+  }
+  if (body.start_date > body.end_date) {
+    return c.json(errJson("VALIDATION_ERROR", "start_date must be on or before end_date"), 400);
+  }
+  const span = daySpanInclusive(body.start_date, body.end_date);
+  if (span < 1 || span > 370) {
+    return c.json(errJson("VALIDATION_ERROR", "Date range must be between 1 and 370 days"), 400);
+  }
+
+  const prevEnd = dateOffset(body.start_date, -1);
+  const prevStart = dateOffset(prevEnd, -(span - 1));
+  const db = c.env.POP_BRIEF_DB;
+
+  const currentSnap = await queryFirst<{ snapshot_date: string }>(
+    db,
+    `SELECT MAX(snapshot_date) AS snapshot_date
+     FROM pib_ga4_metrics
+     WHERE community_id = ? AND snapshot_date BETWEEN ? AND ?`,
+    [body.community_id, body.start_date, body.end_date]
+  );
+  if (!currentSnap?.snapshot_date) {
+    return c.json(errJson("NOT_FOUND", "No PIB snapshot found in selected date range"), 404);
+  }
+
+  let previousSnap = await queryFirst<{ snapshot_date: string }>(
+    db,
+    `SELECT MAX(snapshot_date) AS snapshot_date
+     FROM pib_ga4_metrics
+     WHERE community_id = ? AND snapshot_date BETWEEN ? AND ?`,
+    [body.community_id, prevStart, prevEnd]
+  );
+  if (!previousSnap?.snapshot_date) {
+    previousSnap = await queryFirst<{ snapshot_date: string }>(
+      db,
+      `SELECT MAX(snapshot_date) AS snapshot_date
+       FROM pib_ga4_metrics
+       WHERE community_id = ? AND snapshot_date < ?`,
+      [body.community_id, body.start_date]
+    );
+  }
+
+  const current = await queryFirst<Record<string, unknown>>(
+    db,
+    `SELECT
+       c.name AS community_name,
+       g.total_sessions,
+       srch.total_clicks AS gsc_clicks,
+       cir.cir_value,
+       cir.cir_status,
+       rv.avg_rating,
+       lp.action_rate AS gbp_action_rate,
+       md.occupancy,
+       md.google_ppc,
+       md.google_remarketing
+     FROM communities c
+     LEFT JOIN pib_ga4_metrics g ON g.community_id = c.id AND g.snapshot_date = ?2
+     LEFT JOIN pib_search_performance srch ON srch.community_id = c.id AND srch.snapshot_date = ?2
+     LEFT JOIN pib_cir cir ON cir.community_id = c.id AND cir.snapshot_date = ?2
+     LEFT JOIN pib_reviews rv ON rv.community_id = c.id AND rv.snapshot_date = ?2
+     LEFT JOIN pib_local_presence lp ON lp.community_id = c.id AND lp.snapshot_date = ?2
+     LEFT JOIN marketing_data md ON md.community_id = c.id AND md.week_date = ?2
+     WHERE c.id = ?1 AND c.deleted_at IS NULL`,
+    [body.community_id, currentSnap.snapshot_date]
+  );
+
+  if (!current) {
+    return c.json(errJson("NOT_FOUND", "Community not found"), 404);
+  }
+
+  const previous = previousSnap?.snapshot_date
+    ? await queryFirst<Record<string, unknown>>(
+      db,
+      `SELECT
+         g.total_sessions,
+         srch.total_clicks AS gsc_clicks,
+         cir.cir_value,
+         rv.avg_rating,
+         md.occupancy,
+         md.google_ppc,
+         md.google_remarketing
+       FROM pib_ga4_metrics g
+       LEFT JOIN pib_search_performance srch ON srch.community_id = g.community_id AND srch.snapshot_date = g.snapshot_date
+       LEFT JOIN pib_cir cir ON cir.community_id = g.community_id AND cir.snapshot_date = g.snapshot_date
+       LEFT JOIN pib_reviews rv ON rv.community_id = g.community_id AND rv.snapshot_date = g.snapshot_date
+       LEFT JOIN marketing_data md ON md.community_id = g.community_id AND md.week_date = g.snapshot_date
+       WHERE g.community_id = ?1 AND g.snapshot_date = ?2`,
+      [body.community_id, previousSnap.snapshot_date]
+    )
+    : null;
+
+  const curAdSpend = (num(current.google_ppc) ?? 0) + (num(current.google_remarketing) ?? 0);
+  const prevAdSpendRaw = previous ? ((num(previous.google_ppc) ?? 0) + (num(previous.google_remarketing) ?? 0)) : null;
+
+  const report = {
+    property: String(current.community_name ?? "Unknown Property"),
+    current_start: body.start_date,
+    current_end: body.end_date,
+    previous_start: prevStart,
+    previous_end: prevEnd,
+    snapshot_date: currentSnap.snapshot_date,
+    previous_snapshot_date: previousSnap?.snapshot_date ?? null,
+    sessions: {
+      value: num(current.total_sessions),
+      delta: previous ? (num(current.total_sessions) ?? 0) - (num(previous.total_sessions) ?? 0) : null,
+    },
+    gsc_clicks: {
+      value: num(current.gsc_clicks),
+      delta: previous ? (num(current.gsc_clicks) ?? 0) - (num(previous.gsc_clicks) ?? 0) : null,
+    },
+    cir: {
+      value: num(current.cir_value),
+      delta: previous ? (num(current.cir_value) ?? 0) - (num(previous.cir_value) ?? 0) : null,
+      status: (current.cir_status as string | null) ?? null,
+    },
+    avg_rating: {
+      value: num(current.avg_rating),
+      delta: previous ? (num(current.avg_rating) ?? 0) - (num(previous.avg_rating) ?? 0) : null,
+    },
+    occupancy: {
+      value: num(current.occupancy),
+      delta: previous ? (num(current.occupancy) ?? 0) - (num(previous.occupancy) ?? 0) : null,
+    },
+    ad_spend: {
+      value: curAdSpend,
+      delta: previous && prevAdSpendRaw != null ? curAdSpend - prevAdSpendRaw : null,
+    },
+    action_rate: num(current.gbp_action_rate),
+  };
+
+  const report_html = buildPibEmailHtml(report);
+
+  let email_sent = false;
+  let email_error: string | null = null;
+  if (body.email) {
+    if (c.env.ENABLE_EMAIL_SEND !== "true") {
+      email_error = "Email sending disabled by environment flag";
+    } else {
+      const send = await sendEmail(c.env.RESEND_API_KEY, c.env.EMAIL_FROM, {
+        to: body.email,
+        subject: `Property Intelligence Brief: ${report.property} (${body.start_date} to ${body.end_date})`,
+        html: report_html,
+      });
+      email_sent = send.ok;
+      email_error = send.ok ? null : (send.error ?? "Failed to send email");
+    }
+  }
+
+  return c.json({
+    ...report,
+    report_html,
+    email_sent,
+    email_error,
   });
 });
 

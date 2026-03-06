@@ -262,6 +262,50 @@ export async function getPibDetail(communityId: string, weekDate?: string): Prom
   return res.json();
 }
 
+export interface PibReportRequest {
+  community_id: string;
+  start_date: string;
+  end_date: string;
+  email?: string;
+}
+
+interface PibReportMetric {
+  value: number | null;
+  delta: number | null;
+}
+
+export interface PibReportResponse {
+  property: string;
+  current_start: string;
+  current_end: string;
+  previous_start: string;
+  previous_end: string;
+  snapshot_date: string;
+  previous_snapshot_date: string | null;
+  sessions: PibReportMetric;
+  gsc_clicks: PibReportMetric;
+  cir: PibReportMetric & { status: string | null };
+  avg_rating: PibReportMetric;
+  occupancy: PibReportMetric;
+  ad_spend: PibReportMetric;
+  action_rate: number | null;
+  report_html: string;
+  email_sent: boolean;
+  email_error: string | null;
+}
+
+export async function generatePibReport(body: PibReportRequest): Promise<PibReportResponse> {
+  const res = await apiFetch("/v1/pib/report", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to generate PIB report");
+  }
+  return res.json();
+}
+
 // ── Data Pond ──
 
 export interface PondInsight {
