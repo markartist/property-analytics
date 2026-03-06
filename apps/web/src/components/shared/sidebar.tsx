@@ -8,10 +8,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 import {
   BarChart3,
-  Calendar,
-  TrendingUp,
-  Megaphone,
-  BarChart2,
+  Search,
   Download,
   Shield,
   Menu,
@@ -22,7 +19,7 @@ import {
   Anchor,
   Eye,
   Fish,
-  Search,
+  LineChart,
 } from "lucide-react";
 
 type NavRole = "admin" | "editor" | "viewer";
@@ -34,12 +31,9 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; minRole
   { href: "/fish", label: "Fishing Hole", icon: Fish },
 
   // Reports
-  { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "Reports" },
-  { href: "/analysis", label: "Analysis", icon: BarChart2, minRole: "editor" },
-  { href: "/analysis/gsc", label: "GSC Snapshot", icon: Search, minRole: "editor" },
-  { href: "/marketing", label: "Marketing Data", icon: Megaphone, minRole: "editor" },
-  { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar, minRole: "editor" },
-  { href: "/t30-metrics", label: "T30 Metrics", icon: TrendingUp, minRole: "editor" },
+  { href: "/analysis", label: "POP Brief", icon: FileText, section: "Reports", minRole: "editor" },
+  { href: "/analysis/pib", label: "PIB Builder", icon: LineChart, minRole: "editor" },
+  { href: "/analysis/gsc", label: "GSC Report", icon: Search, minRole: "editor" },
 
   // Utilities
   { href: "/backup", label: "Backup & Export", icon: Download, section: "Utilities", minRole: "editor" },

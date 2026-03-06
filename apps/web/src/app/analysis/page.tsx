@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -515,8 +516,8 @@ export default function AnalysisPage() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#15284B]">Performance Analysis</h1>
-            <p className="mt-2 text-slate-600">Compare community performance against portfolio averages.</p>
+            <h1 className="text-3xl font-bold text-[#15284B]">POP Brief</h1>
+            <p className="mt-2 text-slate-600">Unified property operations performance brief.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3 print:hidden">
             <WeekDatePicker value={weekDate} onChange={setWeekDate} />
@@ -529,6 +530,34 @@ export default function AnalysisPage() {
             </Button>
           </div>
         </div>
+
+        <Card className="mb-6 border-slate-200 print:hidden">
+          <CardHeader>
+            <CardTitle className="text-base">POP Brief Modules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <Link href="/analysis/pib" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
+                <FileText className="mr-2 inline h-4 w-4" />PIB Builder
+              </Link>
+              <Link href="/analysis/gsc" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
+                <Search className="mr-2 inline h-4 w-4" />GSC Snapshot
+              </Link>
+              <Link href="/pib" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
+                <BarChart2 className="mr-2 inline h-4 w-4" />PIB Dashboard
+              </Link>
+              <Link href="/marketing" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
+                <DollarSign className="mr-2 inline h-4 w-4" />Marketing Data
+              </Link>
+              <Link href="/t7-metrics" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
+                <CalendarIcon className="mr-2 inline h-4 w-4" />T7 Metrics
+              </Link>
+              <Link href="/t30-metrics" className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
+                <TrendingUp className="mr-2 inline h-4 w-4" />T30 Metrics
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
 
         {!communityId ? (
           <Card><CardContent className="p-12 text-center">

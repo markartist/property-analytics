@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useFishStream, type ChatMessage, type FishTableEvent, type FishCsvEvent, type Conversation } from "@/hooks/use-fish-stream";
@@ -16,6 +17,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787"
 // ── Suggested casts ─────────────────────────────────────────────
 
 const SUGGESTED_CASTS = [
+  "Build me a PIB for The Anatole for 30 days and email mlaufhutte@venterraliving.com",
   "Which properties have the highest CIR this week?",
   "Show me the top 10 properties by total sessions",
   "Which properties are below 90% occupancy?",
@@ -78,14 +80,45 @@ function RenderContent({ text }: { text: string }) {
 }
 
 function renderInline(text: string): React.ReactNode {
-  // Bold: **text**
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>;
+  const chunks = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+  return chunks.map((chunk, i) => {
+    const linkMatch = chunk.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (linkMatch) {
+      const label = linkMatch[1];
+      const href = linkMatch[2];
+      if (href.startsWith("/")) {
+        return (
+          <Link key={i} href={href} className="text-[#0D5E6D] underline underline-offset-2 hover:text-[#15803D]">
+            {label}
+          </Link>
+        );
+      }
+      return (
+        <a key={i} href={href} target="_blank" rel="noreferrer" className="text-[#0D5E6D] underline underline-offset-2 hover:text-[#15803D]">
+          {label}
+        </a>
+      );
     }
-    return part;
+
+    const parts = chunk.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <React.Fragment key={i}>
+        {parts.map((part, j) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={`${i}-${j}`} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>;
+          }
+          return <React.Fragment key={`${i}-${j}`}>{part}</React.Fragment>;
+        })}
+      </React.Fragment>
+    );
   });
+}
+
+function buildPibDeepLink(prompt: string): string | null {
+  const text = prompt.trim();
+  if (!/\bpib\b/i.test(text)) return null;
+  if (!/\b(build|generate|create|email|send)\b/i.test(text)) return null;
+  return "/pib";
 }
 
 // ── Data table component ────────────────────────────────────────
@@ -235,6 +268,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 // ── Main page ───────────────────────────────────────────────────
 
 export default function FishingHolePage() {
+  const router = useRouter();
   const {
     messages, isLoading, status, conversationId,
     conversations, cast, stop, clear,
@@ -258,11 +292,22 @@ export default function FishingHolePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    const pibLink = buildPibDeepLink(input);
+    if (pibLink) {
+      setInput("");
+      router.push(pibLink);
+      return;
+    }
     cast(input);
     setInput("");
   };
 
   const handleSuggestedCast = (question: string) => {
+    const pibLink = buildPibDeepLink(question);
+    if (pibLink) {
+      router.push(pibLink);
+      return;
+    }
     cast(question);
   };
 

@@ -16,9 +16,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sqlite3
 import subprocess
 import sys
+import glob
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
@@ -41,14 +43,45 @@ class StepResult:
 
 
 def _run_cmd(cmd: List[str], cwd: Optional[Path] = None, timeout: int = 900) -> Tuple[int, str, str]:
+    env = _build_runtime_env()
     proc = subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
     return proc.returncode, proc.stdout, proc.stderr
+
+
+def _build_runtime_env() -> Dict[str, str]:
+    """Build a launchd-safe PATH so npx/wrangler can be discovered."""
+    env = os.environ.copy()
+    existing = env.get("PATH", "")
+    path_segments: List[str] = []
+
+    for p in ["/opt/homebrew/bin", "/usr/local/bin"]:
+        if Path(p).exists():
+            path_segments.append(p)
+
+    nvm_bins = sorted(glob.glob(str(Path.home() / ".nvm" / "versions" / "node" / "*" / "bin")))
+    if nvm_bins:
+        path_segments.append(nvm_bins[-1])
+
+    if existing:
+        path_segments.extend(existing.split(":"))
+
+    deduped: List[str] = []
+    seen = set()
+    for seg in path_segments:
+        seg = seg.strip()
+        if seg and seg not in seen:
+            seen.add(seg)
+            deduped.append(seg)
+
+    env["PATH"] = ":".join(deduped)
+    return env
 
 
 def _is_friday(s: str) -> bool:
@@ -195,6 +228,49 @@ def _d1_query(sql: str) -> Tuple[bool, List[Dict], str]:
         return True, rows, ""
     except Exception as exc:
         return False, [], f"JSON parse failed: {exc}"
+
+
+def verify_wrangler_access() -> StepResult:
+    """Fail fast if wrangler binary/auth is unavailable."""
+    rc, out, err = _run_cmd(["npx", "wrangler", "--version"], cwd=API_DIR, timeout=30)
+    if rc != 0:
+        tail = (err or out)[-300:]
+        return StepResult("wrangler_access", False, f"Wrangler unavailable: {tail}")
+
+    ok, rows, msg = _d1_query("SELECT 1 AS ok;")
+    if not ok:
+        return StepResult("wrangler_access", False, f"D1 access check failed: {msg}")
+    if not rows:
+        return StepResult("wrangler_access", False, "D1 access check returned no rows")
+    return StepResult("wrangler_access", True, "Wrangler + D1 access OK")
+
+
+def verify_local_source_freshness(recency: Dict[str, str], max_age_days: int = 2) -> StepResult:
+    """Ensure required local sources are fresh enough before syncing to D1."""
+    today = date.today()
+    stale: List[str] = []
+    required = [
+        "ga4_daily_metrics.metric_date",
+        "guest_card_metrics.run_date",
+        "unit_availability.snapshot_date",
+    ]
+
+    for key in required:
+        val = recency.get(key) or ""
+        if not val:
+            stale.append(f"{key}=missing")
+            continue
+        try:
+            age = (today - date.fromisoformat(val)).days
+        except ValueError:
+            stale.append(f"{key}=invalid({val})")
+            continue
+        if age > max_age_days:
+            stale.append(f"{key}={val} (age={age}d)")
+
+    if stale:
+        return StepResult("local_source_freshness", False, f"Stale sources: {', '.join(stale)}")
+    return StepResult("local_source_freshness", True, f"All required sources <= {max_age_days} days old")
 
 
 def verify_d1(target_friday: str) -> Tuple[StepResult, Dict[str, object]]:
@@ -353,6 +429,26 @@ def main() -> None:
     maintenance_step = maintenance_local_db(run_vacuum=args.vacuum)
     steps.append(maintenance_step)
     print(f"[{maintenance_step.name}] {'OK' if maintenance_step.ok else 'FAIL'} - {maintenance_step.details}")
+
+    wrangler_step = verify_wrangler_access()
+    steps.append(wrangler_step)
+    print(f"[{wrangler_step.name}] {'OK' if wrangler_step.ok else 'FAIL'} - {wrangler_step.details}")
+    if not wrangler_step.ok:
+        report["steps"] = [asdict(s) for s in steps]
+        report["success"] = False
+        path = write_report(report)
+        print(f"Report: {path}")
+        sys.exit(1)
+
+    source_freshness_step = verify_local_source_freshness(recency, max_age_days=2)
+    steps.append(source_freshness_step)
+    print(f"[{source_freshness_step.name}] {'OK' if source_freshness_step.ok else 'FAIL'} - {source_freshness_step.details}")
+    if not source_freshness_step.ok:
+        report["steps"] = [asdict(s) for s in steps]
+        report["success"] = False
+        path = write_report(report)
+        print(f"Report: {path}")
+        sys.exit(1)
 
     target_friday, friday_step = resolve_target_friday(args.date, recency)
     steps.append(friday_step)

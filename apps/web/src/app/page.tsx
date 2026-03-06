@@ -218,6 +218,21 @@ export default function DataPondLanding() {
           ))}
         </div>
 
+        <Card className="border-[#0D5E6D]/20 bg-gradient-to-r from-[#0D5E6D]/5 to-[#15803D]/5">
+          <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Need a PIB fast?</p>
+              <p className="text-xs text-slate-600">Open the PIB dashboard and drill into your standard PIB sections.</p>
+            </div>
+            <Link
+              href="/pib"
+              className="inline-flex items-center rounded-md bg-[#0D5E6D] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0a4d59]"
+            >
+              Open PIB
+            </Link>
+          </CardContent>
+        </Card>
+
         {/* Catch of the Day */}
         <div>
           <div className="flex items-center gap-2 mb-4">

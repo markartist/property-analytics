@@ -39,6 +39,7 @@ from Data_Collection.utils.preflight import validate_preflight, record_job_run
 from Data_Collection.collectors.gbp_collector import GoogleBusinessProfileCollector
 from Data_Collection.collectors.gsc_collector import GoogleSearchConsoleCollector
 from Data_Collection.collectors.guest_card_collector import GuestCardCollector
+from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollector
 from Data_Collection.monitoring.alert_sender import DataAlertEmailer
 
 # Preflight validation
@@ -86,6 +87,7 @@ class PortfolioDataCollector:
             'gbp_reviews': {'success': 0, 'failed': 0, 'skipped': 0},
             'gbp_insights': {'success': 0, 'failed': 0, 'skipped': 0},
             'guest_card': {'success': 0, 'failed': 0, 'skipped': 0},
+            'unit_availability': {'success': 0, 'failed': 0, 'skipped': 0},
             'd1_mirror': {'success': 0, 'failed': 0, 'skipped': 0},
             'errors': []
         }
@@ -1627,6 +1629,48 @@ class PortfolioDataCollector:
                 'error': str(e)[:100]
             })
             print()
+
+    def collect_unit_availability_data(self):
+        """Collect ThirtyLines unit availability feed into unit_availability table."""
+        print('=' * 80)
+        print('🏢 COLLECTING THIRTYLINES AVAILABILITY DATA')
+        print('=' * 80)
+        print()
+
+        try:
+            collector = ThirtyLinesCollector(db_path=self.db_path)
+            result = collector.ingest()
+
+            self.results['unit_availability']['success'] = result.floorplans_upserted
+            self.results['unit_availability']['failed'] = 0
+            self.results['unit_availability']['skipped'] = 0
+
+            print(f'   📦 Properties seen: {result.properties_seen}')
+            print(f'   ✅ Properties mapped: {result.properties_mapped}')
+            print(f'   ⚠️  Properties unmapped: {result.properties_unmapped}')
+            print(f'   🔢 Floorplans upserted: {result.floorplans_upserted}')
+
+            # Keep only first 20 mapping warnings in summary error list.
+            for err in result.errors[:20]:
+                self.results['errors'].append({
+                    'property': 'Availability Feed',
+                    'collector': 'ThirtyLines',
+                    'error': err[:100]
+                })
+
+            print()
+            print(f'ThirtyLines Summary: ✅ {self.results[\"unit_availability\"][\"success\"]} | ⚠️  {self.results[\"unit_availability\"][\"skipped\"]} | ❌ {self.results[\"unit_availability\"][\"failed\"]}')
+            print()
+
+        except Exception as e:
+            print(f'   ❌ Error collecting ThirtyLines availability: {e}')
+            self.results['unit_availability']['failed'] = 1
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'ThirtyLines',
+                'error': str(e)[:100]
+            })
+            print()
     
     def print_final_summary(self):
         """Print final collection summary"""
@@ -1649,6 +1693,7 @@ class PortfolioDataCollector:
         print(f'  GBP Reviews:  ✅ {self.results["gbp_reviews"]["success"]} | ⚠️  {self.results["gbp_reviews"]["skipped"]} | ❌ {self.results["gbp_reviews"]["failed"]}')
         print(f'  GBP Insights: ✅ {self.results["gbp_insights"]["success"]} | ⚠️  {self.results["gbp_insights"]["skipped"]} | ❌ {self.results["gbp_insights"]["failed"]}')
         print(f'  Guest Card:   ✅ {self.results["guest_card"]["success"]} | ⚠️  {self.results["guest_card"]["skipped"]} | ❌ {self.results["guest_card"]["failed"]}')
+        print(f'  Availability: ✅ {self.results["unit_availability"]["success"]} | ⚠️  {self.results["unit_availability"]["skipped"]} | ❌ {self.results["unit_availability"]["failed"]}')
         print(f'  D1 Mirror:    ✅ {self.results["d1_mirror"]["success"]} | ⚠️  {self.results["d1_mirror"]["skipped"]} | ❌ {self.results["d1_mirror"]["failed"]}')
         print()
         
@@ -1664,6 +1709,7 @@ class PortfolioDataCollector:
                 'gbp_reviews',
                 'gbp_insights',
                 'guest_card',
+                'unit_availability',
                 'd1_mirror'
             ]
         )
@@ -1795,6 +1841,12 @@ class PortfolioDataCollector:
 
             # Collect Guest Card CSV (runs in both quick and full mode)
             self.collect_guest_card_data()
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect ThirtyLines availability feed (runs in both quick and full mode)
+            self.collect_unit_availability_data()
             
             # Skip SEMRush and GTMetrix in quick mode
             if not self.quick_mode:

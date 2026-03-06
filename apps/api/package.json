@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "guardrails:pib": "bash ../../scripts/check_pib_guardrails.sh"
   },
   "dependencies": {
     "hono": "^4.0.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.22.0"
   },
   "devDependencies": {

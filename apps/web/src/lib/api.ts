@@ -454,3 +454,32 @@ export async function getGscSnapshot(): Promise<GscSnapshotResponse> {
   if (!res.ok) throw new Error("Failed to load GSC snapshot");
   return res.json();
 }
+
+export interface GscReportRequest {
+  scope: "portfolio" | "property";
+  community_id?: string;
+  start_date: string;
+  end_date: string;
+  email?: string;
+}
+
+export interface GscReportResponse extends GscSnapshotResponse {
+  scope: "portfolio" | "property";
+  community_id: string | null;
+  email_sent: boolean;
+  email_error: string | null;
+  excel_filename: string;
+  excel_base64: string;
+}
+
+export async function generateGscReport(body: GscReportRequest): Promise<GscReportResponse> {
+  const res = await apiFetch("/v1/gsc-snapshot/report", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to generate GSC report");
+  }
+  return res.json();
+}

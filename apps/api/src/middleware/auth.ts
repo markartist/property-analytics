@@ -75,7 +75,7 @@ function getCookie(c: Context, name: string): string | undefined {
 async function resolveSession(
   db: D1Database,
   rawToken: string
-): Promise<{ id: string; email: string; role: "admin" | "user"; isActive: boolean } | null> {
+): Promise<{ id: string; email: string; role: AuthUser["role"]; isActive: boolean } | null> {
   const tokenHash = await hashToken(rawToken);
   const row = await queryFirst<SessionRow>(
     db,
