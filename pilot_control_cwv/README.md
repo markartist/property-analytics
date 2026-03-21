@@ -48,5 +48,6 @@ The runtime config is intentionally not committed because the repo ignores neste
 ## Current Status
 
 - Pilot properties are configured
-- Sister/control mappings still need to be added before production delivery
+- Sister/control mappings are configured
 - The workbook supports blank T30, T90, and YoY values until direct history exists
+- `report_start_date` can be set earlier than `launch_date` to support prelaunch monitoring

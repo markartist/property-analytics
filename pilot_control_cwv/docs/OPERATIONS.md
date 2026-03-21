@@ -9,6 +9,8 @@ existing portfolio report stack.
 
 - Config: `pilot_control_cwv/config/pilot_control_cwv_config.json`
 - Template: `pilot_control_cwv/config/pilot_control_cwv_config.example.json`
+- Set `report_start_date` to the first date you want included in the matrix
+- Keep `launch_date` as the business go-live milestone
 - PSI API key:
   - currently referenced from
     `/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/pagespeed_api_key.txt`

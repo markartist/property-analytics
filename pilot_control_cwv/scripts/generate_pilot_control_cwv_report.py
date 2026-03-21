@@ -38,7 +38,9 @@ class CohortEntry:
 
 def load_config(path: Path) -> Dict[str, object]:
     with path.open() as fh:
-        return json.load(fh)
+        config = json.load(fh)
+    config.setdefault("report_start_date", config.get("launch_date"))
+    return config
 
 
 def active_entries(config: Dict[str, object]) -> List[CohortEntry]:
@@ -153,7 +155,7 @@ def current_mobile_row(conn: sqlite3.Connection, entry: CohortEntry, as_of_date:
     ).fetchone()
 
 
-def all_dates(conn: sqlite3.Connection, launch_date: str) -> List[str]:
+def all_dates(conn: sqlite3.Connection, report_start_date: str) -> List[str]:
     rows = conn.execute(
         """
         SELECT DISTINCT metric_date
@@ -161,12 +163,12 @@ def all_dates(conn: sqlite3.Connection, launch_date: str) -> List[str]:
         WHERE metric_date >= ?
         ORDER BY metric_date ASC
         """,
-        (launch_date,),
+        (report_start_date,),
     ).fetchall()
     return [row[0] for row in rows]
 
 
-def raw_rows(conn: sqlite3.Connection, launch_date: str) -> List[sqlite3.Row]:
+def raw_rows(conn: sqlite3.Connection, report_start_date: str) -> List[sqlite3.Row]:
     return conn.execute(
         """
         SELECT
@@ -184,14 +186,14 @@ def raw_rows(conn: sqlite3.Connection, launch_date: str) -> List[sqlite3.Row]:
         WHERE metric_date >= ?
         ORDER BY metric_date ASC, display_name ASC, strategy ASC
         """,
-        (launch_date,),
+        (report_start_date,),
     ).fetchall()
 
 
-def build_dataset(conn: sqlite3.Connection, entries: List[CohortEntry], launch_date: str) -> Dict[str, Dict[str, Dict[str, Optional[float]]]]:
+def build_dataset(conn: sqlite3.Connection, entries: List[CohortEntry], report_start_date: str) -> Dict[str, Dict[str, Dict[str, Optional[float]]]]:
     index = {entry.key: entry for entry in entries}
     dataset: Dict[str, Dict[str, Dict[str, Optional[float]]]] = {}
-    for metric_date in all_dates(conn, launch_date):
+    for metric_date in all_dates(conn, report_start_date):
         dataset[metric_date] = {}
         for entry in entries:
             current = current_mobile_row(conn, entry, metric_date)
@@ -274,10 +276,10 @@ def build_workbook(
             ws.column_dimensions[get_column_letter(col + offset)].width = 16
         col += len(columns)
 
-    launch_dt = datetime.strptime(config["launch_date"], "%Y-%m-%d").date()
+    report_start_dt = datetime.strptime(config["report_start_date"], "%Y-%m-%d").date()
     row = 6
     for metric_date in sorted(dataset.keys()):
-        day_num = (datetime.strptime(metric_date, "%Y-%m-%d").date() - launch_dt).days + 1
+        day_num = (datetime.strptime(metric_date, "%Y-%m-%d").date() - report_start_dt).days + 1
         ws.cell(row=row, column=1, value=f"Day {day_num}")
         col = 2
         for entry in entries:
@@ -394,8 +396,8 @@ def main() -> int:
     db_path = Path(config["db_path"])
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    dataset = build_dataset(conn, entries, config["launch_date"])
-    raw_metric_rows = raw_rows(conn, config["launch_date"])
+    dataset = build_dataset(conn, entries, config["report_start_date"])
+    raw_metric_rows = raw_rows(conn, config["report_start_date"])
     conn.close()
 
     label_date = args.date or (max(dataset.keys()) if dataset else date.today().isoformat())

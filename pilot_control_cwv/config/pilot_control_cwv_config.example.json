@@ -1,6 +1,7 @@
 {
   "report_name": "Pilot vs Control CWV Daily",
   "launch_date": "2026-03-24",
+  "report_start_date": "2026-03-20",
   "db_path": "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
   "pagespeed_api_key_path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/pagespeed_api_key.txt",
   "report_recipients": [

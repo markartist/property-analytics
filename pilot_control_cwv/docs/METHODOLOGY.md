@@ -37,6 +37,16 @@ For newly launched pilot vanity domains:
 - `YoY Trend` remains blank until prior-year direct history exists
 - corresponding variance fields remain blank when the comparison baseline is blank
 
+## Date Handling
+
+- `launch_date`
+  - business launch milestone
+- `report_start_date`
+  - first date included in the commissioned matrix and used for day numbering
+
+This allows prelaunch collection to appear in the report without changing the
+declared launch date.
+
 ## Supporting Metrics
 
 The raw PSI tab preserves:
