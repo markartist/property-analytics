@@ -1,0 +1,36 @@
+{
+  "report_name": "Pilot vs Control CWV Daily",
+  "launch_date": "2026-03-24",
+  "db_path": "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
+  "pagespeed_api_key_path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/pagespeed_api_key.txt",
+  "report_recipients": [
+    "mlaufhutte@venterraliving.com"
+  ],
+  "cohorts": [
+    {
+      "key": "pilot_calais_midtown",
+      "display_name": "Calais Midtown",
+      "role": "pilot",
+      "property_id": "378381499",
+      "site_url": "https://calaismidtownapartments.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_example",
+      "active": true
+    },
+    {
+      "key": "control_example",
+      "display_name": "Example Control Property",
+      "role": "control",
+      "property_id": "123456789",
+      "site_url": "https://example-control-property.com/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": false
+    }
+  ],
+  "notes": [
+    "Copy this file to pilot_control_cwv_config.json for local use.",
+    "Use history_source=dedicated for pilot vanity domains.",
+    "Use history_source=portfolio_property for sister/control properties when legacy PSI history should come from pagespeed_metrics."
+  ]
+}

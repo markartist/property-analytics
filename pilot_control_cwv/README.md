@@ -9,6 +9,7 @@ It is intentionally separate from the portfolio reporting pipeline.
 
 - `config/`
   - cohort definitions and report recipients
+  - tracked example config plus local runtime config
 - `scripts/`
   - daily collection, report generation, email delivery, and orchestration
 - `docs/`
@@ -33,6 +34,16 @@ It is intentionally separate from the portfolio reporting pipeline.
 - Pilot history does not write into portfolio `pagespeed_metrics`
 - Sister/control properties can later be configured to reference portfolio history
   without mixing pilot launch-day data into legacy baselines
+
+## Config
+
+- Tracked template:
+  - `pilot_control_cwv/config/pilot_control_cwv_config.example.json`
+- Local runtime file:
+  - `pilot_control_cwv/config/pilot_control_cwv_config.json`
+
+The runtime config is intentionally not committed because the repo ignores nested
+`config/` paths.
 
 ## Current Status
 

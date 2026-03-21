@@ -8,6 +8,7 @@ existing portfolio report stack.
 ## Inputs
 
 - Config: `pilot_control_cwv/config/pilot_control_cwv_config.json`
+- Template: `pilot_control_cwv/config/pilot_control_cwv_config.example.json`
 - PSI API key:
   - currently referenced from
     `/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/pagespeed_api_key.txt`
