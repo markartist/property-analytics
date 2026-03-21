@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -236,15 +236,14 @@ def build_workbook(
     ws.title = "Daily Matrix"
 
     header_fill = PatternFill("solid", fgColor="D9E2F3")
-    section_fill = PatternFill("solid", fgColor="EEF3F8")
-    bold = Font(bold=True)
+    white_fill = PatternFill("solid", fgColor="FFFFFF")
     center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    thin_gray = Side(style="thin", color="D9DCE3")
+    dark_gray = Side(style="thin", color="333333")
+    light_border = Border(left=thin_gray, right=thin_gray, top=thin_gray, bottom=thin_gray)
+    header_border = Border(left=dark_gray, right=dark_gray, top=dark_gray, bottom=dark_gray)
 
-    ws["A1"] = config["report_name"]
-    ws["A1"].font = Font(bold=True, size=14)
-    ws["A2"] = "Trailing and YoY fields remain blank for new vanity domains until enough direct history exists."
-
-    columns = [
+    pilot_columns = [
         ("Score", "score"),
         ("T30", "t30"),
         ("Variance from T30", "variance_t30"),
@@ -254,41 +253,88 @@ def build_workbook(
         ("Variance from YoY", "variance_yoy"),
         ("Variance from Sister", "variance_sister"),
     ]
+    control_columns = pilot_columns[:-1]
+    pilots = [entry for entry in entries if entry.role == "pilot"]
+    entry_index = {entry.key: entry for entry in entries}
 
-    ws.merge_cells(start_row=4, start_column=1, end_row=5, end_column=1)
-    ws["A4"] = "Day"
-    ws["A4"].font = bold
-    ws["A4"].alignment = center
-    ws.column_dimensions["A"].width = 14
+    ws.sheet_view.showGridLines = False
+    ws.freeze_panes = "B4"
+    ws.column_dimensions["A"].width = 18
+    ws.row_dimensions[1].height = 54
+    ws.row_dimensions[2].height = 44
 
     col = 2
-    for entry in entries:
-        ws.merge_cells(start_row=4, start_column=col, end_row=4, end_column=col + len(columns) - 1)
-        cell = ws.cell(row=4, column=col, value=entry.display_name)
-        cell.font = bold
+    for pilot in pilots:
+        sister = entry_index.get(pilot.sister_key) if pilot.sister_key else None
+
+        ws.merge_cells(start_row=1, start_column=col, end_row=1, end_column=col + len(pilot_columns) - 1)
+        cell = ws.cell(row=1, column=col, value=pilot.display_name)
+        cell.font = Font(size=12)
         cell.fill = header_fill
         cell.alignment = center
-        for offset, (label, _) in enumerate(columns):
-            sub = ws.cell(row=5, column=col + offset, value=label)
-            sub.font = bold
-            sub.fill = section_fill
+        cell.border = header_border
+        for offset, (label, _) in enumerate(pilot_columns):
+            sub = ws.cell(row=2, column=col + offset, value=label)
+            sub.font = Font(size=11)
+            sub.fill = white_fill
             sub.alignment = center
-            ws.column_dimensions[get_column_letter(col + offset)].width = 16
-        col += len(columns)
+            sub.border = light_border
+            ws.column_dimensions[get_column_letter(col + offset)].width = 13
+        col += len(pilot_columns)
+
+        if sister:
+            ws.merge_cells(start_row=1, start_column=col, end_row=1, end_column=col + len(control_columns) - 1)
+            cell = ws.cell(row=1, column=col, value=sister.display_name)
+            cell.font = Font(size=12)
+            cell.fill = header_fill
+            cell.alignment = center
+            cell.border = header_border
+            for offset, (label, _) in enumerate(control_columns):
+                sub = ws.cell(row=2, column=col + offset, value=label)
+                sub.font = Font(size=11)
+                sub.fill = white_fill
+                sub.alignment = center
+                sub.border = light_border
+                ws.column_dimensions[get_column_letter(col + offset)].width = 13
+            col += len(control_columns)
+
+    ws["A3"] = "PRACTICE ROW"
+    ws["A3"].font = Font(size=11)
+    ws["A3"].alignment = Alignment(horizontal="left", vertical="center")
+    ws["A3"].border = light_border
+    for col_idx in range(2, ws.max_column + 1):
+        cell = ws.cell(row=3, column=col_idx, value="")
+        cell.border = light_border
 
     report_start_dt = datetime.strptime(config["report_start_date"], "%Y-%m-%d").date()
-    row = 6
+    row = 4
     for metric_date in sorted(dataset.keys()):
         day_num = (datetime.strptime(metric_date, "%Y-%m-%d").date() - report_start_dt).days + 1
-        ws.cell(row=row, column=1, value=f"Day {day_num}")
+        day_label = ws.cell(row=row, column=1, value=f"Day {day_num}")
+        day_label.font = Font(size=11)
+        day_label.alignment = center
+        day_label.border = light_border
         col = 2
-        for entry in entries:
-            values = dataset[metric_date][entry.key]
-            for _, key in columns:
+        for pilot in pilots:
+            values = dataset[metric_date][pilot.key]
+            for _, key in pilot_columns:
                 val = values[key]
                 rendered = fmt_delta(val) if key.startswith("variance") else fmt_num(val)
-                ws.cell(row=row, column=col, value=rendered)
+                data_cell = ws.cell(row=row, column=col, value=rendered)
+                data_cell.alignment = center
+                data_cell.border = light_border
                 col += 1
+
+            sister = entry_index.get(pilot.sister_key) if pilot.sister_key else None
+            if sister:
+                values = dataset[metric_date][sister.key]
+                for _, key in control_columns:
+                    val = values[key]
+                    rendered = fmt_delta(val) if key.startswith("variance") else fmt_num(val)
+                    data_cell = ws.cell(row=row, column=col, value=rendered)
+                    data_cell.alignment = center
+                    data_cell.border = light_border
+                    col += 1
         row += 1
 
     raw = wb.create_sheet("Raw PSI")
@@ -326,7 +372,7 @@ def build_workbook(
 
     notes = wb.create_sheet("Notes")
     notes["A1"] = "Methodology"
-    notes["A1"].font = bold
+    notes["A1"].font = Font(bold=True)
     notes["A3"] = "Score"
     notes["B3"] = "Actual PSI Mobile Performance Score collected for the configured site URL."
     notes["A4"] = "T30 / Rolling T90"
