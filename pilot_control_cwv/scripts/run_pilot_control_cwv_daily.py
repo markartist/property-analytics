@@ -28,9 +28,39 @@ def main() -> int:
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to config JSON")
     parser.add_argument("--date", default=date.today().isoformat(), help="Metric/report date label")
     parser.add_argument("--skip-send", action="store_true", help="Collect and generate, but skip email send")
+    parser.add_argument(
+        "--strategies",
+        nargs="+",
+        default=["mobile"],
+        choices=["mobile", "desktop"],
+        help="PSI strategies to collect for the daily workflow",
+    )
     args = parser.parse_args()
 
-    run_step([sys.executable, str(BASE_DIR / "scripts" / "collect_pilot_control_psi.py"), "--config", args.config, "--date", args.date])
+    run_step(
+        [
+            sys.executable,
+            str(BASE_DIR / "scripts" / "collect_pilot_control_psi.py"),
+            "--config",
+            args.config,
+            "--date",
+            args.date,
+            "--strategies",
+            *args.strategies,
+        ]
+    )
+    run_step(
+        [
+            sys.executable,
+            str(BASE_DIR / "scripts" / "validate_pilot_control_psi.py"),
+            "--config",
+            args.config,
+            "--date",
+            args.date,
+            "--strategies",
+            *args.strategies,
+        ]
+    )
     run_step([sys.executable, str(BASE_DIR / "scripts" / "generate_pilot_control_cwv_report.py"), "--config", args.config, "--date", args.date])
     if not args.skip_send:
         run_step([sys.executable, str(BASE_DIR / "scripts" / "send_pilot_control_cwv_report.py"), "--config", args.config, "--date", args.date])

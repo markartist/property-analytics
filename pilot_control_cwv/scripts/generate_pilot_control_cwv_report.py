@@ -6,6 +6,7 @@ Generate the dedicated pilot/control daily CWV workbook and HTML summary.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sqlite3
 from dataclasses import dataclass
@@ -168,7 +169,27 @@ def all_dates(conn: sqlite3.Connection, report_start_date: str) -> List[str]:
     return [row[0] for row in rows]
 
 
-def raw_rows(conn: sqlite3.Connection, report_start_date: str) -> List[sqlite3.Row]:
+def complete_dates(conn: sqlite3.Connection, entries: List[CohortEntry], report_start_date: str) -> List[str]:
+    expected_count = len(entries)
+    rows = conn.execute(
+        """
+        SELECT metric_date
+        FROM pilot_control_psi_metrics
+        WHERE metric_date >= ?
+          AND strategy = 'mobile'
+        GROUP BY metric_date
+        HAVING COUNT(DISTINCT cohort_key) >= ?
+        ORDER BY metric_date ASC
+        """,
+        (report_start_date, expected_count),
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
+def raw_rows(conn: sqlite3.Connection, report_dates: List[str]) -> List[sqlite3.Row]:
+    if not report_dates:
+        return []
+    placeholders = ",".join("?" for _ in report_dates)
     return conn.execute(
         """
         SELECT
@@ -183,17 +204,22 @@ def raw_rows(conn: sqlite3.Connection, report_start_date: str) -> List[sqlite3.R
             cls_value,
             total_blocking_time
         FROM pilot_control_psi_metrics
-        WHERE metric_date >= ?
+        WHERE metric_date IN ({placeholders})
         ORDER BY metric_date ASC, display_name ASC, strategy ASC
-        """,
-        (report_start_date,),
+        """.format(placeholders=placeholders),
+        report_dates,
     ).fetchall()
 
 
-def build_dataset(conn: sqlite3.Connection, entries: List[CohortEntry], report_start_date: str) -> Dict[str, Dict[str, Dict[str, Optional[float]]]]:
+def build_dataset(
+    conn: sqlite3.Connection,
+    entries: List[CohortEntry],
+    report_start_date: str,
+    report_dates: List[str],
+) -> Dict[str, Dict[str, Dict[str, Optional[float]]]]:
     index = {entry.key: entry for entry in entries}
     dataset: Dict[str, Dict[str, Dict[str, Optional[float]]]] = {}
-    for metric_date in all_dates(conn, report_start_date):
+    for metric_date in report_dates:
         dataset[metric_date] = {}
         for entry in entries:
             current = current_mobile_row(conn, entry, metric_date)
@@ -225,6 +251,65 @@ def build_dataset(conn: sqlite3.Connection, entries: List[CohortEntry], report_s
     return dataset
 
 
+def pilot_control_pairs(entries: List[CohortEntry]) -> List[tuple[CohortEntry, Optional[CohortEntry]]]:
+    pilots = [entry for entry in entries if entry.role == "pilot"]
+    entry_index = {entry.key: entry for entry in entries}
+    return [(pilot, entry_index.get(pilot.sister_key) if pilot.sister_key else None) for pilot in pilots]
+
+
+def matrix_columns() -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    pilot_columns = [
+        ("Score", "score"),
+        ("T30", "t30"),
+        ("Variance from T30", "variance_t30"),
+        ("Rolling T90", "t90"),
+        ("Variance from T90", "variance_t90"),
+        ("YoY Trend", "yoy"),
+        ("Variance from YoY", "variance_yoy"),
+        ("Variance from Sister", "variance_sister"),
+    ]
+    control_columns = pilot_columns[:-1]
+    return pilot_columns, control_columns
+
+
+def matrix_rows(
+    config: Dict[str, object],
+    entries: List[CohortEntry],
+    dataset: Dict[str, Dict[str, Dict[str, Optional[float]]]],
+) -> List[List[str]]:
+    pilot_columns, control_columns = matrix_columns()
+    pairs = pilot_control_pairs(entries)
+
+    header_row_1 = [""]
+    header_row_2 = [""]
+    practice_row = ["PRACTICE ROW"]
+
+    for pilot, sister in pairs:
+        header_row_1.extend([pilot.display_name] + [""] * (len(pilot_columns) - 1))
+        header_row_2.extend([label for label, _ in pilot_columns])
+        practice_row.extend([""] * len(pilot_columns))
+        if sister:
+            header_row_1.extend([sister.display_name] + [""] * (len(control_columns) - 1))
+            header_row_2.extend([label for label, _ in control_columns])
+            practice_row.extend([""] * len(control_columns))
+
+    rows = [header_row_1, header_row_2, practice_row]
+    for metric_date in sorted(dataset.keys()):
+        row = [metric_date]
+        for pilot, sister in pairs:
+            pilot_values = dataset[metric_date][pilot.key]
+            for _, key in pilot_columns:
+                value = pilot_values[key]
+                row.append(fmt_delta(value) if key.startswith("variance") else fmt_num(value))
+            if sister:
+                sister_values = dataset[metric_date][sister.key]
+                for _, key in control_columns:
+                    value = sister_values[key]
+                    row.append(fmt_delta(value) if key.startswith("variance") else fmt_num(value))
+        rows.append(row)
+    return rows
+
+
 def build_workbook(
     config: Dict[str, object],
     entries: List[CohortEntry],
@@ -243,19 +328,8 @@ def build_workbook(
     light_border = Border(left=thin_gray, right=thin_gray, top=thin_gray, bottom=thin_gray)
     header_border = Border(left=dark_gray, right=dark_gray, top=dark_gray, bottom=dark_gray)
 
-    pilot_columns = [
-        ("Score", "score"),
-        ("T30", "t30"),
-        ("Variance from T30", "variance_t30"),
-        ("Rolling T90", "t90"),
-        ("Variance from T90", "variance_t90"),
-        ("YoY Trend", "yoy"),
-        ("Variance from YoY", "variance_yoy"),
-        ("Variance from Sister", "variance_sister"),
-    ]
-    control_columns = pilot_columns[:-1]
-    pilots = [entry for entry in entries if entry.role == "pilot"]
-    entry_index = {entry.key: entry for entry in entries}
+    pilot_columns, control_columns = matrix_columns()
+    pairs = pilot_control_pairs(entries)
 
     ws.sheet_view.showGridLines = False
     ws.freeze_panes = "B4"
@@ -264,8 +338,7 @@ def build_workbook(
     ws.row_dimensions[2].height = 44
 
     col = 2
-    for pilot in pilots:
-        sister = entry_index.get(pilot.sister_key) if pilot.sister_key else None
+    for pilot, sister in pairs:
 
         ws.merge_cells(start_row=1, start_column=col, end_row=1, end_column=col + len(pilot_columns) - 1)
         cell = ws.cell(row=1, column=col, value=pilot.display_name)
@@ -306,16 +379,14 @@ def build_workbook(
         cell = ws.cell(row=3, column=col_idx, value="")
         cell.border = light_border
 
-    report_start_dt = datetime.strptime(config["report_start_date"], "%Y-%m-%d").date()
     row = 4
     for metric_date in sorted(dataset.keys()):
-        day_num = (datetime.strptime(metric_date, "%Y-%m-%d").date() - report_start_dt).days + 1
-        day_label = ws.cell(row=row, column=1, value=f"Day {day_num}")
+        day_label = ws.cell(row=row, column=1, value=metric_date)
         day_label.font = Font(size=11)
         day_label.alignment = center
         day_label.border = light_border
         col = 2
-        for pilot in pilots:
+        for pilot, sister in pairs:
             values = dataset[metric_date][pilot.key]
             for _, key in pilot_columns:
                 val = values[key]
@@ -325,7 +396,6 @@ def build_workbook(
                 data_cell.border = light_border
                 col += 1
 
-            sister = entry_index.get(pilot.sister_key) if pilot.sister_key else None
             if sister:
                 values = dataset[metric_date][sister.key]
                 for _, key in control_columns:
@@ -383,8 +453,22 @@ def build_workbook(
     notes["B6"] = "Current score minus assigned sister/control property's current score on the same date."
     notes["A7"] = "Judgment"
     notes["B7"] = "Supporting status only. Score remains the primary commissioned metric."
+    notes["A8"] = "Date Inclusion"
+    notes["B8"] = "Only dates with a complete required mobile cohort are included in the commissioned exports."
 
     return wb
+
+
+def write_matrix_csv(
+    config: Dict[str, object],
+    entries: List[CohortEntry],
+    dataset: Dict[str, Dict[str, Dict[str, Optional[float]]]],
+    out_path: Path,
+) -> None:
+    rows = matrix_rows(config, entries, dataset)
+    with out_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerows(rows)
 
 
 def write_html_summary(config: Dict[str, object], entries: List[CohortEntry], dataset: Dict[str, Dict[str, Dict[str, Optional[float]]]], out_path: Path) -> None:
@@ -442,20 +526,24 @@ def main() -> int:
     db_path = Path(config["db_path"])
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    dataset = build_dataset(conn, entries, config["report_start_date"])
-    raw_metric_rows = raw_rows(conn, config["report_start_date"])
+    report_dates = complete_dates(conn, entries, config["report_start_date"])
+    dataset = build_dataset(conn, entries, config["report_start_date"], report_dates)
+    raw_metric_rows = raw_rows(conn, report_dates)
     conn.close()
 
     label_date = args.date or (max(dataset.keys()) if dataset else date.today().isoformat())
     workbook_path = OUTPUT_DIR / f"Pilot_Control_CWV_Report_{label_date}.xlsx"
     html_path = OUTPUT_DIR / f"Pilot_Control_CWV_Report_{label_date}.html"
+    csv_path = OUTPUT_DIR / f"Pilot_Control_CWV_Report_{label_date}.csv"
 
     wb = build_workbook(config, entries, dataset, raw_metric_rows)
     wb.save(workbook_path)
     write_html_summary(config, entries, dataset, html_path)
+    write_matrix_csv(config, entries, dataset, csv_path)
 
     print(f"Saved workbook: {workbook_path}")
     print(f"Saved HTML:     {html_path}")
+    print(f"Saved CSV:      {csv_path}")
     return 0
 
 

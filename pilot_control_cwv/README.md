@@ -51,3 +51,5 @@ The runtime config is intentionally not committed because the repo ignores neste
 - Sister/control mappings are configured
 - The workbook supports blank T30, T90, and YoY values until direct history exists
 - `report_start_date` can be set earlier than `launch_date` to support prelaunch monitoring
+- Daily validation now gates report generation/send on complete expected PSI rows
+- CSV export is generated in the commissioned matrix shape alongside the workbook

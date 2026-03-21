@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import time
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -22,6 +23,8 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = BASE_DIR.parent
 DEFAULT_CONFIG_PATH = BASE_DIR / "config" / "pilot_control_cwv_config.json"
 REQUEST_TIMEOUT = 120
+DEFAULT_RETRIES = 3
+DEFAULT_RETRY_DELAY = 3.0
 
 
 TABLE_DDL = """
@@ -110,19 +113,36 @@ def audit_value(payload: Dict[str, object], name: str) -> Optional[float]:
     return float(numeric)
 
 
-def collect_psi(api_key: str, url: str, strategy: str) -> Dict[str, object]:
-    response = requests.get(
-        "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
-        params={
-            "url": url,
-            "strategy": strategy,
-            "key": api_key,
-            "category": ["PERFORMANCE", "ACCESSIBILITY", "BEST_PRACTICES", "SEO"],
-        },
-        timeout=REQUEST_TIMEOUT,
-    )
-    response.raise_for_status()
-    return response.json()
+def collect_psi(
+    api_key: str,
+    url: str,
+    strategy: str,
+    retries: int = DEFAULT_RETRIES,
+    retry_delay: float = DEFAULT_RETRY_DELAY,
+) -> Dict[str, object]:
+    last_error: Optional[Exception] = None
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.get(
+                "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
+                params={
+                    "url": url,
+                    "strategy": strategy,
+                    "key": api_key,
+                    "category": ["PERFORMANCE", "ACCESSIBILITY", "BEST_PRACTICES", "SEO"],
+                },
+                timeout=REQUEST_TIMEOUT,
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as exc:  # pragma: no cover - runtime/network errors
+            last_error = exc
+            if attempt == retries:
+                break
+            sleep_for = retry_delay * attempt
+            print(f"    retry {attempt}/{retries - 1} in {sleep_for:.1f}s after: {exc}")
+            time.sleep(sleep_for)
+    raise RuntimeError(f"PSI collection failed after {retries} attempts: {last_error}")
 
 
 def extract_metrics(payload: Dict[str, object]) -> Dict[str, object]:
@@ -231,11 +251,18 @@ def main() -> int:
     parser.add_argument(
         "--strategies",
         nargs="+",
-        default=["mobile", "desktop"],
+        default=["mobile"],
         choices=["mobile", "desktop"],
         help="PSI strategies to collect",
     )
     parser.add_argument("--limit", type=int, default=0, help="Optional limit for testing")
+    parser.add_argument("--retries", type=int, default=DEFAULT_RETRIES, help="Retry attempts per PSI request")
+    parser.add_argument(
+        "--retry-delay",
+        type=float,
+        default=DEFAULT_RETRY_DELAY,
+        help="Base seconds between PSI retries; multiplies by attempt number",
+    )
     args = parser.parse_args()
 
     config_path = Path(args.config)
@@ -253,12 +280,19 @@ def main() -> int:
 
     success = 0
     failures = 0
+    missing: List[str] = []
 
     for entry in entries:
         print(f"\n[{entry.display_name}] {entry.site_url}")
         for strategy in args.strategies:
             try:
-                payload = collect_psi(api_key, entry.site_url, strategy)
+                payload = collect_psi(
+                    api_key,
+                    entry.site_url,
+                    strategy,
+                    retries=args.retries,
+                    retry_delay=args.retry_delay,
+                )
                 metrics = extract_metrics(payload)
                 upsert_metric(conn, entry, args.date, strategy, metrics)
                 conn.commit()
@@ -269,9 +303,16 @@ def main() -> int:
                 )
             except Exception as exc:  # pragma: no cover - runtime/network errors
                 failures += 1
+                missing.append(f"{entry.display_name} [{strategy}]")
                 print(f"  {strategy:<7} FAILED: {exc}")
 
     conn.close()
+    expected = len(entries) * len(args.strategies)
+    print(f"\nExpected rows={expected} Success={success} Failed={failures}")
+    if missing:
+        print("Missing:")
+        for item in missing:
+            print(f"  - {item}")
     print(f"\nDone. Success={success} Failed={failures}")
     return 0 if failures == 0 else 1
 

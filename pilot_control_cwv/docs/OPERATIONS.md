@@ -32,6 +32,12 @@ Generate report only:
 python3 pilot_control_cwv/scripts/generate_pilot_control_cwv_report.py
 ```
 
+Validate completeness first:
+
+```bash
+python3 pilot_control_cwv/scripts/validate_pilot_control_psi.py --date YYYY-MM-DD
+```
+
 Send most recent dated report:
 
 ```bash
@@ -64,6 +70,7 @@ Generated artifacts are written to:
 
 - `pilot_control_cwv/reports/Pilot_Control_CWV_Report_YYYY-MM-DD.xlsx`
 - `pilot_control_cwv/reports/Pilot_Control_CWV_Report_YYYY-MM-DD.html`
+- `pilot_control_cwv/reports/Pilot_Control_CWV_Report_YYYY-MM-DD.csv`
 
 ## Production Readiness Checklist
 
@@ -71,5 +78,6 @@ Generated artifacts are written to:
 - Populate `sister_key` pairings
 - Confirm recipient list
 - Validate mobile PSI collection for all 10 properties
+- Confirm `validate_pilot_control_psi.py` passes before sending
 - Schedule the daily runner
 - Verify email delivery on a test date
