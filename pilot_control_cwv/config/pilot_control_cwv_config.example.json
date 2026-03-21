@@ -14,18 +14,98 @@
       "property_id": "378381499",
       "site_url": "https://calaismidtownapartments.com/",
       "history_source": "dedicated",
-      "sister_key": "control_example",
+      "sister_key": "control_avasa_spring_branch",
       "active": true
     },
     {
-      "key": "control_example",
-      "display_name": "Example Control Property",
+      "key": "pilot_champions_green",
+      "display_name": "Champions Green",
+      "role": "pilot",
+      "property_id": "378404769",
+      "site_url": "https://championsgreen-ga.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_axial_buckhead",
+      "active": true
+    },
+    {
+      "key": "pilot_district_universal",
+      "display_name": "The District Universal Boulevard",
+      "role": "pilot",
+      "property_id": "378644585",
+      "site_url": "https://thedistrictuniversal.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_northbridge_millenia_lake",
+      "active": true
+    },
+    {
+      "key": "pilot_the_harrison",
+      "display_name": "The Harrison",
+      "role": "pilot",
+      "property_id": "378702475",
+      "site_url": "https://theharrisonsandysprings.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_the_whitney",
+      "active": true
+    },
+    {
+      "key": "pilot_ventana",
+      "display_name": "Ventana",
+      "role": "pilot",
+      "property_id": "378380644",
+      "site_url": "https://ventanaapts.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_park_on_wurzbach",
+      "active": true
+    },
+    {
+      "key": "control_avasa_spring_branch",
+      "display_name": "Avasa Spring Branch",
       "role": "control",
-      "property_id": "123456789",
-      "site_url": "https://example-control-property.com/",
+      "property_id": "403700195",
+      "site_url": "https://venterraliving.com/apartments/avasa-spring-branch/",
       "history_source": "portfolio_property",
       "sister_key": null,
-      "active": false
+      "active": true
+    },
+    {
+      "key": "control_axial_buckhead",
+      "display_name": "Axial Buckhead",
+      "role": "control",
+      "property_id": "378379349",
+      "site_url": "https://venterraliving.com/apartments/axial-buckhead/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_northbridge_millenia_lake",
+      "display_name": "Northbridge at Millenia Lake",
+      "role": "control",
+      "property_id": "378701160",
+      "site_url": "https://venterraliving.com/apartments/northbridge-at-millenia-lake/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_the_whitney",
+      "display_name": "The Whitney",
+      "role": "control",
+      "property_id": "378701831",
+      "site_url": "https://venterraliving.com/apartments/the-whitney/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_park_on_wurzbach",
+      "display_name": "Park on Wurzbach",
+      "role": "control",
+      "property_id": "378700447",
+      "site_url": "https://venterraliving.com/apartments/park-on-wurzbach/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
     }
   ],
   "notes": [
