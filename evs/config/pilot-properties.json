@@ -1,0 +1,47 @@
+[
+  {
+    "property_id": "champions-green",
+    "property_name": "Champion's Green",
+    "legacy_url": "https://venterraliving.com/apartments/champions-green/",
+    "staging_url": "https://championsgreen.kinsta.cloud/",
+    "live_url": "https://championsgreen-ga.com/",
+    "cohort": "pilot",
+    "active": true
+  },
+  {
+    "property_id": "the-district-universal",
+    "property_name": "The District Universal",
+    "legacy_url": "https://venterraliving.com/apartments/the-district-universal-boulevard/",
+    "staging_url": "https://thedistrictuniversalboulevard.kinsta.cloud/",
+    "live_url": "https://thedistrictuniversal.com/",
+    "cohort": "pilot",
+    "active": true
+  },
+  {
+    "property_id": "the-harrison",
+    "property_name": "The Harrison",
+    "legacy_url": "https://venterraliving.com/apartments/the-harrison/",
+    "staging_url": "https://theharrison.kinsta.cloud/",
+    "live_url": "https://theharrisonsandysprings.com/",
+    "cohort": "pilot",
+    "active": true
+  },
+  {
+    "property_id": "ventana",
+    "property_name": "Ventana",
+    "legacy_url": "https://venterraliving.com/apartments/ventana/",
+    "staging_url": "https://ventana.kinsta.cloud/",
+    "live_url": "https://ventanaapts.com/",
+    "cohort": "pilot",
+    "active": true
+  },
+  {
+    "property_id": "calais-midtown",
+    "property_name": "Calais Midtown",
+    "legacy_url": "https://venterraliving.com/apartments/calais-midtown/",
+    "staging_url": "https://calaismidtown.kinsta.cloud/",
+    "live_url": "https://calaismidtownapartments.com/",
+    "cohort": "pilot",
+    "active": true
+  }
+]

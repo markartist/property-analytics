@@ -1,0 +1,66 @@
+{
+  "result_id": "sample-result-id",
+  "request_id": "sample-request-id",
+  "status": "fail",
+  "summary": "Experiential validation found 2 failing checks.",
+  "profile": "broad_experiential_homepage",
+  "environment": "staging",
+  "device_results": [
+    {
+      "device_profile": "desktop_chrome",
+      "status": "fail",
+      "summary": "12 experiential checks on desktop_chrome",
+      "provider": "browserstack",
+      "duration_ms": 16423,
+      "check_results": [
+        {
+          "check_id": "desktop_chrome-link-1",
+          "label": "Apply now",
+          "category": "link",
+          "status": "fail",
+          "severity": "high",
+          "message": "Navigation target timed out.",
+          "target_label": "Apply now",
+          "target_url": "https://championsgreen.kinsta.cloud/apply/",
+          "selector_hint": "apply-now",
+          "evidence_refs": [],
+          "metadata": {}
+        }
+      ],
+      "evidence_refs": [
+        {
+          "kind": "artifact",
+          "label": "desktop screenshot",
+          "url": "https://example.com/screenshots/desktop.png",
+          "provider": "browserstack"
+        }
+      ]
+    }
+  ],
+  "check_results": [
+    {
+      "check_id": "desktop_chrome-link-1",
+      "label": "Apply now",
+      "category": "link",
+      "status": "fail",
+      "severity": "high",
+      "message": "Navigation target timed out.",
+      "target_label": "Apply now",
+      "target_url": "https://championsgreen.kinsta.cloud/apply/",
+      "selector_hint": "apply-now",
+      "evidence_refs": [],
+      "metadata": {}
+    }
+  ],
+  "evidence_refs": [
+    {
+      "kind": "artifact",
+      "label": "desktop screenshot",
+      "url": "https://example.com/screenshots/desktop.png",
+      "provider": "browserstack"
+    }
+  ],
+  "severity": "high",
+  "business_impact": "Potential user experience regressions are present on the staging experience.",
+  "recommended_action": "Review failed checks, inspect linked evidence, and resolve staging regressions before release."
+}

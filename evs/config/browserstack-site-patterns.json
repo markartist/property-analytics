@@ -1,0 +1,42 @@
+{
+  "defaults": {
+    "mobile_menu_selectors": [
+      ".tm-header-mobile a.uk-navbar-toggle",
+      ".tm-header-mobile [uk-toggle][href*='tm-dialog-mobile']",
+      "a.uk-navbar-toggle",
+      "[uk-toggle][href*='tm-dialog-mobile']",
+      "[uk-navbar-toggle-icon]",
+      "button[aria-label*='menu' i], [role='button'][aria-label*='menu' i]",
+      "summary"
+    ],
+    "navigation_link_selector": "#tm-dialog-mobile a, .uk-offcanvas-bar a, nav a, [role='navigation'] a, header a",
+    "navigation_link_pattern": "floor|apart|amenit|gallery|neighborhood|contact|home|feature|location",
+    "mobile_cta_selectors": [
+      "a[href*='createPipelineApplication']",
+      "a[href*='scheduleTour']",
+      "a[href^='tel:']",
+      "a[href*='/contact/#form']"
+    ],
+    "mobile_interior_selectors": [
+      "a[href*='/contact']",
+      "a[href*='/floor']",
+      "a[href*='/amenit']",
+      "a[href*='/gallery']",
+      "a[href*='/neighborhood']"
+    ],
+    "mobile_conversion_selectors": [
+      "a[href^='tel:']",
+      "a[href^='mailto:']",
+      "a[href*='apply']",
+      "a[href*='tour']",
+      "a[href*='quote']"
+    ]
+  },
+  "properties": {
+    "champions-green": {},
+    "the-district-universal": {},
+    "the-harrison": {},
+    "ventana": {},
+    "calais-midtown": {}
+  }
+}

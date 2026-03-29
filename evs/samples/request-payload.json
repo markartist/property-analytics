@@ -1,0 +1,22 @@
+{
+  "source_consumer": "property_advocate",
+  "property_id": "champions-green",
+  "environment": "staging",
+  "reason": "Pre-release experiential sweep for pilot property homepage",
+  "priority": "high",
+  "target_pages": [
+    "https://championsgreen.kinsta.cloud/"
+  ],
+  "validation_profiles": [
+    "broad_experiential_homepage"
+  ],
+  "device_profiles": [
+    "iphone_safari",
+    "desktop_chrome"
+  ],
+  "execution_mode": "manual",
+  "trigger_metadata": {
+    "requested_from": "sample",
+    "staging_only": true
+  }
+}
