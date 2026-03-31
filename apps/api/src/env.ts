@@ -10,6 +10,9 @@ export interface Env {
   SESSION_SIGNING_SECRET: string;
   ENABLE_EMAIL_SEND: string; // "true" | "false" — feature flag for email delivery
   OPENAI_API_KEY: string; // OpenAI API key for The Fishing Hole
+  VACS_SHARED_TOKEN?: string; // optional bearer token for service-to-service VACS context access
+  EVS_SHARED_TOKEN?: string; // optional bearer token for workflow-to-EVS result ingestion
+  PLATFORM_SHARED_TOKEN?: string; // optional bearer token for Phase 1 platform orchestration endpoints
 }
 
 /**
