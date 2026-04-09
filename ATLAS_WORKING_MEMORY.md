@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-01-28 22:51 UTC  
+**Last Updated:** 2026-04-09 01:10 UTC  
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -270,6 +270,53 @@ Data_Collection/
 ---
 
 ## 📝 SESSION LOG
+
+### 2026-04-09 01:10 - Cloudflare Cache Audit + Phase 1 Full-Page Cache Rollout Design
+**Actions:**
+- Built a daily Cloudflare cache audit collector and integrated it into `daily_master_collection.py`
+- Added Cloudflare GraphQL analytics support plus zone settings snapshots
+- Added JSON, CSV, Markdown, and PIB-style HTML reporting for the cache audit
+- Captured the first full baseline across the 5 Resi pilot domains
+- Implemented homepage-only Phase 1 Cloudflare cache-rule rollout tooling
+- Dry-run rendered the full ruleset payload for all 5 pilot zones
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/Data_Collection/collectors/cloudflare_cache_audit.py`
+- `/Users/mark/Property_Analytics/Data_Collection/queries/cloudflare_graphql_cache_metrics.py`
+- `/Users/mark/Property_Analytics/Data_Collection/reports/cloudflare_cache_daily_report.py`
+- `/Users/mark/Property_Analytics/config/cloudflare_cache_audit.yaml`
+- `/Users/mark/Property_Analytics/config/cloudflare_full_page_cache.yaml`
+- `/Users/mark/Property_Analytics/ops/cloudflare/cache_rules_manager.py`
+- `/Users/mark/Property_Analytics/ops/cloudflare/apply_pilot_full_page_cache.py`
+- `/Users/mark/Property_Analytics/ops/cloudflare/purge_cloudflare_cache.py`
+- `/Users/mark/Property_Analytics/docs/CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md`
+- `/Users/mark/Property_Analytics/docs/CLOUDFLARE_CACHE_WORKDAY_2026-04-08.md`
+- `/Users/mark/Property_Analytics/outputs/cloudflare_full_page_cache/README.md`
+
+**Baseline Findings:**
+- Portfolio status mix: `0 pass, 0 warn, 5 fail`
+- Average Cloudflare cache-hit ratio: `47.20%`
+- Average homepage warm TTFB: `59.3 ms` desktop, `63.5 ms` mobile
+- Warm HIT coverage: `0.00%`
+- All tested homepage variants returned second-request `CF-Cache-Status: DYNAMIC`
+
+**Cloudflare Findings:**
+- All 5 pilot zones are on the `Free Website` plan
+- No custom `http_request_cache_settings` entrypoint existed before rollout work
+- Desired `1800s` edge TTL is clamped to `7200s` in the Phase 1 payload because of the plan floor
+- Read token in `/Users/mark/Downloads/Cloudflare_Cache_Audit_Token_3.txt` works for analytics + dry-run inspection, but not live writes
+
+**Validation:**
+- Dry-run export written to `/Users/mark/Property_Analytics/outputs/cloudflare_full_page_cache/20260409T010139Z`
+- Cache audit artifacts written to `/Users/mark/Property_Analytics/reports/cloudflare_cache_audit/2026-04-08/`
+- PIB guardrails passed
+
+**Next Steps:**
+1. Confirm Kinsta Edge Caching is off for the five pilot domains
+2. Obtain a write-capable Cloudflare token with `Cache Settings Write`
+3. Apply homepage-only Phase 1 rules
+4. Purge Cloudflare
+5. Re-run the cache audit and validate homepage second-request `HIT`
 
 ### 2026-01-28 22:51 - GSC Portfolio Snapshot Report Creation
 **Actions:**

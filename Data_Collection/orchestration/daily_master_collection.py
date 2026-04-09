@@ -18,6 +18,7 @@ import sys
 import os
 import json
 import time
+import fcntl
 import sqlite3
 import traceback
 import subprocess
@@ -40,7 +41,9 @@ from Data_Collection.collectors.gbp_collector import GoogleBusinessProfileCollec
 from Data_Collection.collectors.gsc_collector import GoogleSearchConsoleCollector
 from Data_Collection.collectors.guest_card_collector import GuestCardCollector
 from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollector
+from Data_Collection.collectors.cloudflare_cache_audit import CloudflareCacheAuditCollector
 from Data_Collection.monitoring.alert_sender import DataAlertEmailer
+from utils.ksm import resolve_secret
 
 # Preflight validation
 validate_preflight(__file__)
@@ -78,6 +81,7 @@ class PortfolioDataCollector:
         # Results tracking
         self.results = {
             'ga4': {'success': 0, 'failed': 0, 'skipped': 0},
+            'ga4_events': {'success': 0, 'failed': 0, 'skipped': 0},
             'gsc': {'success': 0, 'failed': 0, 'skipped': 0},
             'gsc_inspection': {'success': 0, 'failed': 0, 'skipped': 0},
             'google_ads': {'success': 0, 'failed': 0, 'skipped': 0},
@@ -88,6 +92,7 @@ class PortfolioDataCollector:
             'gbp_insights': {'success': 0, 'failed': 0, 'skipped': 0},
             'guest_card': {'success': 0, 'failed': 0, 'skipped': 0},
             'unit_availability': {'success': 0, 'failed': 0, 'skipped': 0},
+            'cloudflare_cache_audit': {'success': 0, 'failed': 0, 'skipped': 0},
             'd1_mirror': {'success': 0, 'failed': 0, 'skipped': 0},
             'errors': []
         }
@@ -103,6 +108,7 @@ class PortfolioDataCollector:
         
         # Credential warnings from pre-flight check
         self.credential_warnings = []
+        self._run_lock_file = None
         
         print('=' * 80)
         print('📊 PORTFOLIO DAILY DATA COLLECTION')
@@ -113,6 +119,38 @@ class PortfolioDataCollector:
         if self.quick_mode:
             print('⚡ QUICK MODE: GA4 + GSC only (daily collection)')
         print()
+
+    def _acquire_run_lock(self):
+        """
+        Acquire a non-blocking process lock so only one collector run executes at a time.
+        """
+        lock_path = self.base_dir / 'Data_Collection' / 'logs' / 'daily_master_collection.lock'
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        self._run_lock_file = open(lock_path, 'a+')
+        try:
+            fcntl.flock(self._run_lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            self._run_lock_file.seek(0)
+            owner = self._run_lock_file.read().strip()
+            raise RuntimeError(
+                f"Another collection run is already active (lock: {lock_path}, owner: {owner or 'unknown'})"
+            )
+
+        self._run_lock_file.seek(0)
+        self._run_lock_file.truncate()
+        self._run_lock_file.write(f"pid={os.getpid()} started_at={datetime.now().isoformat()}")
+        self._run_lock_file.flush()
+        os.fsync(self._run_lock_file.fileno())
+
+    def _release_run_lock(self):
+        """Release process lock if held."""
+        if self._run_lock_file is None:
+            return
+        try:
+            fcntl.flock(self._run_lock_file.fileno(), fcntl.LOCK_UN)
+        finally:
+            self._run_lock_file.close()
+            self._run_lock_file = None
         
     def _initialize_main_gsc_service(self):
         """Initialize GSC service with main Venterra credentials (not Cendana)"""
@@ -252,16 +290,26 @@ class PortfolioDataCollector:
         print('  SEMRush API...', end=' ')
         sys.stdout.flush()
         semrush_key_path = self.base_dir / 'Spotlight_Properties_Report' / 'config' / 'semrush_api_key.txt'
-        with open(semrush_key_path) as f:
-            self.semrush_api_key = f.read().strip()
+        self.semrush_api_key = resolve_secret(
+            description='SEMRush API key',
+            notation_env_var='KSM_SEMRUSH_API_KEY_NOTATION',
+            direct_env_var='SEMRUSH_API_KEY',
+            file_path=semrush_key_path,
+            default_profile='data-collection-prod',
+        )
         print('✅')
         
         # GTMetrix
         print('  GTMetrix API...', end=' ')
         sys.stdout.flush()
         gtmetrix_key_path = self.base_dir / 'Spotlight_Properties_Report' / 'config' / 'GTMetrix_API_Key.txt'
-        with open(gtmetrix_key_path) as f:
-            self.gtmetrix_api_key = f.read().strip()
+        self.gtmetrix_api_key = resolve_secret(
+            description='GTMetrix API key',
+            notation_env_var='KSM_GTMETRIX_API_KEY_NOTATION',
+            direct_env_var='GTMETRIX_API_KEY',
+            file_path=gtmetrix_key_path,
+            default_profile='data-collection-prod',
+        )
         print('✅')
         
         # GBP Collector
@@ -300,6 +348,15 @@ class PortfolioDataCollector:
         print(f'Properties with GA4 IDs: {len(ga4_properties)}/{len(properties)}')
         print()
         
+        collection_id = self.db.start_data_collection(
+            collection_date=datetime.now().date(),
+            collection_type='daily',
+            data_source='ga4'
+        )
+        failed = 0
+        success = 0
+        error_messages = []
+
         for i, prop in enumerate(ga4_properties, 1):
             prop_name = prop['name']
             ga4_id = prop['ga4_property_id']
@@ -319,6 +376,7 @@ class PortfolioDataCollector:
                         Metric(name="sessions"),
                         Metric(name="engagedSessions"),
                         Metric(name="totalUsers"),
+                        Metric(name="newUsers"),
                         Metric(name="screenPageViews"),
                         Metric(name="averageSessionDuration"),
                         Metric(name="bounceRate")
@@ -338,9 +396,10 @@ class PortfolioDataCollector:
                         sessions = int(row.metric_values[0].value)
                         engaged = int(row.metric_values[1].value)
                         users = int(row.metric_values[2].value)
-                        pageviews = int(row.metric_values[3].value)
-                        avg_session_duration = float(row.metric_values[4].value)
-                        bounce_rate = float(row.metric_values[5].value)
+                        new_users = int(row.metric_values[3].value)
+                        pageviews = int(row.metric_values[4].value)
+                        avg_session_duration = float(row.metric_values[5].value)
+                        bounce_rate = float(row.metric_values[6].value)
                         
                         # Store in database with actual date
                         self.db.insert_ga4_daily_metrics(
@@ -350,10 +409,12 @@ class PortfolioDataCollector:
                                 'sessions': sessions,
                                 'engaged_sessions': engaged,
                                 'total_users': users,
+                                'new_users': new_users,
                                 'pageviews': pageviews,
                                 'avg_session_duration': avg_session_duration,
                                 'bounce_rate': bounce_rate
-                            }
+                            },
+                            collection_id=collection_id
                         )
                         days_collected += 1
                     
@@ -370,6 +431,8 @@ class PortfolioDataCollector:
                         )],
                         metrics=[
                             Metric(name="sessions"),
+                            Metric(name="totalUsers"),
+                            Metric(name="newUsers"),
                             Metric(name="engagedSessions"),
                             Metric(name="conversions"),
                             Metric(name="engagementRate"),
@@ -386,10 +449,12 @@ class PortfolioDataCollector:
                             channel = row.dimension_values[1].value
                             
                             traffic_sessions = int(row.metric_values[0].value)
-                            traffic_engaged = int(row.metric_values[1].value)
-                            traffic_conversions = int(row.metric_values[2].value)
-                            traffic_engagement_rate = float(row.metric_values[3].value)
-                            traffic_bounce_rate = float(row.metric_values[4].value)
+                            traffic_total_users = int(row.metric_values[1].value)
+                            traffic_new_users = int(row.metric_values[2].value)
+                            traffic_engaged = int(row.metric_values[3].value)
+                            traffic_conversions = int(row.metric_values[4].value)
+                            traffic_engagement_rate = float(row.metric_values[5].value)
+                            traffic_bounce_rate = float(row.metric_values[6].value)
                             
                             # Store traffic source data
                             self.db.insert_ga4_traffic_source(
@@ -398,6 +463,8 @@ class PortfolioDataCollector:
                                 channel_group=channel,
                                 data={
                                     'sessions': traffic_sessions,
+                                    'total_users': traffic_total_users,
+                                    'new_users': traffic_new_users,
                                     'engaged_sessions': traffic_engaged,
                                     'conversions': traffic_conversions,
                                     'engagement_rate': traffic_engagement_rate,
@@ -455,6 +522,7 @@ class PortfolioDataCollector:
                     
                     print(f'   ✅ Collected {days_collected} days + traffic + devices')
                     self.results['ga4']['success'] += 1
+                    success += 1
                 else:
                     print(f'   ⚠️  No data')
                     self.results['ga4']['skipped'] += 1
@@ -463,6 +531,8 @@ class PortfolioDataCollector:
                 error_msg = str(e)[:100]
                 print(f'   ❌ Error: {error_msg}')
                 self.results['ga4']['failed'] += 1
+                failed += 1
+                error_messages.append(f"{prop_name}: {error_msg}")
                 self.results['errors'].append({
                     'property': prop_name,
                     'collector': 'GA4',
@@ -471,10 +541,125 @@ class PortfolioDataCollector:
             
             # Small delay to avoid rate limits
             time.sleep(0.1)
+
+        summary_error = '; '.join(error_messages[:5]) if error_messages else None
+        self.db.complete_data_collection(
+            collection_id=collection_id,
+            properties_collected=success,
+            properties_failed=failed,
+            error_message=summary_error
+        )
         
         print()
         print(f'GA4 Summary: ✅ {self.results["ga4"]["success"]} | ⚠️  {self.results["ga4"]["skipped"]} | ❌ {self.results["ga4"]["failed"]}')
         print()
+        self._check_ga4_new_users_integrity(end_date.date())
+
+    def collect_ga4_event_facts(self):
+        """Collect GA4 event facts via the dedicated supplementary collector."""
+        print('=' * 80)
+        print('📈 COLLECTING GA4 EVENT FACTS')
+        print('=' * 80)
+        print()
+
+        try:
+            script_path = self.base_dir / 'Portfolio_Monitoring' / 'scripts' / 'collect_ga4_events.py'
+            if not script_path.exists():
+                raise FileNotFoundError(f'Collector not found: {script_path}')
+
+            cmd = [sys.executable, str(script_path), '--days', '1']
+            print(f'Running: {" ".join(cmd)}')
+            result = subprocess.run(cmd, timeout=1800)
+
+            if result.returncode != 0:
+                self.results['ga4_events']['failed'] = 1
+                print(f'   ❌ GA4 event facts collector exited {result.returncode}')
+                self.results['errors'].append({
+                    'property': 'All Properties',
+                    'collector': 'GA4 Events',
+                    'error': f'collect_ga4_events.py exited {result.returncode}'
+                })
+                print()
+                return
+
+            yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT COUNT(DISTINCT property_id)
+                    FROM ga4_event_facts
+                    WHERE event_date = ?
+                    """,
+                    (yesterday,),
+                )
+                prop_count = int(cursor.fetchone()[0] or 0)
+
+            if prop_count > 0:
+                self.results['ga4_events']['success'] = prop_count
+                print(f'GA4 Event Facts Summary: ✅ {prop_count} | ⚠️  0 | ❌ 0')
+            else:
+                self.results['ga4_events']['skipped'] = 1
+                print('GA4 Event Facts Summary: ✅ 0 | ⚠️  1 | ❌ 0')
+                print(f'   ⚠️  No ga4_event_facts rows found for {yesterday}')
+            print()
+
+        except subprocess.TimeoutExpired:
+            self.results['ga4_events']['failed'] = 1
+            print('   ❌ GA4 event facts collection timed out after 30 minutes')
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'GA4 Events',
+                'error': 'collect_ga4_events.py timed out'
+            })
+            print()
+        except Exception as e:
+            self.results['ga4_events']['failed'] = 1
+            print(f'   ❌ Error collecting GA4 event facts: {e}')
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'GA4 Events',
+                'error': str(e)[:100]
+            })
+            print()
+
+    def _check_ga4_new_users_integrity(self, metric_date):
+        """Warn when GA4 collection appears to be zeroing out new_users across the board."""
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) AS total_rows,
+                        SUM(CASE WHEN total_users > 0 THEN 1 ELSE 0 END) AS active_rows,
+                        SUM(CASE WHEN total_users > 0 AND new_users > 0 THEN 1 ELSE 0 END) AS rows_with_new_users
+                    FROM ga4_daily_metrics
+                    WHERE metric_date = ?
+                    """,
+                    (metric_date,),
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return
+
+                total_rows = row[0] or 0
+                active_rows = row[1] or 0
+                rows_with_new_users = row[2] or 0
+
+                if total_rows > 0 and active_rows > 0 and rows_with_new_users == 0:
+                    warning = (
+                        f"GA4 metric integrity warning: {metric_date} has {active_rows} properties with "
+                        "total_users > 0 but zero properties with new_users > 0."
+                    )
+                    print(f"   ⚠️  {warning}")
+                    self.results['errors'].append({
+                        'property': 'ALL_PROPERTIES',
+                        'collector': 'GA4',
+                        'error': warning
+                    })
+        except Exception as exc:
+            print(f"   ⚠️  Failed to run GA4 new_users integrity check: {str(exc)[:100]}")
     
     def _collect_gsc_queries(self, prop, gsc_url, start_date, end_date):
         """Collect query-level data for a single property (30-day window)"""
@@ -533,7 +718,7 @@ class PortfolioDataCollector:
             return 0
     
     def collect_gsc_data(self, properties):
-        """Collect GSC data for all properties (excluding Cendana)"""
+        """Collect GSC data for all properties with configured GSC access."""
         print('=' * 80)
         print('🔍 COLLECTING GOOGLE SEARCH CONSOLE DATA')
         print('=' * 80)
@@ -547,10 +732,10 @@ class PortfolioDataCollector:
         print(f'📅 Date range: {start_date.strftime("%Y-%m-%d")} to {end_date.strftime("%Y-%m-%d")} (30 days for daily metrics + queries)')
         print()
         
-        # Filter properties with GSC access, EXCLUDING Cendana (collected separately)
+        # Filter properties with GSC access.
         gsc_properties = [p for p in properties 
                          if p.get('gsc_access') and p['gsc_access'] != 'none'
-                         and p['name'] != 'Cendana District West']
+                        ]
         
         print(f'Properties with GSC access: {len(gsc_properties)}/{len(properties)}')
         print()
@@ -639,19 +824,32 @@ class PortfolioDataCollector:
         domain = (property_info.get('domain') or '').strip().lower()
         ga4_id = str(property_info.get('ga4_property_id') or '').strip()
 
-        targets = []
+        seed_targets = []
         if full_url:
             base = full_url.rstrip('/')
-            # Always include the 3 canonical property URLs we care about for PIB:
-            # home, reviews, and gallery.
-            targets.extend([
-                base + '/',
-                base + '/reviews/',
-                base + '/gallery/',
-            ])
+            known_page_paths = property_info.get('known_page_paths') or []
+            if known_page_paths:
+                for raw_path in known_page_paths:
+                    path = str(raw_path or '').strip()
+                    if not path:
+                        continue
+                    if path == '/':
+                        seed_targets.append(base + '/')
+                    elif path.startswith('http://') or path.startswith('https://'):
+                        seed_targets.append(path)
+                    else:
+                        normalized = path if path.startswith('/') else f'/{path}'
+                        seed_targets.append(base + normalized)
+            else:
+                # Legacy fallback when no site contract exists yet.
+                seed_targets.extend([
+                    base + '/',
+                    base + '/reviews/',
+                    base + '/gallery/',
+                ])
 
         if not ga4_id:
-            return targets[:max_urls]
+            return seed_targets[:max_urls]
 
         # Pull sitemap URLs first to get indexation coverage across real pages.
         sitemap_urls = []
@@ -698,8 +896,9 @@ class PortfolioDataCollector:
         except Exception:
             rows = []
 
+        targets = []
         seen = set()
-        for url in targets + sitemap_urls + rows:
+        for url in seed_targets + sitemap_urls + rows:
             if not url:
                 continue
             url = url.strip()
@@ -768,6 +967,7 @@ class PortfolioDataCollector:
         )
         success = 0
         failed = 0
+        error_messages = []
 
         for i, prop in enumerate(gsc_properties, 1):
             prop_name = prop.get('name', 'Unknown')
@@ -823,6 +1023,7 @@ class PortfolioDataCollector:
                 print(f'   ✅ Inspected {inserted} URLs')
             else:
                 failed += 1
+                error_messages.append(f"{prop_name}: no URLs inspected successfully")
                 self.results['gsc_inspection']['failed'] += 1
                 self.results['errors'].append({
                     'property': prop_name,
@@ -831,10 +1032,12 @@ class PortfolioDataCollector:
                 })
                 print('   ❌ No URLs inspected successfully')
 
+        summary_error = '; '.join(error_messages[:5]) if error_messages else None
         self.db.complete_data_collection(
             collection_id=collection_id,
             properties_collected=success,
-            properties_failed=failed
+            properties_failed=failed,
+            error_message=summary_error
         )
 
         print()
@@ -1659,7 +1862,11 @@ class PortfolioDataCollector:
                 })
 
             print()
-            print(f'ThirtyLines Summary: ✅ {self.results[\"unit_availability\"][\"success\"]} | ⚠️  {self.results[\"unit_availability\"][\"skipped\"]} | ❌ {self.results[\"unit_availability\"][\"failed\"]}')
+            print(
+                f"ThirtyLines Summary: ✅ {self.results['unit_availability']['success']} | "
+                f"⚠️  {self.results['unit_availability']['skipped']} | "
+                f"❌ {self.results['unit_availability']['failed']}"
+            )
             print()
 
         except Exception as e:
@@ -1668,6 +1875,57 @@ class PortfolioDataCollector:
             self.results['errors'].append({
                 'property': 'All Properties',
                 'collector': 'ThirtyLines',
+                'error': str(e)[:100]
+            })
+            print()
+
+    def collect_cloudflare_cache_audit(self):
+        """Collect daily Cloudflare cache diagnostics for pilot domains."""
+        print('=' * 80)
+        print('☁️  COLLECTING CLOUDFLARE CACHE AUDIT')
+        print('=' * 80)
+        print()
+
+        try:
+            config_path = self.base_dir / 'config' / 'cloudflare_cache_audit.yaml'
+            if not config_path.exists():
+                print(f'   ⚠️  Config not found: {config_path}')
+                self.results['cloudflare_cache_audit']['skipped'] = 1
+                print()
+                return
+
+            collector = CloudflareCacheAuditCollector(config_path=config_path, db=self.db)
+            result = collector.run(audit_date=datetime.now().date())
+
+            self.results['cloudflare_cache_audit']['success'] = (
+                result['domains_total'] - result['domains_failed']
+            )
+            self.results['cloudflare_cache_audit']['failed'] = result['domains_failed']
+            self.results['cloudflare_cache_audit']['skipped'] = 0
+
+            for row in result['domain_results']:
+                if row['domain_status'] == 'fail':
+                    self.results['errors'].append({
+                        'property': row['domain'],
+                        'collector': 'Cloudflare Cache Audit',
+                        'error': '; '.join(row.get('observations', [])[:2])[:100]
+                    })
+
+            print(
+                f"Cloudflare Cache Audit Summary: ✅ {self.results['cloudflare_cache_audit']['success']} | "
+                f"⚠️  {self.results['cloudflare_cache_audit']['skipped']} | "
+                f"❌ {self.results['cloudflare_cache_audit']['failed']}"
+            )
+            for key, value in result['artifact_paths'].items():
+                print(f'   {key}: {value}')
+            print()
+
+        except Exception as e:
+            print(f'   ❌ Error collecting Cloudflare cache audit: {e}')
+            self.results['cloudflare_cache_audit']['failed'] = 1
+            self.results['errors'].append({
+                'property': 'pilot domains',
+                'collector': 'Cloudflare Cache Audit',
                 'error': str(e)[:100]
             })
             print()
@@ -1684,6 +1942,7 @@ class PortfolioDataCollector:
         print()
         print('Results:')
         print(f'  GA4:          ✅ {self.results["ga4"]["success"]} | ⚠️  {self.results["ga4"]["skipped"]} | ❌ {self.results["ga4"]["failed"]}')
+        print(f'  GA4 Events:   ✅ {self.results["ga4_events"]["success"]} | ⚠️  {self.results["ga4_events"]["skipped"]} | ❌ {self.results["ga4_events"]["failed"]}')
         print(f'  GSC:          ✅ {self.results["gsc"]["success"]} | ⚠️  {self.results["gsc"]["skipped"]} | ❌ {self.results["gsc"]["failed"]}')
         print(f'  GSC Inspect:  ✅ {self.results["gsc_inspection"]["success"]} | ⚠️  {self.results["gsc_inspection"]["skipped"]} | ❌ {self.results["gsc_inspection"]["failed"]}')
         print(f'  Google Ads:   ✅ {self.results["google_ads"]["success"]} | ⚠️  {self.results["google_ads"]["skipped"]} | ❌ {self.results["google_ads"]["failed"]}')
@@ -1694,6 +1953,7 @@ class PortfolioDataCollector:
         print(f'  GBP Insights: ✅ {self.results["gbp_insights"]["success"]} | ⚠️  {self.results["gbp_insights"]["skipped"]} | ❌ {self.results["gbp_insights"]["failed"]}')
         print(f'  Guest Card:   ✅ {self.results["guest_card"]["success"]} | ⚠️  {self.results["guest_card"]["skipped"]} | ❌ {self.results["guest_card"]["failed"]}')
         print(f'  Availability: ✅ {self.results["unit_availability"]["success"]} | ⚠️  {self.results["unit_availability"]["skipped"]} | ❌ {self.results["unit_availability"]["failed"]}')
+        print(f'  CF Cache:     ✅ {self.results["cloudflare_cache_audit"]["success"]} | ⚠️  {self.results["cloudflare_cache_audit"]["skipped"]} | ❌ {self.results["cloudflare_cache_audit"]["failed"]}')
         print(f'  D1 Mirror:    ✅ {self.results["d1_mirror"]["success"]} | ⚠️  {self.results["d1_mirror"]["skipped"]} | ❌ {self.results["d1_mirror"]["failed"]}')
         print()
         
@@ -1701,6 +1961,7 @@ class PortfolioDataCollector:
             self.results[cat]["success"]
             for cat in [
                 'ga4',
+                'ga4_events',
                 'gsc',
                 'google_ads',
                 'psi',
@@ -1710,6 +1971,7 @@ class PortfolioDataCollector:
                 'gbp_insights',
                 'guest_card',
                 'unit_availability',
+                'cloudflare_cache_audit',
                 'd1_mirror'
             ]
         )
@@ -1726,6 +1988,38 @@ class PortfolioDataCollector:
         print()
         print(f'📊 Database: {self.db_path}')
         print('=' * 80)
+
+    def _guest_card_freshness_issue(self, max_allowed_age_days: int = 2) -> str | None:
+        """
+        Validate guest card freshness for hard reliability gating.
+
+        Guest card exports arrive around 09:00-10:00 local, after the 05:00 run,
+        so next-day availability is expected. We allow up to 2 days of age to
+        tolerate timing delays and fail hard when older.
+        """
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            latest = cursor.execute("SELECT MAX(run_date) FROM guest_card_metrics").fetchone()[0]
+            conn.close()
+        except Exception as e:
+            return f"guest_card: freshness check query failed ({e})"
+
+        if not latest:
+            return "guest_card: no data found in guest_card_metrics"
+
+        try:
+            latest_date = datetime.strptime(str(latest), "%Y-%m-%d").date()
+        except ValueError:
+            return f"guest_card: invalid run_date format ({latest})"
+
+        age_days = (datetime.now().date() - latest_date).days
+        if age_days > max_allowed_age_days:
+            return (
+                f"guest_card: stale (latest={latest_date}, age={age_days}d, "
+                f"threshold={max_allowed_age_days}d)"
+            )
+        return None
 
     def sync_d1_mirror(self):
         """Run deterministic D1 mirror sync after local collection + validation."""
@@ -1785,6 +2079,7 @@ class PortfolioDataCollector:
     def run(self):
         """Main collection workflow"""
         try:
+            self._acquire_run_lock()
             # Load properties
             properties = self.load_properties()
             
@@ -1793,11 +2088,17 @@ class PortfolioDataCollector:
             
             # Collect GA4 data
             self.collect_ga4_data(properties)
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect supplementary event facts needed for exact channel + new-user reporting
+            self.collect_ga4_event_facts()
             
             # Small pause between collectors
             time.sleep(2)
             
-            # Collect GSC data (main properties, excluding Cendana)
+            # Collect GSC data (all GSC-enabled properties, including Cendana)
             self.collect_gsc_data(properties)
 
             # Small pause
@@ -1806,12 +2107,6 @@ class PortfolioDataCollector:
             # Collect URL inspection/index coverage signals
             self.collect_gsc_url_inspection_data(properties, max_urls_per_property=10)
 
-            # Small pause
-            time.sleep(2)
-            
-            # Collect Cendana GSC data with separate credentials
-            self.collect_cendana_gsc_data(properties)
-            
             # Small pause
             time.sleep(2)
             
@@ -1847,6 +2142,12 @@ class PortfolioDataCollector:
 
             # Collect ThirtyLines availability feed (runs in both quick and full mode)
             self.collect_unit_availability_data()
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect Cloudflare cache audit for pilot domains
+            self.collect_cloudflare_cache_audit()
             
             # Skip SEMRush and GTMetrix in quick mode
             if not self.quick_mode:
@@ -1987,7 +2288,7 @@ class PortfolioDataCollector:
             print('📧 PHASE 10: DATA INTEGRITY MONITORING & ALERTS')
             print('=' * 80)
             print()
-            
+            alert_exit_code = 1
             try:
                 alerter = DataAlertEmailer(test_mode=False)
                 alert_exit_code = alerter.run()
@@ -1995,12 +2296,34 @@ class PortfolioDataCollector:
                 if alert_exit_code == 0:
                     print('✅ Alert system completed successfully')
                 else:
-                    print('⚠️  Alert system encountered issues (non-fatal)')
+                    print('❌ Alert system encountered issues')
                     
             except Exception as e:
                 print(f'❌ Alert system failed: {e}')
-                print('   (Collection completed, but email alerts may not have been sent)')
+                print('   Email alerts may not have been sent')
             
+            critical_issues = []
+            for source in ('ga4', 'gsc'):
+                stats = self.results[source]
+                if stats['success'] == 0:
+                    critical_issues.append(
+                        f"{source}: success=0 failed={stats['failed']} skipped={stats['skipped']}"
+                    )
+            if self.results['d1_mirror']['success'] == 0:
+                critical_issues.append('d1_mirror: did not complete successfully')
+            if alert_exit_code != 0:
+                critical_issues.append('alerts: delivery verification failed')
+            guest_card_issue = self._guest_card_freshness_issue(max_allowed_age_days=2)
+            if guest_card_issue:
+                critical_issues.append(guest_card_issue)
+
+            if critical_issues:
+                print()
+                print('❌ Critical pipeline reliability checks failed:')
+                for item in critical_issues:
+                    print(f'   - {item}')
+                return 1
+
             return 0
             
         except KeyboardInterrupt:
@@ -2012,6 +2335,8 @@ class PortfolioDataCollector:
             import traceback
             traceback.print_exc()
             return 1
+        finally:
+            self._release_run_lock()
 
 
 if __name__ == '__main__':

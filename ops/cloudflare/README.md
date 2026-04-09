@@ -57,3 +57,13 @@ The file may contain either:
 - Do not commit live tokens
 - Prefer zone-scoped user tokens
 - Rotate any token that was shared in chat or stored in Downloads
+
+## Pilot Full-Page Cache Tooling
+
+Phase 1 homepage-only rollout assets live here:
+
+- Config: `/Users/mark/Property_Analytics/config/cloudflare_full_page_cache.yaml`
+- Rules manager: `/Users/mark/Property_Analytics/ops/cloudflare/cache_rules_manager.py`
+- Dry-run/apply CLI: `/Users/mark/Property_Analytics/ops/cloudflare/apply_pilot_full_page_cache.py`
+- Purge helper: `/Users/mark/Property_Analytics/ops/cloudflare/purge_cloudflare_cache.py`
+- Rollout doc: `/Users/mark/Property_Analytics/docs/CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md`
