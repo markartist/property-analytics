@@ -5,6 +5,33 @@
 
 ---
 
+## April 8, 2026 - Spotlight Monthly Config Pattern
+
+### Summary
+- Spotlight monthly rotations are now handled with durable repo-managed config files instead of relying on `~/Downloads`.
+- April 2026 was the first month set up under this pattern.
+
+### Files added for April
+- `Spotlight_Properties_Report/config/April_2026_Spotlight_Properties.txt`
+- `Spotlight_Properties_Report/config/monthly_spotlight_properties_2026-04.json`
+- `Spotlight_Properties_Report/config/monthly_import_names_2026-04.csv`
+
+### Behavioral updates
+- Spotlight report generation now uses the newest repo monthly import-name config by default.
+- Short monthly-list names can resolve safely without mutating canonical names:
+  - `Pointe` → `Pointe at Bentonville`
+  - `Clearwater` → `Clearwater Heights`
+- Spotlight fallback metadata was added in the resolution layer for:
+  - `Forest View`
+  - `Phoenix`
+
+### Outcome
+- April report ran successfully:
+  - `/Users/mark/Downloads/Spotlight_Properties_20260408_133019.csv`
+- This pattern should be repeated each month when the new Spotlight list and import matrix arrive.
+
+---
+
 ## Current State Summary
 
 ### ✅ Completed Today
