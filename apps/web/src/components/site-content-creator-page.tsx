@@ -211,7 +211,7 @@ export function SiteContentCreatorPage() {
                       <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
                         {page.page_type || "page"} • {page.sections.length} sections
                       </p>
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">{page.page_path || page.page_url}</p>
+                      <p className="mt-2 break-words text-sm text-slate-600">{page.page_path || page.page_url}</p>
                     </button>
                   ))}
                 </div>
@@ -341,11 +341,14 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 function SectionCard({ section }: { section: SiteContentSection }) {
+  const hasMedia = section.image_count > 0;
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-slate-900">{section.section_label || section.heading || `Section ${section.section_order + 1}`}</p>
+          <p className="text-base font-semibold leading-6 text-slate-900">
+            {section.section_label || section.heading || `Section ${section.section_order + 1}`}
+          </p>
           {section.heading && section.heading !== section.section_label && (
             <p className="mt-1 text-sm text-slate-600">Visible heading: {section.heading}</p>
           )}
@@ -357,15 +360,39 @@ function SectionCard({ section }: { section: SiteContentSection }) {
         </div>
       </div>
 
-      {section.bullet_points.length > 0 && (
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-          {section.bullet_points.map((point, index) => (
-            <li key={index}>{point}</li>
-          ))}
-        </ul>
-      )}
+      <div className={`mt-3 grid gap-4 ${hasMedia ? "lg:grid-cols-[1.35fr_0.65fr]" : ""}`}>
+        <div className="space-y-3">
+          {section.bullet_points.length > 0 && (
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {section.bullet_points.map((point, index) => (
+                <li key={index}>{point}</li>
+              ))}
+            </ul>
+          )}
 
-      <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{section.original_copy}</div>
+          <div className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{section.original_copy}</div>
+        </div>
+
+        {hasMedia && (
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
+            <div className="flex h-full min-h-[220px] flex-col rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Image area</p>
+              <div className="mt-3 flex-1 rounded-md bg-[linear-gradient(180deg,rgba(21,40,75,0.08),rgba(13,94,109,0.12))]" />
+              <div className="mt-3 space-y-1">
+                <p className="text-sm font-semibold text-slate-900">
+                  {section.section_label || section.heading || "Section image"}
+                </p>
+                <p className="text-sm text-slate-600">
+                  Use the section visual here to mirror the live page layout and support the adjacent copy.
+                </p>
+                <p className="text-xs text-slate-500">
+                  {section.image_count} image{section.image_count === 1 ? "" : "s"} detected on source page
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
