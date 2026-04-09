@@ -31,6 +31,7 @@ function formatStamp(value: string | null | undefined): string {
 export function SiteContentCreatorPage() {
   const [loading, setLoading] = React.useState(true);
   const [crawling, setCrawling] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("inventory");
   const [flash, setFlash] = React.useState<Flash>(null);
   const [properties, setProperties] = React.useState<SiteContentPropertySummary[]>([]);
   const [selectedPropertyId, setSelectedPropertyId] = React.useState("");
@@ -87,6 +88,7 @@ export function SiteContentCreatorPage() {
       setProperties(inventory.properties);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
+      setActiveTab("inventory");
       setFlash({ type: "success", text: `Crawled ${detail.pages.length} pages for ${detail.property.property_name}.` });
     } catch (err: any) {
       setFlash({ type: "error", text: err.message });
@@ -162,7 +164,7 @@ export function SiteContentCreatorPage() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="inventory">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="brief">Brief Intelligence</TabsTrigger>
@@ -178,29 +180,47 @@ export function SiteContentCreatorPage() {
             </CardContent>
           </Card>
 
-          {selectedPages.map((page) => (
-            <Card key={page.id}>
-              <CardContent className="space-y-4 p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-slate-900">{page.page_title || page.page_path || page.page_url}</h3>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      {page.page_type || "page"} • {page.page_path || "/"}
-                    </p>
-                    <p className="text-sm text-slate-600">{page.page_url}</p>
-                    {page.meta_description && <p className="text-sm text-slate-500">Meta: {page.meta_description}</p>}
-                  </div>
-                  <Badge className="border-0 bg-slate-100 text-slate-700">{page.crawl_status}</Badge>
-                </div>
-
-                <div className="grid gap-4">
-                  {page.sections.map((section) => (
-                    <SectionCard key={`${page.id}-${section.section_order}`} section={section} />
-                  ))}
-                </div>
+          {selectedPages.length === 0 ? (
+            <Card>
+              <CardContent className="space-y-2 p-6">
+                <p className="text-base font-semibold text-slate-900">No page inventory yet</p>
+                <p className="text-sm text-slate-600">
+                  Run a crawl for the selected property and this tab will populate with the captured pages, section map,
+                  and original copy baseline.
+                </p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            selectedPages.map((page) => (
+              <Card key={page.id}>
+                <CardContent className="space-y-4 p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-semibold text-slate-900">{page.page_title || page.page_path || page.page_url}</h3>
+                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                        {page.page_type || "page"} • {page.page_path || "/"} • {page.sections.length} sections
+                      </p>
+                      <p className="text-sm text-slate-600">{page.page_url}</p>
+                      {page.meta_description && <p className="text-sm text-slate-500">Meta: {page.meta_description}</p>}
+                    </div>
+                    <Badge className="border-0 bg-slate-100 text-slate-700">{page.crawl_status}</Badge>
+                  </div>
+
+                  {page.sections.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                      This page was discovered, but no section blocks were extracted yet.
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {page.sections.map((section) => (
+                        <SectionCard key={`${page.id}-${section.section_order}`} section={section} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="brief" className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
