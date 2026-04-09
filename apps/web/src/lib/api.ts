@@ -215,10 +215,52 @@ export interface PibPortfolioResponse {
   communities: PibCommunityRow[];
 }
 
+export interface PibMetricDelta {
+  value: number | null;
+  delta: number | null;
+}
+
+export interface PibReportResponse {
+  property: string;
+  current_start: string;
+  current_end: string;
+  previous_start: string;
+  previous_end: string;
+  snapshot_date: string;
+  previous_snapshot_date: string | null;
+  sessions: PibMetricDelta;
+  gsc_clicks: PibMetricDelta;
+  cir: PibMetricDelta & { status: string | null };
+  avg_rating: PibMetricDelta;
+  occupancy: PibMetricDelta;
+  ad_spend: PibMetricDelta;
+  action_rate: number | null;
+  report_html: string;
+  email_sent: boolean;
+  email_error: string | null;
+}
+
 export async function getPibPortfolio(weekDate?: string): Promise<PibPortfolioResponse> {
   const q = weekDate ? `?week_date=${weekDate}` : "";
   const res = await apiFetch(`/v1/pib/portfolio${q}`);
   if (!res.ok) throw new Error("Failed to load PIB portfolio data");
+  return res.json();
+}
+
+export async function generatePibReport(body: {
+  community_id: string;
+  start_date: string;
+  end_date: string;
+  email?: string;
+}): Promise<PibReportResponse> {
+  const res = await apiFetch("/v1/pib/report", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to generate PIB report");
+  }
   return res.json();
 }
 
@@ -259,50 +301,6 @@ export async function getPibDetail(communityId: string, weekDate?: string): Prom
   const q = weekDate ? `?week_date=${weekDate}` : "";
   const res = await apiFetch(`/v1/pib/${communityId}${q}`);
   if (!res.ok) throw new Error("Failed to load PIB detail");
-  return res.json();
-}
-
-export interface PibReportRequest {
-  community_id: string;
-  start_date: string;
-  end_date: string;
-  email?: string;
-}
-
-interface PibReportMetric {
-  value: number | null;
-  delta: number | null;
-}
-
-export interface PibReportResponse {
-  property: string;
-  current_start: string;
-  current_end: string;
-  previous_start: string;
-  previous_end: string;
-  snapshot_date: string;
-  previous_snapshot_date: string | null;
-  sessions: PibReportMetric;
-  gsc_clicks: PibReportMetric;
-  cir: PibReportMetric & { status: string | null };
-  avg_rating: PibReportMetric;
-  occupancy: PibReportMetric;
-  ad_spend: PibReportMetric;
-  action_rate: number | null;
-  report_html: string;
-  email_sent: boolean;
-  email_error: string | null;
-}
-
-export async function generatePibReport(body: PibReportRequest): Promise<PibReportResponse> {
-  const res = await apiFetch("/v1/pib/report", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? "Failed to generate PIB report");
-  }
   return res.json();
 }
 
@@ -461,6 +459,173 @@ export async function requestMagicLink(email: string): Promise<{ ok: boolean; me
   return res.json();
 }
 
+// ── Intelligence Office ──
+
+export interface IntelligenceOfficeProfile {
+  id: string;
+  office_name: string;
+  office_label: string;
+  mission: string;
+  source_of_truth: string;
+  operating_model: string;
+  naming_rationale: string;
+  updated_at: string;
+}
+
+export interface IntelligenceDirective {
+  id: string;
+  category: string;
+  title: string;
+  directive_text: string;
+  rationale: string;
+  status: "active" | "draft" | "archived";
+  sort_order: number;
+  updated_at: string;
+}
+
+export interface IntelligenceSource {
+  id: string;
+  title: string;
+  source_kind: string;
+  relative_path: string;
+  summary: string;
+  evidence_excerpt: string;
+  status: string;
+  updated_at: string;
+}
+
+export interface IntelligencePilotProperty {
+  property_id: string;
+  property_name: string;
+  legacy_url: string | null;
+  staging_url: string | null;
+  live_url: string | null;
+  revised_url: string | null;
+  editorial_focus: string;
+  approved_points: string;
+  open_questions: string;
+  advocate_prompt: string;
+  updated_at: string;
+}
+
+export interface IntelligenceAdvocatePrompt {
+  id: string;
+  property_id: string;
+  prompt_text: string;
+  desired_outcome: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntelligenceOfficeResponse {
+  office: IntelligenceOfficeProfile;
+  directives: IntelligenceDirective[];
+  sources: IntelligenceSource[];
+  properties: IntelligencePilotProperty[];
+  advocatePrompts: IntelligenceAdvocatePrompt[];
+}
+
+export async function getIntelligenceOffice(): Promise<IntelligenceOfficeResponse> {
+  const res = await apiFetch("/v1/admin/intelligence");
+  if (!res.ok) throw new Error("Failed to load Intelligence Office");
+  return res.json();
+}
+
+export async function updateIntelligenceOffice(body: {
+  office_name: string;
+  office_label: string;
+  mission: string;
+  source_of_truth: string;
+  operating_model: string;
+  naming_rationale: string;
+}): Promise<IntelligenceOfficeProfile> {
+  const res = await apiFetch("/v1/admin/intelligence/office", {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to update Intelligence Office");
+  }
+  return res.json();
+}
+
+export async function createIntelligenceDirective(body: {
+  category: string;
+  title: string;
+  directive_text: string;
+  rationale: string;
+  status: "active" | "draft" | "archived";
+}): Promise<IntelligenceDirective> {
+  const res = await apiFetch("/v1/admin/intelligence/directives", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create directive");
+  }
+  return res.json();
+}
+
+export async function updateIntelligenceDirective(
+  id: string,
+  body: Partial<{
+    category: string;
+    title: string;
+    directive_text: string;
+    rationale: string;
+    status: "active" | "draft" | "archived";
+  }>
+): Promise<IntelligenceDirective> {
+  const res = await apiFetch(`/v1/admin/intelligence/directives/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to update directive");
+  }
+  return res.json();
+}
+
+export async function updateIntelligenceProperty(
+  propertyId: string,
+  body: Partial<{
+    revised_url: string;
+    editorial_focus: string;
+    approved_points: string;
+    open_questions: string;
+    advocate_prompt: string;
+  }>
+): Promise<IntelligencePilotProperty> {
+  const res = await apiFetch(`/v1/admin/intelligence/properties/${propertyId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to update property intelligence");
+  }
+  return res.json();
+}
+
+export async function createIntelligenceAdvocatePrompt(body: {
+  property_id: string;
+  prompt_text: string;
+  desired_outcome: string;
+}): Promise<IntelligenceAdvocatePrompt> {
+  const res = await apiFetch("/v1/admin/intelligence/advocate-prompts", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to save advocate prompt");
+  }
+  return res.json();
+}
+
 // ── GSC Snapshot ──
 
 export interface GscSnapshotProperty {
@@ -496,5 +661,176 @@ export interface GscSnapshotResponse {
 export async function getGscSnapshot(): Promise<GscSnapshotResponse> {
   const res = await apiFetch("/v1/gsc-snapshot");
   if (!res.ok) throw new Error("Failed to load GSC snapshot");
+  return res.json();
+}
+
+export interface GscReportRequest {
+  scope: "portfolio" | "property";
+  community_id?: string;
+  start_date: string;
+  end_date: string;
+  email?: string;
+}
+
+export interface GscReportResponse extends GscSnapshotResponse {
+  scope: "portfolio" | "property";
+  community_id: string | null;
+  email_sent: boolean;
+  email_error: string | null;
+  excel_filename: string;
+  excel_base64: string;
+}
+
+export async function generateGscReport(body: GscReportRequest): Promise<GscReportResponse> {
+  const res = await apiFetch("/v1/gsc-snapshot/report", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to generate GSC report");
+  }
+  return res.json();
+}
+
+// ── GBP Posts ──
+
+export interface GbpPostPolicy {
+  community_id: string;
+  approval_required: boolean;
+  allow_offer_posts: boolean;
+  allow_event_posts: boolean;
+  allow_amenity_posts: boolean;
+  cooldown_days: number;
+  max_drafts_per_run: number;
+  blocked_terms: string[];
+  required_utm_source: string | null;
+}
+
+export interface GbpDraftQueueItem {
+  id: string;
+  community_id: string;
+  community_name: string;
+  status: "draft" | "approved" | "rejected" | "published" | "failed";
+  post_type: "STANDARD" | "EVENT" | "OFFER";
+  angle: string;
+  candidate_rank: number;
+  rendered_text: string;
+  validation: {
+    approval_required?: boolean;
+    warnings?: string[];
+    blockers?: string[];
+    freshness?: Record<string, string | boolean | null>;
+  };
+  approved_at: string | null;
+  rejected_at: string | null;
+  created_at: string;
+  snapshot_created_at: string;
+}
+
+export interface GbpDraftDetail {
+  draft: Record<string, unknown> & {
+    id: string;
+    community_id: string;
+    community_name: string;
+    status: string;
+    rendered_text: string;
+    payload: Record<string, unknown>;
+    validation: Record<string, unknown>;
+  };
+  source_snapshot: {
+    payload: Record<string, unknown>;
+    freshness: Record<string, unknown>;
+  };
+  reviews: { id: string; decision: string; notes: string | null; created_at: string; created_by: string | null }[];
+}
+
+export interface GbpDraftInput {
+  availability_summary?: string;
+  concession_summary?: string;
+  concession_expires_on?: string;
+  amenity_highlights?: string[];
+  feature_highlights?: string[];
+  cta_url?: string;
+  source_label?: string;
+  notes?: string;
+  draft_count?: number;
+}
+
+export async function getGbpPostQueue(filters: { status?: string; community_id?: string } = {}): Promise<GbpDraftQueueItem[]> {
+  const res = await apiFetch(`/v1/gbp-posts/queue${qs(filters)}`);
+  if (!res.ok) throw new Error("Failed to load GBP post queue");
+  return (await res.json()).items;
+}
+
+export async function getGbpPostPolicy(communityId: string): Promise<GbpPostPolicy> {
+  const res = await apiFetch(`/v1/gbp-posts/policies/${communityId}`);
+  if (!res.ok) throw new Error("Failed to load GBP post policy");
+  return (await res.json()).policy;
+}
+
+export async function upsertGbpPostPolicy(communityId: string, body: Partial<GbpPostPolicy>): Promise<GbpPostPolicy> {
+  const res = await apiFetch(`/v1/gbp-posts/policies/${communityId}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to save GBP post policy");
+  }
+  return (await res.json()).policy;
+}
+
+export async function buildGbpContext(communityId: string, body: GbpDraftInput) {
+  const res = await apiFetch(`/v1/gbp-posts/context/${communityId}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to build GBP context");
+  }
+  return res.json();
+}
+
+export async function generateGbpDrafts(communityId: string, body: GbpDraftInput) {
+  const res = await apiFetch(`/v1/gbp-posts/drafts/${communityId}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to generate GBP drafts");
+  }
+  return res.json();
+}
+
+export async function getGbpDraftDetail(draftId: string): Promise<GbpDraftDetail> {
+  const res = await apiFetch(`/v1/gbp-posts/drafts/${draftId}`);
+  if (!res.ok) throw new Error("Failed to load GBP draft detail");
+  return res.json();
+}
+
+export async function approveGbpDraft(draftId: string, notes?: string) {
+  const res = await apiFetch(`/v1/gbp-posts/drafts/${draftId}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ notes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to approve GBP draft");
+  }
+  return res.json();
+}
+
+export async function rejectGbpDraft(draftId: string, notes?: string) {
+  const res = await apiFetch(`/v1/gbp-posts/drafts/${draftId}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ notes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to reject GBP draft");
+  }
   return res.json();
 }

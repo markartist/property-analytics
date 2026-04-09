@@ -8,10 +8,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 import {
   BarChart3,
-  Calendar,
-  TrendingUp,
-  Megaphone,
-  BarChart2,
+  Search,
   Download,
   Shield,
   Menu,
@@ -22,7 +19,10 @@ import {
   Anchor,
   Eye,
   Fish,
-  Search,
+  LineChart,
+  MessageSquare,
+  Gauge,
+  BookOpenText,
 } from "lucide-react";
 
 type NavRole = "admin" | "editor" | "viewer";
@@ -32,15 +32,14 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; minRole
   { href: "/watchtower", label: "Watchtower", icon: Eye },
   { href: "/dock", label: "The Dock", icon: Anchor },
   { href: "/fish", label: "Fishing Hole", icon: Fish },
+  { href: "/tracker", label: "Pilot Tracker", icon: Gauge },
 
   // Reports
-  { href: "/pib", label: "PIB Dashboard", icon: FileText, section: "Reports" },
-  { href: "/analysis", label: "Analysis", icon: BarChart2, minRole: "editor" },
-  { href: "/analysis/pib", label: "PIB Builder", icon: FileText, minRole: "editor" },
-  { href: "/analysis/gsc", label: "GSC Report", icon: Search, minRole: "editor" },
-  { href: "/marketing", label: "Marketing Data", icon: Megaphone, minRole: "editor" },
-  { href: "/t7-metrics", label: "T7 Metrics", icon: Calendar, minRole: "editor" },
-  { href: "/t30-metrics", label: "T30 Metrics", icon: TrendingUp, minRole: "editor" },
+  { href: "/analysis", label: "POP Brief", icon: FileText, section: "Reports", minRole: "editor" },
+  { href: "/analysis/pib", label: "PIB Builder", icon: LineChart, minRole: "editor" },
+  { href: "/gbp-posts", label: "GBP Posts", icon: MessageSquare, minRole: "editor" },
+  { href: "/gsc", label: "GSC Report", icon: Search, minRole: "editor" },
+  { href: "/intelligence-office", label: "Intelligence Office", icon: BookOpenText, minRole: "admin" },
 
   // Utilities
   { href: "/backup", label: "Backup & Export", icon: Download, section: "Utilities", minRole: "editor" },
