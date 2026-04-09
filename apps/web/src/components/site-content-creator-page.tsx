@@ -36,6 +36,7 @@ export function SiteContentCreatorPage() {
   const [properties, setProperties] = React.useState<SiteContentPropertySummary[]>([]);
   const [selectedPropertyId, setSelectedPropertyId] = React.useState("");
   const [selectedPages, setSelectedPages] = React.useState<SiteContentPage[]>([]);
+  const [focusedPageId, setFocusedPageId] = React.useState<string>("all");
   const [selectedPropertyName, setSelectedPropertyName] = React.useState("");
   const [selectedPageLimit, setSelectedPageLimit] = React.useState("8");
   const [directives, setDirectives] = React.useState<IntelligenceDirective[]>([]);
@@ -53,6 +54,7 @@ export function SiteContentCreatorPage() {
       const detail = await getSiteContentProperty(nextPropertyId);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
+      setFocusedPageId("all");
     }
   }, [selectedPropertyId]);
 
@@ -68,6 +70,7 @@ export function SiteContentCreatorPage() {
       const detail = await getSiteContentProperty(propertyId);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
+      setFocusedPageId("all");
     } catch (err: any) {
       setFlash({ type: "error", text: err.message });
     }
@@ -88,6 +91,7 @@ export function SiteContentCreatorPage() {
       setProperties(inventory.properties);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
+      setFocusedPageId("all");
       setActiveTab("inventory");
       setFlash({ type: "success", text: `Crawled ${detail.pages.length} pages for ${detail.property.property_name}.` });
     } catch (err: any) {
@@ -107,6 +111,7 @@ export function SiteContentCreatorPage() {
   }
 
   const selectedSummary = properties.find((property) => property.property_id === selectedPropertyId) ?? null;
+  const visiblePages = focusedPageId === "all" ? selectedPages : selectedPages.filter((page) => page.id === focusedPageId);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -192,17 +197,41 @@ export function SiteContentCreatorPage() {
                 </div>
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {selectedPages.map((page) => (
-                    <a
+                    <button
                       key={`nav-${page.id}`}
-                      href={`#page-${page.id}`}
-                      className="rounded-lg border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+                      type="button"
+                      onClick={() => setFocusedPageId(page.id)}
+                      className={`rounded-lg border p-4 text-left transition ${
+                        focusedPageId === page.id
+                          ? "border-[#0D5E6D] bg-[#0D5E6D]/5"
+                          : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
+                      }`}
                     >
                       <p className="font-semibold text-slate-900">{page.page_title || page.page_path || page.page_url}</p>
                       <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
                         {page.page_type || "page"} • {page.sections.length} sections
                       </p>
                       <p className="mt-2 line-clamp-2 text-sm text-slate-600">{page.page_path || page.page_url}</p>
-                    </a>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant={focusedPageId === "all" ? "default" : "outline"}
+                    onClick={() => setFocusedPageId("all")}
+                  >
+                    Show all pages
+                  </Button>
+                  {selectedPages.map((page) => (
+                    <Button
+                      key={`filter-${page.id}`}
+                      type="button"
+                      variant={focusedPageId === page.id ? "default" : "outline"}
+                      onClick={() => setFocusedPageId(page.id)}
+                    >
+                      {page.page_type || page.page_title || page.page_path || "Page"}
+                    </Button>
                   ))}
                 </div>
               </CardContent>
@@ -220,7 +249,7 @@ export function SiteContentCreatorPage() {
               </CardContent>
             </Card>
           ) : (
-            selectedPages.map((page) => (
+            visiblePages.map((page) => (
               <Card key={page.id} id={`page-${page.id}`}>
                 <CardContent className="space-y-4 p-6">
                   <div className="flex items-start justify-between gap-4">
