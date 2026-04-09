@@ -215,52 +215,10 @@ export interface PibPortfolioResponse {
   communities: PibCommunityRow[];
 }
 
-export interface PibMetricDelta {
-  value: number | null;
-  delta: number | null;
-}
-
-export interface PibReportResponse {
-  property: string;
-  current_start: string;
-  current_end: string;
-  previous_start: string;
-  previous_end: string;
-  snapshot_date: string;
-  previous_snapshot_date: string | null;
-  sessions: PibMetricDelta;
-  gsc_clicks: PibMetricDelta;
-  cir: PibMetricDelta & { status: string | null };
-  avg_rating: PibMetricDelta;
-  occupancy: PibMetricDelta;
-  ad_spend: PibMetricDelta;
-  action_rate: number | null;
-  report_html: string;
-  email_sent: boolean;
-  email_error: string | null;
-}
-
 export async function getPibPortfolio(weekDate?: string): Promise<PibPortfolioResponse> {
   const q = weekDate ? `?week_date=${weekDate}` : "";
   const res = await apiFetch(`/v1/pib/portfolio${q}`);
   if (!res.ok) throw new Error("Failed to load PIB portfolio data");
-  return res.json();
-}
-
-export async function generatePibReport(body: {
-  community_id: string;
-  start_date: string;
-  end_date: string;
-  email?: string;
-}): Promise<PibReportResponse> {
-  const res = await apiFetch("/v1/pib/report", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message ?? "Failed to generate PIB report");
-  }
   return res.json();
 }
 
@@ -641,7 +599,11 @@ export interface SiteContentSection {
   section_order: number;
   section_label: string | null;
   heading: string | null;
+  eyebrow?: string | null;
+  title?: string | null;
+  subtitle?: string | null;
   section_type: string | null;
+  media_side?: "left" | "right" | "none" | null;
   original_copy: string | null;
   bullet_points: string[];
   image_count: number;
