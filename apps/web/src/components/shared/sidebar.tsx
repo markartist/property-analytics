@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Gauge,
   BookOpenText,
+  FileSearch,
 } from "lucide-react";
 
 type NavRole = "admin" | "editor" | "viewer";
@@ -40,6 +41,7 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; minRole
   { href: "/gbp-posts", label: "GBP Posts", icon: MessageSquare, minRole: "editor" },
   { href: "/gsc", label: "GSC Report", icon: Search, minRole: "editor" },
   { href: "/intelligence-office", label: "Intelligence Office", icon: BookOpenText, minRole: "admin" },
+  { href: "/site-content", label: "Site Content Creator", icon: FileSearch, minRole: "admin" },
 
   // Utilities
   { href: "/backup", label: "Backup & Export", icon: Download, section: "Utilities", minRole: "editor" },

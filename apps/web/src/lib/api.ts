@@ -626,6 +626,88 @@ export async function createIntelligenceAdvocatePrompt(body: {
   return res.json();
 }
 
+// ── Site Content Creator ──
+
+export interface SiteContentPropertySummary extends IntelligencePilotProperty {
+  page_count: number;
+  section_count: number;
+  last_crawled_at: string | null;
+}
+
+export interface SiteContentSection {
+  id?: string;
+  page_id?: string;
+  section_key: string | null;
+  section_order: number;
+  section_label: string | null;
+  heading: string | null;
+  section_type: string | null;
+  original_copy: string | null;
+  bullet_points: string[];
+  image_count: number;
+  link_count: number;
+  updated_at?: string;
+}
+
+export interface SiteContentPage {
+  id: string;
+  property_id: string;
+  page_url: string;
+  page_path: string | null;
+  page_type: string | null;
+  page_title: string | null;
+  meta_description: string | null;
+  crawl_status: string;
+  crawled_at: string | null;
+  updated_at: string;
+  sections: SiteContentSection[];
+}
+
+export interface SiteContentInventoryResponse {
+  properties: SiteContentPropertySummary[];
+}
+
+export interface SiteContentPropertyResponse {
+  property: IntelligencePilotProperty;
+  pages: SiteContentPage[];
+}
+
+export interface SiteContentCrawlResponse {
+  property: IntelligencePilotProperty;
+  crawled_count: number;
+  pages: SiteContentPage[];
+}
+
+export async function getSiteContentInventory(): Promise<SiteContentInventoryResponse> {
+  const res = await apiFetch("/v1/admin/site-content");
+  if (!res.ok) throw new Error("Failed to load site content inventory");
+  return res.json();
+}
+
+export async function getSiteContentProperty(propertyId: string): Promise<SiteContentPropertyResponse> {
+  const res = await apiFetch(`/v1/admin/site-content/${propertyId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to load property site content");
+  }
+  return res.json();
+}
+
+export async function crawlSiteContentProperty(
+  propertyId: string,
+  body?: { page_limit?: number }
+): Promise<SiteContentCrawlResponse> {
+  const res = await apiFetch(`/v1/admin/site-content/${propertyId}/crawl`, {
+    method: "POST",
+    body: JSON.stringify(body ?? {}),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to crawl property site content");
+  }
+  return res.json();
+}
+
 // ── GSC Snapshot ──
 
 export interface GscSnapshotProperty {
