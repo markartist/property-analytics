@@ -180,6 +180,35 @@ export function SiteContentCreatorPage() {
             </CardContent>
           </Card>
 
+          {selectedPages.length > 0 && (
+            <Card>
+              <CardContent className="space-y-3 p-6">
+                <div>
+                  <p className="text-base font-semibold text-slate-900">Captured pages</p>
+                  <p className="text-sm text-slate-600">
+                    These are the pages found in the crawl. Select them below in order as a quick map before reviewing
+                    section-level copy.
+                  </p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {selectedPages.map((page) => (
+                    <a
+                      key={`nav-${page.id}`}
+                      href={`#page-${page.id}`}
+                      className="rounded-lg border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+                    >
+                      <p className="font-semibold text-slate-900">{page.page_title || page.page_path || page.page_url}</p>
+                      <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
+                        {page.page_type || "page"} • {page.sections.length} sections
+                      </p>
+                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">{page.page_path || page.page_url}</p>
+                    </a>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {selectedPages.length === 0 ? (
             <Card>
               <CardContent className="space-y-2 p-6">
@@ -192,7 +221,7 @@ export function SiteContentCreatorPage() {
             </Card>
           ) : (
             selectedPages.map((page) => (
-              <Card key={page.id}>
+              <Card key={page.id} id={`page-${page.id}`}>
                 <CardContent className="space-y-4 p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
@@ -287,7 +316,10 @@ function SectionCard({ section }: { section: SiteContentSection }) {
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-slate-900">{section.heading || section.section_label || `Section ${section.section_order + 1}`}</p>
+          <p className="font-semibold text-slate-900">{section.section_label || section.heading || `Section ${section.section_order + 1}`}</p>
+          {section.heading && section.heading !== section.section_label && (
+            <p className="mt-1 text-sm text-slate-600">Visible heading: {section.heading}</p>
+          )}
           <p className="text-xs uppercase tracking-wide text-slate-500">{section.section_type || "standard"}</p>
         </div>
         <div className="flex gap-2">
