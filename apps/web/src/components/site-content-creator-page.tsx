@@ -268,7 +268,9 @@ export function SiteContentCreatorPage() {
                         {page.page_type || "page"} • {page.page_path || "/"} • {page.sections.length} sections
                       </p>
                       {page.spec_layout_path && (
-                        <p className="text-xs text-slate-500">Specs: {page.spec_layout_path}</p>
+                        <p className="text-xs text-slate-500">
+                          Specs: {page.spec_layout_path}
+                        </p>
                       )}
                       <p className="text-sm text-slate-600">{page.page_url}</p>
                       {page.meta_description && <p className="text-sm text-slate-500">Meta: {page.meta_description}</p>}
@@ -356,18 +358,29 @@ function SectionCard({ section }: { section: SiteContentSection }) {
   const hasMedia = section.image_count > 0;
   const mediaSide = hasMedia ? section.media_side ?? "right" : "none";
   const title = section.title || section.section_label || section.heading || `Section ${section.section_order + 1}`;
+  const isHero = hasMedia && section.section_order === 0;
+  const hasBullets = section.bullet_points.length > 0;
+  const textColumnOrder = mediaSide === "left" ? "lg:order-2" : "lg:order-1";
+  const mediaColumnOrder = mediaSide === "left" ? "lg:order-1" : "lg:order-2";
+  const cardTone = isHero
+    ? "border-[#15284B]/10 bg-[linear-gradient(180deg,rgba(21,40,75,0.02),rgba(13,94,109,0.05))]"
+    : "border-slate-200 bg-slate-50";
+  const titleClass = isHero ? "text-[1.75rem] leading-tight md:text-[2rem]" : "text-base leading-6";
+  const textWrapClass = isHero ? "space-y-5 lg:pr-4" : "space-y-4";
+  const bodyClass = isHero ? "text-[0.98rem] leading-8 text-slate-700" : "text-sm leading-7 text-slate-700";
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+    <div className={`rounded-2xl border p-5 shadow-[0_1px_0_rgba(15,23,42,0.03)] ${cardTone}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           {section.eyebrow && (
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0D5E6D]">{section.eyebrow}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">{section.eyebrow}</p>
           )}
-          <p className="mt-1 text-base font-semibold leading-6 text-slate-900">{title}</p>
+          <p className={`mt-1 font-semibold text-slate-900 ${titleClass}`}>{title}</p>
           {section.subtitle && (
             <p className="mt-1 text-sm leading-6 text-slate-600">{section.subtitle}</p>
           )}
-          <p className="text-xs uppercase tracking-wide text-slate-500">{section.section_type || "standard"}</p>
+          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">{section.section_type || "standard"}</p>
         </div>
         <div className="flex gap-2">
           <Badge className="border-0 bg-white text-slate-700">{section.image_count} images</Badge>
@@ -375,25 +388,26 @@ function SectionCard({ section }: { section: SiteContentSection }) {
         </div>
       </div>
 
-      <div className={`mt-3 grid gap-4 ${hasMedia ? "lg:grid-cols-2" : ""}`}>
-        <div className={`space-y-3 ${mediaSide === "left" ? "lg:order-2" : "lg:order-1"}`}>
-          {section.bullet_points.length > 0 && (
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+      <div className={`mt-4 grid items-stretch gap-5 ${hasMedia ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]" : ""}`}>
+        <div className={`${textWrapClass} ${textColumnOrder}`}>
+          {hasBullets && (
+            <ul className={`list-disc pl-5 text-slate-700 ${isHero ? "grid gap-x-8 gap-y-1 md:grid-cols-2 text-sm leading-7" : "space-y-1 text-sm"}`}>
               {section.bullet_points.map((point, index) => (
                 <li key={index}>{point}</li>
               ))}
             </ul>
           )}
 
-          <div className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{section.original_copy}</div>
+          <div className={`whitespace-pre-wrap ${bodyClass}`}>{section.original_copy}</div>
         </div>
 
         {hasMedia && (
-          <div className={`min-h-full ${mediaSide === "left" ? "lg:order-1" : "lg:order-2"}`}>
-            <div className="h-full min-h-[240px] rounded-xl border border-slate-200 bg-[linear-gradient(180deg,rgba(21,40,75,0.08),rgba(13,94,109,0.12))]" />
-            <p className="mt-2 text-xs text-slate-500">
-              {section.image_count} image{section.image_count === 1 ? "" : "s"} detected on source page
-            </p>
+          <div className={`flex h-full ${mediaColumnOrder}`}>
+            <div
+              className={`w-full rounded-[1.25rem] border border-slate-200/90 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.65),transparent_42%),linear-gradient(145deg,rgba(21,40,75,0.08),rgba(13,94,109,0.18))] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] ${
+                isHero ? "min-h-[360px]" : "min-h-[240px]"
+              }`}
+            />
           </div>
         )}
       </div>
