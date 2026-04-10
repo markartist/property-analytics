@@ -622,6 +622,13 @@ export interface SiteContentPage {
   crawl_status: string;
   crawled_at: string | null;
   updated_at: string;
+  spec_archetype_id?: string | null;
+  spec_archetype_name?: string | null;
+  spec_page_id?: string | null;
+  spec_page_name?: string | null;
+  spec_layout_path?: string | null;
+  spec_screenshot?: string | null;
+  spec_order?: number | null;
   sections: SiteContentSection[];
 }
 

@@ -207,10 +207,17 @@ export function SiteContentCreatorPage() {
                           : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
                       }`}
                     >
-                      <p className="font-semibold text-slate-900">{page.page_title || page.page_path || page.page_url}</p>
+                      <p className="font-semibold text-slate-900">
+                        {page.spec_page_name || page.page_title || page.page_path || page.page_url}
+                      </p>
                       <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
                         {page.page_type || "page"} • {page.sections.length} sections
                       </p>
+                      {page.spec_archetype_name && (
+                        <p className="mt-1 text-xs text-slate-500">
+                          {page.spec_archetype_name} · {page.spec_page_id}
+                        </p>
+                      )}
                       <p className="mt-2 break-words text-sm text-slate-600">{page.page_path || page.page_url}</p>
                     </button>
                   ))}
@@ -230,7 +237,7 @@ export function SiteContentCreatorPage() {
                       variant={focusedPageId === page.id ? "default" : "outline"}
                       onClick={() => setFocusedPageId(page.id)}
                     >
-                      {page.page_type || page.page_title || page.page_path || "Page"}
+                      {page.spec_page_name || page.page_type || page.page_title || page.page_path || "Page"}
                     </Button>
                   ))}
                 </div>
@@ -254,10 +261,15 @@ export function SiteContentCreatorPage() {
                 <CardContent className="space-y-4 p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-slate-900">{page.page_title || page.page_path || page.page_url}</h3>
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {page.spec_page_name || page.page_title || page.page_path || page.page_url}
+                      </h3>
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         {page.page_type || "page"} • {page.page_path || "/"} • {page.sections.length} sections
                       </p>
+                      {page.spec_layout_path && (
+                        <p className="text-xs text-slate-500">Specs: {page.spec_layout_path}</p>
+                      )}
                       <p className="text-sm text-slate-600">{page.page_url}</p>
                       {page.meta_description && <p className="text-sm text-slate-500">Meta: {page.meta_description}</p>}
                     </div>
