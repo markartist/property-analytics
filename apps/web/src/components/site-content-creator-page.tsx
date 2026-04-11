@@ -360,27 +360,43 @@ function SectionCard({ section }: { section: SiteContentSection }) {
   const title = section.title || section.section_label || section.heading || `Section ${section.section_order + 1}`;
   const isHero = hasMedia && section.section_order === 0;
   const hasBullets = section.bullet_points.length > 0;
+  const isSplitFeature = hasMedia && (hasBullets || section.section_type === "amenities" || section.section_type === "features");
+  const isTextOnly = !hasMedia;
+  const originalCopy = section.original_copy ?? "";
   const textColumnOrder = mediaSide === "left" ? "lg:order-2" : "lg:order-1";
   const mediaColumnOrder = mediaSide === "left" ? "lg:order-1" : "lg:order-2";
   const cardTone = isHero
-    ? "border-[#15284B]/10 bg-[linear-gradient(180deg,rgba(21,40,75,0.02),rgba(13,94,109,0.05))]"
-    : "border-slate-200 bg-slate-50";
-  const titleClass = isHero ? "text-[1.75rem] leading-tight md:text-[2rem]" : "text-base leading-6";
-  const textWrapClass = isHero ? "space-y-5 lg:pr-4" : "space-y-4";
-  const bodyClass = isHero ? "text-[0.98rem] leading-8 text-slate-700" : "text-sm leading-7 text-slate-700";
+    ? "border-[#15284B]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(13,94,109,0.04))] shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+    : isSplitFeature
+      ? "border-[#15284B]/8 bg-white shadow-[0_10px_26px_rgba(15,23,42,0.04)]"
+      : "border-slate-200 bg-slate-50";
+  const titleClass = isHero ? "text-[2rem] leading-tight md:text-[2.4rem]" : "text-xl leading-tight";
+  const textWrapClass = isHero ? "space-y-6 lg:pr-6" : "space-y-5";
+  const bodyClass = isHero ? "text-[1.02rem] leading-8 text-slate-700" : "text-sm leading-7 text-slate-700";
+  const bodyLines = originalCopy
+    .split(/\n{2,}/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const topBody = bodyLines[0] ?? originalCopy;
+  const remainingBody = bodyLines.slice(1);
+  const mediaPlaceholderClass = isHero
+    ? "min-h-[420px] rounded-[1.6rem]"
+    : isSplitFeature
+      ? "min-h-[320px] rounded-[1.35rem]"
+      : "min-h-[240px] rounded-[1.15rem]";
 
   return (
-    <div className={`rounded-2xl border p-5 shadow-[0_1px_0_rgba(15,23,42,0.03)] ${cardTone}`}>
+    <div className={`rounded-[1.6rem] border p-6 shadow-[0_1px_0_rgba(15,23,42,0.03)] ${cardTone}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           {section.eyebrow && (
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">{section.eyebrow}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#0D5E6D]">{section.eyebrow}</p>
           )}
           <p className={`mt-1 font-semibold text-slate-900 ${titleClass}`}>{title}</p>
           {section.subtitle && (
-            <p className="mt-1 text-sm leading-6 text-slate-600">{section.subtitle}</p>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-slate-600">{section.subtitle}</p>
           )}
-          <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">{section.section_type || "standard"}</p>
+          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">{section.section_type || "standard"}</p>
         </div>
         <div className="flex gap-2">
           <Badge className="border-0 bg-white text-slate-700">{section.image_count} images</Badge>
@@ -388,29 +404,57 @@ function SectionCard({ section }: { section: SiteContentSection }) {
         </div>
       </div>
 
-      <div className={`mt-4 grid items-stretch gap-5 ${hasMedia ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]" : ""}`}>
+      <div
+        className={`mt-5 grid items-stretch gap-6 ${
+          hasMedia
+            ? isHero
+              ? "lg:grid-cols-[minmax(340px,0.85fr)_minmax(440px,1.15fr)]"
+              : "lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)]"
+            : ""
+        }`}
+      >
         <div className={`${textWrapClass} ${textColumnOrder}`}>
+          <div className={`whitespace-pre-wrap ${bodyClass}`}>{topBody}</div>
+
           {hasBullets && (
-            <ul className={`list-disc pl-5 text-slate-700 ${isHero ? "grid gap-x-8 gap-y-1 md:grid-cols-2 text-sm leading-7" : "space-y-1 text-sm"}`}>
-              {section.bullet_points.map((point, index) => (
-                <li key={index}>{point}</li>
-              ))}
-            </ul>
+            <div className="rounded-2xl border border-[#15284B]/10 bg-[#15284B]/[0.035] p-4">
+              <ul
+                className={`list-disc pl-5 text-slate-700 ${
+                  isHero || isSplitFeature
+                    ? "grid gap-x-8 gap-y-1 md:grid-cols-2 text-sm leading-7"
+                    : "space-y-1 text-sm"
+                }`}
+              >
+                {section.bullet_points.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            </div>
           )}
 
-          <div className={`whitespace-pre-wrap ${bodyClass}`}>{section.original_copy}</div>
+          {remainingBody.length > 0 && (
+            <div className="space-y-4">
+              {remainingBody.map((block, index) => (
+                <p key={index} className={bodyClass}>
+                  {block}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
 
         {hasMedia && (
           <div className={`flex h-full ${mediaColumnOrder}`}>
             <div
-              className={`w-full rounded-[1.25rem] border border-slate-200/90 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.65),transparent_42%),linear-gradient(145deg,rgba(21,40,75,0.08),rgba(13,94,109,0.18))] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] ${
-                isHero ? "min-h-[360px]" : "min-h-[240px]"
-              }`}
+              className={`w-full self-stretch border border-slate-200/90 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.72),transparent_38%),linear-gradient(145deg,rgba(21,40,75,0.09),rgba(13,94,109,0.2))] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] ${mediaPlaceholderClass}`}
             />
           </div>
         )}
       </div>
+
+      {!isTextOnly && (
+        <div className="mt-3 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+      )}
 
       {section.heading && section.heading !== title && section.heading !== section.subtitle && (
         <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
