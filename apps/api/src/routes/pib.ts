@@ -125,7 +125,7 @@ pib.get("/portfolio", async (c) => {
       db,
       `SELECT MAX(snapshot_date) as snapshot_date FROM pib_ga4_metrics`
     );
-    weekDate = latest?.snapshot_date ?? null;
+    weekDate = latest?.snapshot_date;
     if (!weekDate) {
       return c.json(errJson("NOT_FOUND", "No PIB data available"), 404);
     }
@@ -269,7 +269,7 @@ pib.get("/:communityId", async (c) => {
       `SELECT MAX(snapshot_date) as snapshot_date FROM pib_ga4_metrics WHERE community_id = ?`,
       [communityId]
     );
-    weekDate = latest?.snapshot_date ?? null;
+    weekDate = latest?.snapshot_date;
     if (!weekDate) {
       return c.json(errJson("NOT_FOUND", "No PIB data for this community"), 404);
     }
