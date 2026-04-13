@@ -16,6 +16,7 @@ import { pond } from "./routes/pond";
 import { health } from "./routes/health";
 import { fish } from "./routes/fish";
 import { gsc } from "./routes/gsc";
+import { platform } from "./routes/platform";
 
 // Phase 2 leasing funnel metric routers
 const t7Metrics = createLeasingMetricsRouter("t7_metrics", "t7_metrics");
@@ -27,7 +28,13 @@ const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 app.use(
   "*",
   cors({
-    origin: ["https://app.venterradev.com", "http://localhost:3000"],
+    origin: [
+      "https://app.venterradev.com",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+    ],
     credentials: true,
   })
 );
@@ -53,6 +60,7 @@ app.route("/v1/pond", pond);
 app.route("/v1/health", health);
 app.route("/v1/fish", fish);
 app.route("/v1/gsc-snapshot", gsc);
+app.route("/v1/platform", platform);
 
 // 404 fallback
 app.notFound((c) =>

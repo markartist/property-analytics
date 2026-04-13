@@ -12,6 +12,8 @@
 ### Essential References
 1. **[DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md)** - Database schema, table structures, join patterns, common pitfalls
 2. **[RESI_COMPARISON_ANALYSIS.md](RESI_COMPARISON_ANALYSIS.md)** - Resi vs Portfolio comparative analysis project documentation
+3. **[CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md](CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md)** - Pilot Cloudflare HTML cache rollout plan and operational checklist
+4. **[CLOUDFLARE_CACHE_WORKDAY_2026-04-08.md](CLOUDFLARE_CACHE_WORKDAY_2026-04-08.md)** - Day-of memory for the initial baseline and rollout implementation
 
 ### Critical Knowledge
 Before working with this system, **READ THESE FIRST:**
@@ -42,6 +44,7 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 6. Property metadata updates
 7. Data validation & completeness checks
 8. Email status report
+9. Cloudflare cache audit for the Resi pilot domains
 
 ### Database
 **Location:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
@@ -90,6 +93,12 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 **Script:** `Data_Collection/orchestration/daily_master_collection.py`  
 **Frequency:** Daily (sent with collection completion)  
 **Content:** Success/failure status for all 91 properties across 5 data sources
+
+### 5. Cloudflare Cache Audit
+**Purpose:** Measure whether Cloudflare is serving warm full-page HTML cache for the Resi pilot domains  
+**Script:** `Data_Collection/collectors/cloudflare_cache_audit.py`  
+**Frequency:** Daily via `daily_master_collection.py`  
+**Artifacts:** JSON + CSV + Markdown + PIB-style HTML in `reports/cloudflare_cache_audit/`
 
 ---
 

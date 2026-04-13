@@ -33,6 +33,22 @@ This file contains:
 ## System Purpose
 Automated daily data collection and weekly reporting for Venterra's 91 property portfolio, tracking GA4 analytics, Google Search Console, SEMRush, and PageSpeed metrics.
 
+## Cloudflare Pilot Cache Work
+
+For the five Resi pilot domains, Cloudflare cache observability and rollout tooling now exist in-repo.
+
+Start here:
+
+- `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
+- `/Users/mark/Property_Analytics/docs/CLOUDFLARE_CACHE_WORKDAY_2026-04-08.md`
+- `/Users/mark/Property_Analytics/docs/CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md`
+
+Key implementation areas:
+
+- Daily audit collector: `/Users/mark/Property_Analytics/Data_Collection/collectors/cloudflare_cache_audit.py`
+- GraphQL analytics client: `/Users/mark/Property_Analytics/Data_Collection/queries/cloudflare_graphql_cache_metrics.py`
+- Rollout tooling: `/Users/mark/Property_Analytics/ops/cloudflare/`
+
 ## Critical Information
 
 ### Single Source of Truth

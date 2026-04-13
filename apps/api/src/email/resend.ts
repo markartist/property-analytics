@@ -8,6 +8,11 @@ interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
+  attachments?: {
+    filename: string;
+    contentBase64: string;
+    contentType?: string;
+  }[];
 }
 
 interface SendEmailResult {
@@ -37,6 +42,11 @@ export async function sendEmail(
         to: [params.to],
         subject: params.subject,
         html: params.html,
+        attachments: params.attachments?.map((a) => ({
+          filename: a.filename,
+          content: a.contentBase64,
+          content_type: a.contentType,
+        })),
       }),
     });
 

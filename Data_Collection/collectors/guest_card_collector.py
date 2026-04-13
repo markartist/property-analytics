@@ -126,6 +126,16 @@ class GuestCardCollector:
                 last_err = e
                 time.sleep(0.5)
 
+        # Fallback path for OneDrive lock behavior: copy + unlink with retries.
+        for _ in range(5):
+            try:
+                shutil.copy2(str(file_path), str(destination))
+                file_path.unlink()
+                return
+            except OSError as e:
+                last_err = e
+                time.sleep(0.5)
+
         if last_err:
             raise last_err
 
@@ -225,7 +235,11 @@ class GuestCardCollector:
                             rows_upserted_file += 1
 
                     conn.commit()
-                    self._archive_file(csv_file)
+                    try:
+                        self._archive_file(csv_file)
+                    except Exception as archive_err:
+                        # Keep DB updates even when OneDrive file lock blocks archive.
+                        result.errors.append(f"{csv_file.name}: archive warning: {archive_err}")
                     result.files_processed += 1
                     result.rows_upserted += rows_upserted_file
                 except Exception as e:

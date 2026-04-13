@@ -128,6 +128,197 @@ class DatabaseManager:
                 CREATE INDEX IF NOT EXISTS idx_crux_history_metric_ff
                 ON crux_history_metrics(metric_name, form_factor)
             """)
+            columns = {row["name"] for row in cursor.execute("PRAGMA table_info(ga4_traffic_sources)").fetchall()}
+            if "new_users" not in columns:
+                cursor.execute("ALTER TABLE ga4_traffic_sources ADD COLUMN new_users INTEGER DEFAULT 0")
+            if "total_users" not in columns:
+                cursor.execute("ALTER TABLE ga4_traffic_sources ADD COLUMN total_users INTEGER DEFAULT 0")
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS pilot_homepage_audit_evidence (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    property_name TEXT NOT NULL,
+                    page_url TEXT NOT NULL,
+                    metric_date DATE NOT NULL,
+                    collection_id INTEGER,
+                    device_profile TEXT NOT NULL DEFAULT 'mobile_chrome_headless',
+                    lcp_start_time_ms REAL,
+                    lcp_size REAL,
+                    lcp_url TEXT,
+                    lcp_tag_name TEXT,
+                    lcp_class_name TEXT,
+                    lcp_text TEXT,
+                    lcp_outer_html TEXT,
+                    lcp_background_image TEXT,
+                    screenshot_path TEXT,
+                    main_document_status_code INTEGER,
+                    main_document_headers_json TEXT,
+                    lcp_resource_status_code INTEGER,
+                    lcp_resource_headers_json TEXT,
+                    total_request_count INTEGER,
+                    failed_request_count INTEGER,
+                    total_transfer_size INTEGER,
+                    network_summary_json TEXT,
+                    blocking_resources_json TEXT,
+                    console_errors_json TEXT,
+                    browserstack_desktop_classification TEXT,
+                    browserstack_desktop_screenshot_path TEXT,
+                    browserstack_iphone_classification TEXT,
+                    browserstack_iphone_screenshot_path TEXT,
+                    browserstack_summary_json TEXT,
+                    raw_probe_json TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, page_url, metric_date, device_profile),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            homepage_audit_columns = {
+                row["name"] for row in cursor.execute("PRAGMA table_info(pilot_homepage_audit_evidence)").fetchall()
+            }
+            required_homepage_audit_columns = {
+                "main_document_status_code": "INTEGER",
+                "main_document_headers_json": "TEXT",
+                "lcp_resource_status_code": "INTEGER",
+                "lcp_resource_headers_json": "TEXT",
+                "total_request_count": "INTEGER",
+                "failed_request_count": "INTEGER",
+                "total_transfer_size": "INTEGER",
+                "network_summary_json": "TEXT",
+                "blocking_resources_json": "TEXT",
+                "console_errors_json": "TEXT",
+                "browserstack_desktop_classification": "TEXT",
+                "browserstack_desktop_screenshot_path": "TEXT",
+                "browserstack_iphone_classification": "TEXT",
+                "browserstack_iphone_screenshot_path": "TEXT",
+                "browserstack_summary_json": "TEXT",
+            }
+            for column_name, column_type in required_homepage_audit_columns.items():
+                if column_name not in homepage_audit_columns:
+                    cursor.execute(
+                        f"ALTER TABLE pilot_homepage_audit_evidence ADD COLUMN {column_name} {column_type}"
+                    )
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_pilot_homepage_audit_property_date
+                ON pilot_homepage_audit_evidence(property_id, metric_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_pilot_homepage_audit_date
+                ON pilot_homepage_audit_evidence(metric_date DESC)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cloudflare_cache_synthetic_checks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    property_name TEXT NOT NULL,
+                    normalized_domain TEXT NOT NULL,
+                    zone_name TEXT NOT NULL,
+                    zone_tag TEXT,
+                    request_date DATE NOT NULL,
+                    path_tested TEXT NOT NULL,
+                    variant_key TEXT NOT NULL DEFAULT 'clean',
+                    request_sequence INTEGER NOT NULL,
+                    final_url TEXT,
+                    http_status INTEGER,
+                    cf_cache_status TEXT,
+                    ttfb_ms REAL,
+                    total_time_ms REAL,
+                    response_bytes INTEGER,
+                    headers_json TEXT,
+                    notes_json TEXT,
+                    audit_status TEXT,
+                    request_timestamp TEXT,
+                    collection_id INTEGER,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, request_date, path_tested, variant_key, request_sequence),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_cache_synth_property_date
+                ON cloudflare_cache_synthetic_checks(property_id, request_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_cache_synth_domain_date
+                ON cloudflare_cache_synthetic_checks(normalized_domain, request_date DESC)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cloudflare_zone_cache_daily (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    property_name TEXT NOT NULL,
+                    normalized_domain TEXT NOT NULL,
+                    zone_name TEXT NOT NULL,
+                    zone_tag TEXT,
+                    hostname TEXT,
+                    metric_date DATE NOT NULL,
+                    window_start TEXT,
+                    window_end TEXT,
+                    dataset_name TEXT,
+                    total_requests INTEGER,
+                    cached_requests INTEGER,
+                    uncached_requests INTEGER,
+                    cache_hit_ratio REAL,
+                    cache_status_breakdown_json TEXT,
+                    supported_dimensions_json TEXT,
+                    supported_sum_fields_json TEXT,
+                    query_attempts_json TEXT,
+                    raw_response_json TEXT,
+                    query_status TEXT,
+                    audit_status TEXT,
+                    collection_id INTEGER,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, metric_date, normalized_domain),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_zone_cache_property_date
+                ON cloudflare_zone_cache_daily(property_id, metric_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_zone_cache_domain_date
+                ON cloudflare_zone_cache_daily(normalized_domain, metric_date DESC)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cloudflare_zone_config_snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    property_id TEXT NOT NULL,
+                    property_name TEXT NOT NULL,
+                    normalized_domain TEXT NOT NULL,
+                    zone_name TEXT NOT NULL,
+                    zone_tag TEXT,
+                    snapshot_date DATE NOT NULL,
+                    snapshot_status TEXT,
+                    zone_summary_json TEXT,
+                    cache_settings_json TEXT,
+                    rulesets_json TEXT,
+                    raw_snapshot_json TEXT,
+                    collection_id INTEGER,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(property_id, snapshot_date, normalized_domain),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_zone_snapshot_domain_date
+                ON cloudflare_zone_config_snapshots(normalized_domain, snapshot_date DESC)
+            """)
+            cf_synth_columns = {
+                row["name"] for row in cursor.execute("PRAGMA table_info(cloudflare_cache_synthetic_checks)").fetchall()
+            }
+            required_cf_synth_columns = {
+                "device_profile": "TEXT DEFAULT 'desktop'",
+                "requested_url": "TEXT",
+                "redirect_count": "INTEGER DEFAULT 0",
+                "redirect_chain_json": "TEXT",
+                "cacheability_json": "TEXT",
+                "headers_full_json": "TEXT",
+            }
+            for column_name, column_type in required_cf_synth_columns.items():
+                if column_name not in cf_synth_columns:
+                    cursor.execute(
+                        f"ALTER TABLE cloudflare_cache_synthetic_checks ADD COLUMN {column_name} {column_type}"
+                    )
     
     @contextmanager
     def get_connection(self):
@@ -321,6 +512,65 @@ class DatabaseManager:
                 WHERE collection_id = ?
             """, (datetime.now(), status, properties_collected, properties_failed, 
                   error_message, collection_id))
+
+    # =========================================================================
+    # GTMETRIX DATA INSERTION
+    # =========================================================================
+
+    def insert_gtmetrix_metrics(
+        self,
+        property_id: str,
+        metric_date: date,
+        data: Dict,
+        collection_id: Optional[int] = None,
+    ) -> None:
+        """Insert or update GTMetrix metrics for a property/date."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO gtmetrix_metrics
+                (
+                    property_id, metric_date, collection_id,
+                    pagespeed_score, yslow_score, structure_score,
+                    fully_loaded_time_ms, onload_time_ms,
+                    first_contentful_paint_ms, time_to_interactive_ms,
+                    page_bytes, page_requests,
+                    test_server_location, test_browser
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, metric_date) DO UPDATE SET
+                    collection_id = excluded.collection_id,
+                    pagespeed_score = excluded.pagespeed_score,
+                    yslow_score = excluded.yslow_score,
+                    structure_score = excluded.structure_score,
+                    fully_loaded_time_ms = excluded.fully_loaded_time_ms,
+                    onload_time_ms = excluded.onload_time_ms,
+                    first_contentful_paint_ms = excluded.first_contentful_paint_ms,
+                    time_to_interactive_ms = excluded.time_to_interactive_ms,
+                    page_bytes = excluded.page_bytes,
+                    page_requests = excluded.page_requests,
+                    test_server_location = excluded.test_server_location,
+                    test_browser = excluded.test_browser,
+                    collected_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    property_id,
+                    metric_date,
+                    collection_id,
+                    data.get("pagespeed_score"),
+                    data.get("yslow_score"),
+                    data.get("structure_score"),
+                    data.get("fully_loaded_time_ms"),
+                    data.get("onload_time_ms"),
+                    data.get("first_contentful_paint_ms"),
+                    data.get("time_to_interactive_ms"),
+                    data.get("page_bytes"),
+                    data.get("page_requests"),
+                    data.get("test_server_location"),
+                    data.get("test_browser"),
+                ),
+            )
     
     # =========================================================================
     # GA4 DATA INSERTION
@@ -348,12 +598,24 @@ class DatabaseManager:
                  total_revenue, average_revenue_per_user, pageviews)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(property_id, metric_date) DO UPDATE SET
+                    collection_id = excluded.collection_id,
                     sessions = excluded.sessions,
                     engaged_sessions = excluded.engaged_sessions,
+                    sessions_per_user = excluded.sessions_per_user,
+                    bounce_rate = excluded.bounce_rate,
+                    total_users = excluded.total_users,
+                    new_users = excluded.new_users,
+                    returning_users = excluded.returning_users,
+                    engagement_rate = excluded.engagement_rate,
+                    engaged_sessions_per_user = excluded.engaged_sessions_per_user,
+                    events_per_session = excluded.events_per_session,
                     conversions = excluded.conversions,
                     conversion_rate = excluded.conversion_rate,
+                    conversions_per_user = excluded.conversions_per_user,
                     pageviews = excluded.pageviews,
                     avg_session_duration = excluded.avg_session_duration,
+                    total_revenue = excluded.total_revenue,
+                    average_revenue_per_user = excluded.average_revenue_per_user,
                     collected_at = CURRENT_TIMESTAMP
             """, (
                 property_id, metric_date, collection_id,
@@ -395,12 +657,17 @@ class DatabaseManager:
             cursor.execute("""
                 INSERT INTO ga4_traffic_sources
                 (property_id, metric_date, collection_id, channel_group,
-                 sessions, engaged_sessions, conversions, engagement_rate, bounce_rate)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 sessions, engaged_sessions, conversions, engagement_rate, bounce_rate, new_users, total_users)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(property_id, metric_date, channel_group) DO UPDATE SET
+                    collection_id = excluded.collection_id,
                     sessions = excluded.sessions,
                     engaged_sessions = excluded.engaged_sessions,
                     conversions = excluded.conversions,
+                    engagement_rate = excluded.engagement_rate,
+                    bounce_rate = excluded.bounce_rate,
+                    new_users = excluded.new_users,
+                    total_users = excluded.total_users,
                     collected_at = CURRENT_TIMESTAMP
             """, (
                 property_id, metric_date, collection_id, channel_group,
@@ -408,7 +675,9 @@ class DatabaseManager:
                 data.get('engaged_sessions', 0),
                 data.get('conversions', 0),
                 data.get('engagement_rate'),
-                data.get('bounce_rate')
+                data.get('bounce_rate'),
+                data.get('new_users', 0),
+                data.get('total_users', 0),
             ))
     
     def insert_ga4_device_metrics(self, property_id: str, metric_date: date,
@@ -666,6 +935,95 @@ class DatabaseManager:
                 inspection_data.get('raw_response_json')
             ))
 
+    def insert_pilot_homepage_audit_evidence(
+        self,
+        property_id: str,
+        property_name: str,
+        page_url: str,
+        metric_date: str,
+        evidence: Dict[str, Any],
+        collection_id: Optional[int] = None
+    ) -> None:
+        """Insert daily homepage browser-evidence row for a pilot property."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO pilot_homepage_audit_evidence
+                (
+                    property_id, property_name, page_url, metric_date, collection_id,
+                    device_profile, lcp_start_time_ms, lcp_size, lcp_url,
+                    lcp_tag_name, lcp_class_name, lcp_text, lcp_outer_html,
+                    lcp_background_image, screenshot_path, main_document_status_code,
+                    main_document_headers_json, lcp_resource_status_code, lcp_resource_headers_json,
+                    total_request_count, failed_request_count, total_transfer_size,
+                    network_summary_json, blocking_resources_json, console_errors_json,
+                    browserstack_desktop_classification, browserstack_desktop_screenshot_path,
+                    browserstack_iphone_classification, browserstack_iphone_screenshot_path,
+                    browserstack_summary_json, raw_probe_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, page_url, metric_date, device_profile) DO UPDATE SET
+                    collection_id = excluded.collection_id,
+                    lcp_start_time_ms = excluded.lcp_start_time_ms,
+                    lcp_size = excluded.lcp_size,
+                    lcp_url = excluded.lcp_url,
+                    lcp_tag_name = excluded.lcp_tag_name,
+                    lcp_class_name = excluded.lcp_class_name,
+                    lcp_text = excluded.lcp_text,
+                    lcp_outer_html = excluded.lcp_outer_html,
+                    lcp_background_image = excluded.lcp_background_image,
+                    screenshot_path = excluded.screenshot_path,
+                    main_document_status_code = excluded.main_document_status_code,
+                    main_document_headers_json = excluded.main_document_headers_json,
+                    lcp_resource_status_code = excluded.lcp_resource_status_code,
+                    lcp_resource_headers_json = excluded.lcp_resource_headers_json,
+                    total_request_count = excluded.total_request_count,
+                    failed_request_count = excluded.failed_request_count,
+                    total_transfer_size = excluded.total_transfer_size,
+                    network_summary_json = excluded.network_summary_json,
+                    blocking_resources_json = excluded.blocking_resources_json,
+                    console_errors_json = excluded.console_errors_json,
+                    browserstack_desktop_classification = excluded.browserstack_desktop_classification,
+                    browserstack_desktop_screenshot_path = excluded.browserstack_desktop_screenshot_path,
+                    browserstack_iphone_classification = excluded.browserstack_iphone_classification,
+                    browserstack_iphone_screenshot_path = excluded.browserstack_iphone_screenshot_path,
+                    browserstack_summary_json = excluded.browserstack_summary_json,
+                    raw_probe_json = excluded.raw_probe_json,
+                    collected_at = CURRENT_TIMESTAMP
+            """, (
+                property_id,
+                property_name,
+                page_url,
+                metric_date,
+                collection_id,
+                evidence.get("device_profile", "mobile_chrome_headless"),
+                evidence.get("lcp_start_time_ms"),
+                evidence.get("lcp_size"),
+                evidence.get("lcp_url"),
+                evidence.get("lcp_tag_name"),
+                evidence.get("lcp_class_name"),
+                evidence.get("lcp_text"),
+                evidence.get("lcp_outer_html"),
+                evidence.get("lcp_background_image"),
+                evidence.get("screenshot_path"),
+                evidence.get("main_document_status_code"),
+                evidence.get("main_document_headers_json"),
+                evidence.get("lcp_resource_status_code"),
+                evidence.get("lcp_resource_headers_json"),
+                evidence.get("total_request_count"),
+                evidence.get("failed_request_count"),
+                evidence.get("total_transfer_size"),
+                evidence.get("network_summary_json"),
+                evidence.get("blocking_resources_json"),
+                evidence.get("console_errors_json"),
+                evidence.get("browserstack_desktop_classification"),
+                evidence.get("browserstack_desktop_screenshot_path"),
+                evidence.get("browserstack_iphone_classification"),
+                evidence.get("browserstack_iphone_screenshot_path"),
+                evidence.get("browserstack_summary_json"),
+                evidence.get("raw_probe_json"),
+            ))
+
     def get_gsc_url_inspection_history(self, property_id: str, days: int = 90) -> List[Dict]:
         """Get URL inspection history for a property.
 
@@ -737,6 +1095,258 @@ class DatabaseManager:
                 ORDER BY period_end_date DESC, metric_name ASC, form_factor ASC
             """, (property_id, -days))
             return [dict(row) for row in cursor.fetchall()]
+
+    # =========================================================================
+    # CLOUDFLARE CACHE AUDIT
+    # =========================================================================
+
+    def insert_cloudflare_cache_synthetic_check(
+        self,
+        *,
+        property_id: str,
+        property_name: str,
+        normalized_domain: str,
+        zone_name: str,
+        zone_tag: Optional[str],
+        request_date: str,
+        path_tested: str,
+        variant_key: str,
+        request_sequence: int,
+        request_data: Dict[str, Any],
+        collection_id: Optional[int] = None,
+    ) -> None:
+        """Insert one Cloudflare synthetic cache-check row."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO cloudflare_cache_synthetic_checks
+                (
+                    property_id, property_name, normalized_domain, zone_name, zone_tag,
+                    request_date, path_tested, variant_key, request_sequence,
+                    final_url, http_status, cf_cache_status, ttfb_ms, total_time_ms,
+                    response_bytes, headers_json, notes_json, audit_status,
+                    request_timestamp, collection_id, device_profile, requested_url,
+                    redirect_count, redirect_chain_json, cacheability_json, headers_full_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, request_date, path_tested, variant_key, request_sequence) DO UPDATE SET
+                    property_name = excluded.property_name,
+                    normalized_domain = excluded.normalized_domain,
+                    zone_name = excluded.zone_name,
+                    zone_tag = excluded.zone_tag,
+                    final_url = excluded.final_url,
+                    http_status = excluded.http_status,
+                    cf_cache_status = excluded.cf_cache_status,
+                    ttfb_ms = excluded.ttfb_ms,
+                    total_time_ms = excluded.total_time_ms,
+                    response_bytes = excluded.response_bytes,
+                    headers_json = excluded.headers_json,
+                    notes_json = excluded.notes_json,
+                    audit_status = excluded.audit_status,
+                    request_timestamp = excluded.request_timestamp,
+                    device_profile = excluded.device_profile,
+                    requested_url = excluded.requested_url,
+                    redirect_count = excluded.redirect_count,
+                    redirect_chain_json = excluded.redirect_chain_json,
+                    cacheability_json = excluded.cacheability_json,
+                    headers_full_json = excluded.headers_full_json,
+                    collection_id = excluded.collection_id,
+                    collected_at = CURRENT_TIMESTAMP
+            """, (
+                property_id,
+                property_name,
+                normalized_domain,
+                zone_name,
+                zone_tag,
+                request_date,
+                path_tested,
+                variant_key,
+                request_sequence,
+                request_data.get('final_url'),
+                request_data.get('http_status'),
+                request_data.get('cf_cache_status'),
+                request_data.get('ttfb_ms'),
+                request_data.get('total_time_ms'),
+                request_data.get('response_bytes'),
+                request_data.get('headers_json'),
+                request_data.get('notes_json'),
+                request_data.get('audit_status'),
+                request_data.get('timestamp'),
+                collection_id,
+                request_data.get('device_profile'),
+                request_data.get('requested_url'),
+                request_data.get('redirect_count'),
+                request_data.get('redirect_chain_json'),
+                request_data.get('cacheability_json'),
+                request_data.get('headers_full_json'),
+            ))
+
+    def insert_cloudflare_zone_cache_daily(
+        self,
+        *,
+        property_id: str,
+        property_name: str,
+        normalized_domain: str,
+        zone_name: str,
+        zone_tag: Optional[str],
+        hostname: Optional[str],
+        metric_date: str,
+        zone_data: Dict[str, Any],
+        collection_id: Optional[int] = None,
+    ) -> None:
+        """Insert one Cloudflare zone/day analytics row."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO cloudflare_zone_cache_daily
+                (
+                    property_id, property_name, normalized_domain, zone_name, zone_tag, hostname,
+                    metric_date, window_start, window_end, dataset_name,
+                    total_requests, cached_requests, uncached_requests, cache_hit_ratio,
+                    cache_status_breakdown_json, supported_dimensions_json, supported_sum_fields_json,
+                    query_attempts_json, raw_response_json, query_status, audit_status, collection_id
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, metric_date, normalized_domain) DO UPDATE SET
+                    property_name = excluded.property_name,
+                    zone_name = excluded.zone_name,
+                    zone_tag = excluded.zone_tag,
+                    hostname = excluded.hostname,
+                    window_start = excluded.window_start,
+                    window_end = excluded.window_end,
+                    dataset_name = excluded.dataset_name,
+                    total_requests = excluded.total_requests,
+                    cached_requests = excluded.cached_requests,
+                    uncached_requests = excluded.uncached_requests,
+                    cache_hit_ratio = excluded.cache_hit_ratio,
+                    cache_status_breakdown_json = excluded.cache_status_breakdown_json,
+                    supported_dimensions_json = excluded.supported_dimensions_json,
+                    supported_sum_fields_json = excluded.supported_sum_fields_json,
+                    query_attempts_json = excluded.query_attempts_json,
+                    raw_response_json = excluded.raw_response_json,
+                    query_status = excluded.query_status,
+                    audit_status = excluded.audit_status,
+                    collection_id = excluded.collection_id,
+                    collected_at = CURRENT_TIMESTAMP
+            """, (
+                property_id,
+                property_name,
+                normalized_domain,
+                zone_name,
+                zone_tag,
+                hostname,
+                metric_date,
+                zone_data.get('window_start'),
+                zone_data.get('window_end'),
+                zone_data.get('dataset_name'),
+                zone_data.get('total_requests'),
+                zone_data.get('cached_requests'),
+                zone_data.get('uncached_requests'),
+                zone_data.get('cache_hit_ratio'),
+                zone_data.get('cache_status_breakdown_json'),
+                zone_data.get('supported_dimensions_json'),
+                zone_data.get('supported_sum_fields_json'),
+                zone_data.get('query_attempts_json'),
+                zone_data.get('raw_response_json'),
+                zone_data.get('query_status'),
+                zone_data.get('audit_status'),
+                collection_id,
+            ))
+
+    def get_cloudflare_cache_daily_summary(self, audit_date: str) -> List[Dict]:
+        """Return per-domain cache summary rows for a given audit date."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                WITH synth AS (
+                    SELECT
+                        property_id,
+                        property_name,
+                        normalized_domain,
+                        MAX(CASE WHEN path_tested = '/' AND variant_key = 'clean_desktop' AND request_sequence = 2 THEN audit_status END) AS homepage_status,
+                        AVG(CASE WHEN path_tested = '/' AND variant_key = 'clean_desktop' AND request_sequence = 2 THEN ttfb_ms END) AS homepage_second_ttfb_ms,
+                        MAX(CASE WHEN path_tested = '/' AND variant_key = 'clean_mobile' AND request_sequence = 2 THEN audit_status END) AS homepage_mobile_status,
+                        AVG(CASE WHEN path_tested = '/' AND variant_key = 'clean_mobile' AND request_sequence = 2 THEN ttfb_ms END) AS homepage_mobile_second_ttfb_ms,
+                        SUM(CASE WHEN request_sequence = 2 THEN 1 ELSE 0 END) AS total_second_requests,
+                        SUM(CASE WHEN request_sequence = 2 AND UPPER(COALESCE(cf_cache_status, '')) = 'HIT' THEN 1 ELSE 0 END) AS second_request_hits
+                    FROM cloudflare_cache_synthetic_checks
+                    WHERE request_date = ?
+                    GROUP BY property_id, property_name, normalized_domain
+                )
+                SELECT
+                    synth.property_id,
+                    synth.property_name,
+                    synth.normalized_domain AS domain,
+                    synth.homepage_status,
+                    synth.homepage_second_ttfb_ms,
+                    synth.homepage_mobile_status,
+                    synth.homepage_mobile_second_ttfb_ms,
+                    CASE
+                        WHEN synth.total_second_requests > 0
+                        THEN ROUND((CAST(synth.second_request_hits AS REAL) / synth.total_second_requests) * 100, 2)
+                        ELSE NULL
+                    END AS warm_hit_percent,
+                    zone.cache_hit_ratio AS graphql_cache_hit_ratio,
+                    zone.total_requests AS graphql_total_requests,
+                    zone.cached_requests AS graphql_cached_requests,
+                    zone.uncached_requests AS graphql_uncached_requests
+                FROM synth
+                LEFT JOIN cloudflare_zone_cache_daily AS zone
+                  ON zone.property_id = synth.property_id
+                 AND zone.metric_date = ?
+                 AND zone.normalized_domain = synth.normalized_domain
+                ORDER BY synth.normalized_domain ASC
+            """, (audit_date, audit_date))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def insert_cloudflare_zone_config_snapshot(
+        self,
+        *,
+        property_id: str,
+        property_name: str,
+        normalized_domain: str,
+        zone_name: str,
+        zone_tag: Optional[str],
+        snapshot_date: str,
+        snapshot: Dict[str, Any],
+        collection_id: Optional[int] = None,
+    ) -> None:
+        """Insert one Cloudflare zone config snapshot."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO cloudflare_zone_config_snapshots
+                (
+                    property_id, property_name, normalized_domain, zone_name, zone_tag,
+                    snapshot_date, snapshot_status, zone_summary_json, cache_settings_json,
+                    rulesets_json, raw_snapshot_json, collection_id
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(property_id, snapshot_date, normalized_domain) DO UPDATE SET
+                    property_name = excluded.property_name,
+                    zone_name = excluded.zone_name,
+                    zone_tag = excluded.zone_tag,
+                    snapshot_status = excluded.snapshot_status,
+                    zone_summary_json = excluded.zone_summary_json,
+                    cache_settings_json = excluded.cache_settings_json,
+                    rulesets_json = excluded.rulesets_json,
+                    raw_snapshot_json = excluded.raw_snapshot_json,
+                    collection_id = excluded.collection_id,
+                    collected_at = CURRENT_TIMESTAMP
+            """, (
+                property_id,
+                property_name,
+                normalized_domain,
+                zone_name,
+                zone_tag,
+                snapshot_date,
+                "ok" if snapshot.get("ok") else "error",
+                json.dumps(snapshot.get("zone") or {}, sort_keys=True),
+                json.dumps(snapshot.get("cache_related_settings") or [], sort_keys=True),
+                json.dumps(snapshot.get("rulesets") or [], sort_keys=True),
+                json.dumps(snapshot, sort_keys=True),
+                collection_id,
+            ))
     
     # =========================================================================
     # SEMRUSH DATA INSERTION

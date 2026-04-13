@@ -1,0 +1,96 @@
+phase: "phase1_homepage_only"
+
+ruleset:
+  phase: "http_request_cache_settings"
+  name: "Property Analytics Pilot Full-Page Cache"
+  description: "Phase 1 homepage-only HTML caching for Resi pilot domains."
+  managed_marker: "property-analytics-pilot-full-page-cache"
+
+edge_ttl:
+  desired_seconds: 1800
+  minimum_seconds_by_plan:
+    free: 7200
+    pro: 3600
+    business: 1
+    enterprise: 1
+
+browser_ttl:
+  mode: "respect_origin"
+
+cache_key:
+  strategy: "default"
+  notes: "Phase 1 leaves the default cache key in place so query-string handling is observable before later normalization work."
+
+bypass:
+  allowed_methods:
+    - "GET"
+    - "HEAD"
+  path_prefixes:
+    - "/wp-admin"
+    - "/wp-login"
+    - "/wp-json"
+  query_fragments:
+    - "preview=true"
+    - "preview_id="
+    - "preview_nonce="
+    - "customize_changeset_uuid="
+    - "customize_messenger_channel="
+    - "customize_autosaved="
+    - "_wpnonce="
+    - "s="
+    - "elementor-preview="
+    - "fl_builder"
+  cookie_fragments:
+    - "wordpress_logged_in_"
+    - "wordpress_sec_"
+    - "wp-postpass_"
+    - "wordpress_test_cookie"
+    - "comment_author_"
+    - "PHPSESSID"
+    - "woocommerce_items_in_cart"
+    - "woocommerce_cart_hash"
+    - "wp_woocommerce_session_"
+    - "preview"
+    - "logged_in"
+    - "auth"
+  notes:
+    - "Cloudflare may surface DYNAMIC for bypassed requests; this is acceptable."
+    - "YOOtheme/editor-specific cookies can be added here if we observe front-end editor collisions."
+
+phase1:
+  homepage_paths:
+    - "/"
+  apply_only_to_listed_paths: true
+
+purge:
+  mode: "manual_during_rollout"
+  notes:
+    - "Purge Cloudflare after content updates or deployments."
+    - "Keep Kinsta origin/site cache purging active."
+
+domains:
+  - property_id: "378404769"
+    property_name: "Champion's Green"
+    domain: "championsgreen-ga.com"
+    zone_name: "championsgreen-ga.com"
+    zone_tag:
+  - property_id: "378644585"
+    property_name: "The District Universal Boulevard"
+    domain: "thedistrictuniversal.com"
+    zone_name: "thedistrictuniversal.com"
+    zone_tag:
+  - property_id: "378702475"
+    property_name: "The Harrison"
+    domain: "theharrisonsandysprings.com"
+    zone_name: "theharrisonsandysprings.com"
+    zone_tag:
+  - property_id: "378380644"
+    property_name: "Ventana"
+    domain: "ventanaapts.com"
+    zone_name: "ventanaapts.com"
+    zone_tag:
+  - property_id: "378381499"
+    property_name: "Calais Midtown"
+    domain: "calaismidtownapartments.com"
+    zone_name: "calaismidtownapartments.com"
+    zone_tag:

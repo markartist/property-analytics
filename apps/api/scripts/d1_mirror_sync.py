@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sqlite3
 import subprocess
 import sys
+import glob
+import tempfile
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
@@ -31,6 +34,8 @@ REPO_ROOT = API_DIR.parent.parent
 WRANGLER_TOML = API_DIR / "wrangler.toml"
 CANONICAL_DB = REPO_ROOT / "data" / "portfolio_analytics.db"
 GENERATED_DIR = SCRIPT_DIR / "generated"
+PLATFORM_CLIENT = SCRIPT_DIR / "platform_phase1_client.py"
+CHECKSUM_STAMPER = SCRIPT_DIR / "stamp_phase1_payload_checksums.js"
 
 
 @dataclass
@@ -40,15 +45,58 @@ class StepResult:
     details: str
 
 
+def _fnv1a32(value: str) -> str:
+    hash_value = 0x811C9DC5
+    for char in value:
+        hash_value ^= ord(char)
+        hash_value = (hash_value * 0x01000193) & 0xFFFFFFFF
+    return f"{hash_value:08x}"
+
+
+def _stable_hash(parts: List[object]) -> str:
+    return _fnv1a32("|".join("" if part is None else str(part) for part in parts))
+
+
 def _run_cmd(cmd: List[str], cwd: Optional[Path] = None, timeout: int = 900) -> Tuple[int, str, str]:
+    env = _build_runtime_env()
     proc = subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
         capture_output=True,
         text=True,
         timeout=timeout,
+        env=env,
     )
     return proc.returncode, proc.stdout, proc.stderr
+
+
+def _build_runtime_env() -> Dict[str, str]:
+    """Build a launchd-safe PATH so npx/wrangler can be discovered."""
+    env = os.environ.copy()
+    existing = env.get("PATH", "")
+    path_segments: List[str] = []
+
+    for p in ["/opt/homebrew/bin", "/usr/local/bin"]:
+        if Path(p).exists():
+            path_segments.append(p)
+
+    nvm_bins = sorted(glob.glob(str(Path.home() / ".nvm" / "versions" / "node" / "*" / "bin")))
+    if nvm_bins:
+        path_segments.append(nvm_bins[-1])
+
+    if existing:
+        path_segments.extend(existing.split(":"))
+
+    deduped: List[str] = []
+    seen = set()
+    for seg in path_segments:
+        seg = seg.strip()
+        if seg and seg not in seen:
+            seen.add(seg)
+            deduped.append(seg)
+
+    env["PATH"] = ":".join(deduped)
+    return env
 
 
 def _is_friday(s: str) -> bool:
@@ -75,6 +123,358 @@ def _max_date(conn: sqlite3.Connection, table: str, col: str) -> Optional[str]:
     return str(row[0])[:10]
 
 
+def _platform_sync_enabled() -> bool:
+    return os.environ.get("ENABLE_PHASE1_PLATFORM_SYNC", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _property_advocate_enabled() -> bool:
+    return os.environ.get("ENABLE_PHASE1_PROPERTY_ADVOCATE_RUN", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _phase1_local_simulation_only() -> bool:
+    return os.environ.get("PHASE1_LOCAL_SIMULATION_ONLY", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _build_phase1_ga4_payload(conn: sqlite3.Connection, contract_bundle_id: str) -> Dict[str, object]:
+    metric_date = _max_date(conn, "ga4_daily_metrics", "metric_date")
+    if not metric_date:
+        raise RuntimeError("No GA4 data available for Phase 1 mirror payload")
+
+    rows = conn.execute(
+        """
+        SELECT property_id, metric_date, total_users, new_users, sessions, pageviews,
+               avg_session_duration, bounce_rate
+        FROM ga4_daily_metrics
+        WHERE metric_date = ?
+        ORDER BY property_id
+        """,
+        (metric_date,),
+    ).fetchall()
+    if not rows:
+        raise RuntimeError(f"No GA4 rows found for latest metric_date {metric_date}")
+
+    records: List[Dict[str, object]] = []
+    row_hashes: List[str] = []
+    for row in rows:
+        record = {
+            "propertyId": str(row["property_id"]),
+            "metricDate": str(row["metric_date"])[:10],
+            "ga4PropertyId": str(row["property_id"]),
+            "totalUsers": row["total_users"],
+            "newUsers": row["new_users"],
+            "sessions": row["sessions"],
+            "pageviews": row["pageviews"],
+            "avgSessionDurationSeconds": row["avg_session_duration"],
+            "bounceRate": row["bounce_rate"],
+        }
+        records.append(record)
+        row_hashes.append(
+            _stable_hash(
+                [
+                    "ga4",
+                    record["propertyId"],
+                    record["metricDate"],
+                    record["ga4PropertyId"],
+                    record["totalUsers"],
+                    record["newUsers"],
+                    record["sessions"],
+                    record["pageviews"],
+                    record["avgSessionDurationSeconds"],
+                    record["bounceRate"],
+                ]
+            )
+        )
+
+    slice_checksum = _stable_hash([len(row_hashes), *sorted(row_hashes)])
+    batch_checksum = _stable_hash(["platform_ga4_daily_metrics", metric_date, slice_checksum])
+    suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    return {
+        "domainKey": "ga4",
+        "mirrorBatchId": f"mb_ga4_live_{metric_date}_{suffix}",
+        "sourceValidationBatchId": f"val_ga4_live_{metric_date}_{suffix}",
+        "sourceSnapshotId": f"snap_ga4_live_{metric_date}",
+        "contractBundleId": contract_bundle_id,
+        "schemaBundleVersion": "schema_v1",
+        "validatorBundleVersion": "validator_v1",
+        "mirrorBundleVersion": "mirror_v1",
+        "payloadContractVersion": "payload_v1",
+        "batchDateStart": metric_date,
+        "batchDateEnd": metric_date,
+        "rowCountTotalExpected": len(records),
+        "checksumManifest": json.dumps({"batchChecksum": batch_checksum}),
+        "payloadSlices": [
+            {
+                "mirrorBatchSliceId": f"slice_ga4_live_{metric_date}_{suffix}",
+                "targetTable": "platform_ga4_daily_metrics",
+                "sliceKey": metric_date,
+                "rowCountExpected": len(records),
+                "sliceChecksumExpected": slice_checksum,
+                "recordsJson": json.dumps(records),
+            }
+        ],
+        "sourceHost": "local-mac",
+        "operatorId": os.environ.get("PLATFORM_OPERATOR_ID", os.environ.get("USER", "local_mac")),
+    }
+
+
+def _build_phase1_psi_payload(conn: sqlite3.Connection, contract_bundle_id: str) -> Dict[str, object]:
+    metric_date = _max_date(conn, "pagespeed_metrics", "metric_date")
+    if not metric_date:
+        raise RuntimeError("No PSI data available for Phase 1 mirror payload")
+
+    rows = conn.execute(
+        """
+        SELECT property_id, metric_date, strategy, performance_score, accessibility_score,
+               best_practices_score, seo_score, lcp_value, cls_value, fcp_value,
+               total_blocking_time, fid_value, ttfb_value
+        FROM pagespeed_metrics
+        WHERE metric_date = ?
+        ORDER BY property_id, strategy
+        """,
+        (metric_date,),
+    ).fetchall()
+    if not rows:
+        raise RuntimeError(f"No PSI rows found for latest metric_date {metric_date}")
+
+    records: List[Dict[str, object]] = []
+    row_hashes: List[str] = []
+    for row in rows:
+        strategy = str(row["strategy"]).strip().lower()
+        if strategy not in {"mobile", "desktop"}:
+            continue
+        record = {
+            "propertyId": str(row["property_id"]),
+            "metricDate": str(row["metric_date"])[:10],
+            "strategy": strategy,
+            "performanceScore": row["performance_score"],
+            "accessibilityScore": row["accessibility_score"],
+            "bestPracticesScore": row["best_practices_score"],
+            "seoScore": row["seo_score"],
+            "lcpSeconds": row["lcp_value"],
+            "clsValue": row["cls_value"],
+            "fcpSeconds": row["fcp_value"],
+            "tbtMs": row["total_blocking_time"],
+            "inpMs": row["fid_value"],
+            "ttfbMs": row["ttfb_value"],
+        }
+        records.append(record)
+        row_hashes.append(
+            _stable_hash(
+                [
+                    "psi",
+                    record["propertyId"],
+                    record["metricDate"],
+                    record["strategy"],
+                    record["performanceScore"],
+                    record["accessibilityScore"],
+                    record["bestPracticesScore"],
+                    record["seoScore"],
+                    record["lcpSeconds"],
+                    record["clsValue"],
+                    record["fcpSeconds"],
+                    record["tbtMs"],
+                    record["inpMs"],
+                    record["ttfbMs"],
+                ]
+            )
+        )
+
+    if not records:
+        raise RuntimeError(f"No supported PSI rows found for latest metric_date {metric_date}")
+
+    slice_checksum = _stable_hash([len(row_hashes), *sorted(row_hashes)])
+    batch_checksum = _stable_hash(["platform_psi_daily_metrics", metric_date, slice_checksum])
+    suffix = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    return {
+        "domainKey": "psi",
+        "mirrorBatchId": f"mb_psi_live_{metric_date}_{suffix}",
+        "sourceValidationBatchId": f"val_psi_live_{metric_date}_{suffix}",
+        "sourceSnapshotId": f"snap_psi_live_{metric_date}",
+        "contractBundleId": contract_bundle_id,
+        "schemaBundleVersion": "schema_v1",
+        "validatorBundleVersion": "validator_v1",
+        "mirrorBundleVersion": "mirror_v1",
+        "payloadContractVersion": "payload_v1",
+        "batchDateStart": metric_date,
+        "batchDateEnd": metric_date,
+        "rowCountTotalExpected": len(records),
+        "checksumManifest": json.dumps({"batchChecksum": batch_checksum}),
+        "payloadSlices": [
+            {
+                "mirrorBatchSliceId": f"slice_psi_live_{metric_date}_{suffix}",
+                "targetTable": "platform_psi_daily_metrics",
+                "sliceKey": metric_date,
+                "rowCountExpected": len(records),
+                "sliceChecksumExpected": slice_checksum,
+                "recordsJson": json.dumps(records),
+            }
+        ],
+        "sourceHost": "local-mac",
+        "operatorId": os.environ.get("PLATFORM_OPERATOR_ID", os.environ.get("USER", "local_mac")),
+    }
+
+
+def _resolve_property_advocate_property_id(conn: sqlite3.Connection, preferred: Optional[str]) -> Optional[str]:
+    if preferred:
+        return preferred
+
+    row = conn.execute(
+        """
+        SELECT g.property_id
+        FROM ga4_daily_metrics g
+        WHERE g.metric_date = (SELECT MAX(metric_date) FROM ga4_daily_metrics)
+          AND EXISTS (
+            SELECT 1 FROM pagespeed_metrics p
+            WHERE p.property_id = g.property_id
+          )
+        ORDER BY g.property_id
+        LIMIT 1
+        """
+    ).fetchone()
+    return str(row[0]) if row and row[0] is not None else None
+
+
+def _write_phase1_activity_report(activity: Dict[str, object]) -> Path:
+    GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = GENERATED_DIR / f"platform_phase1_activity_{ts}.json"
+    path.write_text(json.dumps(activity, indent=2), encoding="utf-8")
+    return path
+
+
+def _run_platform_client(args: List[str]) -> Dict[str, object]:
+    cmd = [sys.executable, str(PLATFORM_CLIENT), *args]
+    rc, out, err = _run_cmd(cmd, cwd=API_DIR, timeout=1200)
+    if rc != 0:
+        tail = (err or out)[-1200:]
+        raise RuntimeError(f"platform client failed ({rc}): {tail}")
+    try:
+        return json.loads(out)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"platform client returned non-JSON output: {exc}") from exc
+
+
+def _stamp_phase1_payload_checksums(payload_path: Path) -> None:
+    if not CHECKSUM_STAMPER.exists():
+        raise RuntimeError(f"Missing checksum stamper: {CHECKSUM_STAMPER}")
+    rc, out, err = _run_cmd(["node", str(CHECKSUM_STAMPER), str(payload_path)], cwd=API_DIR, timeout=120)
+    if rc != 0:
+        tail = (err or out)[-1200:]
+        raise RuntimeError(f"checksum stamper failed ({rc}): {tail}")
+
+
+def run_phase1_platform_sync() -> Tuple[StepResult, Dict[str, object]]:
+    if not _platform_sync_enabled():
+        return StepResult("phase1_platform_sync", True, "skipped (ENABLE_PHASE1_PLATFORM_SYNC not set)"), {
+            "enabled": False,
+            "skipped": True,
+        }
+
+    if not PLATFORM_CLIENT.exists():
+        return StepResult("phase1_platform_sync", False, f"Missing platform client: {PLATFORM_CLIENT}"), {
+            "enabled": True,
+            "skipped": False,
+        }
+
+    base_url = os.environ.get("PLATFORM_BASE_URL")
+    shared_token = os.environ.get("PLATFORM_SHARED_TOKEN")
+    if not base_url or not shared_token:
+        return StepResult(
+            "phase1_platform_sync",
+            False,
+            "PLATFORM_BASE_URL and PLATFORM_SHARED_TOKEN are required when ENABLE_PHASE1_PLATFORM_SYNC is enabled",
+        ), {"enabled": True, "skipped": False}
+
+    conn = sqlite3.connect(str(CANONICAL_DB))
+    conn.row_factory = sqlite3.Row
+    temp_dir_obj = tempfile.TemporaryDirectory(prefix="phase1-platform-sync-")
+    temp_dir = Path(temp_dir_obj.name)
+    activity: Dict[str, object] = {
+        "enabled": True,
+        "base_url": base_url,
+        "actor": os.environ.get("PLATFORM_ROUTE_ACTOR", "d1_mirror_sync"),
+        "source": os.environ.get("PLATFORM_ROUTE_SOURCE", "d1_mirror_sync"),
+        "runs": {},
+    }
+    try:
+        contract_bundle_id = os.environ.get("PHASE1_CONTRACT_BUNDLE_ID", "cb_phase1_v1")
+        shared_args = [
+            "--base-url",
+            base_url,
+            "--shared-token",
+            shared_token,
+            "--actor",
+            os.environ.get("PLATFORM_ROUTE_ACTOR", "d1_mirror_sync"),
+            "--source",
+            os.environ.get("PLATFORM_ROUTE_SOURCE", "d1_mirror_sync"),
+        ]
+
+        for domain_key, builder in (("ga4", _build_phase1_ga4_payload), ("psi", _build_phase1_psi_payload)):
+            payload = builder(conn, contract_bundle_id)
+            payload_path = temp_dir / f"{domain_key}_payload.json"
+            payload_path.write_text(json.dumps(payload), encoding="utf-8")
+            _stamp_phase1_payload_checksums(payload_path)
+            result = _run_platform_client(
+                [
+                    "mirror-batch",
+                    *shared_args,
+                    "--input",
+                    str(payload_path),
+                ]
+            )
+            activity["runs"][domain_key] = result
+
+        if _property_advocate_enabled():
+            property_id = _resolve_property_advocate_property_id(
+                conn, os.environ.get("PHASE1_PROPERTY_ADVOCATE_PROPERTY_ID")
+            )
+            if not property_id:
+                raise RuntimeError("Could not resolve a property_id for the Phase 1 property advocate run")
+            advocate_result = _run_platform_client(
+                [
+                    "property-advocate-run",
+                    *shared_args,
+                    "--property-id",
+                    property_id,
+                    "--agent-id",
+                    os.environ.get("PHASE1_PROPERTY_ADVOCATE_AGENT_ID", "agent_prop_1"),
+                    "--contract-bundle-id",
+                    contract_bundle_id,
+                    "--execution-policy-id",
+                    os.environ.get("PHASE1_EXECUTION_POLICY_ID", "exec_policy_property_advocate"),
+                    "--requested-by",
+                    os.environ.get("PHASE1_REQUESTED_BY", "d1_mirror_sync"),
+                    "--operator-id",
+                    os.environ.get("PLATFORM_OPERATOR_ID", os.environ.get("USER", "local_mac")),
+                    "--trigger-type",
+                    os.environ.get("PHASE1_TRIGGER_TYPE", "scheduled"),
+                    "--trigger-source",
+                    os.environ.get("PHASE1_TRIGGER_SOURCE", "d1_mirror_sync"),
+                ]
+            )
+            activity["property_advocate"] = {
+                "property_id": property_id,
+                "response": advocate_result,
+            }
+        else:
+            activity["property_advocate"] = {"enabled": False, "skipped": True}
+
+        activity_path = _write_phase1_activity_report(activity)
+        activity["activity_report_path"] = str(activity_path)
+        detail = f"mirrored ga4+psi via platform routes; activity={activity_path.name}"
+        if _property_advocate_enabled():
+            detail += "; property advocate executed"
+        return StepResult("phase1_platform_sync", True, detail), activity
+    except Exception as exc:
+        activity["error"] = str(exc)
+        activity_path = _write_phase1_activity_report(activity)
+        activity["activity_report_path"] = str(activity_path)
+        return StepResult("phase1_platform_sync", False, f"{exc} | activity={activity_path.name}"), activity
+    finally:
+        temp_dir_obj.cleanup()
+        conn.close()
+
+
 def validate_local_db() -> Tuple[StepResult, Dict[str, str]]:
     if not CANONICAL_DB.exists():
         return StepResult("local_db_validate", False, f"Missing DB: {CANONICAL_DB}"), {}
@@ -91,6 +491,7 @@ def validate_local_db() -> Tuple[StepResult, Dict[str, str]]:
 
         recency = {
             "ga4_daily_metrics.metric_date": _max_date(conn, "ga4_daily_metrics", "metric_date") or "",
+            "pagespeed_metrics.metric_date": _max_date(conn, "pagespeed_metrics", "metric_date") or "",
             "guest_card_metrics.run_date": _max_date(conn, "guest_card_metrics", "run_date") or "",
             "unit_availability.snapshot_date": _max_date(conn, "unit_availability", "snapshot_date") or "",
         }
@@ -197,6 +598,66 @@ def _d1_query(sql: str) -> Tuple[bool, List[Dict], str]:
         return False, [], f"JSON parse failed: {exc}"
 
 
+def verify_wrangler_access() -> StepResult:
+    """Fail fast if wrangler binary/auth is unavailable."""
+    rc, out, err = _run_cmd(["npx", "wrangler", "--version"], cwd=API_DIR, timeout=30)
+    if rc != 0:
+        tail = (err or out)[-300:]
+        return StepResult("wrangler_access", False, f"Wrangler unavailable: {tail}")
+
+    ok, rows, msg = _d1_query("SELECT 1 AS ok;")
+    if not ok:
+        return StepResult("wrangler_access", False, f"D1 access check failed: {msg}")
+    if not rows:
+        return StepResult("wrangler_access", False, "D1 access check returned no rows")
+    return StepResult("wrangler_access", True, "Wrangler + D1 access OK")
+
+
+def verify_local_source_freshness(recency: Dict[str, str], max_age_days: int = 2) -> StepResult:
+    """Ensure critical local sources are fresh; report non-critical stale sources."""
+    today = date.today()
+    hard_stale: List[str] = []
+    soft_stale: List[str] = []
+    # Criticality policy:
+    # - required=True sources block the mirror when stale.
+    # - required=False sources are reported but do not block the mirror.
+    source_policy = {
+        "ga4_daily_metrics.metric_date": {"required": True, "max_age_days": max_age_days},
+        "guest_card_metrics.run_date": {"required": False, "max_age_days": max_age_days},
+        "unit_availability.snapshot_date": {"required": False, "max_age_days": max_age_days},
+    }
+
+    for key, policy in source_policy.items():
+        source_max_age = int(policy["max_age_days"])
+        required = bool(policy["required"])
+        val = recency.get(key) or ""
+        if not val:
+            target = hard_stale if required else soft_stale
+            target.append(f"{key}=missing")
+            continue
+        try:
+            age = (today - date.fromisoformat(val)).days
+        except ValueError:
+            target = hard_stale if required else soft_stale
+            target.append(f"{key}=invalid({val})")
+            continue
+        if age > source_max_age:
+            target = hard_stale if required else soft_stale
+            target.append(f"{key}={val} (age={age}d)")
+
+    if hard_stale:
+        return StepResult("local_source_freshness", False, f"Critical stale sources: {', '.join(hard_stale)}")
+
+    if soft_stale:
+        return StepResult(
+            "local_source_freshness",
+            True,
+            f"Critical sources fresh; non-blocking stale sources: {', '.join(soft_stale)}"
+        )
+
+    return StepResult("local_source_freshness", True, f"All sources <= {max_age_days} days old")
+
+
 def verify_d1(target_friday: str) -> Tuple[StepResult, Dict[str, object]]:
     checks: Dict[str, object] = {"target_friday": target_friday}
 
@@ -252,29 +713,20 @@ def verify_d1(target_friday: str) -> Tuple[StepResult, Dict[str, object]]:
     return StepResult("verify_d1", True, "D1 freshness and sanity checks passed"), checks
 
 
-def expected_d1_max_dates(recency: Dict[str, str]) -> Dict[str, Optional[str]]:
+def expected_d1_max_dates(target_friday: str) -> Dict[str, Optional[str]]:
     """
-    Compute expected D1 max dates by dataset from local recency.
-    Uses Friday floor for weekly snapshot tables.
+    Compute expected D1 max dates by dataset from the resolved sync target Friday.
+    The mirror intentionally syncs to a single Friday across datasets.
     """
-    def _to_friday(v: Optional[str]) -> Optional[str]:
-        if not v:
-            return None
-        d = _floor_to_friday(date.fromisoformat(v))
-        return d.isoformat()
-
-    ga4_friday = _to_friday(recency.get("ga4_daily_metrics.metric_date"))
-    guest_card_friday = _to_friday(recency.get("guest_card_metrics.run_date"))
-    marketing_friday = _to_friday(recency.get("unit_availability.snapshot_date"))
     return {
-        "pib_ga4_metrics": ga4_friday,
-        "pib_search_performance": ga4_friday,
-        "pib_site_performance": ga4_friday,
-        "pib_local_presence": ga4_friday,
-        "pib_cir": ga4_friday,
-        "t7_metrics": guest_card_friday,
-        "t30_metrics": guest_card_friday,
-        "marketing_data": marketing_friday,
+        "pib_ga4_metrics": target_friday,
+        "pib_search_performance": target_friday,
+        "pib_site_performance": target_friday,
+        "pib_local_presence": target_friday,
+        "pib_cir": target_friday,
+        "t7_metrics": target_friday,
+        "t30_metrics": target_friday,
+        "marketing_data": target_friday,
     }
 
 
@@ -354,6 +806,70 @@ def main() -> None:
     steps.append(maintenance_step)
     print(f"[{maintenance_step.name}] {'OK' if maintenance_step.ok else 'FAIL'} - {maintenance_step.details}")
 
+    simulation_only = _phase1_local_simulation_only()
+    report["phase1_local_simulation_only"] = simulation_only
+
+    if simulation_only:
+        source_freshness_step = verify_local_source_freshness(recency, max_age_days=2)
+        steps.append(source_freshness_step)
+        print(f"[{source_freshness_step.name}] {'OK' if source_freshness_step.ok else 'FAIL'} - {source_freshness_step.details}")
+        if not source_freshness_step.ok:
+            report["steps"] = [asdict(s) for s in steps]
+            report["success"] = False
+            path = write_report(report)
+            print(f"Report: {path}")
+            sys.exit(1)
+
+        target_friday, friday_step = resolve_target_friday(args.date, recency)
+        steps.append(friday_step)
+        print(f"[{friday_step.name}] {'OK' if friday_step.ok else 'FAIL'} - {friday_step.details}")
+        if not friday_step.ok or not target_friday:
+            report["steps"] = [asdict(s) for s in steps]
+            report["success"] = False
+            path = write_report(report)
+            print(f"Report: {path}")
+            sys.exit(1)
+
+        report["target_friday"] = target_friday
+        expected_max = expected_d1_max_dates(target_friday)
+        report["expected_max_dates"] = expected_max
+
+        phase1_step, phase1_activity = run_phase1_platform_sync()
+        steps.append(phase1_step)
+        report["phase1_platform"] = phase1_activity
+        print(f"[{phase1_step.name}] {'OK' if phase1_step.ok else 'FAIL'} - {phase1_step.details}")
+
+        report["steps"] = [asdict(s) for s in steps]
+        report["success"] = phase1_step.ok
+        report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        report["mode"] = "phase1_local_simulation_only"
+        path = write_report(report)
+        print(f"Report: {path}")
+        if not report["success"]:
+            sys.exit(1)
+        print("Phase 1 local simulation complete.")
+        return
+
+    wrangler_step = verify_wrangler_access()
+    steps.append(wrangler_step)
+    print(f"[{wrangler_step.name}] {'OK' if wrangler_step.ok else 'FAIL'} - {wrangler_step.details}")
+    if not wrangler_step.ok:
+        report["steps"] = [asdict(s) for s in steps]
+        report["success"] = False
+        path = write_report(report)
+        print(f"Report: {path}")
+        sys.exit(1)
+
+    source_freshness_step = verify_local_source_freshness(recency, max_age_days=2)
+    steps.append(source_freshness_step)
+    print(f"[{source_freshness_step.name}] {'OK' if source_freshness_step.ok else 'FAIL'} - {source_freshness_step.details}")
+    if not source_freshness_step.ok:
+        report["steps"] = [asdict(s) for s in steps]
+        report["success"] = False
+        path = write_report(report)
+        print(f"Report: {path}")
+        sys.exit(1)
+
     target_friday, friday_step = resolve_target_friday(args.date, recency)
     steps.append(friday_step)
     print(f"[{friday_step.name}] {'OK' if friday_step.ok else 'FAIL'} - {friday_step.details}")
@@ -365,8 +881,19 @@ def main() -> None:
         sys.exit(1)
 
     report["target_friday"] = target_friday
-    expected_max = expected_d1_max_dates(recency)
+    expected_max = expected_d1_max_dates(target_friday)
     report["expected_max_dates"] = expected_max
+
+    phase1_step, phase1_activity = run_phase1_platform_sync()
+    steps.append(phase1_step)
+    report["phase1_platform"] = phase1_activity
+    print(f"[{phase1_step.name}] {'OK' if phase1_step.ok else 'FAIL'} - {phase1_step.details}")
+    if not phase1_step.ok:
+        report["steps"] = [asdict(s) for s in steps]
+        report["success"] = False
+        path = write_report(report)
+        print(f"Report: {path}")
+        sys.exit(1)
 
     # Deterministic sync order.
     sync_scripts = [

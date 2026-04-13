@@ -1,0 +1,13 @@
+{
+  "name": "@pop-brief/evs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node providers/browserstack/run-experiential-playwright.mjs",
+    "matrix": "node orchestration/build-run-matrix.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.54.2"
+  }
+}

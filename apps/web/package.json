@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "guardrails:pib": "bash ../../scripts/check_pib_guardrails.sh"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.0",
