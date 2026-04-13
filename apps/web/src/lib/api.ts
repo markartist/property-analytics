@@ -86,6 +86,13 @@ function qs(filters: Record<string, string | undefined>): string {
   return s ? `?${s}` : "";
 }
 
+function siteContentHeaders(): HeadersInit | undefined {
+  if (process.env.NEXT_PUBLIC_SITE_CONTENT_DEBUG === "true") {
+    return { "x-debug-site-content": "allow" };
+  }
+  return undefined;
+}
+
 export async function getCommunities(): Promise<Community[]> {
   const res = await apiFetch("/v1/communities");
   if (!res.ok) throw new Error("Failed to load communities");
@@ -352,6 +359,92 @@ export interface SourceFreshness {
   row_count: number;
   property_count: number;
   updated_at: string;
+  expected_latest_date?: string | null;
+  age_days?: number | null;
+  business_lag_days?: number | null;
+  freshness_status?: "fresh" | "warning" | "stale" | "missing";
+}
+
+export interface DailyCollectionSourceStatus {
+  source: string;
+  status: string;
+  success_count: number;
+  failed_count: number;
+  skipped_count: number;
+  total_count: number;
+  remaining_count: number;
+  started_at: string | null;
+  completed_at: string | null;
+  retry_attempts: number;
+  rate_limit_hits: number;
+  error_message: string | null;
+  notes: string | null;
+}
+
+export interface DailyCollectionSummary {
+  sources_total: number;
+  sources_completed: number;
+  sources_active: number;
+  sources_blocked: number;
+  properties_expected: number;
+  properties_succeeded: number;
+  properties_failed: number;
+  properties_remaining: number;
+}
+
+export interface WatchtowerCollectionHistoryPoint {
+  collection_date: string;
+  sources_total: number;
+  sources_completed: number;
+  sources_active: number;
+  sources_blocked: number;
+  properties_expected: number;
+  properties_succeeded: number;
+  properties_failed: number;
+  retry_attempts: number;
+  rate_limit_hits: number;
+}
+
+export interface WatchtowerSourceCoverageHistory {
+  source_key: string;
+  source_label: string;
+  points: {
+    date: string;
+    coverage: number;
+    coverage_pct: number;
+  }[];
+}
+
+export interface WatchtowerRetryQueueItem {
+  queue_id: number;
+  collection_date: string;
+  data_source: string;
+  property_id: string | null;
+  property_name: string | null;
+  attempt_count: number;
+  status: string;
+  retry_disposition: string;
+  last_error_type: string | null;
+  last_error_message: string | null;
+  next_attempt_at: string | null;
+  retry_window_end: string | null;
+  resolved_at: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface WatchtowerSourceTimeline {
+  source: string;
+  points: {
+    collection_date: string;
+    status: string;
+    success_count: number;
+    failed_count: number;
+    total_count: number;
+    retry_attempts: number;
+    rate_limit_hits: number;
+  }[];
 }
 
 export interface HealthStatusResponse {
@@ -363,6 +456,38 @@ export interface HealthStatusResponse {
   source_freshness: SourceFreshness[];
   coverage_matrix: CoverageRow[];
   data_sources: { key: string; label: string }[];
+  integrity_summary: {
+    core_failure_sources: number;
+    specialty_failure_sources: number;
+    freshness_warning_sources: number;
+    freshness_stale_sources: number;
+    top_issues: {
+      kind: "core_failure" | "freshness";
+      source: string;
+      message: string;
+      timestamp: string | null;
+    }[];
+  };
+  daily_collection_status: {
+    summary: DailyCollectionSummary;
+    closure: {
+      state: "open" | "complete" | "not_started";
+      summary_reason: string;
+      unresolved_sources: string[];
+    };
+    sources: DailyCollectionSourceStatus[];
+  };
+  telemetry: {
+    collection_history: WatchtowerCollectionHistoryPoint[];
+    source_coverage_history: WatchtowerSourceCoverageHistory[];
+    source_timelines: WatchtowerSourceTimeline[];
+    retry_queue: {
+      queue_depth: number;
+      by_status: Record<string, number>;
+      by_disposition: Record<string, number>;
+      items: WatchtowerRetryQueueItem[];
+    };
+  };
 }
 
 export async function getHealthStatus(): Promise<HealthStatusResponse> {
@@ -621,6 +746,245 @@ export async function createIntelligenceAdvocatePrompt(body: {
   return res.json();
 }
 
+// ── Governed Memory ──
+
+export interface MemoryEvidenceReference {
+  id: string;
+  memory_entry_id: string;
+  evidence_type: string;
+  evidence_source: string;
+  evidence_ref: string;
+  evidence_excerpt: string | null;
+  metadata_json: string | null;
+  created_at: string;
+}
+
+export interface GovernedMemoryEntry {
+  id: string;
+  scope: "property" | "fleet" | "ledger";
+  property_id: string | null;
+  fleet_key: string | null;
+  ledger_key: string | null;
+  summary: string;
+  structured_payload_json: string | null;
+  source_system: string;
+  created_by: string;
+  confidence: number;
+  status: "active" | "candidate" | "approved" | "deprecated";
+  parent_entry_id: string | null;
+  originating_candidate_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GovernedMemoryLineage {
+  id: string;
+  target_entry_id: string;
+  source_entry_id: string;
+  source_candidate_id: string | null;
+  created_at: string;
+}
+
+export interface GovernedMemoryEntryWithEvidence {
+  entry: GovernedMemoryEntry;
+  evidence: MemoryEvidenceReference[];
+  lineage: GovernedMemoryLineage[];
+}
+
+export interface GovernedMemoryCandidate {
+  id: string;
+  source_entry_id: string;
+  source_scope: "property" | "fleet";
+  target_scope: "fleet" | "ledger";
+  property_id: string | null;
+  fleet_key: string | null;
+  ledger_key: string | null;
+  proposed_summary: string;
+  proposed_structured_payload_json: string | null;
+  rationale: string;
+  status: "pending" | "promoted" | "rejected";
+  requested_by: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GovernedMemoryIdentity {
+  id: string;
+  scope: "property" | "fleet" | "ledger";
+  property_id: string | null;
+  fleet_key: string | null;
+  ledger_key: string | null;
+  role_family: "Captain" | "Commodore" | "Ledger";
+  display_name: string;
+  internal_name: string | null;
+}
+
+export interface GovernedMemoryProperty {
+  propertyId: string;
+  propertyName: string;
+  shortName: string;
+  region: string | null;
+  fleetKey: string;
+  captainDisplayName: string;
+  captainInternalName: string;
+}
+
+export interface GovernedMemoryFleetSummary {
+  fleetKey: string;
+  displayName: string;
+  propertyCount: number;
+  memoryCount: number;
+  pendingCandidates: number;
+}
+
+export interface GovernedMemoryPropertyContext {
+  propertyId: string;
+  fleetKey: string;
+  identity: GovernedMemoryIdentity;
+  captainLog: GovernedMemoryEntryWithEvidence[];
+  fleetBrief: GovernedMemoryEntryWithEvidence[];
+  ledger: GovernedMemoryEntryWithEvidence[];
+}
+
+export interface GovernedMemoryFleetContext {
+  fleetKey: string;
+  identity: GovernedMemoryIdentity | null;
+  entries: GovernedMemoryEntryWithEvidence[];
+  pendingCandidates: GovernedMemoryCandidate[];
+}
+
+export interface GovernedMemoryLedgerContext {
+  ledgerKey: string;
+  identity: GovernedMemoryIdentity | null;
+  entries: GovernedMemoryEntryWithEvidence[];
+  pendingCandidates: GovernedMemoryCandidate[];
+}
+
+export async function getGovernedMemoryProperties(): Promise<GovernedMemoryProperty[]> {
+  const res = await apiFetch("/v1/intelligence-memory/properties");
+  if (!res.ok) throw new Error("Failed to load governed memory properties");
+  return (await res.json()).properties;
+}
+
+export async function getGovernedMemoryPropertyLog(propertyId: string): Promise<{
+  entries: GovernedMemoryEntryWithEvidence[];
+  context: GovernedMemoryPropertyContext;
+}> {
+  const res = await apiFetch(`/v1/intelligence-memory/properties/${propertyId}/log`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to load Captain's Log");
+  }
+  return res.json();
+}
+
+export async function createCaptainLogEntry(propertyId: string, body: {
+  summary: string;
+  structuredPayload?: Record<string, unknown> | null;
+  evidence: Array<{
+    evidenceType: string;
+    evidenceSource: string;
+    evidenceRef: string;
+    evidenceExcerpt?: string | null;
+    metadata?: Record<string, unknown> | null;
+  }>;
+  sourceSystem: string;
+  confidence: number;
+}): Promise<GovernedMemoryEntryWithEvidence> {
+  const res = await apiFetch(`/v1/intelligence-memory/properties/${propertyId}/log`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create Captain's Log entry");
+  }
+  return res.json();
+}
+
+export async function createFleetBriefCandidate(entryId: string, body: {
+  rationale: string;
+  proposedSummary?: string;
+  proposedStructuredPayload?: Record<string, unknown> | null;
+}): Promise<GovernedMemoryCandidate> {
+  const res = await apiFetch(`/v1/intelligence-memory/entries/${entryId}/candidates/fleet`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create Fleet Brief candidate");
+  }
+  return res.json();
+}
+
+export async function createLedgerCandidate(entryId: string, body: {
+  rationale: string;
+  proposedSummary?: string;
+  proposedStructuredPayload?: Record<string, unknown> | null;
+}): Promise<GovernedMemoryCandidate> {
+  const res = await apiFetch(`/v1/intelligence-memory/entries/${entryId}/candidates/ledger`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create Ledger candidate");
+  }
+  return res.json();
+}
+
+export async function promoteMemoryCandidate(candidateId: string, actionNotes?: string): Promise<{
+  candidate: GovernedMemoryCandidate;
+  entry: GovernedMemoryEntryWithEvidence;
+  actionType: "promoted_new" | "promoted_existing";
+}> {
+  const res = await apiFetch(`/v1/intelligence-memory/candidates/${candidateId}/promote`, {
+    method: "POST",
+    body: JSON.stringify({ actionNotes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to promote memory candidate");
+  }
+  return res.json();
+}
+
+export async function getFleetBriefs(): Promise<GovernedMemoryFleetSummary[]> {
+  const res = await apiFetch("/v1/intelligence-memory/fleets");
+  if (!res.ok) throw new Error("Failed to load Fleet Brief summaries");
+  return (await res.json()).fleets;
+}
+
+export async function getFleetBrief(fleetKey: string): Promise<GovernedMemoryFleetContext> {
+  const res = await apiFetch(`/v1/intelligence-memory/fleets/${fleetKey}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to load Fleet Brief");
+  }
+  return res.json();
+}
+
+export async function getLedgerContext(): Promise<GovernedMemoryLedgerContext> {
+  const res = await apiFetch("/v1/intelligence-memory/ledger");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to load The Ledger");
+  }
+  return res.json();
+}
+
+export async function getGovernedMemoryContext(propertyId: string): Promise<GovernedMemoryPropertyContext> {
+  const res = await apiFetch(`/v1/intelligence-memory/context/property/${propertyId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to load governed memory context");
+  }
+  return res.json();
+}
+
 // ── Site Content Creator ──
 
 export interface SiteContentPropertySummary extends IntelligencePilotProperty {
@@ -685,13 +1049,13 @@ export interface SiteContentCrawlResponse {
 }
 
 export async function getSiteContentInventory(): Promise<SiteContentInventoryResponse> {
-  const res = await apiFetch("/v1/admin/site-content");
+  const res = await apiFetch("/v1/admin/site-content", { headers: siteContentHeaders() });
   if (!res.ok) throw new Error("Failed to load site content inventory");
   return res.json();
 }
 
 export async function getSiteContentProperty(propertyId: string): Promise<SiteContentPropertyResponse> {
-  const res = await apiFetch(`/v1/admin/site-content/${propertyId}`);
+  const res = await apiFetch(`/v1/admin/site-content/${propertyId}`, { headers: siteContentHeaders() });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message ?? "Failed to load property site content");
@@ -706,6 +1070,7 @@ export async function crawlSiteContentProperty(
   const res = await apiFetch(`/v1/admin/site-content/${propertyId}/crawl`, {
     method: "POST",
     body: JSON.stringify(body ?? {}),
+    headers: siteContentHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
