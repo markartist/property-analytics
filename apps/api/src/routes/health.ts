@@ -45,6 +45,20 @@ const BLOCKED_COLLECTION_STATUSES = new Set(["blocked", "failed", "exhausted"]);
 
 type DataSourceKey = typeof DATA_SOURCES[number]["key"];
 
+async function safeQueryAll<T>(
+  db: Env["POP_BRIEF_DB"],
+  sql: string,
+  params: unknown[] = [],
+  label = "queryAll",
+): Promise<T[]> {
+  try {
+    return await queryAll<T>(db, sql, params);
+  } catch (error) {
+    console.warn(`[watchtower.health] ${label} failed; returning empty result`, error);
+    return [];
+  }
+}
+
 function formatDateInTimezone(now: Date, timeZone = LOCAL_TIMEZONE): { ymd: string; hour: number } {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone,
@@ -261,7 +275,7 @@ health.get("/status", async (c) => {
   }));
 
   // 7. Integrity summary from canonical monitoring tables pushed into D1 mirror
-  const collectionFailures = await queryAll<{
+  const collectionFailures = await safeQueryAll<{
     data_source: string;
     status: string;
     error_message: string | null;
@@ -274,7 +288,9 @@ health.get("/status", async (c) => {
      FROM data_collections
      WHERE DATE(started_at) >= DATE('now', '-3 day')
        AND (status = 'failed' OR properties_failed > properties_total * 0.2)
-     ORDER BY started_at DESC`
+     ORDER BY started_at DESC`,
+    [],
+    "collectionFailures"
   );
 
   const coreFailures = collectionFailures.filter((row) => CORE_FAILURE_SOURCES.has(String(row.data_source || "").toLowerCase()));
@@ -314,7 +330,7 @@ health.get("/status", async (c) => {
       })),
   ].slice(0, 6);
 
-  const dailyCollectionRows = await queryAll<{
+  const dailyCollectionRows = await safeQueryAll<{
     data_source: string;
     status: string | null;
     properties_total: number | null;
@@ -344,7 +360,9 @@ health.get("/status", async (c) => {
         notes
       FROM data_collections
       WHERE collection_date = DATE('now', 'localtime')
-      ORDER BY started_at ASC, data_source ASC`
+      ORDER BY started_at ASC, data_source ASC`,
+    [],
+    "dailyCollectionRows"
   );
 
   const dailyCollections = dailyCollectionRows.map((row) => {
@@ -401,7 +419,7 @@ health.get("/status", async (c) => {
     unresolved_sources: unresolvedSources,
   };
 
-  const retryQueueRows = await queryAll<{
+  const retryQueueRows = await safeQueryAll<{
     queue_id: number;
     collection_date: string;
     data_source: string;
@@ -441,7 +459,9 @@ health.get("/status", async (c) => {
       WHERE collection_date = DATE('now', 'localtime')
         AND status NOT IN ('resolved', 'exhausted')
       ORDER BY COALESCE(next_attempt_at, created_at) ASC, queue_id ASC
-      LIMIT 30`
+      LIMIT 30`,
+    [],
+    "retryQueueRows"
   );
 
   const retryQueueStatusCounts = retryQueueRows.reduce<Record<string, number>>((acc, row) => {
@@ -455,7 +475,7 @@ health.get("/status", async (c) => {
     return acc;
   }, {});
 
-  const collectionHistory = await queryAll<{
+  const collectionHistory = await safeQueryAll<{
     collection_date: string;
     sources_total: number;
     sources_completed: number;
@@ -482,7 +502,9 @@ health.get("/status", async (c) => {
       FROM data_collections
       WHERE collection_date >= DATE('now', 'localtime', '-6 day')
       GROUP BY collection_date
-      ORDER BY collection_date ASC`
+      ORDER BY collection_date ASC`,
+    [],
+    "collectionHistory"
   );
 
   const sourceCoverageHistory = await Promise.all(
@@ -490,7 +512,7 @@ health.get("/status", async (c) => {
       const whereClause = src.key === "t7" || src.key === "t30"
         ? `WHERE ${src.dateCol} IS NOT NULL AND type = 'community'`
         : `WHERE ${src.dateCol} IS NOT NULL`;
-      const points = await queryAll<{ bucket_date: string; coverage: number }>(
+      const points = await safeQueryAll<{ bucket_date: string; coverage: number }>(
         db,
         `SELECT
             ${src.dateCol} as bucket_date,
@@ -499,7 +521,9 @@ health.get("/status", async (c) => {
           ${whereClause}
           GROUP BY ${src.dateCol}
           ORDER BY ${src.dateCol} DESC
-          LIMIT 6`
+          LIMIT 6`,
+        [],
+        `sourceCoverageHistory:${src.key}`
       );
 
       return {
@@ -516,7 +540,7 @@ health.get("/status", async (c) => {
     })
   );
 
-  const sourceTimelineRows = await queryAll<{
+  const sourceTimelineRows = await safeQueryAll<{
     collection_date: string;
     data_source: string;
     status: string | null;
@@ -538,7 +562,9 @@ health.get("/status", async (c) => {
         rate_limit_hits
       FROM data_collections
       WHERE collection_date >= DATE('now', 'localtime', '-6 day')
-      ORDER BY data_source ASC, collection_date ASC`
+      ORDER BY data_source ASC, collection_date ASC`,
+    [],
+    "sourceTimelineRows"
   );
 
   const sourceTimelineMap = new Map<string, {
