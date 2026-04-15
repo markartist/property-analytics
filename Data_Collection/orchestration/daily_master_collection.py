@@ -43,7 +43,11 @@ from Data_Collection.collectors.guest_card_collector import GuestCardCollector
 from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollector
 from Data_Collection.collectors.cloudflare_cache_audit import CloudflareCacheAuditCollector
 from Data_Collection.monitoring.alert_sender import DataAlertEmailer
-from utils.ksm import resolve_secret
+from Data_Collection.utils.source_freshness_policy import evaluate_source_freshness, is_guest_card_harvest_suspended
+from apps.api.scripts.wrangler_auth import build_runtime_env as build_wrangler_runtime_env
+from utils.config_manager import Config
+from utils.keeper_file_materializer import materialize_keeper_file
+from utils.ksm import resolve_secret, resolve_secret_from_multiple_notations
 
 # Preflight validation
 validate_preflight(__file__)
@@ -70,13 +74,19 @@ class PortfolioDataCollector:
         # Paths
         self.base_dir = Path(__file__).parent.parent.parent  # Property_Analytics root
         self.registry_path = self.base_dir / 'config' / 'venterra_properties_official.json'
-        self.ga4_creds_path = Path('/Users/mark/Spotlight_Properties_Report/config/venterra-property-analytics-8e67b1bcc684.json')
+        self.ga4_creds_path = Config.get_ga4_credentials_path()
         # CANONICAL DATABASE - single source of truth for all collectors
         self.db_path = Path('/Users/mark/Property_Analytics/data/portfolio_analytics.db')
         
         # GSC credentials paths - SEPARATE for main properties vs Cendana
-        self.main_gsc_creds_path = self.base_dir / 'credentials' / 'client_secret.json'
-        self.main_gsc_token_path = self.base_dir / 'credentials' / 'gsc_token_main.pickle'
+        self.main_gsc_creds_path = materialize_keeper_file(
+            uid_env_var='KSM_GSC_CLIENT_SECRET_UID',
+            fallback_path=str(self.base_dir / 'credentials' / 'client_secret.json'),
+        )
+        self.main_gsc_token_path = materialize_keeper_file(
+            uid_env_var='KSM_GSC_TOKEN_UID',
+            fallback_path=str(self.base_dir / 'credentials' / 'gsc_token_main.pickle'),
+        )
         
         # Results tracking
         self.results = {
@@ -109,6 +119,199 @@ class PortfolioDataCollector:
         # Credential warnings from pre-flight check
         self.credential_warnings = []
         self._run_lock_file = None
+        self.source_level_retry_property_id = "__source__"
+
+    @staticmethod
+    def _is_transient_ga4_error(message: str) -> bool:
+        text = (message or "").lower()
+        transient_tokens = (
+            'deadline exceeded',
+            'connection reset by peer',
+            'broken pipe',
+            'temporarily unavailable',
+            'internal error',
+            'service unavailable',
+            'timed out',
+            'timeout',
+            'recvmsg',
+            'sendmsg',
+            '503',
+            '504',
+        )
+        return any(token in text for token in transient_tokens)
+
+    @staticmethod
+    def _is_transient_gsc_error(message: str) -> bool:
+        text = (message or "").lower()
+        transient_tokens = (
+            'deadline exceeded',
+            'timed out',
+            'timeout',
+            'internal error',
+            'service unavailable',
+            'temporarily unavailable',
+            'backend error',
+            'read timed out',
+            'connection reset',
+            '503',
+            '504',
+            '500',
+        )
+        return any(token in text for token in transient_tokens)
+
+    def _collect_ga4_for_property(self, prop, start_date, end_date, collection_id: int) -> tuple[str, str | None]:
+        prop_name = prop['name']
+        ga4_id = prop['ga4_property_id']
+
+        request = RunReportRequest(
+            property=f"properties/{ga4_id}",
+            dimensions=[Dimension(name="date")],
+            date_ranges=[DateRange(
+                start_date=start_date.strftime('%Y-%m-%d'),
+                end_date=end_date.strftime('%Y-%m-%d')
+            )],
+            metrics=[
+                Metric(name="sessions"),
+                Metric(name="engagedSessions"),
+                Metric(name="totalUsers"),
+                Metric(name="newUsers"),
+                Metric(name="screenPageViews"),
+                Metric(name="averageSessionDuration"),
+                Metric(name="bounceRate")
+            ]
+        )
+
+        response = self.ga4_client.run_report(request)
+        if not response.rows:
+            return 'skipped', 'No data'
+
+        days_collected = 0
+        for row in response.rows:
+            date_str = row.dimension_values[0].value
+            formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
+            self.db.insert_ga4_daily_metrics(
+                property_id=ga4_id,
+                metric_date=formatted_date,
+                data={
+                    'sessions': int(row.metric_values[0].value),
+                    'engaged_sessions': int(row.metric_values[1].value),
+                    'total_users': int(row.metric_values[2].value),
+                    'new_users': int(row.metric_values[3].value),
+                    'pageviews': int(row.metric_values[4].value),
+                    'avg_session_duration': float(row.metric_values[5].value),
+                    'bounce_rate': float(row.metric_values[6].value)
+                },
+                collection_id=collection_id
+            )
+            days_collected += 1
+
+        traffic_request = RunReportRequest(
+            property=f"properties/{ga4_id}",
+            dimensions=[Dimension(name="date"), Dimension(name="sessionDefaultChannelGrouping")],
+            date_ranges=[DateRange(
+                start_date=start_date.strftime('%Y-%m-%d'),
+                end_date=end_date.strftime('%Y-%m-%d')
+            )],
+            metrics=[
+                Metric(name="sessions"),
+                Metric(name="totalUsers"),
+                Metric(name="newUsers"),
+                Metric(name="engagedSessions"),
+                Metric(name="conversions"),
+                Metric(name="engagementRate"),
+                Metric(name="bounceRate")
+            ]
+        )
+        traffic_response = self.ga4_client.run_report(traffic_request)
+        if traffic_response.rows:
+            for row in traffic_response.rows:
+                date_str = row.dimension_values[0].value
+                formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                self.db.insert_ga4_traffic_source(
+                    property_id=ga4_id,
+                    metric_date=formatted_date,
+                    channel_group=row.dimension_values[1].value,
+                    data={
+                        'sessions': int(row.metric_values[0].value),
+                        'total_users': int(row.metric_values[1].value),
+                        'new_users': int(row.metric_values[2].value),
+                        'engaged_sessions': int(row.metric_values[3].value),
+                        'conversions': int(row.metric_values[4].value),
+                        'engagement_rate': float(row.metric_values[5].value),
+                        'bounce_rate': float(row.metric_values[6].value)
+                    }
+                )
+
+        device_request = RunReportRequest(
+            property=f"properties/{ga4_id}",
+            dimensions=[Dimension(name="date"), Dimension(name="deviceCategory")],
+            date_ranges=[DateRange(
+                start_date=start_date.strftime('%Y-%m-%d'),
+                end_date=end_date.strftime('%Y-%m-%d')
+            )],
+            metrics=[
+                Metric(name="sessions"),
+                Metric(name="engagedSessions"),
+                Metric(name="conversions"),
+                Metric(name="engagementRate"),
+                Metric(name="bounceRate")
+            ]
+        )
+        device_response = self.ga4_client.run_report(device_request)
+        if device_response.rows:
+            for row in device_response.rows:
+                date_str = row.dimension_values[0].value
+                formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
+                self.db.insert_ga4_device_metrics(
+                    property_id=ga4_id,
+                    metric_date=formatted_date,
+                    device_category=row.dimension_values[1].value,
+                    data={
+                        'sessions': int(row.metric_values[0].value),
+                        'engaged_sessions': int(row.metric_values[1].value),
+                        'conversions': int(row.metric_values[2].value),
+                        'engagement_rate': float(row.metric_values[3].value),
+                        'bounce_rate': float(row.metric_values[4].value)
+                    }
+                )
+
+        return 'success', f'Collected {days_collected} days + traffic + devices'
+
+    def _queue_property_retry(
+        self,
+        data_source: str,
+        property_id: str | None,
+        property_name: str,
+        error_message: str,
+        retry_disposition: str = 'retryable_now',
+        next_attempt_minutes: int = 30,
+        attempt_count: int = 1,
+    ) -> None:
+        if not hasattr(self, 'db') or self.db is None:
+            return
+        self.db.upsert_collection_retry_queue(
+            collection_date=datetime.now().date(),
+            data_source=data_source,
+            property_id=property_id or self.source_level_retry_property_id,
+            property_name=property_name,
+            attempt_count=attempt_count,
+            status='pending',
+            retry_disposition=retry_disposition,
+            next_attempt_at=datetime.now() + timedelta(minutes=next_attempt_minutes),
+            last_error_type=retry_disposition,
+            last_error_message=error_message[:400],
+            notes=error_message[:400],
+        )
+
+    def _resolve_property_retry(self, data_source: str, property_id: str | None, note: str | None = None) -> None:
+        if not hasattr(self, 'db') or self.db is None:
+            return
+        self.db.resolve_collection_retry_queue(
+            collection_date=datetime.now().date(),
+            data_source=data_source,
+            property_id=property_id or self.source_level_retry_property_id,
+            notes=note,
+        )
         
         print('=' * 80)
         print('📊 PORTFOLIO DAILY DATA COLLECTION')
@@ -290,9 +493,12 @@ class PortfolioDataCollector:
         print('  SEMRush API...', end=' ')
         sys.stdout.flush()
         semrush_key_path = self.base_dir / 'Spotlight_Properties_Report' / 'config' / 'semrush_api_key.txt'
-        self.semrush_api_key = resolve_secret(
+        self.semrush_api_key = resolve_secret_from_multiple_notations(
             description='SEMRush API key',
-            notation_env_var='KSM_SEMRUSH_API_KEY_NOTATION',
+            notation_env_vars=[
+                'KSM_SEMRUSH_API_KEY_NOTATION',
+                'KSM_SEMRUSH_API_KEY_FILE_NOTATION',
+            ],
             direct_env_var='SEMRUSH_API_KEY',
             file_path=semrush_key_path,
             default_profile='data-collection-prod',
@@ -303,9 +509,12 @@ class PortfolioDataCollector:
         print('  GTMetrix API...', end=' ')
         sys.stdout.flush()
         gtmetrix_key_path = self.base_dir / 'Spotlight_Properties_Report' / 'config' / 'GTMetrix_API_Key.txt'
-        self.gtmetrix_api_key = resolve_secret(
+        self.gtmetrix_api_key = resolve_secret_from_multiple_notations(
             description='GTMetrix API key',
-            notation_env_var='KSM_GTMETRIX_API_KEY_NOTATION',
+            notation_env_vars=[
+                'KSM_GTMETRIX_API_KEY_NOTATION',
+                'KSM_GTMETRIX_API_KEY_FILE_NOTATION',
+            ],
             direct_env_var='GTMETRIX_API_KEY',
             file_path=gtmetrix_key_path,
             default_profile='data-collection-prod',
@@ -356,6 +565,7 @@ class PortfolioDataCollector:
         failed = 0
         success = 0
         error_messages = []
+        failed_props = []
 
         for i, prop in enumerate(ga4_properties, 1):
             prop_name = prop['name']
@@ -365,166 +575,13 @@ class PortfolioDataCollector:
             sys.stdout.flush()
             
             try:
-                request = RunReportRequest(
-                    property=f"properties/{ga4_id}",
-                    dimensions=[Dimension(name="date")],  # CRITICAL: Get data broken down by date
-                    date_ranges=[DateRange(
-                        start_date=start_date.strftime('%Y-%m-%d'),
-                        end_date=end_date.strftime('%Y-%m-%d')
-                    )],
-                    metrics=[
-                        Metric(name="sessions"),
-                        Metric(name="engagedSessions"),
-                        Metric(name="totalUsers"),
-                        Metric(name="newUsers"),
-                        Metric(name="screenPageViews"),
-                        Metric(name="averageSessionDuration"),
-                        Metric(name="bounceRate")
-                    ]
-                )
-                
-                response = self.ga4_client.run_report(request)
-                
-                if response.rows:
-                    # Process each day separately
-                    days_collected = 0
-                    for row in response.rows:
-                        # Get the date from dimension value (format: YYYYMMDD)
-                        date_str = row.dimension_values[0].value
-                        formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
-                        
-                        sessions = int(row.metric_values[0].value)
-                        engaged = int(row.metric_values[1].value)
-                        users = int(row.metric_values[2].value)
-                        new_users = int(row.metric_values[3].value)
-                        pageviews = int(row.metric_values[4].value)
-                        avg_session_duration = float(row.metric_values[5].value)
-                        bounce_rate = float(row.metric_values[6].value)
-                        
-                        # Store in database with actual date
-                        self.db.insert_ga4_daily_metrics(
-                            property_id=ga4_id,
-                            metric_date=formatted_date,
-                            data={
-                                'sessions': sessions,
-                                'engaged_sessions': engaged,
-                                'total_users': users,
-                                'new_users': new_users,
-                                'pageviews': pageviews,
-                                'avg_session_duration': avg_session_duration,
-                                'bounce_rate': bounce_rate
-                            },
-                            collection_id=collection_id
-                        )
-                        days_collected += 1
-                    
-                    # SECOND REQUEST: Get traffic source breakdown (Organic Search, Direct, etc.)
-                    traffic_request = RunReportRequest(
-                        property=f"properties/{ga4_id}",
-                        dimensions=[
-                            Dimension(name="date"),
-                            Dimension(name="sessionDefaultChannelGrouping")
-                        ],
-                        date_ranges=[DateRange(
-                            start_date=start_date.strftime('%Y-%m-%d'),
-                            end_date=end_date.strftime('%Y-%m-%d')
-                        )],
-                        metrics=[
-                            Metric(name="sessions"),
-                            Metric(name="totalUsers"),
-                            Metric(name="newUsers"),
-                            Metric(name="engagedSessions"),
-                            Metric(name="conversions"),
-                            Metric(name="engagementRate"),
-                            Metric(name="bounceRate")
-                        ]
-                    )
-                    
-                    traffic_response = self.ga4_client.run_report(traffic_request)
-                    
-                    if traffic_response.rows:
-                        for row in traffic_response.rows:
-                            date_str = row.dimension_values[0].value
-                            formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
-                            channel = row.dimension_values[1].value
-                            
-                            traffic_sessions = int(row.metric_values[0].value)
-                            traffic_total_users = int(row.metric_values[1].value)
-                            traffic_new_users = int(row.metric_values[2].value)
-                            traffic_engaged = int(row.metric_values[3].value)
-                            traffic_conversions = int(row.metric_values[4].value)
-                            traffic_engagement_rate = float(row.metric_values[5].value)
-                            traffic_bounce_rate = float(row.metric_values[6].value)
-                            
-                            # Store traffic source data
-                            self.db.insert_ga4_traffic_source(
-                                property_id=ga4_id,
-                                metric_date=formatted_date,
-                                channel_group=channel,
-                                data={
-                                    'sessions': traffic_sessions,
-                                    'total_users': traffic_total_users,
-                                    'new_users': traffic_new_users,
-                                    'engaged_sessions': traffic_engaged,
-                                    'conversions': traffic_conversions,
-                                    'engagement_rate': traffic_engagement_rate,
-                                    'bounce_rate': traffic_bounce_rate
-                                }
-                            )
-                    
-                    # THIRD REQUEST: Get device breakdown (mobile, desktop, tablet)
-                    device_request = RunReportRequest(
-                        property=f"properties/{ga4_id}",
-                        dimensions=[
-                            Dimension(name="date"),
-                            Dimension(name="deviceCategory")
-                        ],
-                        date_ranges=[DateRange(
-                            start_date=start_date.strftime('%Y-%m-%d'),
-                            end_date=end_date.strftime('%Y-%m-%d')
-                        )],
-                        metrics=[
-                            Metric(name="sessions"),
-                            Metric(name="engagedSessions"),
-                            Metric(name="conversions"),
-                            Metric(name="engagementRate"),
-                            Metric(name="bounceRate")
-                        ]
-                    )
-                    
-                    device_response = self.ga4_client.run_report(device_request)
-                    
-                    if device_response.rows:
-                        for row in device_response.rows:
-                            date_str = row.dimension_values[0].value
-                            formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
-                            device = row.dimension_values[1].value
-                            
-                            device_sessions = int(row.metric_values[0].value)
-                            device_engaged = int(row.metric_values[1].value)
-                            device_conversions = int(row.metric_values[2].value)
-                            device_engagement_rate = float(row.metric_values[3].value)
-                            device_bounce_rate = float(row.metric_values[4].value)
-                            
-                            # Store device data
-                            self.db.insert_ga4_device_metrics(
-                                property_id=ga4_id,
-                                metric_date=formatted_date,
-                                device_category=device,
-                                data={
-                                    'sessions': device_sessions,
-                                    'engaged_sessions': device_engaged,
-                                    'conversions': device_conversions,
-                                    'engagement_rate': device_engagement_rate,
-                                    'bounce_rate': device_bounce_rate
-                                }
-                            )
-                    
-                    print(f'   ✅ Collected {days_collected} days + traffic + devices')
+                status, details = self._collect_ga4_for_property(prop, start_date, end_date, collection_id)
+                if status == 'success':
+                    print(f'   ✅ {details}')
                     self.results['ga4']['success'] += 1
                     success += 1
                 else:
-                    print(f'   ⚠️  No data')
+                    print(f'   ⚠️  {details}')
                     self.results['ga4']['skipped'] += 1
                     
             except Exception as e:
@@ -533,6 +590,15 @@ class PortfolioDataCollector:
                 self.results['ga4']['failed'] += 1
                 failed += 1
                 error_messages.append(f"{prop_name}: {error_msg}")
+                failed_props.append((prop, error_msg))
+                self._queue_property_retry(
+                    data_source='ga4',
+                    property_id=ga4_id,
+                    property_name=prop_name,
+                    error_message=error_msg,
+                    retry_disposition='retryable_now' if self._is_transient_ga4_error(error_msg) else 'retryable_later',
+                    next_attempt_minutes=20 if self._is_transient_ga4_error(error_msg) else 45,
+                )
                 self.results['errors'].append({
                     'property': prop_name,
                     'collector': 'GA4',
@@ -542,12 +608,77 @@ class PortfolioDataCollector:
             # Small delay to avoid rate limits
             time.sleep(0.1)
 
+        transient_failed_props = [
+            (prop, error_msg) for prop, error_msg in failed_props
+            if self._is_transient_ga4_error(error_msg)
+        ]
+        if transient_failed_props:
+            print()
+            print(f'🔁 Retrying transient GA4 failures for {len(transient_failed_props)} properties...')
+            time.sleep(5)
+            recovered = 0
+            still_failed = []
+            for retry_index, (prop, original_error) in enumerate(transient_failed_props, 1):
+                prop_name = prop['name']
+                ga4_id = prop['ga4_property_id']
+                print(f'   Retry {retry_index}/{len(transient_failed_props)}. {prop_name} (GA4: {ga4_id})')
+                try:
+                    status, details = self._collect_ga4_for_property(prop, start_date, end_date, collection_id)
+                    if status == 'success':
+                        print(f'      ✅ Recovered: {details}')
+                        recovered += 1
+                        success += 1
+                        failed -= 1
+                        self.results['ga4']['success'] += 1
+                        self.results['ga4']['failed'] = max(0, self.results['ga4']['failed'] - 1)
+                        self._resolve_property_retry('ga4', ga4_id, 'Recovered during in-run transient retry')
+                    elif status == 'skipped':
+                        print(f'      ⚠️  Retry returned no data')
+                        still_failed.append((prop_name, original_error))
+                        self._queue_property_retry(
+                            data_source='ga4',
+                            property_id=ga4_id,
+                            property_name=prop_name,
+                            error_message='Retry returned no data',
+                            retry_disposition='retryable_later',
+                            next_attempt_minutes=45,
+                            attempt_count=2,
+                        )
+                    else:
+                        still_failed.append((prop_name, original_error))
+                except Exception as e:
+                    retry_error = str(e)[:100]
+                    print(f'      ❌ Still failing: {retry_error}')
+                    still_failed.append((prop_name, retry_error))
+                    self._queue_property_retry(
+                        data_source='ga4',
+                        property_id=ga4_id,
+                        property_name=prop_name,
+                        error_message=retry_error,
+                        retry_disposition='retryable_later',
+                        next_attempt_minutes=45,
+                        attempt_count=2,
+                    )
+                time.sleep(0.2)
+
+            if recovered:
+                error_messages = [
+                    msg for msg in error_messages
+                    if not any(msg.startswith(f"{prop['name']}:") for prop, _ in transient_failed_props)
+                ]
+                error_messages.extend(f"{name}: {msg}" for name, msg in still_failed[:5])
+                print(f'   Recovered {recovered}/{len(transient_failed_props)} transient GA4 failures')
+
         summary_error = '; '.join(error_messages[:5]) if error_messages else None
         self.db.complete_data_collection(
             collection_id=collection_id,
             properties_collected=success,
             properties_failed=failed,
-            error_message=summary_error
+            error_message=summary_error,
+            properties_total=len(ga4_properties),
+            properties_success=success,
+            status='partial' if failed > 0 else 'completed',
+            notes='GA4 first pass complete; property-level retries queued for unresolved failures.' if failed > 0 else 'GA4 collection completed cleanly.'
         )
         
         print()
@@ -739,6 +870,16 @@ class PortfolioDataCollector:
         
         print(f'Properties with GSC access: {len(gsc_properties)}/{len(properties)}')
         print()
+
+        collection_id = self.db.start_data_collection(
+            collection_date=datetime.now().date(),
+            collection_type='daily',
+            data_source='gsc'
+        )
+        failed = 0
+        success = 0
+        error_messages = []
+        failed_props = []
         
         for i, prop in enumerate(gsc_properties, 1):
             prop_name = prop['name']
@@ -790,6 +931,8 @@ class PortfolioDataCollector:
                     
                     print(f'   ✅ Collected {days_collected} days')
                     self.results['gsc']['success'] += 1
+                    success += 1
+                    self._resolve_property_retry('gsc', gsc_url, 'GSC data collected successfully')
                     
                     # Also collect query-level data for this property (same 30-day window)
                     self._collect_gsc_queries(prop, gsc_url, start_date, end_date)
@@ -801,6 +944,17 @@ class PortfolioDataCollector:
                 error_msg = str(e)[:100]
                 print(f'   ❌ Error: {error_msg}')
                 self.results['gsc']['failed'] += 1
+                failed += 1
+                error_messages.append(f"{prop_name}: {error_msg}")
+                failed_props.append((prop, error_msg))
+                self._queue_property_retry(
+                    data_source='gsc',
+                    property_id=gsc_url,
+                    property_name=prop_name,
+                    error_message=error_msg,
+                    retry_disposition='retryable_now' if self._is_transient_gsc_error(error_msg) else 'retryable_later',
+                    next_attempt_minutes=20 if self._is_transient_gsc_error(error_msg) else 45,
+                )
                 self.results['errors'].append({
                     'property': prop_name,
                     'collector': 'GSC',
@@ -809,6 +963,100 @@ class PortfolioDataCollector:
             
             # Delay to avoid rate limits
             time.sleep(0.5)
+
+        transient_failed_props = [
+            (prop, error_msg) for prop, error_msg in failed_props
+            if self._is_transient_gsc_error(error_msg)
+        ]
+        if transient_failed_props:
+            print()
+            print(f'🔁 Retrying transient GSC failures for {len(transient_failed_props)} properties...')
+            time.sleep(5)
+            recovered = 0
+            still_failed = []
+            for retry_index, (prop, original_error) in enumerate(transient_failed_props, 1):
+                prop_name = prop['name']
+                gsc_url = prop['gsc_url']
+                print(f'   Retry {retry_index}/{len(transient_failed_props)}. {prop_name}')
+                try:
+                    response = self.gsc_service.searchanalytics().query(
+                        siteUrl=gsc_url,
+                        body={
+                            'startDate': start_date.strftime('%Y-%m-%d'),
+                            'endDate': end_date.strftime('%Y-%m-%d'),
+                            'dimensions': ['date']
+                        }
+                    ).execute()
+                    rows = response.get('rows', [])
+                    if rows:
+                        days_collected = 0
+                        for row in rows:
+                            date_str = row.get('keys', [''])[0]
+                            self.db.insert_gsc_daily_metrics(
+                                property_id=gsc_url,
+                                metric_date=date_str,
+                                data={
+                                    'clicks': row.get('clicks', 0),
+                                    'impressions': row.get('impressions', 0),
+                                    'ctr': row.get('ctr', 0) * 100,
+                                    'position': row.get('position', 0)
+                                }
+                            )
+                            days_collected += 1
+                        self._collect_gsc_queries(prop, gsc_url, start_date, end_date)
+                        print(f'      ✅ Recovered: {days_collected} days')
+                        recovered += 1
+                        success += 1
+                        failed -= 1
+                        self.results['gsc']['success'] += 1
+                        self.results['gsc']['failed'] = max(0, self.results['gsc']['failed'] - 1)
+                        self._resolve_property_retry('gsc', gsc_url, 'Recovered during in-run transient retry')
+                    else:
+                        print('      ⚠️  Retry returned no data')
+                        still_failed.append((prop_name, original_error))
+                        self._queue_property_retry(
+                            data_source='gsc',
+                            property_id=gsc_url,
+                            property_name=prop_name,
+                            error_message='Retry returned no data',
+                            retry_disposition='retryable_later',
+                            next_attempt_minutes=45,
+                            attempt_count=2,
+                        )
+                except Exception as e:
+                    retry_error = str(e)[:100]
+                    print(f'      ❌ Still failing: {retry_error}')
+                    still_failed.append((prop_name, retry_error))
+                    self._queue_property_retry(
+                        data_source='gsc',
+                        property_id=gsc_url,
+                        property_name=prop_name,
+                        error_message=retry_error,
+                        retry_disposition='retryable_later',
+                        next_attempt_minutes=45,
+                        attempt_count=2,
+                    )
+                time.sleep(0.5)
+
+            if recovered:
+                error_messages = [
+                    msg for msg in error_messages
+                    if not any(msg.startswith(f"{prop['name']}:") for prop, _ in transient_failed_props)
+                ]
+                error_messages.extend(f"{name}: {msg}" for name, msg in still_failed[:5])
+                print(f'   Recovered {recovered}/{len(transient_failed_props)} transient GSC failures')
+
+        summary_error = '; '.join(error_messages[:5]) if error_messages else None
+        self.db.complete_data_collection(
+            collection_id=collection_id,
+            properties_collected=success,
+            properties_failed=failed,
+            error_message=summary_error,
+            properties_total=len(gsc_properties),
+            properties_success=success,
+            status='partial' if failed > 0 else 'completed',
+            notes='GSC first pass complete; property-level retries queued for unresolved failures.' if failed > 0 else 'GSC collection completed cleanly.'
+        )
         
         print()
         print(f'GSC Summary (Main): ✅ {self.results["gsc"]["success"]} | ⚠️  {self.results["gsc"]["skipped"]} | ❌ {self.results["gsc"]["failed"]}')
@@ -1705,6 +1953,8 @@ class PortfolioDataCollector:
         print('📢 COLLECTING GOOGLE ADS DATA')
         print('=' * 80)
         print()
+
+        collection_id = None
         
         try:
             # Import the Google Ads collector
@@ -1713,15 +1963,96 @@ class PortfolioDataCollector:
             
             # Create collector (not in test mode even if parent is)
             ads_collector = GoogleAdsCollector(test_mode=False)
+            collection_id = self.db.start_data_collection(
+                collection_date=datetime.now().date(),
+                collection_type='daily',
+                data_source='google_ads'
+            )
             
             # Collect yesterday's data
             yesterday = datetime.now().date() - timedelta(days=1)
             ads_collector.run(start_date=yesterday, end_date=yesterday)
+
+            failed_property_names = list(ads_collector.results.get('failed_properties') or [])
+            for property_name in failed_property_names:
+                self._queue_property_retry(
+                    data_source='google_ads',
+                    property_id=property_name,
+                    property_name=property_name,
+                    error_message='Campaign metrics API or mapping failure on first pass',
+                    retry_disposition='retryable_later',
+                    next_attempt_minutes=45,
+                )
+            if failed_property_names:
+                print()
+                print(f'🔁 Retrying Google Ads for failed properties only ({len(failed_property_names)})...')
+                retry_collector = GoogleAdsCollector(
+                    test_mode=False,
+                    property_names=failed_property_names,
+                )
+                retry_collector.run(start_date=yesterday, end_date=yesterday)
+                recovered = len(retry_collector.results.get('success_properties') or [])
+                if recovered:
+                    print(f'   ✅ Recovered {recovered}/{len(failed_property_names)} Google Ads properties on targeted retry')
+                    for property_name in (retry_collector.results.get('success_properties') or []):
+                        self._resolve_property_retry('google_ads', property_name, f'{property_name} recovered on targeted retry')
+                remaining_failed = set(retry_collector.results.get('failed_properties') or [])
+                combined_success = set(ads_collector.results.get('success_properties') or []) | set(
+                    retry_collector.results.get('success_properties') or []
+                )
+                ads_collector.results['success'] = len(combined_success)
+                ads_collector.results['failed'] = len(remaining_failed)
+                ads_collector.results['failed_properties'] = sorted(remaining_failed)
+                ads_collector.results['success_properties'] = sorted(combined_success)
+                combined_no_activity = set(ads_collector.results.get('no_activity_properties') or []) | set(
+                    retry_collector.results.get('no_activity_properties') or []
+                )
+                ads_collector.results['no_activity_properties'] = sorted(combined_no_activity)
+                ads_collector.results['skipped'] = len(combined_no_activity)
+                ads_collector.results['errors'] = [
+                    err for err in (retry_collector.results.get('errors') or [])
+                    if err.get('property') in remaining_failed
+                ]
+                for property_name in remaining_failed:
+                    self._queue_property_retry(
+                        data_source='google_ads',
+                        property_id=property_name,
+                        property_name=property_name,
+                        error_message='Still missing after targeted Google Ads retry',
+                        retry_disposition='retryable_later',
+                        next_attempt_minutes=60,
+                        attempt_count=2,
+                    )
             
             # Aggregate results
             self.results['google_ads']['success'] = ads_collector.results['success']
             self.results['google_ads']['failed'] = ads_collector.results['failed']
             self.results['google_ads']['skipped'] = ads_collector.results['skipped']
+            summary_error = '; '.join(
+                f"{err.get('property')}: {err.get('error')}"
+                for err in (ads_collector.results.get('errors') or [])[:5]
+            ) or None
+            total_properties = len(ads_collector.get_properties_with_google_ads())
+            ads_notes = (
+                f"Google Ads outcomes: {self.results['google_ads']['success']} active, "
+                f"{self.results['google_ads']['skipped']} no-activity, "
+                f"{self.results['google_ads']['failed']} retryable failure(s)."
+            )
+            if collection_id is not None:
+                self.db.complete_data_collection(
+                    collection_id=collection_id,
+                    properties_collected=self.results['google_ads']['success'],
+                    properties_failed=self.results['google_ads']['failed'],
+                    error_message=summary_error,
+                    properties_total=total_properties,
+                    properties_success=self.results['google_ads']['success'],
+                    status='partial' if self.results['google_ads']['failed'] > 0 else 'completed',
+                    notes=(
+                        f"{ads_notes} Only API or mapping failures were queued for targeted retry."
+                        if self.results['google_ads']['failed'] > 0
+                        else f"{ads_notes} No retryable failures remained."
+                    )
+                )
             
             print()
             print(f'Google Ads Summary: ✅ {self.results["google_ads"]["success"]} | ⚠️  {self.results["google_ads"]["skipped"]} | ❌ {self.results["google_ads"]["failed"]}')
@@ -1730,6 +2061,18 @@ class PortfolioDataCollector:
         except ImportError as e:
             print(f'   ⚠️  Google Ads collector not available: {e}')
             self.results['google_ads']['skipped'] = 1
+            if collection_id is not None:
+                self.db.complete_data_collection(
+                    collection_id=collection_id,
+                    properties_collected=0,
+                    properties_failed=0,
+                    properties_total=0,
+                    properties_success=0,
+                    properties_skipped=1,
+                    status='blocked',
+                    error_message=str(e)[:100],
+                    notes='Google Ads collector import failed'
+                )
             print()
         except Exception as e:
             print(f'   ❌ Error collecting Google Ads data: {e}')
@@ -1739,6 +2082,17 @@ class PortfolioDataCollector:
                 'collector': 'Google Ads',
                 'error': str(e)[:100]
             })
+            if collection_id is not None:
+                self.db.complete_data_collection(
+                    collection_id=collection_id,
+                    properties_collected=0,
+                    properties_failed=1,
+                    properties_total=1,
+                    properties_success=0,
+                    status='blocked',
+                    error_message=str(e)[:100],
+                    notes='Google Ads collection raised an exception before completion'
+                )
             print()
     
     def collect_psi_data(self):
@@ -1790,6 +2144,28 @@ class PortfolioDataCollector:
         print('=' * 80)
         print()
 
+        collection_id = self.db.start_data_collection(
+            collection_date=datetime.now().date(),
+            collection_type='daily',
+            data_source='guest_card'
+        )
+
+        if is_guest_card_harvest_suspended():
+            print('   ⏸️  Guest card harvest is intentionally suspended')
+            self.results['guest_card']['skipped'] = 1
+            self.db.complete_data_collection(
+                collection_id=collection_id,
+                properties_collected=0,
+                properties_failed=0,
+                properties_total=0,
+                properties_success=0,
+                properties_skipped=1,
+                status='completed',
+                notes='Guest card harvest suspended by operator policy; source intentionally excluded from closure and retries.'
+            )
+            print()
+            return
+
         try:
             collector = GuestCardCollector(db_path=self.db_path)
             result = collector.ingest_pending_files(collection_id=None)
@@ -1797,6 +2173,16 @@ class PortfolioDataCollector:
             if result.files_found == 0:
                 print('   ⚠️  No guest card CSV files found (nothing to process)')
                 self.results['guest_card']['skipped'] = 1
+                self.db.complete_data_collection(
+                    collection_id=collection_id,
+                    properties_collected=0,
+                    properties_failed=0,
+                    properties_total=0,
+                    properties_success=0,
+                    properties_skipped=1,
+                    status='completed',
+                    notes='No guest card CSV files found in the monitored drop.'
+                )
                 print()
                 return
 
@@ -1823,6 +2209,17 @@ class PortfolioDataCollector:
             print(f'Guest Card Summary: ✅ {self.results["guest_card"]["success"]} | ⚠️  {self.results["guest_card"]["skipped"]} | ❌ {self.results["guest_card"]["failed"]}')
             print()
 
+            self.db.complete_data_collection(
+                collection_id=collection_id,
+                properties_collected=self.results['guest_card']['success'],
+                properties_failed=self.results['guest_card']['failed'],
+                properties_total=result.files_found,
+                properties_success=self.results['guest_card']['success'],
+                properties_skipped=self.results['guest_card']['skipped'],
+                status='partial' if self.results['guest_card']['failed'] > 0 else 'completed',
+                notes='Guest card file ingest completed.'
+            )
+
         except Exception as e:
             print(f'   ❌ Error collecting Guest Card data: {e}')
             self.results['guest_card']['failed'] = 1
@@ -1831,6 +2228,16 @@ class PortfolioDataCollector:
                 'collector': 'Guest Card',
                 'error': str(e)[:100]
             })
+            self.db.complete_data_collection(
+                collection_id=collection_id,
+                properties_collected=0,
+                properties_failed=1,
+                error_message=str(e)[:400],
+                properties_total=1,
+                properties_success=0,
+                status='failed',
+                notes='Guest card ingest failed unexpectedly.'
+            )
             print()
 
     def collect_unit_availability_data(self):
@@ -1993,9 +2400,9 @@ class PortfolioDataCollector:
         """
         Validate guest card freshness for hard reliability gating.
 
-        Guest card exports arrive around 09:00-10:00 local, after the 05:00 run,
-        so next-day availability is expected. We allow up to 2 days of age to
-        tolerate timing delays and fail hard when older.
+        Guest card / BI inputs are manual morning feeds and typically do not
+        land before the 05:00 collector run or on weekends. Use business-day
+        expectation instead of a fixed calendar-age threshold.
         """
         try:
             conn = sqlite3.connect(self.db_path)
@@ -2009,16 +2416,34 @@ class PortfolioDataCollector:
             return "guest_card: no data found in guest_card_metrics"
 
         try:
-            latest_date = datetime.strptime(str(latest), "%Y-%m-%d").date()
+            expectation = evaluate_source_freshness('guest_cards', str(latest))
         except ValueError:
             return f"guest_card: invalid run_date format ({latest})"
 
-        age_days = (datetime.now().date() - latest_date).days
-        if age_days > max_allowed_age_days:
+        latest_date = expectation.latest_date
+        age_days = (datetime.now().date() - latest_date).days if latest_date else None
+        if expectation.status == 'stale':
             return (
                 f"guest_card: stale (latest={latest_date}, age={age_days}d, "
-                f"threshold={max_allowed_age_days}d)"
+                f"expected>={expectation.expected_latest_date}, business_lag={expectation.business_lag_days}d)"
             )
+        return None
+
+    def _resolve_support_script(self, script_name: str) -> Path | None:
+        """Resolve canonical support scripts with legacy fallback when needed."""
+        canonical = Path(__file__).parent / script_name
+        if canonical.exists():
+            return canonical
+
+        legacy_map = {
+            'validate_registry_completeness.py': self.base_dir / 'Portfolio_Monitoring' / 'validate_registry_completeness.py',
+        }
+        legacy = legacy_map.get(script_name)
+        if legacy and legacy.exists():
+            print(f'⚠️  Canonical support script missing, using legacy fallback: {legacy}')
+            return legacy
+
+        print(f'⚠️  Support script not found: {script_name}')
         return None
 
     def sync_d1_mirror(self):
@@ -2044,7 +2469,8 @@ class PortfolioDataCollector:
             # Keep daily mirror aligned to the most recent common Friday.
             result = subprocess.run(
                 [sys.executable, str(d1_script)],
-                timeout=2700  # 45 min
+                timeout=2700,  # 45 min
+                env=build_wrangler_runtime_env(),
             )
 
             if result.returncode == 0:
@@ -2222,27 +2648,30 @@ class PortfolioDataCollector:
                     'anomalies': anomalies  # Contains 'critical' and 'warnings' lists
                 }
                 
-                validation_script = Path(__file__).parent / 'validate_registry_completeness.py'
-                result = subprocess.run(
-                    [sys.executable, str(validation_script)],
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                    env={
-                        **os.environ,
-                        'COLLECTION_SUMMARY': json.dumps(collection_summary),
-                        'MONITORING_DATA': json.dumps(monitoring_data)
-                    }
-                )
-                
-                # Print validation output
-                print(result.stdout)
-                
-                if result.returncode != 0:
-                    print('⚠️  Registry validation found issues - check output above')
-                    print('   These issues have been logged to registry_validation_failures table')
+                validation_script = self._resolve_support_script('validate_registry_completeness.py')
+                if validation_script:
+                    result = subprocess.run(
+                        [sys.executable, str(validation_script)],
+                        capture_output=True,
+                        text=True,
+                        timeout=60,
+                        env={
+                            **os.environ,
+                            'COLLECTION_SUMMARY': json.dumps(collection_summary),
+                            'MONITORING_DATA': json.dumps(monitoring_data)
+                        }
+                    )
+                    
+                    # Print validation output
+                    print(result.stdout)
+                    
+                    if result.returncode != 0:
+                        print('⚠️  Registry validation found issues - check output above')
+                        print('   These issues have been logged to registry_validation_failures table')
+                    else:
+                        print('✅ Registry validation passed - all properties collecting data')
                 else:
-                    print('✅ Registry validation passed - all properties collecting data')
+                    print('⚠️  Registry validation skipped - no validator script is available')
                     
             except subprocess.TimeoutExpired:
                 print('❌ Registry validation timed out')
@@ -2257,22 +2686,25 @@ class PortfolioDataCollector:
             print()
             
             try:
-                quality_script = Path(__file__).parent / 'validate_data_quality.py'
-                quality_result = subprocess.run(
-                    [sys.executable, str(quality_script)],
-                    capture_output=True,
-                    text=True,
-                    timeout=120  # Longer timeout for comprehensive checks
-                )
-                
-                # Print quality validation output
-                print(quality_result.stdout)
-                
-                if quality_result.returncode != 0:
-                    print('ℹ️  Data quality checks found issues - see details above')
-                    print('   (Some issues like query impression mismatches are expected)')
+                quality_script = self._resolve_support_script('validate_data_quality.py')
+                if quality_script:
+                    quality_result = subprocess.run(
+                        [sys.executable, str(quality_script)],
+                        capture_output=True,
+                        text=True,
+                        timeout=120  # Longer timeout for comprehensive checks
+                    )
+                    
+                    # Print quality validation output
+                    print(quality_result.stdout)
+                    
+                    if quality_result.returncode != 0:
+                        print('ℹ️  Data quality checks found issues - see details above')
+                        print('   (Some issues like query impression mismatches are expected)')
+                    else:
+                        print('✅ All data quality checks passed')
                 else:
-                    print('✅ All data quality checks passed')
+                    print('⚠️  Data quality validation skipped - no validation script is available')
                     
             except subprocess.TimeoutExpired:
                 print('❌ Data quality validation timed out')
@@ -2313,9 +2745,10 @@ class PortfolioDataCollector:
                 critical_issues.append('d1_mirror: did not complete successfully')
             if alert_exit_code != 0:
                 critical_issues.append('alerts: delivery verification failed')
-            guest_card_issue = self._guest_card_freshness_issue(max_allowed_age_days=2)
-            if guest_card_issue:
-                critical_issues.append(guest_card_issue)
+            if not is_guest_card_harvest_suspended():
+                guest_card_issue = self._guest_card_freshness_issue(max_allowed_age_days=2)
+                if guest_card_issue:
+                    critical_issues.append(guest_card_issue)
 
             if critical_issues:
                 print()

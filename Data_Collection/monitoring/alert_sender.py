@@ -12,13 +12,21 @@ import sys
 import os
 import json
 import sqlite3
+import subprocess
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
+from urllib.parse import urlparse
 
 # Import from unified structure
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from Data_Collection.collectors.guest_card_collector import GuestCardCollector
+from Data_Collection.utils.daily_collection_closure import evaluate_daily_collection_closure
+from Data_Collection.utils.source_freshness_policy import evaluate_source_freshness, is_guest_card_harvest_suspended
 from Data_Collection.utils.email_sender import EmailSender
+from apps.api.scripts.wrangler_auth import build_runtime_env as build_wrangler_runtime_env
+from utils.pib_email_shell import wrap_pib_light_email
 
 
 class DataAlertEmailer:
@@ -29,14 +37,27 @@ class DataAlertEmailer:
         self.base_dir = Path(__file__).parent.parent.parent  # Property_Analytics root
         self.db_path = self.base_dir / 'data' / 'portfolio_analytics.db'
         self.registry_path = self.base_dir / 'config' / 'venterra_properties_official.json'
+        self.mirror_report_dir = self.base_dir / 'apps' / 'api' / 'scripts' / 'generated'
         
         # Load property registry
         with open(self.registry_path) as f:
             registry = json.load(f)
             self.properties = {p.get('ga4_property_id', p['name']): p['name'] 
                              for p in registry['properties']}
+            self._registry_properties = registry['properties']
         
         self.recipient = 'mlaufhutte@venterraliving.com'
+        backup = os.getenv("EMAIL_BACKUP_RECIPIENT", "").strip()
+        self.recipients = [self.recipient] + ([backup] if backup and backup != self.recipient else [])
+        self.delivery_log_dir = self.base_dir / 'logs' / 'email_delivery'
+        self.prelaunch_property_names = set()
+        self.prelaunch_gsc_urls = set()
+        self.core_failure_sources = {
+            'ga4', 'gsc', 'google_ads', 'guest_card', 'unit_availability', 'd1_mirror'
+        }
+        self.gsc_property_lookup = {}
+        self._load_prelaunch_registry_filters()
+        self._build_gsc_property_lookup()
         
         # Create unified email sender
         if not test_mode:
@@ -44,6 +65,199 @@ class DataAlertEmailer:
         
         if test_mode:
             print("🧪 TEST MODE: Email preview only (no actual send)")
+
+    def _latest_guest_card_date(self) -> str | None:
+        conn = sqlite3.connect(self.db_path)
+        try:
+            cursor = conn.cursor()
+            row = cursor.execute("SELECT MAX(run_date) FROM guest_card_metrics").fetchone()
+            return row[0] if row and row[0] else None
+        except sqlite3.OperationalError:
+            return None
+        finally:
+            conn.close()
+
+    def _pending_guest_card_files(self) -> list[Path]:
+        collector = GuestCardCollector(db_path=self.db_path)
+        return collector.get_pending_files()
+
+    def attempt_auto_remediation(self, collection_failures=None):
+        """
+        Safely self-heal the most common integrity gap:
+        restored guest card CSV backlog followed by a stale/failed D1 mirror.
+        """
+        actions = []
+        if self.test_mode:
+            return actions
+
+        if is_guest_card_harvest_suspended():
+            mirror_failure = self.check_d1_mirror_failure()
+            if mirror_failure is not None:
+                print("🛠️  Auto-remediation: running D1 mirror sync...")
+                d1_script = self.base_dir / 'apps' / 'api' / 'scripts' / 'd1_mirror_sync.py'
+                result = subprocess.run(
+                    [sys.executable, str(d1_script)],
+                    capture_output=True,
+                    text=True,
+                    timeout=2700,
+                    env=build_wrangler_runtime_env(),
+                )
+                tail_source = (result.stdout or "") + ("\n" + result.stderr if result.stderr else "")
+                actions.append({
+                    'action': 'd1_mirror_sync',
+                    'ok': result.returncode == 0,
+                    'details': tail_source.strip()[-500:] or f"exit={result.returncode}",
+                })
+            actions.append({
+                'action': 'guest_card_harvest_suspended',
+                'ok': True,
+                'details': 'Guest card harvest is intentionally suspended.',
+            })
+            return actions
+
+        pending_files = self._pending_guest_card_files()
+        latest_guest_card_date = self._latest_guest_card_date()
+        guest_card_expectation = evaluate_source_freshness('guest_cards', latest_guest_card_date)
+        guest_card_stale = guest_card_expectation.status == 'stale'
+
+        guest_card_ingested = False
+        if pending_files and guest_card_stale:
+            print("🛠️  Auto-remediation: ingesting pending guest card CSV backlog...")
+            collector = GuestCardCollector(db_path=self.db_path)
+            result = collector.ingest_pending_files(collection_id=None)
+            guest_card_ingested = result.files_processed > 0
+            actions.append({
+                'action': 'guest_card_ingest',
+                'ok': result.files_failed == 0,
+                'details': (
+                    f"files_found={result.files_found}, files_processed={result.files_processed}, "
+                    f"files_failed={result.files_failed}, rows_upserted={result.rows_upserted}"
+                ),
+            })
+
+        mirror_failure = self.check_d1_mirror_failure()
+        should_retry_mirror = guest_card_ingested or mirror_failure is not None
+        if should_retry_mirror:
+            print("🛠️  Auto-remediation: running D1 mirror sync...")
+            d1_script = self.base_dir / 'apps' / 'api' / 'scripts' / 'd1_mirror_sync.py'
+            result = subprocess.run(
+                [sys.executable, str(d1_script)],
+                capture_output=True,
+                text=True,
+                timeout=2700,
+                env=build_wrangler_runtime_env(),
+            )
+            tail_source = (result.stdout or "") + ("\n" + result.stderr if result.stderr else "")
+            actions.append({
+                'action': 'd1_mirror_sync',
+                'ok': result.returncode == 0,
+                'details': tail_source.strip()[-500:] or f"exit={result.returncode}",
+            })
+
+        return actions
+
+    def _load_prelaunch_registry_filters(self) -> None:
+        """Build non-blocking filters for prelaunch/non-live properties."""
+        lifecycle_tokens = (
+            'prelaunch',
+            'pre-launch',
+            'coming soon',
+            'not live',
+            'lease up',
+            'lease-up',
+            'under construction',
+            'future',
+        )
+        for prop in self._registry_properties:
+            lifecycle = " ".join(
+                [
+                    str(prop.get('lifecycle') or ''),
+                    str(prop.get('operational_status') or ''),
+                    str(prop.get('status') or ''),
+                ]
+            ).lower()
+            if any(token in lifecycle for token in lifecycle_tokens):
+                name = (prop.get('name') or '').strip()
+                if name:
+                    self.prelaunch_property_names.add(name.lower())
+                gsc_url = (prop.get('gsc_url') or '').strip()
+                if gsc_url:
+                    self.prelaunch_gsc_urls.add(gsc_url.rstrip('/').lower())
+
+    @staticmethod
+    def _normalize_url_key(url: str) -> str:
+        raw = (url or '').strip()
+        if not raw:
+            return ''
+        if raw.startswith('sc-domain:'):
+            return raw.rstrip('/').lower()
+        parsed = urlparse(raw)
+        if parsed.scheme and parsed.netloc:
+            path = parsed.path.rstrip('/')
+            return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}{path}/" if path else f"{parsed.scheme.lower()}://{parsed.netloc.lower()}/"
+        return raw.rstrip('/').lower()
+
+    @staticmethod
+    def _slugify(value: str) -> str:
+        text = (value or '').strip().lower()
+        text = re.sub(r'[^a-z0-9]+', '-', text).strip('-')
+        return text
+
+    def _build_gsc_property_lookup(self) -> None:
+        lookup = {}
+        for prop in self._registry_properties:
+            name = (prop.get('name') or '').strip()
+            if not name:
+                continue
+            for key in (
+                prop.get('gsc_url'),
+                prop.get('full_url'),
+                f"https://venterraliving.com/apartments/{prop.get('url_slug', '').strip('/')}/" if prop.get('url_slug') else None,
+                f"sc-domain:{prop.get('domain')}" if prop.get('domain') else None,
+            ):
+                normalized = self._normalize_url_key(str(key or ''))
+                if normalized:
+                    lookup[normalized] = name
+            url_slug = self._slugify(prop.get('url_slug') or name)
+            if url_slug:
+                lookup[f"slug:{url_slug}"] = name
+        self.gsc_property_lookup = lookup
+
+    def _resolve_gsc_property_name(self, url: str) -> str:
+        normalized = self._normalize_url_key(url)
+        if normalized in self.prelaunch_gsc_urls:
+            return ''
+
+        prop_name = self.gsc_property_lookup.get(normalized)
+        if prop_name:
+            return prop_name
+
+        parsed = urlparse(url)
+        path_bits = [bit for bit in parsed.path.split('/') if bit]
+        if len(path_bits) >= 2 and path_bits[0] == 'apartments':
+            slug = self._slugify(path_bits[1])
+            prop_name = self.gsc_property_lookup.get(f"slug:{slug}")
+            if prop_name:
+                return prop_name
+
+        fallback = url.replace('sc-domain:', '').replace('https://', '').replace('http://', '').replace('www.', '')
+        if '/' in fallback:
+            return fallback.split('/')[0]
+        return fallback
+
+    def _is_prelaunch_gsc_issue(self, source: str, error_message: str) -> bool:
+        """Return True when a GSC/GSC inspection failure references prelaunch property/url."""
+        source_l = (source or '').lower()
+        if 'gsc' not in source_l:
+            return False
+        text = (error_message or '').lower()
+        if not text:
+            return False
+        if any(name in text for name in self.prelaunch_property_names):
+            return True
+        if any(url in text for url in self.prelaunch_gsc_urls):
+            return True
+        return False
     
     def check_collection_failures(self):
         """
@@ -78,6 +292,12 @@ class DataAlertEmailer:
             
             for row in cursor.fetchall():
                 source, started, status, error, total, failed = row
+                # URL Inspection is advisory and can fail on non-indexed/prelaunch URLs.
+                # Keep it out of collection-system critical failure classification.
+                if (source or '').lower() == 'gsc_url_inspection':
+                    continue
+                if self._is_prelaunch_gsc_issue(source, error or ""):
+                    continue
                 
                 if source not in failures:
                     failures[source] = []
@@ -87,14 +307,76 @@ class DataAlertEmailer:
                     'status': status,
                     'error': error,
                     'properties_total': total,
-                    'properties_failed': failed
+                    'properties_failed': failed,
+                    'tier': 'core' if (source or '').lower() in self.core_failure_sources else 'specialty',
                 })
         except sqlite3.OperationalError:
             # Table might not exist in older databases
             pass
         
         conn.close()
+
+        mirror_failure = self.check_d1_mirror_failure()
+        if mirror_failure:
+            failures.setdefault('d1_mirror', []).append(mirror_failure)
         return failures
+
+    def summarize_failure_tiers(self, collection_failures):
+        core_sources = 0
+        specialty_sources = 0
+        for failures in (collection_failures or {}).values():
+            if any((item.get('tier') == 'core') for item in failures):
+                core_sources += 1
+            else:
+                specialty_sources += 1
+        return core_sources, specialty_sources
+
+    def check_d1_mirror_failure(self):
+        """Check the latest D1 mirror audit report for a failed or stale mirror."""
+        report_files = sorted(
+            self.mirror_report_dir.glob('d1_mirror_report_*.json'),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if not report_files:
+            return {
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'status': 'failed',
+                'error': 'No D1 mirror report found',
+                'properties_total': 1,
+                'properties_failed': 1,
+            }
+
+        latest = report_files[0]
+        try:
+            payload = json.loads(latest.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            return {
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'status': 'failed',
+                'error': f'Latest D1 mirror report unreadable: {latest.name} ({exc})',
+                'properties_total': 1,
+                'properties_failed': 1,
+            }
+
+        started_at = payload.get('started_at_utc') or payload.get('finished_at_utc') or latest.stem
+        if payload.get('success'):
+            return None
+
+        failing_steps = [
+            f"{step.get('name')}: {step.get('details')}"
+            for step in payload.get('steps', [])
+            if not step.get('ok')
+        ]
+        error = '; '.join(failing_steps) if failing_steps else 'D1 mirror reported failure'
+        return {
+            'timestamp': started_at,
+            'status': 'failed',
+            'error': error,
+            'properties_total': 1,
+            'properties_failed': 1,
+            'tier': 'core',
+        }
     
     def check_data_freshness(self):
         """
@@ -148,30 +430,10 @@ class DataAlertEmailer:
         """)
         gsc_data = {row[0]: row[1] for row in cursor.fetchall()}
         
-        # Build URL to property name mapping from registry
-        with open(self.registry_path) as f:
-            registry = json.load(f)
-            url_to_property = {}
-            for p in registry['properties']:
-                if p.get('gsc_url'):
-                    # Add exact match
-                    url_to_property[p['gsc_url']] = p['name']
-                    # Also add normalized versions (with/without trailing slash)
-                    normalized = p['gsc_url'].rstrip('/')
-                    url_to_property[normalized] = p['name']
-                    url_to_property[normalized + '/'] = p['name']
-        
         for url, last_date in gsc_data.items():
-            # Get actual property name from registry, fallback to URL parsing
-            prop_name = url_to_property.get(url)
+            prop_name = self._resolve_gsc_property_name(url)
             if not prop_name:
-                # Try normalized URL (remove trailing slash)
-                normalized_url = url.rstrip('/')
-                prop_name = url_to_property.get(normalized_url)
-            
-            if not prop_name:
-                # Fallback: extract from URL
-                prop_name = url.replace('sc-domain:', '').replace('https://', '').replace('www.', '').split('/')[0]
+                continue
             
             # GSC has 2-3 day delay, so only flag if older than expected
             if last_date < gsc_expected:
@@ -224,220 +486,261 @@ class DataAlertEmailer:
         
         return issues
     
-    def build_alert_html(self, issues, collection_failures=None):
+    def build_alert_html(self, issues, collection_failures=None, remediation_actions=None):
         """Build HTML email body for data alerts."""
-        
-        # Count total issues
         total_missing = sum(len(v['missing']) for v in issues.values())
         total_stale = sum(len(v['stale']) for v in issues.values())
-        collection_failure_count = len(collection_failures) if collection_failures else 0
-        
+        collection_failure_count = sum(len(v) for v in collection_failures.values()) if collection_failures else 0
+
         if total_missing == 0 and total_stale == 0 and collection_failure_count == 0:
             return self._build_all_clear_html()
-        
-        # Collection failures are CRITICAL
-        if collection_failure_count > 0:
-            severity = "🔴 CRITICAL"
-        elif total_missing > 10 or total_stale > 10:
-            severity = "🔴 CRITICAL"
+
+        if collection_failure_count > 0 or total_missing > 10 or total_stale > 10:
+            severity = "CRITICAL"
+            severity_fg = "#991b1b"
+            severity_bg = "#fee2e2"
         else:
-            severity = "⚠️ WARNING"
-        
-        html = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; }}
-        .header h1 {{ margin: 0; font-size: 24px; }}
-        .header .subtitle {{ opacity: 0.9; margin-top: 8px; font-size: 14px; }}
-        .severity {{ display: inline-block; padding: 6px 12px; background: #ff4444; color: white; border-radius: 4px; font-weight: bold; margin-top: 10px; }}
-        .warning {{ background: #ffaa00; }}
-        .summary {{ background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #667eea; }}
-        .summary-stat {{ display: inline-block; margin-right: 30px; }}
-        .summary-stat .number {{ font-size: 32px; font-weight: bold; color: #667eea; }}
-        .summary-stat .label {{ color: #666; font-size: 14px; }}
-        .critical {{ background: #fff5f5; border-left: 4px solid #ff4444; padding: 20px; border-radius: 8px; margin-bottom: 20px; }}
-        .critical h3 {{ color: #ff4444; margin-top: 0; }}
-        .failure-item {{ background: white; border: 1px solid #ffdddd; padding: 10px; margin: 10px 0; border-radius: 4px; }}
-        .source-section {{ background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }}
-        .source-section h2 {{ margin-top: 0; color: #667eea; font-size: 18px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }}
-        .issue-list {{ list-style: none; padding: 0; }}
-        .issue-list li {{ padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }}
-        .issue-list li.missing {{ border-left: 4px solid #ff4444; }}
-        .issue-list li.stale {{ border-left: 4px solid #ffaa00; }}
-        .property-name {{ font-weight: 600; }}
-        .last-date {{ color: #666; font-size: 13px; }}
-        .badge {{ display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }}
-        .badge-missing {{ background: #ff4444; color: white; }}
-        .badge-stale {{ background: #ffaa00; color: white; }}
-        .footer {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px; }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>📊 Data Collection Alert</h1>
-        <div class="subtitle">Portfolio Analytics Monitoring · {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</div>
-        <span class="severity {'warning' if 'WARNING' in severity else ''}">{severity}</span>
-    </div>
-    
-    <div class="summary">
-        <div class="summary-stat">
-            <div class="number">{collection_failure_count}</div>
-            <div class="label">Collection Failures</div>
-        </div>
-        <div class="summary-stat">
-            <div class="number">{total_missing}</div>
-            <div class="label">Missing Yesterday</div>
-        </div>
-        <div class="summary-stat">
-            <div class="number">{total_stale}</div>
-            <div class="label">Stale (>2 days)</div>
-        </div>
-    </div>
-"""
-        
-        # Add collection failures section if any
-        if collection_failures:
-            html += """
-    <div class="critical">
-        <h3>🔴 CRITICAL: Collection Job Failures Detected</h3>
-        <p style="color: #666; margin-bottom: 15px;">The following data collection jobs have failed in the last 3 days. This is a <strong>system-level failure</strong>, not just missing data.</p>
-"""
-            
-            for source, failures in collection_failures.items():
-                html += f"""        <div class="failure-item">
-            <strong>{source.upper()}</strong><br>
-"""
-                for failure in failures:
-                    timestamp = failure['timestamp']
-                    status = failure['status']
-                    error = failure['error'] or 'No error message'
-                    total = failure['properties_total'] or 0
-                    failed = failure['properties_failed'] or 0
-                    
-                    html += f"""            <div style="margin: 5px 0; padding-left: 10px; border-left: 2px solid #ff4444;">
-                <span style="color: #999; font-size: 12px;">{timestamp}</span><br>
-                Status: <span style="color: #ff4444; font-weight: bold;">{status}</span> 
-                ({failed}/{total} properties failed)<br>
-                <span style="color: #666; font-size: 13px;">{error[:200]}</span>
-            </div>
-"""
-                html += """        </div>
-"""
-            
-            html += """        <p style="margin-top: 15px; padding: 10px; background: #fff; border-left: 3px solid #ff4444;">
-            <strong>⚠️ Action Required:</strong> Collection system is not running properly. Check logs immediately:
-            <code>/Users/mark/Property_Analytics/Portfolio_Monitoring/logs/collection_stdout.log</code>
-        </p>
-    </div>
-"""
-        
-        # Add sections for each data source with issues
+            severity = "WARNING"
+            severity_fg = "#92400e"
+            severity_bg = "#fef3c7"
+
+        summary_tiles = f"""
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-family:Arial, sans-serif;">
+          <tr>
+            <td style="width:33.3%;padding:12px;border:1px solid #e2e8f0;background:#f8fafc;">
+              <div style="font-size:30px;font-weight:700;color:#15284B;">{collection_failure_count}</div>
+              <div style="font-size:12px;color:#334155;">Collection Failures</div>
+            </td>
+            <td style="width:33.3%;padding:12px;border:1px solid #e2e8f0;background:#f8fafc;">
+              <div style="font-size:30px;font-weight:700;color:#15284B;">{total_missing}</div>
+              <div style="font-size:12px;color:#334155;">Missing Yesterday</div>
+            </td>
+            <td style="width:33.3%;padding:12px;border:1px solid #e2e8f0;background:#f8fafc;">
+              <div style="font-size:30px;font-weight:700;color:#15284B;">{total_stale}</div>
+              <div style="font-size:12px;color:#334155;">Stale (>2 days)</div>
+            </td>
+          </tr>
+        </table>
+        """
+
         source_names = {
-            'ga4': '📊 Google Analytics 4',
-            'gsc': '🔍 Google Search Console',
-            'google_ads': '📢 Google Ads',
-            'psi': '⚡ PageSpeed Insights',
-            'semrush': '📈 SEMRush'
+            'ga4': 'Google Analytics 4',
+            'gsc': 'Google Search Console',
+            'google_ads': 'Google Ads',
+            'psi': 'PageSpeed Insights',
+            'semrush': 'SEMRush'
         }
-        
+
+        failures_html = ""
+        if collection_failures:
+            core_failures = {k: v for k, v in collection_failures.items() if any((item.get('tier') == 'core') for item in v)}
+            specialty_failures = {k: v for k, v in collection_failures.items() if all((item.get('tier') != 'core') for item in v)}
+            failures_html += """
+            <div style="margin-top:12px;padding:12px;border-left:4px solid #dc2626;background:#fff5f5;font-family:Arial, sans-serif;">
+              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Collection Job Failures</div>
+            """
+            for section_title, bucket in (("Core Pipeline", core_failures), ("Specialty / Sidecar Jobs", specialty_failures)):
+                if not bucket:
+                    continue
+                failures_html += f'<div style="margin-top:10px;font-size:14px;font-weight:700;color:#7f1d1d;">{section_title}</div>'
+                for source, failures in bucket.items():
+                    failures_html += f'<div style="margin-top:8px;font-size:13px;font-weight:700;color:#15284B;">{source.upper()}</div>'
+                    for failure in failures:
+                        timestamp = failure['timestamp']
+                        status = failure['status']
+                        error = failure['error'] or 'No error message'
+                        total = failure['properties_total'] or 0
+                        failed = failure['properties_failed'] or 0
+                        failures_html += (
+                            f'<div style="margin:6px 0;padding:8px;border:1px solid #fecaca;background:#ffffff;">'
+                            f'<div style="font-size:12px;color:#6b7280;">{timestamp}</div>'
+                            f'<div style="font-size:13px;color:#111827;"><strong>Status:</strong> {status} ({failed}/{total} failed)</div>'
+                            f'<div style="font-size:12px;color:#475569;">{error[:220]}</div>'
+                            '</div>'
+                        )
+            failures_html += "</div>"
+
+        remediation_html = ""
+        if remediation_actions:
+            remediation_html += """
+            <div style="margin-top:12px;padding:12px;border-left:4px solid #2563eb;background:#eff6ff;font-family:Arial, sans-serif;">
+              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Auto-Remediation Activity</div>
+            """
+            for action in remediation_actions:
+                status = "SUCCESS" if action.get('ok') else "FAILED"
+                color = "#166534" if action.get('ok') else "#991b1b"
+                remediation_html += (
+                    f'<div style="margin:6px 0;padding:8px;border:1px solid #bfdbfe;background:#ffffff;">'
+                    f'<div style="font-size:13px;color:#111827;"><strong>{action.get("action")}</strong> '
+                    f'<span style="color:{color};font-weight:700;">{status}</span></div>'
+                    f'<div style="font-size:12px;color:#475569;">{str(action.get("details") or "")[:320]}</div>'
+                    '</div>'
+                )
+            remediation_html += "</div>"
+
+        issues_html = ""
         for source, data in issues.items():
             if not data['missing'] and not data['stale']:
                 continue
-            
-            html += f"""
-    <div class="source-section">
-        <h2>{source_names.get(source, source.upper())}</h2>
-"""
-            
-            if data['missing']:
-                html += """        <h3 style="color: #ff4444; font-size: 14px; margin-top: 0;">Missing Yesterday's Data</h3>
-        <ul class="issue-list">
-"""
-                for prop_name, last_date in sorted(data['missing']):
-                    html += f"""            <li class="missing">
-                <span class="property-name">{prop_name}</span>
-                <span><span class="last-date">Last: {last_date}</span> <span class="badge badge-missing">MISSING</span></span>
-            </li>
-"""
-                html += """        </ul>
-"""
-            
-            if data['stale']:
-                html += """        <h3 style="color: #ffaa00; font-size: 14px; margin-top: 15px;">Stale Data (>2 days old)</h3>
-        <ul class="issue-list">
-"""
-                for prop_name, last_date in sorted(data['stale']):
-                    days_old = (datetime.now().date() - datetime.strptime(last_date, '%Y-%m-%d').date()).days
-                    html += f"""            <li class="stale">
-                <span class="property-name">{prop_name}</span>
-                <span><span class="last-date">Last: {last_date} ({days_old} days ago)</span> <span class="badge badge-stale">STALE</span></span>
-            </li>
-"""
-                html += """        </ul>
-"""
-            
-            html += """    </div>
-"""
-        
-        html += f"""
-    <div class="footer">
-        <strong>Recommended Actions:</strong>
-        <ul style="margin-top: 10px;">
-            <li>Check collector logs: <code>/Users/mark/Property_Analytics/logs/</code></li>
-            <li>Run manual collection: <code>cd /Users/mark/Property_Analytics/Portfolio_Monitoring && python3 collect_daily_data.py</code></li>
-            <li>Verify API credentials and quotas</li>
-        </ul>
-        <p style="margin-top: 15px;">Database: <code>{self.db_path}</code></p>
-    </div>
-</body>
-</html>"""
-        
-        return html
+            rows_html = ""
+            for prop_name, last_date in sorted(data['missing']):
+                rows_html += (
+                    f'<tr><td style="padding:8px;border:1px solid #e2e8f0;">{prop_name}</td>'
+                    f'<td style="padding:8px;border:1px solid #e2e8f0;">{last_date}</td>'
+                    f'<td style="padding:8px;border:1px solid #e2e8f0;color:#991b1b;font-weight:700;">MISSING</td></tr>'
+                )
+            for prop_name, last_date in sorted(data['stale']):
+                days_old = (datetime.now().date() - datetime.strptime(last_date, '%Y-%m-%d').date()).days
+                rows_html += (
+                    f'<tr><td style="padding:8px;border:1px solid #e2e8f0;">{prop_name}</td>'
+                    f'<td style="padding:8px;border:1px solid #e2e8f0;">{last_date} ({days_old}d)</td>'
+                    f'<td style="padding:8px;border:1px solid #e2e8f0;color:#92400e;font-weight:700;">STALE</td></tr>'
+                )
+            issues_html += f"""
+            <div style="margin-top:12px;font-family:Arial, sans-serif;">
+              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">{source_names.get(source, source.upper())}</div>
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:13px;background:#ffffff;">
+                <tr style="background:#f8fafc;">
+                  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Property</th>
+                  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Last Date</th>
+                  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Issue</th>
+                </tr>
+                {rows_html}
+              </table>
+            </div>
+            """
+
+        content_html = (
+            summary_tiles
+            + remediation_html
+            + failures_html
+            + issues_html
+            + f'<div style="margin-top:12px;font-family:Arial, sans-serif;font-size:12px;color:#475569;">'
+              'Recommended actions: check collector logs, run manual collection, verify API credentials/quotas.<br>'
+              f'Database: <code>{self.db_path}</code></div>'
+        )
+        return wrap_pib_light_email(
+            title="Consolidated Morning Failure Alert",
+            subtitle=f"Portfolio Analytics Monitoring | {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
+            body_html=content_html,
+            badge_text=severity,
+            badge_fg=severity_fg,
+            badge_bg=severity_bg,
+        )
     
     def _build_all_clear_html(self):
         """Build HTML for all-clear status."""
-        return f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }}
-        .header h1 {{ margin: 0; font-size: 24px; }}
-        .header .subtitle {{ opacity: 0.9; margin-top: 8px; font-size: 14px; }}
-        .message {{ background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; font-size: 18px; }}
-        .checkmark {{ font-size: 64px; }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>✅ All Systems Operational</h1>
-        <div class="subtitle">Portfolio Analytics Monitoring · {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</div>
-    </div>
+        return wrap_pib_light_email(
+            title="Data Collection Status",
+            subtitle=f"Portfolio Analytics Monitoring | {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
+            body_html=(
+                '<div style="font-family:Arial, sans-serif;">'
+                '<div style="display:inline-block;padding:5px 10px;border-radius:4px;font-size:12px;font-weight:700;color:#166534;background:#dcfce7;">ALL CLEAR</div>'
+                '<div style="margin-top:12px;font-size:16px;color:#15284B;font-weight:700;">All data collectors are up to date.</div>'
+                '<div style="margin-top:6px;font-size:13px;color:#475569;">No missing or stale data detected for any properties.</div>'
+                '</div>'
+            ),
+        )
+
+    def get_latest_registry_validation_summary(self):
+        """Return the most recent registry validation batch recorded in the DB."""
+        conn = sqlite3.connect(self.db_path)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name='registry_validation_failures'
+            """)
+            if not cursor.fetchone():
+                return None
+
+            latest_row = cursor.execute(
+                "SELECT MAX(validation_timestamp) FROM registry_validation_failures"
+            ).fetchone()
+            latest_ts = latest_row[0] if latest_row else None
+            if not latest_ts:
+                return None
+
+            rows = cursor.execute(
+                """
+                SELECT severity, property_name, issue_type, latest_data_date
+                FROM registry_validation_failures
+                WHERE validation_timestamp = ?
+                ORDER BY CASE severity
+                    WHEN 'CRITICAL' THEN 1
+                    WHEN 'HIGH' THEN 2
+                    WHEN 'MEDIUM' THEN 3
+                    ELSE 4
+                END, property_name
+                """,
+                (latest_ts,),
+            ).fetchall()
+            if not rows:
+                return None
+
+            counts = defaultdict(int)
+            for severity, *_ in rows:
+                counts[severity] += 1
+
+            return {
+                'timestamp': latest_ts,
+                'count': len(rows),
+                'counts': dict(counts),
+                'rows': rows[:8],
+            }
+        except sqlite3.OperationalError:
+            return None
+        finally:
+            conn.close()
     
-    <div class="message">
-        <div class="checkmark">✅</div>
-        <p><strong>All data collectors are up-to-date!</strong></p>
-        <p style="color: #666; font-size: 14px;">No missing or stale data detected for any properties.</p>
-    </div>
-</body>
-</html>"""
-    
-    def send_alert_email(self, issues, collection_failures=None):
+    def send_alert_email(self, issues, collection_failures=None, remediation_actions=None):
         """Send alert email via Gmail SMTP."""
-        
+
         # Build email
-        html_body = self.build_alert_html(issues, collection_failures)
+        html_body = self.build_alert_html(issues, collection_failures, remediation_actions)
+        registry_summary = self.get_latest_registry_validation_summary()
+        if registry_summary:
+            counts = registry_summary['counts']
+            count_bits = []
+            for severity in ('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'):
+                if counts.get(severity):
+                    count_bits.append(f"{severity}: {counts[severity]}")
+            summary_line = ", ".join(count_bits) if count_bits else f"Total: {registry_summary['count']}"
+
+            rows_html = ""
+            for severity, property_name, issue_type, latest_date in registry_summary['rows']:
+                latest_fragment = f" ({latest_date})" if latest_date else ""
+                rows_html += (
+                    f'<tr><td style="padding:8px;border:1px solid #e2e8f0;">{severity}</td>'
+                    f'<td style="padding:8px;border:1px solid #e2e8f0;">{property_name}</td>'
+                    f'<td style="padding:8px;border:1px solid #e2e8f0;">{issue_type}{latest_fragment}</td></tr>'
+                )
+
+            registry_html = f"""
+            <div style="margin-top:12px;padding:12px;border-left:4px solid #7c3aed;background:#f5f3ff;font-family:Arial, sans-serif;">
+              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Registry Validation Summary</div>
+              <div style="font-size:13px;color:#475569;margin-bottom:8px;">
+                Latest validation: {registry_summary['timestamp']}<br>
+                {summary_line}
+              </div>
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:13px;background:#ffffff;">
+                <tr style="background:#f8fafc;">
+                  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Severity</th>
+                  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Property</th>
+                  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Issue</th>
+                </tr>
+                {rows_html}
+              </table>
+            </div>
+            """
+            html_body = html_body.replace("</body>", registry_html + "</body>")
         
         # Determine subject based on severity
         total_issues = sum(len(v['missing']) + len(v['stale']) for v in issues.values())
         collection_failure_count = len(collection_failures) if collection_failures else 0
         
         if collection_failure_count > 0:
-            subject = f"🔴 CRITICAL: Collection System Failure ({collection_failure_count} jobs failed)"
+            subject = f"🔴 CRITICAL: Consolidated Morning Failure Alert ({collection_failure_count} jobs failed)"
         elif total_issues == 0:
             subject = "✅ Data Collection Status: All Clear"
         elif total_issues > 20:
@@ -459,7 +762,7 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             print("\n" + "="*80)
             print("📧 EMAIL PREVIEW (Test Mode)")
             print("="*80)
-            print(f"To: {self.recipient}")
+            print(f"To: {', '.join(self.recipients)}")
             print(f"Subject: {subject}")
             print("\n[HTML body would be sent - preview saved to /tmp/alert_preview.html]")
             
@@ -471,16 +774,18 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         
         # Send email via unified sender
         try:
-            self.email_sender.send_email(
+            metadata = self.email_sender.send_email_with_tracking(
                 subject=subject,
                 html_body=html_body,
                 plain_text=plain_text,
-                recipients=[self.recipient],
-                reply_to='mlaufhutte@venterraliving.com'
+                recipients=self.recipients,
+                reply_to='mlaufhutte@venterraliving.com',
+                log_path=self.delivery_log_dir / f"email_delivery_{datetime.now().strftime('%Y-%m-%d')}.jsonl",
             )
             
-            print(f"✅ Alert email sent to {self.recipient}")
+            print(f"✅ Alert email sent to {', '.join(self.recipients)}")
             print(f"   Subject: {subject}")
+            print(f"   Message ID: {metadata.get('message_id')}")
             return True
             
         except Exception as e:
@@ -494,15 +799,31 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         print("="*80)
         print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
+
+        closure = evaluate_daily_collection_closure(self.db_path)
+        if not closure.get('ready_for_summary'):
+            print(
+                "⏳ Daily collection is still open; holding portfolio failure email until the retry window closes "
+                f"({closure.get('summary_reason')})."
+            )
+            for item in (closure.get('unresolved_sources') or [])[:10]:
+                print(f"   - {item.get('source')}: {item.get('status')} ({item.get('reason')})")
+            print()
+            return 0
         
         # Check collection job failures FIRST
         print("Checking collection job status...")
         collection_failures = self.check_collection_failures()
         
         if collection_failures:
-            print(f"🔴 CRITICAL: Found {len(collection_failures)} data sources with collection failures!")
+            core_sources, specialty_sources = self.summarize_failure_tiers(collection_failures)
+            print(
+                f"🔴 CRITICAL: Found {len(collection_failures)} data sources with collection failures! "
+                f"(core={core_sources}, specialty={specialty_sources})"
+            )
             for source, failures in collection_failures.items():
-                print(f"   {source.upper()}: {len(failures)} failed job(s) in last 3 days")
+                tier = 'core' if any((item.get('tier') == 'core') for item in failures) else 'specialty'
+                print(f"   {source.upper()} [{tier}]: {len(failures)} failed job(s) in last 3 days")
         else:
             print("✅ No collection job failures detected")
         
@@ -525,10 +846,20 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
                     print(f"   {source.upper()}: {missing} missing, {stale} stale")
         
         print()
+
+        remediation_actions = self.attempt_auto_remediation(collection_failures)
+        if remediation_actions:
+            print("Re-checking integrity after auto-remediation...")
+            collection_failures = self.check_collection_failures()
+            issues = self.check_data_freshness()
+            print(f"   Remaining collection failures: {len(collection_failures)}")
+            remaining_issues = sum(len(v['missing']) + len(v['stale']) for v in issues.values())
+            print(f"   Remaining freshness issues: {remaining_issues}")
+            print()
         
         # Send alert email
         print("Sending alert email...")
-        success = self.send_alert_email(issues, collection_failures)
+        success = self.send_alert_email(issues, collection_failures, remediation_actions)
         
         print()
         print("="*80)

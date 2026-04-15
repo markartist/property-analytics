@@ -285,6 +285,17 @@ function sourceStatusTone(status: string): "emerald" | "amber" | "rose" | "cyan"
   return "cyan";
 }
 
+function parseGoogleAdsOutcomeNotes(notes: string | null): { active: number; noActivity: number; retryable: number } | null {
+  if (!notes) return null;
+  const match = notes.match(/Google Ads outcomes:\s*(\d+)\s+active,\s*(\d+)\s+no-activity,\s*(\d+)\s+retryable failure/i);
+  if (!match) return null;
+  return {
+    active: Number(match[1] ?? 0),
+    noActivity: Number(match[2] ?? 0),
+    retryable: Number(match[3] ?? 0),
+  };
+}
+
 function MiniBar({ value, tone = "emerald" }: { value: number; tone?: "emerald" | "amber" | "rose" | "cyan" }) {
   const color =
     tone === "emerald" ? "from-emerald-400 to-emerald-500"
@@ -576,6 +587,30 @@ function CollectionStageCard({ row }: { row: DailyCollectionSourceStatus }) {
             <p className="text-sm text-slate-700">{row.notes || row.error_message || "No issues logged."}</p>
           </div>
         </div>
+        {row.source === "google_ads" && parseGoogleAdsOutcomeNotes(row.notes) && (
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
+            {(() => {
+              const outcomes = parseGoogleAdsOutcomeNotes(row.notes);
+              if (!outcomes) return null;
+              return (
+                <>
+                  <div className="rounded-2xl bg-emerald-50 p-2">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Active</p>
+                    <p className="mt-1 font-bold text-emerald-800">{outcomes.active}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-100 p-2">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">No Activity</p>
+                    <p className="mt-1 font-bold text-slate-800">{outcomes.noActivity}</p>
+                  </div>
+                  <div className="rounded-2xl bg-rose-50 p-2">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-rose-700">Retryable</p>
+                    <p className="mt-1 font-bold text-rose-800">{outcomes.retryable}</p>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1659,6 +1694,30 @@ export default function WatchtowerPage() {
                               <p className="mt-2 text-sm text-slate-700">
                                 {derived.selectedCollectionRow?.notes || derived.selectedCollectionRow?.error_message || "No live collection note is attached to this source."}
                               </p>
+                              {derived.selectedCollectionRow?.source === "google_ads" && parseGoogleAdsOutcomeNotes(derived.selectedCollectionRow?.notes ?? null) && (
+                                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                                  {(() => {
+                                    const outcomes = parseGoogleAdsOutcomeNotes(derived.selectedCollectionRow?.notes ?? null);
+                                    if (!outcomes) return null;
+                                    return (
+                                      <>
+                                        <div className="rounded-2xl bg-emerald-50 p-2">
+                                          <p className="uppercase tracking-[0.16em] text-emerald-700">Active</p>
+                                          <p className="mt-1 font-bold text-emerald-800">{outcomes.active}</p>
+                                        </div>
+                                        <div className="rounded-2xl bg-slate-100 p-2">
+                                          <p className="uppercase tracking-[0.16em] text-slate-500">No Activity</p>
+                                          <p className="mt-1 font-bold text-slate-800">{outcomes.noActivity}</p>
+                                        </div>
+                                        <div className="rounded-2xl bg-rose-50 p-2">
+                                          <p className="uppercase tracking-[0.16em] text-rose-700">Retryable</p>
+                                          <p className="mt-1 font-bold text-rose-800">{outcomes.retryable}</p>
+                                        </div>
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              )}
                             </div>
                             <div className="rounded-[22px] bg-white p-4">
                               <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Recent Queue Signal</p>

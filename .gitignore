@@ -39,11 +39,14 @@ ENV/
 
 # Logs
 *.log
+logs/
+Data_Collection/logs/*.lock
 
 # Temporary files
 *.tmp
 *.bak
 ~$*
+*.tsbuildinfo
 
 # Database files (workspace-level protection)
 *.db
@@ -56,6 +59,14 @@ data/*.db
 reports/
 exports/
 *.docx
+outputs/
+apps/web/public/pilot-kpi/
+*.xlsx
+*_desktop_chrome.png
+*_iphone_safari.png
+*_android_chrome.png
+pilot-*.png
+evs/*.json
 
 # Python cache
 **/__pycache__/

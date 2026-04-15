@@ -282,6 +282,8 @@ export interface PibReportResponse {
   current_end: string;
   previous_start: string;
   previous_end: string;
+  snapshot_date: string;
+  previous_snapshot_date: string | null;
   sessions: { value: number | null; delta: number | null };
   gsc_clicks: { value: number | null; delta: number | null };
   cir: { value: number | null; delta: number | null; status: string | null };
@@ -289,7 +291,7 @@ export interface PibReportResponse {
   occupancy: { value: number | null; delta: number | null };
   ad_spend: { value: number | null; delta: number | null };
   action_rate: number | null;
-  html: string;
+  report_html: string;
   email_sent: boolean;
   email_error: string | null;
 }
@@ -302,6 +304,51 @@ export async function generatePibReport(body: PibReportRequest): Promise<PibRepo
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message ?? "Failed to generate PIB report");
+  }
+  return res.json();
+}
+
+export interface SearchIntelligenceResponse {
+  version: string;
+  current_start: string;
+  current_end: string;
+  community: {
+    id: string;
+    name: string;
+    ga4_property_id: string | null;
+    full_url: string | null;
+    city: string | null;
+    state: string | null;
+  };
+  summary: {
+    brand_keywords: number;
+    generic_keywords: number;
+    top_gap: string | null;
+    local_semrush_snapshot: string | null;
+    competitors_used: number;
+  };
+  report_html: string;
+  html_filename: string;
+  html_base64: string;
+  markdown_filename: string;
+  markdown_base64: string;
+  json_filename: string;
+  json_base64: string;
+  email_sent: boolean;
+  email_error: string | null;
+}
+
+export async function generateSearchIntelligenceReport(body: {
+  community_id: string;
+  email?: string;
+}): Promise<SearchIntelligenceResponse> {
+  const res = await apiFetch("/v1/search-intelligence/report", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to generate Search Intelligence report");
   }
   return res.json();
 }
@@ -637,17 +684,83 @@ export interface IntelligenceAdvocatePrompt {
   updated_at: string;
 }
 
+export interface IntelligenceClaim {
+  id: string;
+  property_id: string | null;
+  cohort_key: string | null;
+  claim_text: string;
+  source: "intelligence_office" | "derived" | "migration" | "other";
+  confidence: number;
+  applicable_scope: "property" | "cohort" | "global";
+  status: "active" | "archived";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntelligenceEvidence {
+  id: string;
+  evidence_type: string;
+  source_system: string;
+  reference: string;
+  summary: string;
+  timestamp: string | null;
+  status: "active" | "archived";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntelligenceClaimEvidence {
+  id: string;
+  claim_id: string;
+  evidence_id: string;
+  created_at: string;
+}
+
+export interface BriefReadiness {
+  property_id: string;
+  completeness_score: number;
+  completeness_status: "incomplete" | "partial" | "ready";
+  missing_components: string[];
+  captain_log_count: number;
+  claim_count: number;
+  evidence_count: number;
+  confidence: number | null;
+  last_updated_at: string | null;
+  migration_candidates: string[];
+}
+
 export interface IntelligenceOfficeResponse {
   office: IntelligenceOfficeProfile;
   directives: IntelligenceDirective[];
   sources: IntelligenceSource[];
   properties: IntelligencePilotProperty[];
   advocatePrompts: IntelligenceAdvocatePrompt[];
+  claims: IntelligenceClaim[];
+  evidence: IntelligenceEvidence[];
+  claimEvidence: IntelligenceClaimEvidence[];
+  briefReadiness: Record<string, BriefReadiness>;
+}
+
+export interface IntelligencePropertyBriefInputsResponse {
+  property: IntelligencePilotProperty;
+  claims: IntelligenceClaim[];
+  evidence: IntelligenceEvidence[];
+  claimEvidence: IntelligenceClaimEvidence[];
+  briefReadiness: BriefReadiness | null;
 }
 
 export async function getIntelligenceOffice(): Promise<IntelligenceOfficeResponse> {
   const res = await apiFetch("/v1/admin/intelligence");
   if (!res.ok) throw new Error("Failed to load Intelligence Office");
+  return res.json();
+}
+
+export async function getIntelligencePropertyBriefInputs(propertyId: string): Promise<IntelligencePropertyBriefInputsResponse> {
+  const res = await apiFetch(`/v1/admin/intelligence/properties/${propertyId}/brief-inputs`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to load property brief inputs");
+  }
   return res.json();
 }
 
@@ -742,6 +855,82 @@ export async function createIntelligenceAdvocatePrompt(body: {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message ?? "Failed to save advocate prompt");
+  }
+  return res.json();
+}
+
+export async function createIntelligenceClaim(body: {
+  property_id?: string | null;
+  cohort_key?: string | null;
+  claim_text: string;
+  source?: "intelligence_office" | "derived" | "migration" | "other";
+  confidence?: number;
+  applicable_scope: "property" | "cohort" | "global";
+  status?: "active" | "archived";
+  linked_evidence_ids?: string[];
+}): Promise<IntelligenceClaim> {
+  const res = await apiFetch("/v1/admin/intelligence/claims", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create claim");
+  }
+  return res.json();
+}
+
+export async function updateIntelligenceClaim(id: string, body: Partial<Omit<IntelligenceClaim, "id" | "created_at">>): Promise<IntelligenceClaim> {
+  const res = await apiFetch(`/v1/admin/intelligence/claims/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to update claim");
+  }
+  return res.json();
+}
+
+export async function createIntelligenceEvidence(body: {
+  evidence_type: string;
+  source_system: string;
+  reference: string;
+  summary: string;
+  timestamp?: string | null;
+  status?: "active" | "archived";
+}): Promise<IntelligenceEvidence> {
+  const res = await apiFetch("/v1/admin/intelligence/evidence", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create evidence");
+  }
+  return res.json();
+}
+
+export async function updateIntelligenceEvidence(id: string, body: Partial<Omit<IntelligenceEvidence, "id" | "created_at">>): Promise<IntelligenceEvidence> {
+  const res = await apiFetch(`/v1/admin/intelligence/evidence/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to update evidence");
+  }
+  return res.json();
+}
+
+export async function linkIntelligenceClaimEvidence(claimId: string, evidenceId: string): Promise<IntelligenceClaimEvidence> {
+  const res = await apiFetch(`/v1/admin/intelligence/claims/${claimId}/evidence`, {
+    method: "POST",
+    body: JSON.stringify({ evidence_id: evidenceId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to link evidence");
   }
   return res.json();
 }
@@ -991,6 +1180,7 @@ export interface SiteContentPropertySummary extends IntelligencePilotProperty {
   page_count: number;
   section_count: number;
   last_crawled_at: string | null;
+  brief_readiness: BriefReadiness | null;
 }
 
 export interface SiteContentSection {
