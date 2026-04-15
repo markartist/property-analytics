@@ -54,12 +54,18 @@ At minimum, the current codebase holds:
 - a full pilot monitoring program with KPI tracker, CWV comparison, exports, and daily roundups
 - an EVS / BrowserStack experiential validation system
 - multiple specialized reporting products: Spotlight, Focus Report, Weekly Progress, Daily Health, Morning Full Report, Paid Media Workbook, Resi diagnostics, site audits, and GSC/PSI snapshots
-- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`
+- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`, plus Data Pond session bootstrap from Cloudflare Access identity for human browsers
 
 The most important planning truth is this:
 
 - we do not have a lack of capabilities
 - we have a capability discoverability, consolidation, and canonical-ownership problem
+
+Operational note added on 2026-04-14:
+
+- the current dirty worktree is best understood as several coherent workstreams stacked together rather than random churn
+- the branch split and release-shaping map now lives in `/Users/mark/Property_Analytics/docs/RELEASE_SPLIT_PLAN_2026-04-14.md`
+- production promotion should come from the clean `codex/release-reconcile` path, while pilot CWV, Intelligence Office / Site Content, Zero Trust / SSO, and EVS work should be separated into follow-up branches
 
 ## 4. Canonical Foundations
 
@@ -199,11 +205,26 @@ Monitoring note:
   - zero-row daily results are treated as `no activity` rather than automatic failure
   - only mapping gaps and true API failures stay in the retry queue
   - this matters because the current manager-account setup does not reliably produce daily rows for every mapped property, even when attribution is otherwise correct
+- Google Ads collection now also degrades more honestly when Keeper/bootstrap is the problem:
+  - the collector raises a typed bootstrap failure instead of exiting the whole runtime blindly
+  - canonical collection/retry orchestration can record the run as blocked and keep source-level retry intent visible
+- the morning retry loop now closes a major orchestration gap for Google Ads:
+  - a source-level `google_ads` retry item can trigger a full Ads collection pass when no same-day Ads run record exists yet
+  - that prevents the system from leaving Google Ads in a permanent `missing/no_run_recorded` state after the first pass fails to create a run
+- launchd collection and retry wrappers now explicitly export the Keeper home/profile context needed for Google Ads collection instead of relying on ambient shell state
+- the same closure/bookkeeping problem is now fixed for other source-level retries too:
+  - successful `unit_availability` and `d1_mirror` retry actions write/close same-day collection rows
+  - closure and Watchtower can now move those sources out of `missing` once the retry worker actually recovers them
+- prelaunch/non-live registry entries now affect the canonical collection path rather than only alert rendering:
+  - GSC collection, GSC URL inspection, and GSC retry handling suppress those communities while they remain marked `lifecycle: prelaunch`
+  - this removes false operational debt for not-yet-launched sites such as `The Vine Kyle Parkway` and `Sundara at Spring Cypress`
 - Guest cards are currently in an explicit temporary suspension posture rather than an accidental stale/manual-dependency posture:
-  - the source is paused by operator policy
-  - closure logic excludes it from unresolved core work
-  - the retry worker resolves guest-card queue items as suspended
-  - Morning Full now represents the lane as paused instead of treating it like a live freshness miss
+  - this posture was reversed on 2026-04-15
+  - canonical guest card ingest is active again and advanced local guest-card freshness to 2026-04-15
+  - the OneDrive drop remains the shared landing zone for both guest card CSVs and pilot BI / Measurement workbooks
+  - pilot BI snapshot ingestion is now caught up through 2026-04-15 from that same shared directory, but the Measurement workbook itself still lags upstream and only exposes daily sheets through 4.11.26
+  - the post-ingest real D1 mirror also succeeded again on 2026-04-15, and same-day closure now evaluates `complete` with no open retry debt after guest card, Ads, unit availability, and D1 bookkeeping are written honestly into `data_collections`
+  - BI harvest is no longer manual-only: the canonical morning collector now ingests pending `BI-Metrics-RunYYYYMMDD.xlsx` files from the shared drop, and the retry cycle re-checks for late-arriving BI workbooks later in the morning using the same shared helper logic
 - `/watchtower` has now started growing into a live daily collection console as well:
   - the API returns a `daily_collection_status` block derived from canonical `data_collections`
   - the web surface shows a "Today's Collection" panel with source-level status, progress counts, retries, rate-limit hits, timing, and current operator context
@@ -226,6 +247,9 @@ Monitoring note:
   - the retry queue and closure-state worker now exist as the primary morning control-loop foundation
   - targeted retry execution is now live for GA4, GSC, and Google Ads, while source-level follow-up exists for guest cards, unit availability, and D1 mirror
   - the retry cycle is now actually scheduled on the machine through a dedicated LaunchAgent and wrapper, rather than existing only as an on-demand worker
+  - historical retry debt is no longer left open indefinitely: the retry worker now archives unresolved past-date queue items as exhausted reconciliation debt, which keeps old days from masquerading as active live incidents
+  - closure semantics now distinguish current-day operational states from past-date governance states: historical dates outside the retry window evaluate as `archived`, and closure payloads now include advisory-source status for non-core lanes such as BI, Measurement, PSI, GSC URL inspection, SEMrush, GBP, and Cloudflare cache audit
+  - Watchtower now consumes that richer closure structure directly: unresolved sources are shown with reason labels rather than flattened strings, closure badges distinguish `archived` and `blocked`, and a dedicated advisory-governance panel exposes non-core lane coverage without pretending those lanes are part of the narrow morning hard-stop contract
 - pilot morning wrapper hardening also matters operationally:
   - the workflow can now survive the previously observed homepage-audit bootstrap path because canonical DB defaults were corrected and the homepage audit collector now passes the canonical DB path explicitly
   - pilot bootstrap failure alerts now identify the active stage more truthfully instead of making the pipeline tail `tee` command look like the root cause
@@ -367,6 +391,7 @@ Capabilities present or partly present:
 - governed directives
 - approved claims and source-backed guidance
 - structured claims + evidence registry with claim-evidence linking and brief readiness scoring
+- migration tooling from legacy `approved_points` into structured claims
 - content/search governance overlays
 - site copy inventory and rewrite workspace concepts
 - property-aware content generation direction
@@ -377,6 +402,11 @@ Audit judgment:
 
 - this is strategically important and easy to under-credit because some of it is still documentation- or route-level
 - this area should be treated as a real capability program with partial implementation, not as “just docs”
+- VACS current-state reporting should be explicit rather than aspirational:
+  - VACS is a real platform system
+  - the VACS API is implemented and protected under Cloudflare Zero Trust
+  - the architecture defines `vacs.venterradev.com` as the intended standalone product surface
+  - the repository does not yet prove that separate frontend host is deployed
 
 ### 5.7 Pilot Monitoring and CWV Program
 

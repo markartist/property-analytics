@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-04-14 20:10 UTC  
+**Last Updated:** 2026-04-15 15:20 UTC  
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -60,12 +60,28 @@
 - Keeper helpers now resolve the `ksm` binary explicitly from canonical macOS/Python paths instead of assuming an inherited shell PATH, which makes launchd and stripped runtime environments materially safer
 - The live Google Ads collector at `Portfolio_Dashboard/scripts/collect_google_ads_data.py` now initializes from a Keeper-materialized temp config using the canonical `Google Ads API Config v2` UID by default, rather than depending on the legacy `Portfolio_Monitoring/google-ads.yaml` file being present
 - Google Ads collection semantics are now less brittle for the manager-account reality: the collector distinguishes `success`, `no_activity`, `mapping_gap`, and `api_failure`, and the retry worker resolves `no_activity` properties as non-failures instead of endlessly re-queuing them
-- Guest card harvest is now temporarily suspended by default via `GUEST_CARD_HARVEST_SUSPENDED=1`; the collector records the source as intentionally paused, the retry worker resolves guest-card queue items as suspended, closure logic excludes the source from unresolved core work, and Morning Full shows the lane as paused instead of stale
+- Prelaunch/non-live communities are now suppressed from canonical GSC reporting by shared registry policy instead of only being filtered in alert presentation; this currently removes `The Vine Kyle Parkway` and `Sundara at Spring Cypress` from GSC collection, GSC URL inspection, and GSC retry debt while they remain `lifecycle: prelaunch` in the registry
+- Google Ads bootstrap failures are now first-class operational states instead of raw collector exits: the collector raises a typed bootstrap exception, the daily collector records the run as `blocked` with a source-level retry item, and the retry worker preserves queued property work while reporting the Keeper/bootstrap block explicitly
+- The morning retry worker now also supports true source-level Google Ads recovery when no same-day Ads run exists yet; it can execute a full Ads collection pass from the source-level retry item, resolve `no_activity` cases as non-failures, and write a real `data_collections` completion row instead of leaving `google_ads` stuck as `missing`
+- Launchd collection/retry entrypoints now export a stable Keeper runtime envelope for Ads (`HOME`, `USER`, `LOGNAME`, `KSM_PROFILE=marketingops`, and the canonical `KSM_GOOGLE_ADS_CONFIG_UID`) so the Ads collector does not depend on implicit desktop-shell inheritance
+- Source-level retry bookkeeping is now fixed for `unit_availability` and `d1_mirror` too: successful retry-worker actions create/complete same-day `data_collections` rows so closure and Watchtower do not keep those sources stuck in `missing/no_run_recorded` after they have already recovered
+- Guest card harvest is active again by default (`GUEST_CARD_HARVEST_SUSPENDED=0` unless explicitly overridden); canonical guest card ingest resumed from the OneDrive drop on 2026-04-15 and advanced `guest_card_metrics` through `2026-04-15` for 91 properties
+- The shared Guest_Card_Reports drop is also now caught up for pilot BI snapshots through `2026-04-15` via `pilot_control_cwv/scripts/ingest_bi_export_snapshot.py` for 2026-04-08, 2026-04-10, 2026-04-13, and 2026-04-15 workbooks
+- BI workbook harvest is now part of the canonical morning collection path: `Data_Collection/utils/bi_manual_ingest.py` discovers `BI-Metrics-RunYYYYMMDD.xlsx` files in the shared Guest_Card_Reports drop, `daily_master_collection.py` ingests pending snapshots during the daily routine, and `retry_incomplete_collections.py` re-checks the drop later in the morning for late-arriving BI workbooks without creating a separate scheduler
+- The same shared drop still has a lagging Measurement workbook: `Measurement_Dashboard_1.1.xlsx` currently only contains daily sheets through `4.11.26`, so `measurement_daily_metrics` is now freshest at `2026-04-11` and cannot advance further until that workbook itself is updated upstream
+- After the guest card / BI catch-up on `2026-04-15`, the real D1 mirror succeeded again in `apps/api/scripts/generated/d1_mirror_report_20260415_143256.json`; local recency now includes `guest_card_metrics.run_date=2026-04-15`, and same-day closure evaluates `complete` with `queue_depth=0`
+- Historical retry debt is now archived automatically by the retry worker: unresolved queue items for past dates are marked `exhausted` with reconciliation notes, so old days stop presenting as live queue debt
+- Daily closure semantics are now split between live operations and historical governance: current-day closure can still be `open` / `blocked` / `complete`, while past dates now evaluate `archived` once outside the retry window, with unresolved source gaps preserved as informational context rather than pretending old debt is still an active live incident
+- Closure output now also includes `advisory_sources` for non-core lanes such as BI, Measurement, PSI, GSC URL inspection, SEMrush, GBP, and Cloudflare cache audit so Watchtower/API consumers can see governance breadth without forcing every advisory source to block the daily summary lane
+- Watchtower now renders that richer closure payload too: structured unresolved-source reasons, `archived` historical closure state, `blocked` live closure state, and an advisory-governance panel so the operator surface reflects broader governance posture instead of only the narrow core closure lane
 - `apps/api/src/lib/service-auth.ts` is now type-safe around Cloudflare Access cert JWK `kid` handling, which clears the API-side TypeScript issue that was blocking cleaner release verification
+- The current repo-noise situation now has a canonical branch split map in `/Users/mark/Property_Analytics/docs/RELEASE_SPLIT_PLAN_2026-04-14.md`: production promotion should come from `codex/release-reconcile`, while the remaining dirty-tree work is primarily pilot CWV/reporting, Intelligence Office / Site Content / Search Intelligence / VACS, Zero Trust / SSO docs/tooling, and EVS / BrowserStack follow-up streams
 - The canonical launch role model is now documented in `/Users/mark/Property_Analytics/docs/DATA_POND_ROLE_MODEL_2026-04-14.md`: technical keys remain `viewer`, `editor`, and `admin`, while product-facing titles are `Observer`, `Curator`, and `Steward`
 - The preferred workforce SSO model is now explicitly documented as Microsoft Entra ID -> Cloudflare Access -> Data Pond role mapping, with canonical cohort names `Data Pond Observers`, `Data Pond Curators`, and `Data Pond Stewards`
 - The dedicated workforce identity setup doc is now `/Users/mark/Property_Analytics/docs/ENTRA_CLOUDFLARE_SSO_BLUEPRINT_2026-04-14.md`, which defines the group model, Access app mapping, launch assignment guidance, and phased setup sequence for internal SSO
 - `apps/api/src/lib/service-auth.ts` now supports origin-side validation of Cloudflare Access JWT assertions for machine routes using the team cert endpoint, so `platform`, `vacs`, and `evs` can authenticate through Access service-token apps after Cloudflare consumes the raw client id/secret at the edge
+- `apps/api/src/routes/auth.ts` now bootstraps a first-party `pop_session` from a valid Cloudflare Access browser identity on `/v1/auth/me`, and the web app now uses a same-origin bridge at `apps/web/src/app/auth/access-bootstrap/route.ts` plus `apps/web/src/components/auth-provider.tsx` to forward Cloudflare Access headers server-side and capture that session before falling back to app-native login
+- `apps/web/src/app/login/page.tsx` now uses that same app-host bootstrap bridge before rendering Magic Link/password UI, and the bridge returns more specific fallback states (`cloudflare_access_missing`, `cloudflare_access_api_unreachable`, `cloudflare_access_no_session`, `cloudflare_access_unavailable`) so Cloudflare-vs-app-session failures can be distinguished instead of silently landing on the generic Data Pond login page
 - `apps/api/migrations/0023_seed_phase1_platform_control_plane.sql` is now the canonical idempotent bootstrap for Phase 1 control-plane rows (`mirror_domains`, `cb_phase1_v1`, `exec_policy_property_advocate`, `agent_prop_1`, and related governance seed data) after `0021_create_phase1_platform_tables.sql`
 
 ### Platform Security Boundary (Cloudflare Zero Trust + Keeper) ✅
@@ -487,6 +503,24 @@ Data_Collection/
 - `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
 - `/Users/mark/Property_Analytics/apps/web/src/components/intelligence-office-page.tsx`
 - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- `/Users/mark/Property_Analytics/packages/shared/src/intelligence-types.ts`
+
+### 2026-04-14 - Captain's Brief migration flow + explicit VACS platform status
+**Actions:**
+- Added one-click migration actions in Intelligence Office so legacy `approved_points` can be promoted into structured claim objects with `source = migration`.
+- Exposed the migration action in both the claim migration workspace and the Pilot Properties readiness panel so operators can close readiness gaps directly from the property view.
+- Clarified the canonical Captain's Brief readiness model in the docs: readiness depends on Captain's Log presence, summary, priorities, structured claims, linked evidence, confidence, and recency.
+- Clarified VACS platform status across the canonical docs:
+  - VACS is a real platform system
+  - the VACS API is live and protected at `api.venterradev.com/v1/vacs/*`
+  - `vacs.venterradev.com` remains the intended canonical product surface in architecture
+  - the repo does not yet verify a separate deployed VACS frontend host
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/web/src/components/intelligence-office-page.tsx`
+- `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+- `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+- `/Users/mark/Property_Analytics/docs/PLATFORM_SYSTEM_CATALOG.md`
 - `/Users/mark/Property_Analytics/packages/shared/src/intelligence-types.ts`
 - `/Users/mark/Property_Analytics/apps/api/test/platform/intelligence-brief-readiness.test.ts`
 

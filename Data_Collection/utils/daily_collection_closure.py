@@ -20,6 +20,16 @@ CORE_SOURCES = (
     "unit_availability",
     "d1_mirror",
 )
+ADVISORY_SOURCES = (
+    "bi_report",
+    "measurement_dashboard",
+    "psi",
+    "gsc_url_inspection",
+    "semrush",
+    "gbp_reviews",
+    "gbp_insights",
+    "cloudflare_cache_audit",
+)
 MANUAL_DEPENDENCY_SOURCES = {
     "guest_card",
     "guest_cards",
@@ -106,6 +116,14 @@ def evaluate_daily_collection_closure(
         for row in latest_runs
         if row.get("data_source")
     }
+    advisory_sources: List[Dict[str, Any]] = []
+    for source in ADVISORY_SOURCES:
+        run = latest_by_source.get(source)
+        advisory_sources.append({
+            "source": source,
+            "status": str((run or {}).get("status") or "missing").lower(),
+            "run_recorded": run is not None,
+        })
     unresolved_queue = [row for row in retry_queue if str(row.get("status") or "").lower() in UNRESOLVED_QUEUE_STATUSES]
     unresolved_queue_by_source: Dict[str, List[Dict[str, Any]]] = {}
     for item in unresolved_queue:
@@ -151,6 +169,20 @@ def evaluate_daily_collection_closure(
             "next_retry_at": None,
             "unresolved_sources": [],
             "queue_depth": 0,
+            "advisory_sources": advisory_sources,
+        }
+
+    if effective_date < effective_now.date() and effective_now >= cutoff_at:
+        return {
+            "target_date": effective_date.isoformat(),
+            "state": "archived",
+            "ready_for_summary": True,
+            "summary_reason": "historical_date_outside_retry_window",
+            "cutoff_at_local": cutoff_at.isoformat(),
+            "next_retry_at": next_retry_at,
+            "unresolved_sources": unresolved_sources,
+            "queue_depth": len(unresolved_queue),
+            "advisory_sources": advisory_sources,
         }
 
     if effective_now >= cutoff_at:
@@ -163,6 +195,7 @@ def evaluate_daily_collection_closure(
             "next_retry_at": next_retry_at,
             "unresolved_sources": unresolved_sources,
             "queue_depth": len(unresolved_queue),
+            "advisory_sources": advisory_sources,
         }
 
     summary_reason = "waiting_on_manual_source" if any(
@@ -177,4 +210,5 @@ def evaluate_daily_collection_closure(
         "next_retry_at": next_retry_at,
         "unresolved_sources": unresolved_sources,
         "queue_depth": len(unresolved_queue),
+        "advisory_sources": advisory_sources,
     }

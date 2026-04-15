@@ -18,6 +18,7 @@ from Data_Collection.collectors.guest_card_collector import GuestCardCollector
 from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollector
 from Data_Collection.db.database_manager import DatabaseManager
 from Data_Collection.orchestration.daily_master_collection import PortfolioDataCollector
+from Data_Collection.utils.bi_manual_ingest import get_pending_bi_workbooks, ingest_bi_workbooks
 from apps.api.scripts.wrangler_auth import build_runtime_env as build_wrangler_runtime_env
 from Data_Collection.utils.daily_collection_closure import (
     ACTIVE_STATUSES,
@@ -27,7 +28,10 @@ from Data_Collection.utils.daily_collection_closure import (
     evaluate_daily_collection_closure,
     local_now,
 )
-from Data_Collection.utils.source_freshness_policy import is_guest_card_harvest_suspended
+from Data_Collection.utils.source_freshness_policy import (
+    is_guest_card_harvest_suspended,
+    is_prelaunch_registry_property,
+)
 
 
 ROOT = Path("/Users/mark/Property_Analytics")
@@ -139,6 +143,42 @@ def _record_initial_retry_queue(
     return actions
 
 
+def _archive_historical_retry_debt(db: DatabaseManager, now: datetime) -> List[Dict[str, object]]:
+    actions: List[Dict[str, object]] = []
+    today = now.date()
+    with db.get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT collection_date, data_source, property_id
+            FROM collection_retry_queue
+            WHERE collection_date < ?
+              AND status NOT IN ('resolved', 'exhausted')
+            ORDER BY collection_date ASC, data_source ASC, queue_id ASC
+            """,
+            (today,),
+        ).fetchall()
+
+    for row in rows:
+        collection_date = row["collection_date"]
+        data_source = str(row["data_source"] or "").strip().lower()
+        property_id = str(row["property_id"] or "").strip()
+        resolved_property_id = None if property_id == SOURCE_LEVEL_PROPERTY_ID else property_id
+        db.resolve_collection_retry_queue(
+            collection_date,
+            data_source,
+            resolved_property_id,
+            notes="Retry window closed; archived historical retry debt during reconciliation.",
+            exhausted=True,
+        )
+        actions.append({
+            "source": data_source,
+            "action": "archived_historical_retry_debt",
+            "collection_date": str(collection_date),
+            "property_id": property_id or SOURCE_LEVEL_PROPERTY_ID,
+        })
+    return actions
+
+
 def _retry_ga4(db: DatabaseManager, collection_date, now: datetime, collector: PortfolioDataCollector) -> List[Dict[str, object]]:
     queue_items = db.get_retry_queue_items(collection_date, unresolved_only=True, data_source="ga4")
     property_items = [item for item in queue_items if str(item.get("property_id") or "") != SOURCE_LEVEL_PROPERTY_ID]
@@ -244,6 +284,15 @@ def _retry_gsc(db: DatabaseManager, collection_date, now: datetime, collector: P
             db.resolve_collection_retry_queue(collection_date, "gsc", property_id, notes="Property no longer found in registry", exhausted=True)
             actions.append({"source": "gsc", "property": property_name, "action": "exhausted_missing_registry"})
             continue
+        if is_prelaunch_registry_property(prop):
+            db.resolve_collection_retry_queue(
+                collection_date,
+                "gsc",
+                property_id,
+                notes="Prelaunch property intentionally suppressed from GSC reporting.",
+            )
+            actions.append({"source": "gsc", "property": property_name, "action": "resolved_prelaunch_suppressed"})
+            continue
         try:
             response = collector.gsc_service.searchanalytics().query(
                 siteUrl=property_id,
@@ -304,6 +353,28 @@ def _retry_gsc(db: DatabaseManager, collection_date, now: datetime, collector: P
             )
             actions.append({"source": "gsc", "property": property_name, "action": "retried_failed", "note": str(exc)[:160]})
 
+    if remaining == 0:
+        db.resolve_collection_retry_queue(
+            collection_date,
+            "gsc",
+            None,
+            notes="GSC retry worker cleared all queued source-level work.",
+        )
+    else:
+        db.upsert_collection_retry_queue(
+            collection_date=collection_date,
+            data_source="gsc",
+            property_id=SOURCE_LEVEL_PROPERTY_ID,
+            property_name="gsc source retry",
+            attempt_count=1,
+            status="pending",
+            retry_disposition="retryable_now",
+            next_attempt_at=_next_retry_time(now, "gsc", 20),
+            last_error_type="retryable_now",
+            last_error_message=f"gsc still open ({remaining} property retry item(s) queued).",
+            notes=f"gsc still open ({remaining} property retry item(s) queued).",
+        )
+
     db.update_data_collection_status(
         collection_id,
         "completed" if remaining == 0 else "retry_scheduled",
@@ -314,24 +385,82 @@ def _retry_gsc(db: DatabaseManager, collection_date, now: datetime, collector: P
 
 def _retry_google_ads(db: DatabaseManager, collection_date, now: datetime) -> List[Dict[str, object]]:
     queue_items = db.get_retry_queue_items(collection_date, unresolved_only=True, data_source="google_ads")
+    source_item = next((item for item in queue_items if str(item.get("property_id") or "") == SOURCE_LEVEL_PROPERTY_ID), None)
     property_items = [item for item in queue_items if str(item.get("property_id") or "") != SOURCE_LEVEL_PROPERTY_ID]
-    if not property_items:
+    if not property_items and not source_item:
         return []
 
     property_names = [str(item.get("property_name") or item.get("property_id") or "").strip() for item in property_items]
     property_names = [name for name in property_names if name]
-    if not property_names:
+    full_source_retry = bool(source_item) and not property_names
+    if not property_names and not full_source_retry:
         return []
 
     latest_run = next((row for row in db.get_latest_collection_runs(collection_date) if str(row.get("data_source") or "").lower() == "google_ads"), None)
-    if latest_run:
-        db.update_data_collection_status(int(latest_run["collection_id"]), "in_progress", notes="Google Ads targeted retry worker is running.")
+    collection_id = int(latest_run["collection_id"]) if latest_run else db.start_data_collection(collection_date, "daily", "google_ads")
+    db.update_data_collection_status(
+        collection_id,
+        "in_progress",
+        notes="Google Ads targeted retry worker is running." if not full_source_retry else "Google Ads source-level retry worker is running.",
+        increment_retry_attempts=True,
+    )
 
     sys.path.insert(0, str(ROOT / "Portfolio_Dashboard" / "scripts"))
-    from collect_google_ads_data import GoogleAdsCollector
+    from collect_google_ads_data import GoogleAdsCollector, GoogleAdsCollectorBootstrapError
 
     yesterday = datetime.now().date() - timedelta(days=1)
-    collector = GoogleAdsCollector(test_mode=False, property_names=property_names)
+    try:
+        collector = GoogleAdsCollector(test_mode=False, property_names=None if full_source_retry else property_names)
+    except GoogleAdsCollectorBootstrapError as exc:
+        error_text = str(exc)[:400]
+        for item in property_items:
+            property_name = str(item.get("property_name") or item.get("property_id") or "").strip()
+            db.upsert_collection_retry_queue(
+                collection_date=collection_date,
+                data_source="google_ads",
+                property_id=property_name,
+                property_name=property_name,
+                attempt_count=int(item.get("attempt_count") or 0) + 1,
+                status="pending",
+                retry_disposition="retryable_later",
+                next_attempt_at=_next_retry_time(now, "google_ads", 60),
+                last_error_type="bootstrap_blocked",
+                last_error_message=error_text,
+                notes="Google Ads retry worker was blocked before collector bootstrap completed.",
+            )
+        db.upsert_collection_retry_queue(
+            collection_date=collection_date,
+            data_source="google_ads",
+            property_id=SOURCE_LEVEL_PROPERTY_ID,
+            property_name="google_ads source retry",
+            attempt_count=1,
+            status="pending",
+            retry_disposition="retryable_later",
+            next_attempt_at=_next_retry_time(now, "google_ads", 60),
+            last_error_type="bootstrap_blocked",
+            last_error_message=error_text,
+                notes="Google Ads retry worker was blocked before collector bootstrap completed.",
+            )
+        db.upsert_collection_retry_queue(
+            collection_date=collection_date,
+            data_source="google_ads",
+            property_id=SOURCE_LEVEL_PROPERTY_ID,
+            property_name="google_ads source retry",
+            attempt_count=int((source_item or {}).get("attempt_count") or 0) + 1,
+            status="pending",
+            retry_disposition="retryable_later",
+            next_attempt_at=_next_retry_time(now, "google_ads", 60),
+            last_error_type="bootstrap_blocked",
+            last_error_message=error_text,
+            notes="Google Ads retry worker was blocked before collector bootstrap completed.",
+        )
+        db.update_data_collection_status(
+            collection_id,
+            "blocked",
+            notes="Google Ads retry worker blocked before collector bootstrap completed.",
+            error_message=error_text,
+        )
+        return [{"source": "google_ads", "action": "bootstrap_blocked", "note": error_text[:160]}]
     collector.run(start_date=yesterday, end_date=yesterday)
 
     actions: List[Dict[str, object]] = []
@@ -347,6 +476,10 @@ def _retry_google_ads(db: DatabaseManager, collection_date, now: datetime) -> Li
         )
         actions.append({"source": "google_ads", "property": property_name, "action": "resolved_no_activity"})
     remaining_failed = set(collector.results.get("failed_properties") or [])
+    summary_error = '; '.join(
+        f"{err.get('property')}: {err.get('error')}"
+        for err in (collector.results.get('errors') or [])[:5]
+    ) or None
     for item in property_items:
         property_name = str(item.get("property_name") or item.get("property_id") or "").strip()
         if property_name in remaining_failed:
@@ -364,17 +497,61 @@ def _retry_google_ads(db: DatabaseManager, collection_date, now: datetime) -> Li
                 notes="Google Ads retry worker attempt did not recover the property.",
             )
             actions.append({"source": "google_ads", "property": property_name, "action": "retried_failed"})
+    if full_source_retry:
+        for property_name in remaining_failed:
+            db.upsert_collection_retry_queue(
+                collection_date=collection_date,
+                data_source="google_ads",
+                property_id=property_name,
+                property_name=property_name,
+                attempt_count=1,
+                status="pending",
+                retry_disposition="retryable_later",
+                next_attempt_at=_next_retry_time(now, "google_ads", 60),
+                last_error_type="retryable_later",
+                last_error_message="Initial Google Ads source-level retry did not recover the property.",
+                notes="Initial Google Ads source-level retry did not recover the property.",
+            )
+            actions.append({"source": "google_ads", "property": property_name, "action": "queued_property_after_source_retry"})
 
-    if latest_run:
-        db.update_data_collection_status(
-            int(latest_run["collection_id"]),
-            "completed" if not remaining_failed else "retry_scheduled",
-            notes=(
-                "Google Ads retry worker cleared all queued properties; no-activity cases were resolved as non-failures."
-                if not remaining_failed
-                else f"Google Ads retry worker ran; {len(remaining_failed)} property retry item(s) still queued after resolving no-activity cases."
-            ),
+    if not remaining_failed:
+        db.resolve_collection_retry_queue(
+            collection_date,
+            "google_ads",
+            None,
+            notes="Google Ads retry worker cleared all queued source-level work.",
         )
+    else:
+        db.upsert_collection_retry_queue(
+            collection_date=collection_date,
+            data_source="google_ads",
+            property_id=SOURCE_LEVEL_PROPERTY_ID,
+            property_name="google_ads source retry",
+            attempt_count=1,
+            status="pending",
+            retry_disposition="retryable_later",
+            next_attempt_at=_next_retry_time(now, "google_ads", 60),
+            last_error_type="retryable_later",
+            last_error_message=f"Google Ads still open ({len(remaining_failed)} property retry item(s) queued).",
+            notes=f"Google Ads still open ({len(remaining_failed)} property retry item(s) queued).",
+        )
+
+    total_properties = len(collector.get_properties_with_google_ads())
+    db.complete_data_collection(
+        collection_id=collection_id,
+        properties_collected=len(collector.results.get("success_properties") or []),
+        properties_failed=len(remaining_failed),
+        error_message=summary_error,
+        properties_total=total_properties,
+        properties_success=len(collector.results.get("success_properties") or []),
+        properties_skipped=len(collector.results.get("no_activity_properties") or []),
+        status="completed" if not remaining_failed else "retry_scheduled",
+        notes=(
+            "Google Ads retry worker cleared all queued properties; no-activity cases were resolved as non-failures."
+            if not remaining_failed
+            else f"Google Ads retry worker ran; {len(remaining_failed)} property retry item(s) still queued after resolving no-activity cases."
+        ),
+    )
     return actions
 
 
@@ -438,6 +615,79 @@ def _retry_guest_card(db: DatabaseManager, collection_date, now: datetime) -> Li
     return actions
 
 
+def _retry_bi_report(db: DatabaseManager, collection_date, now: datetime) -> List[Dict[str, object]]:
+    queue_items = db.get_retry_queue_items(collection_date, unresolved_only=True, data_source="bi_report")
+    source_item = next((item for item in queue_items if str(item.get("property_id") or "") == SOURCE_LEVEL_PROPERTY_ID), None)
+    if not source_item:
+        return []
+
+    actions: List[Dict[str, object]] = []
+    pending_files = get_pending_bi_workbooks(db_path=DB_PATH)
+    latest_run = next((row for row in db.get_latest_collection_runs(collection_date) if str(row.get("data_source") or "").lower() == "bi_report"), None)
+    collection_id = int(latest_run["collection_id"]) if latest_run else db.start_data_collection(collection_date, "daily", "bi_report")
+    db.update_data_collection_status(
+        collection_id,
+        "in_progress",
+        notes="BI report retry worker is running.",
+        increment_retry_attempts=True,
+    )
+
+    if not pending_files:
+        db.resolve_collection_retry_queue(collection_date, "bi_report", None, notes="No pending BI workbooks remain in the drop.")
+        db.complete_data_collection(
+            collection_id=collection_id,
+            properties_collected=0,
+            properties_failed=0,
+            properties_total=0,
+            properties_success=0,
+            properties_skipped=1,
+            status="completed",
+            notes="No pending BI workbooks remained for retry.",
+        )
+        actions.append({"source": "bi_report", "action": "resolved_no_pending_files"})
+        return actions
+
+    result = ingest_bi_workbooks(db_path=DB_PATH, workbook_paths=pending_files)
+    if result.files_processed > 0 and result.files_failed == 0:
+        db.resolve_collection_retry_queue(collection_date, "bi_report", None, notes=f"Processed {result.files_processed} BI workbook(s).")
+        db.complete_data_collection(
+            collection_id=collection_id,
+            properties_collected=result.files_processed,
+            properties_failed=0,
+            properties_total=result.files_found,
+            properties_success=result.files_processed,
+            properties_skipped=result.files_skipped,
+            status="completed",
+            notes=(
+                f"BI retry worker processed snapshots for: {', '.join(result.snapshot_dates)}."
+                if result.snapshot_dates else "BI retry worker completed successfully."
+            ),
+        )
+        actions.append({"source": "bi_report", "action": "retried_success", "note": f"files_processed={result.files_processed}"})
+    else:
+        db.upsert_collection_retry_queue(
+            collection_date=collection_date,
+            data_source="bi_report",
+            property_id=SOURCE_LEVEL_PROPERTY_ID,
+            property_name="bi_report source retry",
+            attempt_count=int(source_item.get("attempt_count") or 0) + 1,
+            status="pending",
+            retry_disposition="manual_dependency",
+            next_attempt_at=_next_retry_time(now, "bi_report", 30),
+            last_error_type="manual_dependency",
+            last_error_message="BI retry did not clear all pending workbooks.",
+            notes=f"BI retry processed {result.files_processed} workbook(s) with {result.files_failed} failures.",
+        )
+        db.update_data_collection_status(
+            collection_id,
+            "partial" if result.files_processed > 0 else "blocked",
+            notes="BI retry worker did not clear all pending workbooks.",
+            error_message="; ".join(result.errors)[:400] if result.errors else "BI retry did not clear all pending workbooks.",
+        )
+        actions.append({"source": "bi_report", "action": "retried_partial", "note": "; ".join(result.errors)[:160]})
+    return actions
+
+
 def _retry_unit_availability(db: DatabaseManager, collection_date, now: datetime) -> List[Dict[str, object]]:
     queue_items = db.get_retry_queue_items(collection_date, unresolved_only=True, data_source="unit_availability")
     source_item = next((item for item in queue_items if str(item.get("property_id") or "") == SOURCE_LEVEL_PROPERTY_ID), None)
@@ -445,10 +695,27 @@ def _retry_unit_availability(db: DatabaseManager, collection_date, now: datetime
         return []
 
     actions: List[Dict[str, object]] = []
+    latest_run = next((row for row in db.get_latest_collection_runs(collection_date) if str(row.get("data_source") or "").lower() == "unit_availability"), None)
+    collection_id = int(latest_run["collection_id"]) if latest_run else db.start_data_collection(collection_date, "daily", "unit_availability")
+    db.update_data_collection_status(
+        collection_id,
+        "in_progress",
+        notes="Unit availability retry worker is running.",
+        increment_retry_attempts=True,
+    )
     try:
         result = ThirtyLinesCollector(db_path=DB_PATH).ingest()
         if int(result.properties_mapped or 0) > 0:
             db.resolve_collection_retry_queue(collection_date, "unit_availability", None, notes=f"ThirtyLines retry mapped {result.properties_mapped} properties.")
+            db.complete_data_collection(
+                collection_id=collection_id,
+                properties_collected=int(result.properties_mapped or 0),
+                properties_failed=0,
+                properties_total=int(result.properties_mapped or 0),
+                properties_success=int(result.properties_mapped or 0),
+                status="completed",
+                notes="Unit availability retry worker completed successfully.",
+            )
             actions.append({"source": "unit_availability", "action": "retried_success"})
         else:
             raise RuntimeError("ThirtyLines retry produced no mapped properties")
@@ -466,6 +733,12 @@ def _retry_unit_availability(db: DatabaseManager, collection_date, now: datetime
             last_error_message=str(exc)[:400],
             notes="Unit availability retry worker attempt failed.",
         )
+        db.update_data_collection_status(
+            collection_id,
+            "blocked",
+            notes="Unit availability retry worker attempt failed.",
+            error_message=str(exc)[:400],
+        )
         actions.append({"source": "unit_availability", "action": "retried_failed", "note": str(exc)[:160]})
     return actions
 
@@ -478,6 +751,14 @@ def _retry_d1_mirror(db: DatabaseManager, collection_date, now: datetime) -> Lis
 
     d1_script = ROOT / "apps" / "api" / "scripts" / "d1_mirror_sync.py"
     actions: List[Dict[str, object]] = []
+    latest_run = next((row for row in db.get_latest_collection_runs(collection_date) if str(row.get("data_source") or "").lower() == "d1_mirror"), None)
+    collection_id = int(latest_run["collection_id"]) if latest_run else db.start_data_collection(collection_date, "daily", "d1_mirror")
+    db.update_data_collection_status(
+        collection_id,
+        "in_progress",
+        notes="D1 mirror retry worker is running.",
+        increment_retry_attempts=True,
+    )
     result = subprocess.run(
         [sys.executable, str(d1_script)],
         capture_output=True,
@@ -487,6 +768,15 @@ def _retry_d1_mirror(db: DatabaseManager, collection_date, now: datetime) -> Lis
     )
     if result.returncode == 0:
         db.resolve_collection_retry_queue(collection_date, "d1_mirror", None, notes="D1 mirror retry worker completed successfully.")
+        db.complete_data_collection(
+            collection_id=collection_id,
+            properties_collected=1,
+            properties_failed=0,
+            properties_total=1,
+            properties_success=1,
+            status="completed",
+            notes="D1 mirror retry worker completed successfully.",
+        )
         actions.append({"source": "d1_mirror", "action": "retried_success"})
     else:
         tail = ((result.stdout or "") + "\n" + (result.stderr or "")).strip()[-300:]
@@ -503,6 +793,12 @@ def _retry_d1_mirror(db: DatabaseManager, collection_date, now: datetime) -> Lis
             last_error_message=tail or f"exit={result.returncode}",
             notes="D1 mirror retry worker attempt failed.",
         )
+        db.update_data_collection_status(
+            collection_id,
+            "blocked",
+            notes="D1 mirror retry worker attempt failed.",
+            error_message=tail or f"exit={result.returncode}",
+        )
         actions.append({"source": "d1_mirror", "action": "retried_failed", "note": tail or f"exit={result.returncode}"})
     return actions
 
@@ -512,12 +808,17 @@ def run_retry_worker(dry_run: bool = False) -> Dict[str, object]:
     collection_date = now.date()
     db = DatabaseManager(DB_PATH)
 
+    actions: List[Dict[str, object]] = []
+    if not dry_run:
+        actions.extend(_archive_historical_retry_debt(db, now))
+
     latest_runs = {
         str(row.get("data_source") or "").strip().lower(): row
         for row in db.get_latest_collection_runs(collection_date)
     }
 
-    actions = _record_initial_retry_queue(db, collection_date, latest_runs, now) if not dry_run else []
+    if not dry_run:
+        actions.extend(_record_initial_retry_queue(db, collection_date, latest_runs, now))
 
     pending_guest_card_files = [] if is_guest_card_harvest_suspended() else GuestCardCollector(db_path=DB_PATH).get_pending_files()
     if pending_guest_card_files and not dry_run:
@@ -532,6 +833,19 @@ def run_retry_worker(dry_run: bool = False) -> Dict[str, object]:
             f"{len(pending_guest_card_files)} pending guest card file(s) detected in drop.",
             _next_retry_time(now, "guest_card"),
         )
+    pending_bi_workbooks = get_pending_bi_workbooks(db_path=DB_PATH)
+    if pending_bi_workbooks and not dry_run:
+        _queue_retry(
+            db,
+            collection_date,
+            "bi_report",
+            SOURCE_LEVEL_PROPERTY_ID,
+            "bi_report source retry",
+            1,
+            "manual_dependency",
+            f"{len(pending_bi_workbooks)} pending BI workbook(s) detected in drop.",
+            _next_retry_time(now, "bi_report"),
+        )
 
     if not dry_run:
         needs_canonical_retry = any(
@@ -544,6 +858,7 @@ def run_retry_worker(dry_run: bool = False) -> Dict[str, object]:
             actions.extend(_retry_gsc(db, collection_date, now, canonical_collector))
         actions.extend(_retry_google_ads(db, collection_date, now))
         actions.extend(_retry_guest_card(db, collection_date, now))
+        actions.extend(_retry_bi_report(db, collection_date, now))
         actions.extend(_retry_unit_availability(db, collection_date, now))
         actions.extend(_retry_d1_mirror(db, collection_date, now))
 

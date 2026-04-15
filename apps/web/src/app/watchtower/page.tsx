@@ -76,10 +76,44 @@ function closureBadge(state: string): string {
   switch (state) {
     case "complete":
       return "bg-emerald-100 text-emerald-700 border-0";
+    case "archived":
+      return "bg-sky-100 text-sky-700 border-0";
     case "open":
       return "bg-amber-100 text-amber-700 border-0";
+    case "blocked":
+      return "bg-rose-100 text-rose-700 border-0";
     default:
       return "bg-slate-100 text-slate-600 border-0";
+  }
+}
+
+function closureStateLabel(state: string): string {
+  switch (state) {
+    case "complete":
+      return "Closed";
+    case "open":
+      return "Open";
+    case "archived":
+      return "Archived";
+    case "blocked":
+      return "Blocked";
+    default:
+      return "Idle";
+  }
+}
+
+function closureStateTone(state: string): "emerald" | "cyan" | "amber" | "rose" {
+  switch (state) {
+    case "complete":
+      return "emerald";
+    case "open":
+      return "cyan";
+    case "archived":
+      return "amber";
+    case "blocked":
+      return "rose";
+    default:
+      return "amber";
   }
 }
 
@@ -1141,15 +1175,19 @@ export default function WatchtowerPage() {
               />
               <CommandRailCard
                 label="Closure Read"
-                value={data.daily_collection_status.closure.state === "complete" ? "Closed" : data.daily_collection_status.closure.state === "open" ? "Open" : "Idle"}
+                value={closureStateLabel(data.daily_collection_status.closure.state)}
                 detail={
                   data.daily_collection_status.closure.state === "complete"
                     ? "Morning collection can move into steady-state monitoring"
                     : data.daily_collection_status.closure.state === "open"
                       ? "Day is still operationally open and should keep recovering"
-                      : "Visible run family has not fully started yet"
+                      : data.daily_collection_status.closure.state === "archived"
+                        ? "Past-day collection has been archived out of active retry operations"
+                        : data.daily_collection_status.closure.state === "blocked"
+                          ? "The day closed with work still unresolved"
+                          : "Visible run family has not fully started yet"
                 }
-                tone={data.daily_collection_status.closure.state === "complete" ? "emerald" : data.daily_collection_status.closure.state === "open" ? "cyan" : "amber"}
+                tone={closureStateTone(data.daily_collection_status.closure.state)}
                 icon={Target}
               />
             </section>
@@ -1183,6 +1221,10 @@ export default function WatchtowerPage() {
                         ? "Day Closed"
                         : data.daily_collection_status.closure.state === "open"
                           ? "Recovery Loop Active"
+                          : data.daily_collection_status.closure.state === "archived"
+                            ? "Historical Archive"
+                            : data.daily_collection_status.closure.state === "blocked"
+                              ? "Blocked"
                           : "Awaiting First Pass"}
                     </Badge>
                     <Badge className="border-0 bg-white/10 text-cyan-100">
@@ -2017,12 +2059,42 @@ export default function WatchtowerPage() {
                         ) : (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {data.daily_collection_status.closure.unresolved_sources.map((source) => (
-                              <Badge key={source} className="border-0 bg-amber-100 text-amber-700">
-                                {formatSourceName(source)}
+                              <Badge key={`${source.source}:${source.reason}`} className="border-0 bg-amber-100 text-amber-700">
+                                {formatSourceName(source.source)}: {formatSourceName(source.reason)}
                               </Badge>
                             ))}
                           </div>
                         )}
+                      </div>
+                      <div className="rounded-[24px] bg-slate-100 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Advisory Governance</p>
+                            <p className="mt-2 text-sm font-medium text-slate-900">
+                              {data.daily_collection_status.closure.advisory_sources.filter((source) => source.run_recorded).length}/
+                              {data.daily_collection_status.closure.advisory_sources.length} advisory lanes have a same-day run record
+                            </p>
+                          </div>
+                          <Badge className="border-0 bg-sky-100 text-sky-700">
+                            Advisory
+                          </Badge>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {data.daily_collection_status.closure.advisory_sources.map((source) => (
+                            <Badge
+                              key={`${source.source}:${source.status}`}
+                              className={
+                                source.status === "completed"
+                                  ? "border-0 bg-emerald-100 text-emerald-700"
+                                  : source.run_recorded
+                                    ? "border-0 bg-amber-100 text-amber-700"
+                                    : "border-0 bg-slate-200 text-slate-600"
+                              }
+                            >
+                              {formatSourceName(source.source)}: {source.run_recorded ? formatSourceName(source.status) : "No Run"}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

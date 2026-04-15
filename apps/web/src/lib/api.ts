@@ -16,6 +16,13 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
   return res;
 }
 
+export function buildCloudflareAccessBootstrapUrl(nextPath: string): string {
+  const safeNext = nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
+  const url = new URL("/v1/auth/access-bootstrap", API_BASE);
+  url.searchParams.set("next", safeNext);
+  return url.toString();
+}
+
 // ── Types ──
 
 export interface Community {
@@ -276,6 +283,11 @@ export interface PibReportRequest {
   email?: string;
 }
 
+export interface PibMetricDelta {
+  value: number | null;
+  delta: number | null;
+}
+
 export interface PibReportResponse {
   property: string;
   current_start: string;
@@ -284,12 +296,12 @@ export interface PibReportResponse {
   previous_end: string;
   snapshot_date: string;
   previous_snapshot_date: string | null;
-  sessions: { value: number | null; delta: number | null };
-  gsc_clicks: { value: number | null; delta: number | null };
-  cir: { value: number | null; delta: number | null; status: string | null };
-  avg_rating: { value: number | null; delta: number | null };
-  occupancy: { value: number | null; delta: number | null };
-  ad_spend: { value: number | null; delta: number | null };
+  sessions: PibMetricDelta;
+  gsc_clicks: PibMetricDelta;
+  cir: PibMetricDelta & { status: string | null };
+  avg_rating: PibMetricDelta;
+  occupancy: PibMetricDelta;
+  ad_spend: PibMetricDelta;
   action_rate: number | null;
   report_html: string;
   email_sent: boolean;
@@ -518,9 +530,21 @@ export interface HealthStatusResponse {
   daily_collection_status: {
     summary: DailyCollectionSummary;
     closure: {
-      state: "open" | "complete" | "not_started";
+      state: "open" | "complete" | "archived" | "blocked" | "not_started";
       summary_reason: string;
-      unresolved_sources: string[];
+      cutoff_at_local: string | null;
+      next_retry_at: string | null;
+      queue_depth: number;
+      unresolved_sources: {
+        source: string;
+        status: string;
+        reason: string;
+      }[];
+      advisory_sources: {
+        source: string;
+        status: string;
+        run_recorded: boolean;
+      }[];
     };
     sources: DailyCollectionSourceStatus[];
   };
