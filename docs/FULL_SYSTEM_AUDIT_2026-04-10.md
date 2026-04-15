@@ -747,3 +747,8 @@ The opportunity is:
 - promoting hidden strengths into the main system model
 
 That should be the planning lens for the next phase.
+
+Operational note added on 2026-04-14:
+
+- the pilot CWV / tracker / roundup stream has now been separated into the dedicated follow-up worktree `/private/tmp/property_analytics_pilot_split` on branch `codex/pilot-cwv-roundup`
+- that split is intended to keep pilot-specific diagnostics, wrappers, tracker surfaces, and roundup assets from riding inside the production release candidate on `codex/release-reconcile`

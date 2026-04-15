@@ -166,3 +166,4 @@ The next high-value documents to create from this register are:
 - a report family map
 - a system retirement / archive candidate list
 - a platform roadmap grouped by canonical owner
+- a branch split / release shaping map for large parallel workstreams, with the pilot CWV / tracker / roundup stream now isolated on `codex/pilot-cwv-roundup`

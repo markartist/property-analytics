@@ -4,6 +4,9 @@
   "report_start_date": "2026-03-20",
   "db_path": "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
   "pagespeed_api_key_path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/pagespeed_api_key.txt",
+  "gtmetrix_api_key_path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/GTMetrix_API_Key.txt",
+  "gtmetrix_location": "4",
+  "gtmetrix_browser": "3",
   "report_recipients": [
     "mlaufhutte@venterraliving.com"
   ],
