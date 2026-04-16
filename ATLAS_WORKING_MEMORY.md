@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-04-15 14:45 UTC  
+**Last Updated:** 2026-04-16 21:52 UTC  
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -67,14 +67,23 @@
 - Source-level retry bookkeeping is now fixed for `unit_availability` and `d1_mirror` too: successful retry-worker actions create/complete same-day `data_collections` rows so closure and Watchtower do not keep those sources stuck in `missing/no_run_recorded` after they have already recovered
 - Guest card harvest is active again by default (`GUEST_CARD_HARVEST_SUSPENDED=0` unless explicitly overridden); canonical guest card ingest resumed from the OneDrive drop on 2026-04-15 and advanced `guest_card_metrics` through `2026-04-15` for 91 properties
 - The shared Guest_Card_Reports drop is also now caught up for pilot BI snapshots through `2026-04-15` via `pilot_control_cwv/scripts/ingest_bi_export_snapshot.py` for 2026-04-08, 2026-04-10, 2026-04-13, and 2026-04-15 workbooks
+- BI workbook harvest is now part of the canonical morning collection path: `Data_Collection/utils/bi_manual_ingest.py` discovers `BI-Metrics-RunYYYYMMDD.xlsx` files in the shared Guest_Card_Reports drop, `daily_master_collection.py` ingests pending snapshots during the daily routine, and `retry_incomplete_collections.py` re-checks the drop later in the morning for late-arriving BI workbooks without creating a separate scheduler
 - The same shared drop still has a lagging Measurement workbook: `Measurement_Dashboard_1.1.xlsx` currently only contains daily sheets through `4.11.26`, so `measurement_daily_metrics` is now freshest at `2026-04-11` and cannot advance further until that workbook itself is updated upstream
 - After the guest card / BI catch-up on `2026-04-15`, the real D1 mirror succeeded again in `apps/api/scripts/generated/d1_mirror_report_20260415_143256.json`; local recency now includes `guest_card_metrics.run_date=2026-04-15`, and same-day closure evaluates `complete` with `queue_depth=0`
+- Historical retry debt is now archived automatically by the retry worker: unresolved queue items for past dates are marked `exhausted` with reconciliation notes, so old days stop presenting as live queue debt
+- Daily closure semantics are now split between live operations and historical governance: current-day closure can still be `open` / `blocked` / `complete`, while past dates now evaluate `archived` once outside the retry window, with unresolved source gaps preserved as informational context rather than pretending old debt is still an active live incident
+- Closure output now also includes `advisory_sources` for non-core lanes such as BI, Measurement, PSI, GSC URL inspection, SEMrush, GBP, and Cloudflare cache audit so Watchtower/API consumers can see governance breadth without forcing every advisory source to block the daily summary lane
+- Watchtower now renders that richer closure payload too: structured unresolved-source reasons, `archived` historical closure state, `blocked` live closure state, and an advisory-governance panel so the operator surface reflects broader governance posture instead of only the narrow core closure lane
 - `apps/api/src/lib/service-auth.ts` is now type-safe around Cloudflare Access cert JWK `kid` handling, which clears the API-side TypeScript issue that was blocking cleaner release verification
 - The current repo-noise situation now has a canonical branch split map in `/Users/mark/Property_Analytics/docs/RELEASE_SPLIT_PLAN_2026-04-14.md`: production promotion should come from `codex/release-reconcile`, while the remaining dirty-tree work is primarily pilot CWV/reporting, Intelligence Office / Site Content / Search Intelligence / VACS, Zero Trust / SSO docs/tooling, and EVS / BrowserStack follow-up streams
 - The canonical launch role model is now documented in `/Users/mark/Property_Analytics/docs/DATA_POND_ROLE_MODEL_2026-04-14.md`: technical keys remain `viewer`, `editor`, and `admin`, while product-facing titles are `Observer`, `Curator`, and `Steward`
 - The preferred workforce SSO model is now explicitly documented as Microsoft Entra ID -> Cloudflare Access -> Data Pond role mapping, with canonical cohort names `Data Pond Observers`, `Data Pond Curators`, and `Data Pond Stewards`
 - The dedicated workforce identity setup doc is now `/Users/mark/Property_Analytics/docs/ENTRA_CLOUDFLARE_SSO_BLUEPRINT_2026-04-14.md`, which defines the group model, Access app mapping, launch assignment guidance, and phased setup sequence for internal SSO
 - `apps/api/src/lib/service-auth.ts` now supports origin-side validation of Cloudflare Access JWT assertions for machine routes using the team cert endpoint, so `platform`, `vacs`, and `evs` can authenticate through Access service-token apps after Cloudflare consumes the raw client id/secret at the edge
+- `apps/api/src/routes/auth.ts` now bootstraps a first-party `pop_session` from a valid Cloudflare Access browser identity on `/v1/auth/me`, and the web app now uses a same-origin bridge at `apps/web/src/app/auth/access-bootstrap/route.ts` plus `apps/web/src/components/auth-provider.tsx` to forward Cloudflare Access headers server-side and capture that session before falling back to app-native login
+- `apps/web/src/app/login/page.tsx` now uses that same app-host bootstrap bridge before rendering Magic Link/password UI, and the bridge returns more specific fallback states (`cloudflare_access_missing`, `cloudflare_access_api_unreachable`, `cloudflare_access_no_session`, `cloudflare_access_unavailable`) so Cloudflare-vs-app-session failures can be distinguished instead of silently landing on the generic Data Pond login page
+- Browser bootstrap and API CORS now recognize both `app.venterradev.com` and `app.venterraliving.com`, so Cloudflare Access can hand users back to the hostname they actually entered instead of defaulting to the legacy app host or falling through to the native login screen
+- Cloudflare Access browser identities can now be auto-provisioned into Data Pond as least-privilege app users during `/v1/auth/me` and `/v1/auth/access-bootstrap`, which lets Zero Trust act as the gatekeeper of record while preserving app-level role enforcement for `viewer` / `editor` / `admin`
 - `apps/api/migrations/0023_seed_phase1_platform_control_plane.sql` is now the canonical idempotent bootstrap for Phase 1 control-plane rows (`mirror_domains`, `cb_phase1_v1`, `exec_policy_property_advocate`, `agent_prop_1`, and related governance seed data) after `0021_create_phase1_platform_tables.sql`
 
 ### Platform Security Boundary (Cloudflare Zero Trust + Keeper) ✅
@@ -365,6 +374,29 @@ Data_Collection/
 ---
 
 ## 📝 SESSION LOG
+
+### 2026-04-16 - Site Content Creator workspace hardening and property-resolution repair
+**Actions:**
+- Repaired a key Site Content Creator failure mode where the page treated crawl inventory, brief inputs, and governed memory as one all-or-nothing load.
+- The Site Content Creator UI now keeps the core page inventory usable even when governed memory or brief-input side lanes fail to load.
+- `admin-site-content` now uses the canonical resolved property id consistently after lookup, so page reads and crawl rewrites do not depend on the raw request key matching stored `property_id` exactly.
+- Intelligence Office brief-input reads now resolve pilot properties by canonical id, property name, and normalized fallback forms instead of exact-id-only.
+- Governed memory property lookup now falls back to `intelligence_pilot_properties` when a pilot property is not yet present in `communities`, which prevents Site Content Creator from breaking on mixed pilot/admin data states.
+- Follow-up UI hardening removed an inconsistent mixed-state failure mode in Site Content Creator:
+  - property detail state now resets when selection changes or detail loads fail
+  - the inventory summary card now falls back to the selected inventory property name instead of rendering a blank property tile
+  - the inventory empty state now distinguishes between "no crawl exists yet" and "summary exists but detailed page rows failed to load"
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-intelligence.ts`
+- `/Users/mark/Property_Analytics/apps/api/src/platform/memory/governed-memory.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
+- `/Users/mark/Property_Analytics/apps/api/test/platform/intelligence-memory.test.ts`
+
+**Verification completed:**
+- `npx tsx --test test/platform/intelligence-memory.test.ts` in `apps/api`
+- `npx tsx --test test/platform/intelligence-brief-readiness.test.ts` in `apps/api`
 
 ### 2026-04-13 - Cloudflare Zero Trust security architecture baseline
 **Actions:**
@@ -2115,3 +2147,75 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Keeper-backed SEMrush notation now has an explicit canonical deployment path for the API Worker:
   - `KSM_PROFILE=marketingops`
   - `KSM_SEMRUSH_API_KEY_NOTATION=keeper://q1dizD20qVFSS1ZCYoRPEw/field/password`
+
+### 2026-04-15 - Cloudflare Access handoff refined for static Pages frontend
+
+- Confirmed `app.venterradev.com` is a static Cloudflare Pages deployment, so Data Pond cannot rely on a Next.js route handler in `apps/web` for Cloudflare bootstrap in production.
+- Replaced the app-host bootstrap concept with an API-host bootstrap flow:
+  - frontend redirects to `https://api.venterradev.com/v1/auth/access-bootstrap`
+  - API Worker mints the normal `pop_session`
+  - browser returns to the Data Pond app shell
+- Cloudflare Access app split now distinguishes:
+  - human/browser bootstrap: `Data Pond - API Auth Bootstrap`
+  - machine-only service routes: `Data Pond - API Platform`, `Data Pond - API VACS`, `Data Pond - API EVS`
+- Origin auth fallback was widened so browser bootstrap can succeed even when Cloudflare forwards `cf-access-authenticated-user-email` without a JWT assertion:
+  - `/Users/mark/Property_Analytics/apps/api/src/lib/service-auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- Added a one-shot `cf_bootstrapped=1` loop guard in the Pages frontend so failed Cloudflare bootstrap attempts now fall back to explicit login error states instead of repeatedly redirecting between `/` and the API bootstrap path.
+
+### 2026-04-15 - Cloudflare browser bootstrap stabilized with controlled retry and explicit signed-out state
+
+- Confirmed the working Cloudflare Access app split for browser vs machine traffic is:
+  - `Data Pond - API Auth Bootstrap` covering only `/v1/auth/access-bootstrap`
+  - machine-only API apps remaining scoped to `/v1/platform/*`, `/v1/vacs/*`, and `/v1/evs/*`
+- Added frontend retry hardening for the Cloudflare-to-Data-Pond handoff:
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/auth-provider.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+- New browser behavior:
+  - one controlled top-level retry through `/v1/auth/access-bootstrap` is allowed before surfacing the `cloudflare_access_api_unreachable` fallback
+  - logout now lands on `/login?logged_out=1` so the signed-out experience stays stable instead of immediately re-triggering Cloudflare bootstrap
+- `/login` now fully suppresses the session/bootstrap probe when `logged_out=1` is present, so logout can no longer immediately bounce the user back into the dashboard through an automatic `/v1/auth/me` check
+  - bootstrap query cleanup now removes both `cf_bootstrapped` and the retry marker after a successful session resolution
+- Verified locally:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+- Redeployed the static Pages frontend through the Keeper/KSM-backed Wrangler path:
+  - latest preview: `https://b801f73e.property-analytics.pages.dev`
+
+### 2026-04-16 - Cloudflare browser bootstrap now preserves the active app hostname
+
+- Updated the API/browser handoff so Data Pond no longer assumes `app.venterradev.com` is the only human frontend origin:
+  - `/Users/mark/Property_Analytics/apps/api/src/index.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- `api.venterradev.com` now allows browser CORS from both `app.venterradev.com` and `app.venterraliving.com`
+- `/v1/auth/access-bootstrap` now redirects back to the requesting frontend origin when the request arrived from a known app host, which keeps `app.venterraliving.com` from falling back to the old app host during Cloudflare Access session bootstrap
+- Added regression coverage for the cross-host bootstrap redirect:
+  - `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- Verified locally:
+  - `npx tsx --test test/auth/cloudflare-bootstrap.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-16 - Zero Trust browser auth can now auto-provision least-privilege app users
+
+- Updated the Data Pond auth bootstrap to let a successful Cloudflare Access browser identity become the app session source of truth instead of requiring a pre-seeded `users` row:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/env.ts`
+  - `/Users/mark/Property_Analytics/apps/api/wrangler.toml`
+- New runtime posture:
+  - `CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED=true` allows Access-approved identities to be created automatically on first entry
+  - default auto-provisioned role is `viewer`
+  - explicit elevation can still be controlled with `CLOUDFLARE_ACCESS_ADMIN_EMAILS` and `CLOUDFLARE_ACCESS_EDITOR_EMAILS`
+  - optional narrowing can be added with `CLOUDFLARE_ACCESS_ALLOWED_EMAILS` and `CLOUDFLARE_ACCESS_ALLOWED_DOMAINS`
+- Tightened trust boundary after review: browser bootstrap now requires a real Cloudflare Access JWT or `CF_Authorization` cookie and no longer trusts a bare `cf-access-authenticated-user-email` header by itself
+- Existing inactive users still fail closed; this did not create a bypass around app-level deactivation or role checks
+- Added regression coverage for viewer/admin auto-provision from Cloudflare Access:
+  - `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- Verified locally:
+  - `npx tsx --test test/auth/cloudflare-bootstrap.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+- Frontend logout now clears the Data Pond session and then navigates to the Cloudflare Access logout URL, so the sign-out button no longer leaves the Zero Trust browser session alive and immediately re-authenticates the user
+- Login bootstrap now also honors a browser-side Cloudflare signed-out marker, so `/login` stops auto-bootstrapping immediately after logout and instead shows an explicit "Continue with Cloudflare Access" choice before re-entering the Zero Trust flow
+- The signed-out Data Pond login page now presents Cloudflare One as the primary branded Zero Trust entry path inside the existing Data Pond visual language, so the handoff feels like one product instead of a generic fallback screen
