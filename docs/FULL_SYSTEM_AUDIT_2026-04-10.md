@@ -904,6 +904,11 @@ Additional current-state note:
   - `runtime_release_state.state_key = release_provenance` has been published in the live D1 environment
   - `/v1/pond/landscape` prefers that runtime state when present
 - that matters because live release pedigree is now beginning to move from repo-state truth to platform-state truth
+- D1 migration-history drift on the live `pop-brief-db` environment is now explicitly governed instead of being an operator-only known issue:
+  - `/Users/mark/Property_Analytics/scripts/reconcile_d1_migration_history.py` probes remote schema before reconciling missing `d1_migrations` rows
+  - `/Users/mark/Property_Analytics/docs/D1_MIGRATION_LEDGER_RECONCILIATION_RUNBOOK_2026-04-19.md` defines the safe dry-run/apply/verify path
+  - the live ledger has been reconciled so Wrangler no longer reports the already-present 0013/0014/0015/0016/0017/0018/0021/0022 schema migrations as pending
+- that matters because the platform can now return to a normal declarative Wrangler migration posture instead of carrying unresolved remote-schema drift as a hidden release exception
 - release reconciliation also now ignores post-deploy provenance bridge artifacts when reading branch cleanliness:
   - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py` excludes `config/release_provenance.json` and `config/release_reconcile_snapshot.json` from dirty-tree lane counts
 - that matters because a successfully promoted clean branch should not immediately look dirty only because the operator bridge restamped deployment pedigree after release

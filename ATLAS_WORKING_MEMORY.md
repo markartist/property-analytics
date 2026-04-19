@@ -3984,3 +3984,22 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - live Watchtower/API release pedigree can now resolve from runtime state in D1 instead of depending only on bundled config
   - release preflight now matches the actual Keeper-backed account-token path used for promotion
   - remaining enterprise cleanup is migration-history reconciliation for old app schema drift and eventual CI-issued provenance replacing the operator bridge
+
+### 2026-04-19 05:05 UTC - Remote D1 migration ledger is reconciled back to the live schema
+
+- Added `/Users/mark/Property_Analytics/scripts/reconcile_d1_migration_history.py` as the canonical one-time reconciliation tool for legacy D1 ledger drift.
+- Added `/Users/mark/Property_Analytics/docs/D1_MIGRATION_LEDGER_RECONCILIATION_RUNBOOK_2026-04-19.md` as the operator runbook for this case.
+- Verified via schema probes that the live `pop-brief-db` remote database already contained the effects of:
+  - `0013_enrich_communities.sql`
+  - `0014_create_pib_tables.sql`
+  - `0015_create_fish_tables.sql`
+  - `0016_create_ad_keyword_performance.sql`
+  - `0017_create_data_freshness.sql`
+  - `0018_magic_links_and_roles.sql`
+  - `0021_create_phase1_platform_tables.sql`
+  - `0022_create_runtime_release_state.sql`
+- Applied ledger reconciliation to `d1_migrations` from the canonical Keeper-backed Cloudflare token path and verified `npx wrangler d1 migrations apply pop-brief-db --remote` now returns `No migrations to apply!`.
+- Current effect:
+  - remote schema truth and Wrangler migration ledger are aligned again
+  - future D1 promotion can return to the normal declarative migration path
+  - the release branch no longer carries unresolved legacy migration-history drift as an enterprise blocker
