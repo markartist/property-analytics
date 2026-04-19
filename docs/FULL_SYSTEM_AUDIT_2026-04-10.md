@@ -449,6 +449,9 @@ Audit judgment:
 - the promoted web surface now reflects that more honestly:
   - Site Content Creator is no longer only a crawl-and-inventory view
   - it now presents site-level story posture, page composition posture, explicit missing-structure review, and active section rewrite workspaces on top of the persisted mapping/assessment model
+- the next refinement step is now also present in the clean branch:
+  - property brief inputs and Captain's Log signals are surfaced directly in the site story layer
+  - page posture now reflects real governed claim/readiness context in addition to section assessment
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system

@@ -3,11 +3,18 @@
 import React from "react";
 import {
   crawlSiteContentProperty,
+  getGovernedMemoryPropertyLog,
   getIntelligenceOffice,
+  getIntelligencePropertyBriefInputs,
   getSiteContentInventory,
   getSiteContentProperty,
   saveSiteContentSectionRewrite,
+  type BriefReadiness,
+  type GovernedMemoryEntryWithEvidence,
+  type IntelligenceClaim,
   type IntelligenceDirective,
+  type IntelligenceEvidence,
+  type IntelligencePropertyBriefInputsResponse,
   type IntelligenceSource,
   type SiteContentPage,
   type SiteContentPropertySummary,
@@ -59,6 +66,11 @@ type PagePosture = {
   harmonizationScore: number;
   posture: "healthy" | "watch" | "needs-attention";
   nextMove: string;
+};
+
+type PropertySignals = {
+  brief: IntelligencePropertyBriefInputsResponse | null;
+  captainLog: GovernedMemoryEntryWithEvidence[];
 };
 
 function formatStamp(value: string | null | undefined): string {
@@ -125,15 +137,24 @@ function summarizeSite(pages: SiteContentPage[]): SiteSummary {
   };
 }
 
-function summarizePage(page: SiteContentPage): PagePosture {
+function summarizePage(
+  page: SiteContentPage,
+  propertyClaims: IntelligenceClaim[] = [],
+  briefReadiness: BriefReadiness | null = null
+): PagePosture {
   const assessments = page.section_assessments;
   const harmonizationScore = clampScore(average(assessments.map((assessment) => assessment.harmonization_score)));
-  const storyScore = clampScore(
+  const baseStoryScore = clampScore(
     average(
       assessments.map((assessment) =>
         average([assessment.messaging_score, assessment.specificity_score, assessment.harmonization_score])
       )
     )
+  );
+  const claimSignal = propertyClaims.length > 0 ? Math.min(100, 58 + propertyClaims.length * 6) : 0;
+  const readinessSignal = briefReadiness ? briefReadiness.completeness_score : 0;
+  const storyScore = clampScore(
+    average([baseStoryScore, claimSignal || baseStoryScore, readinessSignal || baseStoryScore])
   );
 
   if (page.section_mapping_summary.missing_from_live > 0) {
@@ -155,6 +176,7 @@ function summarizePage(page: SiteContentPage): PagePosture {
   }
 
   if (
+    (briefReadiness && briefReadiness.completeness_status !== "ready") ||
     page.section_mapping_summary.partial > 0 ||
     page.section_assessment_summary.watch > 0 ||
     page.section_rewrite_summary.in_review > 0 ||
@@ -212,6 +234,28 @@ export function SiteContentCreatorPage() {
   const [selectedPageLimit, setSelectedPageLimit] = React.useState("8");
   const [directives, setDirectives] = React.useState<IntelligenceDirective[]>([]);
   const [sources, setSources] = React.useState<IntelligenceSource[]>([]);
+  const [propertySignals, setPropertySignals] = React.useState<PropertySignals>({
+    brief: null,
+    captainLog: [],
+  });
+
+  const loadPropertySignals = React.useCallback(async (propertyId: string) => {
+    try {
+      const [brief, captainLog] = await Promise.all([
+        getIntelligencePropertyBriefInputs(propertyId),
+        getGovernedMemoryPropertyLog(propertyId),
+      ]);
+      setPropertySignals({
+        brief,
+        captainLog: captainLog.entries,
+      });
+    } catch {
+      setPropertySignals({
+        brief: null,
+        captainLog: [],
+      });
+    }
+  }, []);
 
   const loadInventory = React.useCallback(async () => {
     const [inventory, office] = await Promise.all([getSiteContentInventory(), getIntelligenceOffice()]);
@@ -222,12 +266,12 @@ export function SiteContentCreatorPage() {
     const nextPropertyId = selectedPropertyId || inventory.properties[0]?.property_id || "";
     if (nextPropertyId) {
       setSelectedPropertyId(nextPropertyId);
-      const detail = await getSiteContentProperty(nextPropertyId);
+      const [detail] = await Promise.all([getSiteContentProperty(nextPropertyId), loadPropertySignals(nextPropertyId)]);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
       setFocusedPageId("all");
     }
-  }, [selectedPropertyId]);
+  }, [selectedPropertyId, loadPropertySignals]);
 
   React.useEffect(() => {
     loadInventory()
@@ -238,7 +282,7 @@ export function SiteContentCreatorPage() {
   async function loadProperty(propertyId: string) {
     setSelectedPropertyId(propertyId);
     try {
-      const detail = await getSiteContentProperty(propertyId);
+      const [detail] = await Promise.all([getSiteContentProperty(propertyId), loadPropertySignals(propertyId)]);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
       setFocusedPageId("all");
@@ -259,6 +303,7 @@ export function SiteContentCreatorPage() {
         getSiteContentInventory(),
         getSiteContentProperty(selectedPropertyId),
       ]);
+      await loadPropertySignals(selectedPropertyId);
       setProperties(inventory.properties);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
@@ -301,6 +346,10 @@ export function SiteContentCreatorPage() {
   const selectedSummary = properties.find((property) => property.property_id === selectedPropertyId) ?? null;
   const visiblePages = focusedPageId === "all" ? selectedPages : selectedPages.filter((page) => page.id === focusedPageId);
   const siteSummary = summarizeSite(selectedPages);
+  const briefReadiness = propertySignals.brief?.briefReadiness ?? selectedSummary?.brief_readiness ?? null;
+  const propertyClaims = propertySignals.brief?.claims ?? [];
+  const propertyEvidence = propertySignals.brief?.evidence ?? [];
+  const latestCaptainEntry = propertySignals.captainLog[0] ?? null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -430,6 +479,89 @@ export function SiteContentCreatorPage() {
         </Card>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center gap-2 text-slate-900">
+              <Brain className="h-5 w-5 text-[#0D5E6D]" />
+              <h2 className="text-lg font-semibold">Intelligence and Captain signals</h2>
+            </div>
+            <p className="text-sm leading-6 text-slate-600">
+              These are the governed narrative inputs behind the site story. They should influence rewrite priority and
+              storytelling judgment before section copy gets polished in isolation.
+            </p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <SurfaceMetric
+                label="Claims"
+                value={String(propertyClaims.length)}
+                helper="Property-scoped narrative claims that should be reinforced or reconciled on the site."
+              />
+              <SurfaceMetric
+                label="Evidence refs"
+                value={String(propertyEvidence.length)}
+                helper="Evidence objects supporting the active property story and its major proof points."
+              />
+              <SurfaceMetric
+                label="Brief readiness"
+                value={briefReadiness ? `${briefReadiness.completeness_score}` : "—"}
+                helper={briefReadiness ? briefReadiness.completeness_status : "No readiness signal loaded for this property."}
+              />
+            </div>
+            {briefReadiness && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Readiness posture</p>
+                <p className="mt-2 text-sm leading-7 text-slate-700">
+                  Captain inputs: {briefReadiness.captain_log_count} · Claims: {briefReadiness.claim_count} · Evidence:{" "}
+                  {briefReadiness.evidence_count}
+                </p>
+                {briefReadiness.missing_components.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {briefReadiness.missing_components.map((item) => (
+                      <InlinePill key={item} label={item.replace(/_/g, " ")} tone="amber" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center gap-2 text-slate-900">
+              <Compass className="h-5 w-5 text-[#0D5E6D]" />
+              <h2 className="text-lg font-semibold">Captain’s Brief lead signal</h2>
+            </div>
+            <p className="text-sm leading-6 text-slate-600">
+              The current property story should stay anchored to the latest Captain guidance, not only to structural and
+              section-level assessment output.
+            </p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              {latestCaptainEntry ? (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Latest Captain entry</p>
+                  <p className="mt-3 text-base font-semibold text-slate-900">{latestCaptainEntry.entry.summary}</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">
+                    Confidence {Math.round((latestCaptainEntry.entry.confidence ?? 0) * 100)} · Updated{" "}
+                    {formatStamp(latestCaptainEntry.entry.updated_at)}
+                  </p>
+                  {latestCaptainEntry.evidence.length > 0 && (
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      Evidence attached: {latestCaptainEntry.evidence.length} supporting references
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm leading-7 text-slate-600">
+                  No Captain’s Brief signal is currently available for this property. The site story should be treated as
+                  under-governed until property strategy is supplied.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="inventory">Site Workspace</TabsTrigger>
@@ -453,7 +585,7 @@ export function SiteContentCreatorPage() {
               ) : (
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {selectedPages.map((page) => {
-                    const posture = summarizePage(page);
+                    const posture = summarizePage(page, propertyClaims, briefReadiness);
                     const tone = toneForPosture(posture.posture);
                     return (
                       <button
@@ -532,7 +664,13 @@ export function SiteContentCreatorPage() {
             </Card>
           ) : (
             visiblePages.map((page) => (
-              <PageWorkspace key={page.id} page={page} onRewriteSaved={handleRewriteSaved} />
+              <PageWorkspace
+                key={page.id}
+                page={page}
+                onRewriteSaved={handleRewriteSaved}
+                propertyClaims={propertyClaims}
+                briefReadiness={briefReadiness}
+              />
             ))
           )}
         </TabsContent>
@@ -594,11 +732,15 @@ export function SiteContentCreatorPage() {
 function PageWorkspace({
   page,
   onRewriteSaved,
+  propertyClaims,
+  briefReadiness,
 }: {
   page: SiteContentPage;
   onRewriteSaved: (pageId: string, rewrite: SiteContentSectionRewrite) => void;
+  propertyClaims: IntelligenceClaim[];
+  briefReadiness: BriefReadiness | null;
 }) {
-  const posture = summarizePage(page);
+  const posture = summarizePage(page, propertyClaims, briefReadiness);
   const tone = toneForPosture(posture.posture);
   const missingMappings = page.section_mappings.filter((mapping) => mapping.match_status === "missing-from-live");
 

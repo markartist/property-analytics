@@ -3961,6 +3961,21 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 15:30 UTC - Site Content story board now consumes governed property signals
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so Site Content Creator now pulls:
+  - property brief inputs from Intelligence Office
+  - Captain's Log entries from governed memory
+- The workspace now exposes those signals directly in the site story layer:
+  - claim count
+  - evidence count
+  - brief-readiness posture and missing components
+  - latest Captain entry as the lead property strategy signal
+- Page composition posture now factors in property brief readiness and narrative-claim presence instead of relying only on section assessment output.
+- Current effect:
+  - Site Content is more clearly acting as the synthesis layer between structure, governed interpretation, and property strategy
+  - storytelling review is now grounded in real property signals rather than only synthetic scoring from mapped sections
+
 ### 2026-04-19 15:05 UTC - Site Content Creator now operates as a page-and-story workspace, not just a crawl viewer
 
 - Refined `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` into a fuller content-operations surface aligned to the new canonical model.
