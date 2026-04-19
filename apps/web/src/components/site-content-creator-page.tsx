@@ -80,6 +80,13 @@ type NarrativeCoverage = {
   posture: "aligned" | "partial" | "missing";
 };
 
+type NarrativePriorityPage = {
+  pageId: string;
+  label: string;
+  score: number;
+  reasons: string[];
+};
+
 function formatStamp(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -282,6 +289,71 @@ function buildNarrativeCoverage(pages: SiteContentPage[], claims: IntelligenceCl
   });
 }
 
+function buildNarrativePriorityPages(
+  pages: SiteContentPage[],
+  narrativeCoverage: NarrativeCoverage[],
+  briefReadiness: BriefReadiness | null
+): NarrativePriorityPage[] {
+  const unresolvedClaims = narrativeCoverage.filter((item) => item.posture !== "aligned");
+  return pages
+    .map((page) => {
+      const label = page.spec_page_name || page.page_title || page.page_path || page.page_url;
+      const searchText = pageSearchText(page);
+      const reasons: string[] = [];
+      let score = 0;
+
+      if ((page.page_path ?? "/") === "/" || page.page_type?.toLowerCase().includes("home")) {
+        score += 4;
+        reasons.push("Homepage carries the broadest story burden.");
+      }
+
+      if (page.section_mapping_summary.missing_from_live > 0) {
+        score += 3;
+        reasons.push("Expected structure is still missing on this page.");
+      }
+
+      if (page.section_assessment_summary.needs_attention > 0) {
+        score += 3;
+        reasons.push("The page already has sections marked needs attention.");
+      } else if (page.section_assessment_summary.watch > 0) {
+        score += 2;
+        reasons.push("The page still has watched sections that can carry story cleanup.");
+      }
+
+      if (page.section_rewrite_summary.drafted > 0 || page.section_rewrite_summary.in_review > 0) {
+        score += 1;
+        reasons.push("Rewrite work is already in motion here, so closing the loop is cheaper.");
+      }
+
+      for (const item of unresolvedClaims) {
+        const tokens = claimKeywords(item.claim.claim_text).slice(0, 5);
+        const tokenHits = tokens.filter((token) => searchText.includes(token)).length;
+        if (tokenHits > 0) {
+          score += item.posture === "missing" ? 2 : 1;
+          reasons.push(
+            item.posture === "missing"
+              ? `This page is a plausible home for a missing governed claim.`
+              : `This page can help strengthen a partially-covered governed claim.`
+          );
+        }
+      }
+
+      if (briefReadiness && briefReadiness.completeness_status !== "ready") {
+        score += 1;
+        reasons.push("Property brief readiness is not fully settled, so visible narrative anchors matter more.");
+      }
+
+      return {
+        pageId: page.id,
+        label,
+        score,
+        reasons: Array.from(new Set(reasons)).slice(0, 3),
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+}
+
 export function SiteContentCreatorPage() {
   const [loading, setLoading] = React.useState(true);
   const [crawling, setCrawling] = React.useState(false);
@@ -414,6 +486,7 @@ export function SiteContentCreatorPage() {
   const narrativeCoverage = buildNarrativeCoverage(selectedPages, propertyClaims);
   const missingNarrativeClaims = narrativeCoverage.filter((item) => item.posture === "missing");
   const partialNarrativeClaims = narrativeCoverage.filter((item) => item.posture === "partial");
+  const narrativePriorityPages = buildNarrativePriorityPages(selectedPages, narrativeCoverage, briefReadiness);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -654,42 +727,72 @@ export function SiteContentCreatorPage() {
             />
           </div>
           {narrativeCoverage.length > 0 ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              {narrativeCoverage.map((item) => {
-                const tone =
-                  item.posture === "aligned"
-                    ? "border-emerald-200 bg-emerald-50/70"
-                    : item.posture === "partial"
-                      ? "border-amber-200 bg-amber-50/70"
-                      : "border-rose-200 bg-rose-50/70";
-                const label =
-                  item.posture === "aligned" ? "Aligned" : item.posture === "partial" ? "Partial" : "Missing";
-                return (
-                  <div key={item.claim.id} className={`rounded-2xl border p-4 ${tone}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="font-semibold text-slate-900">{item.claim.claim_text}</p>
-                      <InlinePill
-                        label={label}
-                        tone={item.posture === "aligned" ? "emerald" : item.posture === "partial" ? "amber" : "rose"}
-                      />
+            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+              <div className="grid gap-3 md:grid-cols-2">
+                {narrativeCoverage.map((item) => {
+                  const tone =
+                    item.posture === "aligned"
+                      ? "border-emerald-200 bg-emerald-50/70"
+                      : item.posture === "partial"
+                        ? "border-amber-200 bg-amber-50/70"
+                        : "border-rose-200 bg-rose-50/70";
+                  const label =
+                    item.posture === "aligned" ? "Aligned" : item.posture === "partial" ? "Partial" : "Missing";
+                  return (
+                    <div key={item.claim.id} className={`rounded-2xl border p-4 ${tone}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-semibold text-slate-900">{item.claim.claim_text}</p>
+                        <InlinePill
+                          label={label}
+                          tone={item.posture === "aligned" ? "emerald" : item.posture === "partial" ? "amber" : "rose"}
+                        />
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Coverage: {Math.round(item.coverageRatio * 100)}% of captured pages
+                      </p>
+                      {item.pagesCovered.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {item.pagesCovered.slice(0, 5).map((pageLabel) => (
+                            <InlinePill key={pageLabel} label={pageLabel} tone="slate" />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm leading-6 text-slate-600">
+                          No captured page currently reflects this governed claim strongly enough to register.
+                        </p>
+                      )}
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Coverage: {Math.round(item.coverageRatio * 100)}% of captured pages
-                    </p>
-                    {item.pagesCovered.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {item.pagesCovered.slice(0, 5).map((pageLabel) => (
-                          <InlinePill key={pageLabel} label={pageLabel} tone="slate" />
+                  );
+                })}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-center gap-2 text-slate-900">
+                  <Wand2 className="h-4 w-4 text-[#0D5E6D]" />
+                  <p className="font-semibold">Narrative priority pages</p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  These pages are the best places to absorb unresolved story work first based on current structure,
+                  section posture, and governed claim gaps.
+                </p>
+                <div className="mt-4 space-y-3">
+                  {narrativePriorityPages.map((page) => (
+                    <div key={page.pageId} className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-semibold text-slate-900">{page.label}</p>
+                        <InlinePill label={`Priority ${page.score}`} tone={page.score >= 6 ? "rose" : page.score >= 4 ? "amber" : "slate"} />
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {page.reasons.map((reason) => (
+                          <p key={reason} className="text-sm leading-6 text-slate-700">
+                            {reason}
+                          </p>
                         ))}
                       </div>
-                    ) : (
-                      <p className="mt-3 text-sm leading-6 text-slate-600">
-                        No captured page currently reflects this governed claim strongly enough to register.
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">

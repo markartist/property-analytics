@@ -3961,6 +3961,20 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 16:00 UTC - Site Content narrative gaps now point back to priority pages
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the narrative consistency layer is no longer only descriptive.
+- Added a `Narrative priority pages` board that ranks the best pages to absorb unresolved story work based on:
+  - homepage/story-anchor weight
+  - missing expected structure
+  - section assessment posture
+  - rewrite-in-progress signals
+  - unresolved governed claim coverage
+  - property brief readiness
+- Current effect:
+  - the site story board now points operators toward where to work first instead of only showing which claims are weak
+  - narrative consistency and page-level rewrite prioritization are now explicitly linked in the UI
+
 ### 2026-04-19 15:45 UTC - Site Content now flags cross-page narrative fragmentation
 
 - Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` with a new `Narrative consistency board`.

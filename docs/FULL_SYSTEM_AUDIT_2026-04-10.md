@@ -456,6 +456,9 @@ Audit judgment:
   - governed claims are compared against captured page copy
   - the board can now surface aligned, partial, and missing claim coverage across the site
   - this is the right direction because it makes the site-level story review more explicit without creating a parallel truth system outside existing Intelligence Office and crawl evidence
+- the next refinement step is also now present:
+  - unresolved claim gaps are routed back into a `Narrative priority pages` board
+  - that means the site-level story layer now helps operators decide where to rewrite first rather than only describing fragmentation
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system
