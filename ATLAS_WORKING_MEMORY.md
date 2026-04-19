@@ -3970,3 +3970,17 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Current effect:
   - the platform now has a real path away from bundled release-provenance artifacts toward runtime-issued state
   - account-scoped Keeper-backed Cloudflare tokens are now treated as valid by the release preflight, matching actual production promotion behavior
+
+### 2026-04-19 04:25 UTC - Runtime release provenance is now live in D1
+
+- Applied the new `runtime_release_state` table to the live D1 database via idempotent remote SQL after confirming the legacy migration history was not fully replay-safe in Wrangler.
+- Published the current clean release pedigree into D1 under:
+  - `state_key = release_provenance`
+  - `source_mode = operator_bridge`
+- Verified the current Cloudflare release preflight now returns:
+  - `status = healthy`
+  - `verification_mode = account_token`
+- Current effect:
+  - live Watchtower/API release pedigree can now resolve from runtime state in D1 instead of depending only on bundled config
+  - release preflight now matches the actual Keeper-backed account-token path used for promotion
+  - remaining enterprise cleanup is migration-history reconciliation for old app schema drift and eventual CI-issued provenance replacing the operator bridge

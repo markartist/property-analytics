@@ -900,6 +900,10 @@ Additional current-state note:
   - migration `0022_create_runtime_release_state.sql`
   - `scripts/update_release_provenance.py --publish-runtime-state`
 - that matters because Watchtower can now be moved toward runtime-issued release state instead of depending only on repo-bundled config artifacts
+- the current live bridge is now active:
+  - `runtime_release_state.state_key = release_provenance` has been published in the live D1 environment
+  - `/v1/pond/landscape` prefers that runtime state when present
+- that matters because live release pedigree is now beginning to move from repo-state truth to platform-state truth
 - release reconciliation also now ignores post-deploy provenance bridge artifacts when reading branch cleanliness:
   - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py` excludes `config/release_provenance.json` and `config/release_reconcile_snapshot.json` from dirty-tree lane counts
 - that matters because a successfully promoted clean branch should not immediately look dirty only because the operator bridge restamped deployment pedigree after release
