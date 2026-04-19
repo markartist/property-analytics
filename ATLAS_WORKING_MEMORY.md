@@ -3903,3 +3903,18 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Watchtower can now show the current dirty-tree split by workstream lane
   - the first clean release-shaped slice is now explicit inside the control plane: `platform_app + data_collection_hardening`
   - the platform can quantify how much of the current tree is still non-primary release work instead of only describing the release problem narratively
+
+### 2026-04-19 01:35 UTC - Release branch deployment is now blocked explicitly by Cloudflare auth health
+
+- Added `/Users/mark/Property_Analytics/scripts/check_cloudflare_release_auth.py` as the canonical preflight for non-interactive Wrangler promotion.
+- Copied `/Users/mark/Property_Analytics/utils/ksm.py` into the clean release branch worktree so release tooling can resolve Keeper secrets without depending on the dirty main workspace.
+- Updated:
+  - `/Users/mark/Property_Analytics/config/enterprise_gap_register.json`
+  - `/Users/mark/Property_Analytics/config/release_governance.json`
+  - `/Users/mark/Property_Analytics/docs/ENTERPRISE_GAP_REGISTER_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_GOVERNANCE_STANDARD_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_READINESS_CHECKLIST_2026-04-18.md`
+- Current effect:
+  - the clean `codex/release-reconcile` branch is validated, committed, and pushed, but live promotion is honestly blocked because the Keeper-backed Cloudflare admin token currently fails verification with `401 Unauthorized`
+  - release governance now treats Cloudflare admin token health as a first-class gate instead of letting Wrangler fail mid-promotion
+  - the remaining blocker is no longer code or branch discipline; it is credential rotation/replacement for Cloudflare release operations

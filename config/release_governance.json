@@ -51,7 +51,8 @@
       "required_checks": [
         "Release branch/worktree identified",
         "Deployment target documented",
-        "Changed workstream families named"
+        "Changed workstream families named",
+        "Cloudflare release auth health verified for non-interactive deployment"
       ]
     }
   ],
@@ -103,6 +104,7 @@
     "Keep the release-reconcile path as the canonical production promotion base",
     "Continue separating work by coherent outcome/workstream lanes",
     "Add deployment provenance and service-level posture to Watchtower over time",
-    "Use the release gates as the standard review language for production candidate approval"
+    "Use the release gates as the standard review language for production candidate approval",
+    "Fail fast on invalid Cloudflare admin credentials before attempting Wrangler-based promotion"
   ]
 }

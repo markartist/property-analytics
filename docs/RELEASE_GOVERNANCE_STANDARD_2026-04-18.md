@@ -56,6 +56,13 @@ Required:
 - branch/worktree source is identified
 - deployment target is identified
 - the changed workstream families are named
+- Cloudflare release auth health is verified before non-interactive Wrangler promotion
+
+Current operational note:
+
+- the historical Keeper-backed `KSM_CLOUDFLARE_TOKEN_NOTATION` value may drift or expire independently of repo state
+- promotion should fail fast on token health rather than reaching the deploy step and discovering invalid credentials mid-release
+- use `/Users/mark/Property_Analytics/scripts/check_cloudflare_release_auth.py` as the canonical preflight
 
 ## Anti-Patterns
 
@@ -83,4 +90,3 @@ Use this standard with:
 - `/Users/mark/Property_Analytics/docs/WORKTREE_COMPARTMENT_MAP_2026-04-16.md`
 - `/Users/mark/Property_Analytics/docs/ENTERPRISE_READINESS_AUDIT_2026-04-18.md`
 - `/Users/mark/Property_Analytics/config/release_governance.json`
-

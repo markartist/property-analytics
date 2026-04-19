@@ -894,3 +894,6 @@ Additional current-state note:
   - `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`
   - `/Users/mark/Property_Analytics/docs/RELEASE_RECONCILE_SNAPSHOT_MODEL_2026-04-18.md`
 - that matters because the control plane can now quantify the dirty-tree split and show the first clean release-shaped slice directly, instead of treating release reconciliation as only a prose planning concern
+- release promotion now also has a canonical auth-health preflight:
+  - `/Users/mark/Property_Analytics/scripts/check_cloudflare_release_auth.py`
+- that matters because the current Keeper-backed Cloudflare admin token has drifted into an invalid state, and the platform now treats that as an explicit release blocker instead of only discovering it mid-Wrangler deploy

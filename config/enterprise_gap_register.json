@@ -111,11 +111,13 @@
       ],
       "gaps": [
         "The repo remains too dirty and mixed for enterprise-grade promotion confidence",
-        "Release provenance and deployment discipline are not yet standardized enough"
+        "Release provenance and deployment discipline are not yet standardized enough",
+        "The current Keeper-backed Cloudflare admin token is invalid for non-interactive Wrangler promotion, which blocks clean release deployment even when the branch is ready"
       ],
       "next_moves": [
         "Establish a clean release path and stop promoting from mixed dirty worktrees",
-        "Track deployment provenance, environment parity, and service-level incident/runbook readiness"
+        "Track deployment provenance, environment parity, and service-level incident/runbook readiness",
+        "Verify Cloudflare release auth health before deployment and rotate the admin token when it fails verification"
       ]
     }
   ],
@@ -151,7 +153,8 @@
       "exit_criteria": [
         "Clean release branch path is defined and in use",
         "Promotion no longer depends on giant mixed worktrees",
-        "Service changes can be traced to coherent release slices"
+        "Service changes can be traced to coherent release slices",
+        "Cloudflare deployment credentials are healthy and verified as part of release readiness"
       ]
     },
     {

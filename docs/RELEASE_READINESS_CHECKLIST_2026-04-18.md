@@ -30,6 +30,7 @@ Owner: MarketingOps / Property Analytics
 - branch/worktree source is documented
 - deployment target is documented
 - affected workstream lane(s) are documented
+- `python3 scripts/check_cloudflare_release_auth.py` passes before Wrangler-based promotion
 
 ## After Promotion
 
@@ -37,3 +38,7 @@ Owner: MarketingOps / Property Analytics
 - relevant control-plane or memory docs are updated
 - any remaining follow-up work is assigned to a named lane
 
+## Current Known Blocker Pattern
+
+- if `check_cloudflare_release_auth.py` reports an invalid token, treat promotion as blocked
+- rotate or replace the Keeper-backed Cloudflare admin token before retrying release deployment

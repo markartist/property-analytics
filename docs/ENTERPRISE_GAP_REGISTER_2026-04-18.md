@@ -35,12 +35,14 @@ Gaps:
 
 - promotions still depend too much on mixed worktree state
 - workstreams are not yet separated cleanly enough for enterprise promotion discipline
+- the current Keeper-backed Cloudflare admin token is invalid for non-interactive Wrangler promotion, which blocks clean release deployment even when the release branch itself is ready
 
 Done when:
 
 - clean release path exists and is used
 - release slices are coherent and traceable
 - platform promotion no longer depends on dirty multi-stream state
+- release credentials are healthy and verified before deployment begins
 
 ### 3. Security completion
 
@@ -77,4 +79,3 @@ Done when:
 The machine-readable source of truth for this register is:
 
 - `/Users/mark/Property_Analytics/config/enterprise_gap_register.json`
-
