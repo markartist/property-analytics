@@ -3961,6 +3961,24 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 14:35 UTC - Site Content canonical architecture aligned to Specs, EVS, Intelligence Office, and Property Captain
+
+- Added the first explicit clean-branch architecture docs for Site Content and the wider content-operations system:
+  - `/Users/mark/Property_Analytics/docs/SITE_CONTENT_CREATOR_MODEL.md`
+  - `/Users/mark/Property_Analytics/docs/CONTENT_OPERATIONS_MODEL.md`
+- Locked the non-duplicative system split so future Site Content refinement does not recreate work already owned by adjacent systems:
+  - Specs = intended structure and page/section contract
+  - EVS / BrowserStack = observed rendered structure and experiential validation
+  - Intelligence Office = governed interpretation, directives, claims, and evidence
+  - Property Captain = property-specific strategic priorities and storytelling emphasis
+  - Site Content Creator = live content capture, block/page/site evaluation, harmonization, and rewrite workflow
+- Explicitly defined the next refinement direction for Site Content:
+  - preserve block-level diagnosis
+  - add page composition evaluation
+  - add site-level harmonization and storytelling evaluation
+  - consume shared structural and validation contracts instead of relying on duplicate local heuristics
+- Updated the capability register and full system audit so the clean branch now points at one canonical content-operations model instead of scattered implied responsibilities.
+
 ### 2026-04-19 04:10 UTC - Release provenance is now moving to D1-backed runtime state
 
 - Added migration `/Users/mark/Property_Analytics/apps/api/migrations/0022_create_runtime_release_state.sql`.

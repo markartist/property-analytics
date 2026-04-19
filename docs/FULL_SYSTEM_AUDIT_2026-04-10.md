@@ -437,6 +437,16 @@ Audit judgment:
 
 - this is strategically important and easy to under-credit because some of it is still documentation- or route-level
 - this area should be treated as a real capability program with partial implementation, not as “just docs”
+- the clean branch now has explicit canonical models in:
+  - [SITE_CONTENT_CREATOR_MODEL.md](/Users/mark/Property_Analytics/docs/SITE_CONTENT_CREATOR_MODEL.md)
+  - [CONTENT_OPERATIONS_MODEL.md](/Users/mark/Property_Analytics/docs/CONTENT_OPERATIONS_MODEL.md)
+- the most important architectural rule is now explicit:
+  - Specs owns intended structure
+  - EVS / BrowserStack owns observed rendered structure
+  - Intelligence Office owns interpretation and governed editorial reasoning
+  - Property Captain owns property-specific strategy
+  - Site Content Creator owns synthesis, diagnosis, and rewrite workflow
+- future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system
   - the VACS API is implemented and protected under Cloudflare Zero Trust
