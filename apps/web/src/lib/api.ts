@@ -1,19 +1,111 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
+export const API_BASE_URL = API_BASE;
+export const SITE_CONTENT_DEBUG_FLAG = process.env.NEXT_PUBLIC_SITE_CONTENT_DEBUG === "true";
+export const CLOUDFLARE_BOOTSTRAP_MARKER = "cf_bootstrapped";
+export const CLOUDFLARE_BOOTSTRAP_RETRY_MARKER = "cf_bootstrap_retry";
+export const LOGGED_OUT_MARKER = "logged_out";
+export const CLOUDFLARE_LOGGED_OUT_STORAGE_KEY = "cloudflare_logged_out";
+const APP_ORIGIN_FALLBACK = "https://app.local";
+const CLOUDFLARE_ACCESS_TEAM_DOMAIN =
+  (process.env.NEXT_PUBLIC_CLOUDFLARE_ACCESS_TEAM_DOMAIN ?? "https://macxs.cloudflareaccess.com").replace(/\/$/, "");
+
+function normalizeSafeNextPath(nextPath: string): string {
+  return nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
+}
+
+function appendBootstrapMarker(nextPath: string): string {
+  const url = new URL(normalizeSafeNextPath(nextPath), APP_ORIGIN_FALLBACK);
+  url.searchParams.set(CLOUDFLARE_BOOTSTRAP_MARKER, "1");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function appendBootstrapRetryMarker(nextPath: string): string {
+  const url = new URL(appendBootstrapMarker(nextPath), APP_ORIGIN_FALLBACK);
+  url.searchParams.set(CLOUDFLARE_BOOTSTRAP_RETRY_MARKER, "1");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+export function hasCloudflareBootstrapMarker(search: string): boolean {
+  return new URLSearchParams(search).get(CLOUDFLARE_BOOTSTRAP_MARKER) === "1";
+}
+
+export function hasCloudflareBootstrapRetryMarker(search: string): boolean {
+  return new URLSearchParams(search).get(CLOUDFLARE_BOOTSTRAP_RETRY_MARKER) === "1";
+}
+
+export function hasLoggedOutMarker(search: string): boolean {
+  return new URLSearchParams(search).get(LOGGED_OUT_MARKER) === "1";
+}
+
+export function stripCloudflareBootstrapMarker(pathname: string, search: string, hash = ""): string {
+  const params = new URLSearchParams(search);
+  params.delete(CLOUDFLARE_BOOTSTRAP_MARKER);
+  params.delete(CLOUDFLARE_BOOTSTRAP_RETRY_MARKER);
+  const nextSearch = params.toString();
+  return `${pathname}${nextSearch ? `?${nextSearch}` : ""}${hash}`;
+}
 
 /**
  * Fetch wrapper that includes credentials and handles auth redirects.
  */
 export async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers ?? undefined);
+  const method = (init?.method ?? "GET").toUpperCase();
+  const hasBody = init?.body !== undefined && init?.body !== null;
+
+  if (hasBody && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (!hasBody && (method === "GET" || method === "HEAD")) {
+    headers.delete("Content-Type");
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    headers,
   });
 
   return res;
+}
+
+export function buildCloudflareAccessBootstrapUrl(nextPath: string): string {
+  const url = new URL("/v1/auth/access-bootstrap", API_BASE);
+  url.searchParams.set("next", appendBootstrapMarker(nextPath));
+  return url.toString();
+}
+
+export function buildCloudflareAccessBootstrapRetryUrl(nextPath: string): string {
+  const url = new URL("/v1/auth/access-bootstrap", API_BASE);
+  url.searchParams.set("next", appendBootstrapRetryMarker(nextPath));
+  return url.toString();
+}
+
+export function buildCloudflareAccessLogoutUrl(): string {
+  if (typeof window !== "undefined") {
+    const { origin, hostname } = window.location;
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+      return `${origin}/cdn-cgi/access/logout`;
+    }
+  }
+
+  return `${CLOUDFLARE_ACCESS_TEAM_DOMAIN}/cdn-cgi/access/logout`;
+}
+
+export function markCloudflareLoggedOut(): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(CLOUDFLARE_LOGGED_OUT_STORAGE_KEY, "1");
+}
+
+export function hasCloudflareLoggedOutFlag(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.sessionStorage.getItem(CLOUDFLARE_LOGGED_OUT_STORAGE_KEY) === "1";
+}
+
+export function clearCloudflareLoggedOutFlag(): void {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(CLOUDFLARE_LOGGED_OUT_STORAGE_KEY);
 }
 
 // ── Types ──
@@ -84,13 +176,6 @@ function qs(filters: Record<string, string | undefined>): string {
   }
   const s = params.toString();
   return s ? `?${s}` : "";
-}
-
-function siteContentHeaders(): HeadersInit | undefined {
-  if (process.env.NEXT_PUBLIC_SITE_CONTENT_DEBUG === "true") {
-    return { "x-debug-site-content": "allow" };
-  }
-  return undefined;
 }
 
 export async function getCommunities(): Promise<Community[]> {
@@ -269,13 +354,6 @@ export async function getPibDetail(communityId: string, weekDate?: string): Prom
   return res.json();
 }
 
-export interface PibReportRequest {
-  community_id: string;
-  start_date: string;
-  end_date: string;
-  email?: string;
-}
-
 export interface PibReportResponse {
   property: string;
   current_start: string;
@@ -296,7 +374,12 @@ export interface PibReportResponse {
   email_error: string | null;
 }
 
-export async function generatePibReport(body: PibReportRequest): Promise<PibReportResponse> {
+export async function generatePibReport(body: {
+  community_id: string;
+  start_date: string;
+  end_date: string;
+  email?: string;
+}): Promise<PibReportResponse> {
   const res = await apiFetch("/v1/pib/report", {
     method: "POST",
     body: JSON.stringify(body),
@@ -379,6 +462,488 @@ export interface PondInsightsResponse {
 export async function getPondInsights(): Promise<PondInsightsResponse> {
   const res = await apiFetch("/v1/pond/insights");
   if (!res.ok) throw new Error("Failed to load pond insights");
+  return res.json();
+}
+
+export interface PondLandscapeFoundation {
+  id: string;
+  name: string;
+  status: string;
+  owner: string;
+  paths: string[];
+  trust_zone: string;
+  responsibilities: string[];
+  posture: "healthy" | "active_build" | "specialized_live" | "migration_debt" | "trust_hardening" | "external_governed" | "reference_only";
+  signal: string;
+  evidence: {
+    represented_in_pond: boolean;
+    pond_surface_href: string | null;
+    boundary_class: string;
+    web_surface_live: boolean;
+    api_surface_live: boolean;
+    expected_zero_trust_mode: "human_access" | "machine_access" | "mixed_access" | "local_only" | "external_governed";
+    observed_zero_trust_posture: "session_origin_guard" | "service_token_capable" | "mixed_session_and_service" | "session_plus_debug_bypass" | "migration_boundary" | "external_governed" | "not_inferred";
+    trust_alignment: "aligned" | "transitional" | "review";
+    trust_evidence_points: string[];
+    remediation_track: {
+      label: string;
+      doc_path: string | null;
+      route_href: string | null;
+      status: "open" | "active" | "closed";
+      status_detail: string;
+      completion_criteria: Array<{
+        label: string;
+        met: boolean;
+        detail: string | null;
+      }>;
+    };
+    evidence_points: string[];
+    next_action: {
+      state: "clear" | "watch" | "action";
+      title: string;
+      detail: string;
+      href: string | null;
+    };
+  };
+}
+
+export interface PondLandscapeSurface {
+  id: string;
+  name: string;
+  status: string;
+  path: string;
+  depends_on: string[];
+  trust_zone: string;
+  visibility_target: string;
+  posture: "healthy" | "active_build" | "specialized_live" | "migration_debt" | "trust_hardening" | "external_governed" | "reference_only";
+  signal: string;
+  evidence: {
+    represented_in_pond: boolean;
+    pond_surface_href: string | null;
+    boundary_class: string;
+    web_surface_live: boolean;
+    api_surface_live: boolean;
+    expected_zero_trust_mode: "human_access" | "machine_access" | "mixed_access" | "local_only" | "external_governed";
+    observed_zero_trust_posture: "session_origin_guard" | "service_token_capable" | "mixed_session_and_service" | "session_plus_debug_bypass" | "migration_boundary" | "external_governed" | "not_inferred";
+    trust_alignment: "aligned" | "transitional" | "review";
+    trust_evidence_points: string[];
+    remediation_track: {
+      label: string;
+      doc_path: string | null;
+      route_href: string | null;
+      status: "open" | "active" | "closed";
+      status_detail: string;
+      completion_criteria: Array<{
+        label: string;
+        met: boolean;
+        detail: string | null;
+      }>;
+    };
+    evidence_points: string[];
+    next_action: {
+      state: "clear" | "watch" | "action";
+      title: string;
+      detail: string;
+      href: string | null;
+    };
+  };
+}
+
+export interface PondLandscapeLegacySystem {
+  id: string;
+  name: string;
+  status: string;
+  path: string;
+  canonical_migration_target: string;
+  notes: string;
+  posture: "healthy" | "active_build" | "specialized_live" | "migration_debt" | "trust_hardening" | "external_governed" | "reference_only";
+  signal: string;
+  evidence: {
+    represented_in_pond: boolean;
+    pond_surface_href: string | null;
+    boundary_class: string;
+    web_surface_live: boolean;
+    api_surface_live: boolean;
+    expected_zero_trust_mode: "human_access" | "machine_access" | "mixed_access" | "local_only" | "external_governed";
+    observed_zero_trust_posture: "session_origin_guard" | "service_token_capable" | "mixed_session_and_service" | "session_plus_debug_bypass" | "migration_boundary" | "external_governed" | "not_inferred";
+    trust_alignment: "aligned" | "transitional" | "review";
+    trust_evidence_points: string[];
+    remediation_track: {
+      label: string;
+      doc_path: string | null;
+      route_href: string | null;
+      status: "open" | "active" | "closed";
+      status_detail: string;
+      completion_criteria: Array<{
+        label: string;
+        met: boolean;
+        detail: string | null;
+      }>;
+    };
+    evidence_points: string[];
+    next_action: {
+      state: "clear" | "watch" | "action";
+      title: string;
+      detail: string;
+      href: string | null;
+    };
+  };
+}
+
+export interface PondLandscapeTrustZone {
+  id: string;
+  description: string;
+}
+
+export interface PondLandscapeResponse {
+  version: string;
+  updated_at: string;
+  purpose: string;
+  summary: {
+    canonical_foundation_count: number;
+    product_surface_count: number;
+    legacy_or_specialized_count: number;
+    nested_repo_count: number;
+    trust_zone_count: number;
+    represented_in_pond_count: number;
+    off_pond_count: number;
+    machine_api_gap_count: number;
+    human_surface_gap_count: number;
+    trust_review_count: number;
+    trust_aligned_count: number;
+    trust_transitional_count: number;
+    trust_review_node_count: number;
+  };
+  gap_runbook: Array<{
+    id: string;
+    label: string;
+    state: "clear" | "watch" | "action";
+    count: number;
+    detail: string;
+    next_move: string;
+    href: string | null;
+  }>;
+  canonical_foundations: PondLandscapeFoundation[];
+  product_surfaces: PondLandscapeSurface[];
+  legacy_or_specialized_systems: PondLandscapeLegacySystem[];
+  nested_git_repos: string[];
+  trust_zones: PondLandscapeTrustZone[];
+  shared_security_posture: {
+    secret_authority: string;
+    outer_trust_boundary: string;
+    business_authorization: string;
+    preferred_machine_identity: string;
+    migration_debt: string[];
+  };
+  immediate_priorities: string[];
+  outcome_map: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    outcomes: Array<{
+      id: string;
+      name: string;
+      category: string;
+      canonical_owner: string;
+      canonical_surfaces: string[];
+      mission: string;
+      allowed_specialized_systems: string[];
+      consolidate_now: string[];
+      current_state: string;
+      next_moves: string[];
+    }>;
+    enterprise_rules: string[];
+    accepted_specializations: Array<{
+      system: string;
+      reason: string;
+    }>;
+    consolidate_now: Array<{
+      system: string;
+      target_owner: string;
+      reason: string;
+    }>;
+  };
+  enterprise_readiness: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    readiness_summary: {
+      overall_state: string;
+      headline: string;
+      strongest_areas: string[];
+      most_critical_gaps: string[];
+    };
+    domains: Array<{
+      id: string;
+      name: string;
+      readiness: string;
+      owner: string;
+      scope: string;
+      strengths: string[];
+      gaps: string[];
+      next_moves: string[];
+    }>;
+    priority_workstreams: Array<{
+      id: string;
+      name: string;
+      severity: "critical" | "high" | "medium";
+      owner: string;
+      target_outcomes: string[];
+      timeframe: string;
+      description: string;
+      exit_criteria: string[];
+    }>;
+    next_90_days: Array<{
+      phase: string;
+      focus: string;
+      moves: string[];
+    }>;
+  };
+  release_governance: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    promotion_model: {
+      canonical_release_path: string;
+      working_rule: string;
+      release_principles: string[];
+    };
+    release_gates: Array<{
+      id: string;
+      label: string;
+      description: string;
+      required_checks: string[];
+    }>;
+    active_workstream_lanes: Array<{
+      id: string;
+      label: string;
+      recommended_branch: string;
+      scope: string;
+    }>;
+    anti_patterns: string[];
+    next_moves: string[];
+  };
+  service_operations: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    services: Array<{
+      id: string;
+      name: string;
+      owner: string;
+      service_tier: string;
+      runtime: string;
+      deployment_target: string;
+      release_lane: string;
+      trust_boundary: string;
+      canonical_surface: string | null;
+      primary_runbook: string | null;
+      depends_on: string[];
+      operational_focus: string[];
+    }>;
+  };
+  service_operations_summary: {
+    service_count: number;
+    foundation_count: number;
+    critical_operator_count: number;
+    governed_workspace_count: number;
+    machine_or_mixed_count: number;
+    local_runtime_count: number;
+    release_lane_count: number;
+  };
+  deployment_provenance: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    environments: Array<{
+      id: string;
+      label: string;
+      web_hosts?: string[];
+      web_host_suffixes?: string[];
+      api_hosts: string[];
+      release_posture: string;
+    }>;
+    rules: {
+      canonical_release_path: string;
+      preferred_api_base: string;
+      production_debug_flags_must_be_false: string[];
+      preview_hosts_are_allowed: boolean;
+      custom_pages_aliases_are_release_review_only: boolean;
+    };
+    service_bindings: Array<{
+      service_id: string;
+      expected_environment: string;
+      managed_target: string;
+    }>;
+  };
+  deployment_runtime: {
+    api_request_origin: string;
+    api_request_host: string;
+    cloudflare_access_team_domain: string | null;
+    access_auto_provision_enabled: boolean;
+    access_default_role: string | null;
+  };
+  release_provenance: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    release_descriptor: {
+      source_branch: string;
+      baseline_commit: {
+        sha: string;
+        short_sha: string;
+        committed_at: string;
+        subject: string;
+      };
+      source_mode: string;
+      release_lane: string;
+      canonical_release_path: string;
+      provenance_status: "aligned" | "transitional" | "review";
+      provenance_note: string;
+    };
+    deployments: Array<{
+      service_id: string;
+      target: string;
+      deployed_at: string;
+      runtime_identifier: string;
+      public_url: string;
+    }>;
+    next_moves: string[];
+  };
+  release_reconcile_snapshot: {
+    version: string;
+    updated_at: string;
+    purpose: string;
+    working_tree: {
+      changed_file_count: number;
+      primary_release_slice_count: number;
+      non_primary_count: number;
+    };
+    recommended_release_candidate: {
+      label: string;
+      canonical_branch: string;
+      included_lanes: string[];
+      exclude_lanes: string[];
+      readiness_note: string;
+    };
+    lane_counts: Record<string, number>;
+    lane_examples: Record<string, string[]>;
+  };
+}
+
+export async function getPondLandscape(): Promise<PondLandscapeResponse> {
+  const res = await apiFetch("/v1/pond/landscape");
+  if (!res.ok) throw new Error("Failed to load pond landscape");
+  return res.json();
+}
+
+export interface EvsProperty {
+  property_id: string;
+  property_name: string;
+  community_id?: string | null;
+  legacy_url?: string | null;
+  staging_url: string;
+  live_url?: string | null;
+  site_type?: "resi" | "legacy";
+  known_page_paths?: string[];
+  cohort: "pilot";
+  active: boolean;
+}
+
+export interface EvsExecutionPlan {
+  request: {
+    request_id: string;
+    property_id: string;
+    source_consumer: "property_advocate" | "deploy_pipeline" | "governance_audit" | "operator";
+    environment: "staging" | "prod";
+    reason: string;
+    priority: "low" | "normal" | "high" | "urgent";
+    target_pages: string[];
+    validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity")[];
+    device_profiles: ("iphone_safari" | "desktop_chrome")[];
+    execution_mode: "manual" | "post_deploy" | "scheduled";
+    trigger_metadata: Record<string, unknown>;
+  };
+  property: EvsProperty;
+  profiles: {
+    id: "broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity";
+    name: string;
+    description: string;
+    goals: string[];
+    supported_device_profiles: ("iphone_safari" | "desktop_chrome")[];
+    provider: "browserstack";
+  }[];
+  workflow_name: string;
+  workflow_inputs: Record<string, string>;
+}
+
+export interface EvsRequestRuntimeView {
+  request_id: string;
+  source_consumer: "property_advocate" | "deploy_pipeline" | "governance_audit" | "operator";
+  property_id: string;
+  environment: "staging" | "prod";
+  reason: string;
+  priority: "low" | "normal" | "high" | "urgent";
+  target_pages: string[];
+  validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity")[];
+  device_profiles: ("iphone_safari" | "desktop_chrome")[];
+  governance_context: Record<string, unknown> | null;
+  execution_mode: "manual" | "post_deploy" | "scheduled";
+  trigger_metadata: Record<string, unknown>;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  provider: "browserstack";
+  requested_by: string | null;
+  orchestrator_ref: string | null;
+  created_at: string;
+  updated_at: string;
+  dispatch_state: "awaiting_handoff" | "handoff_recorded" | "executing" | "completed" | "failed" | "cancelled";
+}
+
+export async function getEvsProperties(): Promise<EvsProperty[]> {
+  const res = await apiFetch("/v1/evs/properties");
+  if (!res.ok) throw new Error("Failed to load EVS properties");
+  const data = await res.json();
+  return data.properties;
+}
+
+export async function getEvsRequests(propertyId?: string): Promise<EvsRequestRuntimeView[]> {
+  const suffix = propertyId ? `?property_id=${encodeURIComponent(propertyId)}` : "";
+  const res = await apiFetch(`/v1/evs/requests${suffix}`);
+  if (!res.ok) throw new Error("Failed to load EVS requests");
+  const data = await res.json();
+  return data.requests;
+}
+
+export async function createEvsRequest(body: {
+  source_consumer: "property_advocate" | "deploy_pipeline" | "governance_audit" | "operator";
+  property_id: string;
+  environment: "staging" | "prod";
+  reason: string;
+  priority: "low" | "normal" | "high" | "urgent";
+  target_pages: string[];
+  validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity")[];
+  device_profiles: ("iphone_safari" | "desktop_chrome")[];
+  execution_mode: "manual" | "post_deploy" | "scheduled";
+  trigger_metadata: Record<string, unknown>;
+  requested_by?: string;
+}): Promise<{ request: EvsRequestRuntimeView; execution_plan: EvsExecutionPlan; note: string }> {
+  const res = await apiFetch("/v1/evs/requests", { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to create EVS request");
+  }
+  return res.json();
+}
+
+export async function recordEvsRequestHandoff(
+  requestId: string,
+  body: { orchestrator_ref: string; status?: "queued" | "running" },
+): Promise<{ request: EvsRequestRuntimeView; execution_plan: EvsExecutionPlan; note: string }> {
+  const res = await apiFetch(`/v1/evs/requests/${requestId}/handoff`, { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to record EVS handoff");
+  }
   return res.json();
 }
 
@@ -518,9 +1083,26 @@ export interface HealthStatusResponse {
   daily_collection_status: {
     summary: DailyCollectionSummary;
     closure: {
-      state: "open" | "complete" | "not_started";
+      state: "open" | "complete" | "archived" | "blocked" | "not_started";
       summary_reason: string;
-      unresolved_sources: string[];
+      cutoff_at_local: string | null;
+      next_retry_at: string | null;
+      queue_depth: number;
+      unresolved_sources: {
+        source: string;
+        status: string;
+        reason: string;
+      }[];
+      advisory_sources: {
+        source: string;
+        status: string;
+        run_recorded: boolean;
+        latest_recorded_date: string | null;
+        expected_latest_date: string | null;
+        freshness_status: "fresh" | "warning" | "stale" | "missing";
+        cadence_key: "same_day_manual" | "daily_diagnostic" | "weekly_manual" | "weekly_automated" | "targeted_manual";
+        cadence_label: string;
+      }[];
     };
     sources: DailyCollectionSourceStatus[];
   };
@@ -1202,6 +1784,75 @@ export interface SiteContentSection {
   updated_at?: string;
 }
 
+export interface SiteContentSectionMapping {
+  id: string;
+  page_id: string;
+  section_id: string | null;
+  expected_section_key: string | null;
+  expected_section_label: string | null;
+  expected_section_role: string | null;
+  expected_order: number | null;
+  match_status: "matched" | "partial" | "extra-on-live" | "missing-from-live";
+  match_confidence: number;
+  rationale: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteContentSectionMappingSummary {
+  matched: number;
+  partial: number;
+  extra_on_live: number;
+  missing_from_live: number;
+}
+
+export interface SiteContentSectionAssessment {
+  id: string;
+  page_id: string;
+  mapping_id: string;
+  section_id: string | null;
+  overall_status: "healthy" | "watch" | "needs-attention";
+  structural_score: number;
+  messaging_score: number;
+  specificity_score: number;
+  search_value_score: number;
+  cta_score: number;
+  harmonization_score: number;
+  flags_json: string;
+  summary: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteContentSectionAssessmentSummary {
+  healthy: number;
+  watch: number;
+  needs_attention: number;
+}
+
+export interface SiteContentSectionRewrite {
+  id: string;
+  page_id: string;
+  mapping_id: string;
+  section_id: string | null;
+  draft_status: "not_started" | "drafted" | "in_review" | "approved";
+  rewrite_brief: string;
+  proposed_copy: string;
+  refinement_notes: string;
+  governed_inputs_json: string;
+  approved_at: string | null;
+  approved_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteContentSectionRewriteSummary {
+  not_started: number;
+  drafted: number;
+  in_review: number;
+  approved: number;
+}
+
 export interface SiteContentPage {
   id: string;
   property_id: string;
@@ -1220,6 +1871,12 @@ export interface SiteContentPage {
   spec_layout_path?: string | null;
   spec_screenshot?: string | null;
   spec_order?: number | null;
+  section_mappings: SiteContentSectionMapping[];
+  section_mapping_summary: SiteContentSectionMappingSummary;
+  section_assessments: SiteContentSectionAssessment[];
+  section_assessment_summary: SiteContentSectionAssessmentSummary;
+  section_rewrites: SiteContentSectionRewrite[];
+  section_rewrite_summary: SiteContentSectionRewriteSummary;
   sections: SiteContentSection[];
 }
 
@@ -1238,14 +1895,18 @@ export interface SiteContentCrawlResponse {
   pages: SiteContentPage[];
 }
 
+export interface SiteContentRewriteResponse {
+  rewrite: SiteContentSectionRewrite;
+}
+
 export async function getSiteContentInventory(): Promise<SiteContentInventoryResponse> {
-  const res = await apiFetch("/v1/admin/site-content", { headers: siteContentHeaders() });
+  const res = await apiFetch("/v1/admin/site-content");
   if (!res.ok) throw new Error("Failed to load site content inventory");
   return res.json();
 }
 
 export async function getSiteContentProperty(propertyId: string): Promise<SiteContentPropertyResponse> {
-  const res = await apiFetch(`/v1/admin/site-content/${propertyId}`, { headers: siteContentHeaders() });
+  const res = await apiFetch(`/v1/admin/site-content/${propertyId}`);
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message ?? "Failed to load property site content");
@@ -1260,11 +1921,33 @@ export async function crawlSiteContentProperty(
   const res = await apiFetch(`/v1/admin/site-content/${propertyId}/crawl`, {
     method: "POST",
     body: JSON.stringify(body ?? {}),
-    headers: siteContentHeaders(),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message ?? "Failed to crawl property site content");
+  }
+  return res.json();
+}
+
+export async function saveSiteContentSectionRewrite(
+  propertyId: string,
+  body: {
+    page_id: string;
+    mapping_id: string;
+    section_id?: string | null;
+    draft_status: "not_started" | "drafted" | "in_review" | "approved";
+    rewrite_brief: string;
+    proposed_copy: string;
+    refinement_notes: string;
+  }
+): Promise<SiteContentRewriteResponse> {
+  const res = await apiFetch(`/v1/admin/site-content/${propertyId}/rewrite`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message ?? "Failed to save section rewrite");
   }
   return res.json();
 }

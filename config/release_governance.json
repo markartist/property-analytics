@@ -1,0 +1,108 @@
+{
+  "version": "2026-04-18.release-governance.v1",
+  "updated_at": "2026-04-18",
+  "purpose": "Canonical release governance model for promoting the MarketingOps platform safely and coherently.",
+  "promotion_model": {
+    "canonical_release_path": "codex/release-reconcile",
+    "working_rule": "Production promotion must come from a clean release-shaped path, not from a mixed dirty worktree.",
+    "release_principles": [
+      "Promote from coherent release slices only",
+      "Separate active workstreams before production promotion",
+      "Treat deployment provenance and trust posture as release requirements",
+      "Do not let legacy or pilot lanes ride silently inside core production promotion"
+    ]
+  },
+  "release_gates": [
+    {
+      "id": "verification",
+      "label": "Verification",
+      "description": "Canonical app, API, and guardrail checks pass on the release candidate.",
+      "required_checks": [
+        "apps/api typecheck",
+        "apps/web build",
+        "context discipline check",
+        "PIB guardrail check"
+      ]
+    },
+    {
+      "id": "ownership",
+      "label": "Ownership",
+      "description": "The release slice has a clear canonical owner and does not mix unrelated outcome ownership by accident.",
+      "required_checks": [
+        "Outcome owner identified",
+        "No accidental canonical ownership from legacy lanes",
+        "Follow-up workstreams explicitly separated"
+      ]
+    },
+    {
+      "id": "trust",
+      "label": "Trust",
+      "description": "The release candidate matches the expected Zero Trust and permission posture for the affected surfaces.",
+      "required_checks": [
+        "Keeper-first secret posture retained",
+        "Expected route trust posture verified",
+        "Offering/action permissions aligned for affected surfaces"
+      ]
+    },
+    {
+      "id": "provenance",
+      "label": "Provenance",
+      "description": "The release can be traced to a coherent branch/workstream slice and deployment target.",
+      "required_checks": [
+        "Release branch/worktree identified",
+        "Deployment target documented",
+        "Changed workstream families named"
+      ]
+    }
+  ],
+  "active_workstream_lanes": [
+    {
+      "id": "platform_app",
+      "label": "Platform / App",
+      "recommended_branch": "codex/release-reconcile or focused follow-up branch",
+      "scope": "Core Pond product shell, Watchtower, auth/bootstrap, permissions, control plane"
+    },
+    {
+      "id": "data_collection_hardening",
+      "label": "Data Collection Hardening",
+      "recommended_branch": "dedicated follow-up or release slice only when coherent",
+      "scope": "Collection orchestration, retry, closure, alerting, freshness, source governance"
+    },
+    {
+      "id": "content_operations",
+      "label": "Content Operations",
+      "recommended_branch": "codex/intelligence-site-content",
+      "scope": "Intelligence Office, Site Content Creator, Search Intelligence, VACS"
+    },
+    {
+      "id": "zero_trust_sso",
+      "label": "Zero Trust / SSO",
+      "recommended_branch": "codex/zero-trust-sso",
+      "scope": "Cloudflare Access, Keeper rollout, role model, SSO blueprint, trust hardening"
+    },
+    {
+      "id": "evs_browserstack",
+      "label": "EVS / BrowserStack",
+      "recommended_branch": "codex/evs-browserstack",
+      "scope": "Experiential validation, BrowserStack execution, validation workflow maturity"
+    },
+    {
+      "id": "pilot_reporting",
+      "label": "Pilot Reporting",
+      "recommended_branch": "codex/pilot-cwv-roundup",
+      "scope": "Pilot CWV, pilot roundup, tracker-adjacent pilot reporting and exports"
+    }
+  ],
+  "anti_patterns": [
+    "Promoting directly from a giant mixed worktree",
+    "Bundling pilot or specialized work silently into core production release",
+    "Shipping trust-boundary changes without route and permission verification",
+    "Letting legacy systems define release scope for canonical product surfaces"
+  ],
+  "next_moves": [
+    "Keep the release-reconcile path as the canonical production promotion base",
+    "Continue separating work by coherent outcome/workstream lanes",
+    "Add deployment provenance and service-level posture to Watchtower over time",
+    "Use the release gates as the standard review language for production candidate approval"
+  ]
+}

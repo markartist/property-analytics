@@ -1,0 +1,210 @@
+{
+  "version": "2026-04-17.foundation.v1",
+  "updated_at": "2026-04-17",
+  "purpose": "Machine-readable landscape map for canonical systems, trust zones, repo boundaries, and migration priorities.",
+  "canonical_foundations": [
+    {
+      "id": "data_pond_truth",
+      "name": "The Data Pond",
+      "status": "canonical",
+      "owner": "Data Pond",
+      "paths": [
+        "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
+        "/Users/mark/Property_Analytics/config/venterra_properties_official.json",
+        "/Users/mark/Property_Analytics/Data_Collection",
+        "/Users/mark/Property_Analytics/apps/api/src",
+        "/Users/mark/Property_Analytics/apps/web/src/app"
+      ],
+      "trust_zone": "access_protected_human_and_machine",
+      "responsibilities": [
+        "normalized facts",
+        "lineage",
+        "freshness",
+        "run state",
+        "shared APIs",
+        "operational surfaces"
+      ]
+    },
+    {
+      "id": "intelligence_office",
+      "name": "Intelligence Office",
+      "status": "active",
+      "owner": "Intelligence Office",
+      "paths": [
+        "/Users/mark/Property_Analytics/apps/web/src/app/intelligence-office",
+        "/Users/mark/Property_Analytics/apps/api/src/platform/memory",
+        "/Users/mark/Property_Analytics/data/Intelligence"
+      ],
+      "trust_zone": "access_protected_human",
+      "responsibilities": [
+        "directives",
+        "criteria",
+        "approved claims",
+        "governed memory",
+        "interpretation"
+      ]
+    },
+    {
+      "id": "specs",
+      "name": "Specs",
+      "status": "external_governed_sibling",
+      "owner": "Specs",
+      "paths": [
+        "/Users/mark/VenterraDev/Specs"
+      ],
+      "trust_zone": "external_governed_system",
+      "responsibilities": [
+        "page archetypes",
+        "section order",
+        "structural contracts",
+        "governed page expectations"
+      ]
+    }
+  ],
+  "product_surfaces": [
+    {
+      "id": "watchtower",
+      "name": "Watchtower",
+      "status": "active",
+      "path": "/Users/mark/Property_Analytics/apps/web/src/app/watchtower",
+      "depends_on": [
+        "data_pond_truth"
+      ],
+      "trust_zone": "access_protected_human",
+      "visibility_target": "in_pond"
+    },
+    {
+      "id": "site_content_creator",
+      "name": "Site Content Creator",
+      "status": "planning_plus_active_build",
+      "path": "/Users/mark/Property_Analytics/apps/web/src/app/site-content",
+      "depends_on": [
+        "data_pond_truth",
+        "intelligence_office",
+        "specs"
+      ],
+      "trust_zone": "access_protected_human",
+      "visibility_target": "in_pond"
+    },
+    {
+      "id": "vacs",
+      "name": "VACS",
+      "status": "planning_plus_api_first",
+      "path": "/Users/mark/Property_Analytics/apps/web/src/app/vacs/page.tsx",
+      "depends_on": [
+        "data_pond_truth",
+        "intelligence_office"
+      ],
+      "trust_zone": "access_protected_machine",
+      "visibility_target": "pond_adjacent"
+    },
+    {
+      "id": "evs",
+      "name": "EVS",
+      "status": "specialized_active",
+      "path": "/Users/mark/Property_Analytics/apps/web/src/app/evs/page.tsx",
+      "depends_on": [
+        "data_pond_truth"
+      ],
+      "trust_zone": "access_protected_human_and_machine",
+      "visibility_target": "in_pond"
+    },
+    {
+      "id": "pilot_tracker",
+      "name": "Pilot Tracker",
+      "status": "active",
+      "path": "/Users/mark/Property_Analytics/apps/web/src/app/tracker",
+      "depends_on": [
+        "data_pond_truth"
+      ],
+      "trust_zone": "access_protected_human",
+      "visibility_target": "in_pond"
+    }
+  ],
+  "legacy_or_specialized_systems": [
+    {
+      "id": "portfolio_monitoring",
+      "name": "Portfolio Monitoring",
+      "status": "legacy_reusable",
+      "path": "/Users/mark/Property_Analytics/Portfolio_Monitoring",
+      "canonical_migration_target": "/Users/mark/Property_Analytics/Data_Collection",
+      "notes": "Keep visible for reusable logic, local repair utilities, and report patterns; collection, health, and default operator ownership now belong to Data Collection, Watchtower, and Dock."
+    },
+    {
+      "id": "portfolio_dashboard",
+      "name": "Portfolio Dashboard",
+      "status": "legacy_reusable",
+      "path": "/Users/mark/Property_Analytics/Portfolio_Dashboard",
+      "canonical_migration_target": "/Users/mark/Property_Analytics/apps/web",
+      "notes": "Useful reference and analysis surface; Dock and Pond-native analysis surfaces should own new default portfolio navigation and insight UI."
+    },
+    {
+      "id": "spotlight_properties_report",
+      "name": "Spotlight Properties Report",
+      "status": "active_specialized",
+      "path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report",
+      "canonical_migration_target": "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
+      "notes": "Keep as a report family, but tie discovery and data contracts back to the platform."
+    },
+    {
+      "id": "property_intelligence_brief",
+      "name": "Property Intelligence Brief",
+      "status": "canonical_locked_reporting_system",
+      "path": "/Users/mark/Property_Analytics/Property_Intelligence_Brief",
+      "canonical_migration_target": "/Users/mark/Property_Analytics/apps/web/src/app/pib",
+      "notes": "Canonical PIB system is active and locked; web surfaces should orchestrate around it rather than fork it."
+    }
+  ],
+  "nested_git_repos": [
+    "/Users/mark/Property_Analytics/.git",
+    "/Users/mark/Property_Analytics/Portfolio_Monitoring/.git",
+    "/Users/mark/Property_Analytics/Portfolio_Dashboard/.git",
+    "/Users/mark/Property_Analytics/Property_Intelligence_Brief/.git",
+    "/Users/mark/Property_Analytics/Spotlight_Properties_Report/.git",
+    "/Users/mark/Property_Analytics/apps/pilot-tracker-standalone/.git"
+  ],
+  "trust_zones": [
+    {
+      "id": "public",
+      "description": "Intentionally public artifacts or low-risk outputs only."
+    },
+    {
+      "id": "access_protected_human",
+      "description": "Cloudflare Access protected human-facing surfaces with app-level roles."
+    },
+    {
+      "id": "access_protected_machine",
+      "description": "Service or automation routes protected by Access service identity and origin validation."
+    },
+    {
+      "id": "access_protected_human_and_machine",
+      "description": "Mixed system where human app surfaces and protected APIs are both part of the same canonical platform boundary."
+    },
+    {
+      "id": "local_operator_only",
+      "description": "Local launchd, ingestion, file-drop, and operator-run workflows."
+    },
+    {
+      "id": "external_governed_system",
+      "description": "Sibling or external governed system that should integrate without becoming private truth."
+    }
+  ],
+  "shared_security_posture": {
+    "secret_authority": "Keeper",
+    "outer_trust_boundary": "Cloudflare Zero Trust",
+    "business_authorization": "app roles",
+    "preferred_machine_identity": "Cloudflare Access service tokens",
+    "migration_debt": [
+      "shared bearer tokens that still exist for platform-adjacent systems",
+      "direct-origin assumptions",
+      "long-lived local secret files where Keeper-backed resolution already exists"
+    ]
+  },
+  "immediate_priorities": [
+    "Keep capability awareness current in docs and this manifest.",
+    "Bring off-Pond specialized systems into governed visibility before replacing them.",
+    "Continue Zero Trust cutover for human and machine surfaces where the platform already has canonical routes.",
+    "Treat nested Git histories as explicit repo boundaries during cleanup and branch shaping.",
+    "Prefer shared policy modules and canonical APIs over duplicated per-surface logic."
+  ]
+}

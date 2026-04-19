@@ -50,16 +50,40 @@ At minimum, the current codebase holds:
 - legacy but still informative daily monitoring and portfolio dashboard systems
 - a production-oriented Cloudflare cache audit and rollout workflow
 - a growing Data Pond / web app / API platform in `apps/api` and `apps/web`
+- a new control-plane visibility layer in The Pond that can surface the broader system landscape instead of only polished end-user product pages
+- a Watchtower layer that is starting to translate platform-awareness gaps into explicit canonical next moves instead of only showing descriptive inventory
+- a Watchtower control-plane model where node-level surfaces can now carry their own operating guidance instead of only category-level warnings
+- a Watchtower remediation model where trust and migration tracks now expose machine-evaluated met/open criteria instead of only descriptive status text
+- a Watchtower health route that now degrades safely across partial mirrored schemas, so the control plane stays visible even when optional ops tables are not yet present in a given environment
 - an Intelligence Office / Site Content Creator / VACS planning and early-product layer
 - a full pilot monitoring program with KPI tracker, CWV comparison, exports, and daily roundups
-- an EVS / BrowserStack experiential validation system
+- an EVS / BrowserStack experiential validation system with a governed Pond bridge and explicit mixed human-and-machine lane posture
 - multiple specialized reporting products: Spotlight, Focus Report, Weekly Progress, Daily Health, Morning Full Report, Paid Media Workbook, Resi diagnostics, site audits, and GSC/PSI snapshots
-- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`
+- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`, plus Data Pond session bootstrap from Cloudflare Access identity for human browsers, preserved browser handoff across both `app.venterradev.com` and `app.venterraliving.com`, and least-privilege auto-provisioning so Zero Trust can act as the primary browser admission gate
 
 The most important planning truth is this:
 
 - we do not have a lack of capabilities
 - we have a capability discoverability, consolidation, and canonical-ownership problem
+
+Foundation note added on 2026-04-17:
+
+- the new repo-level bridge between architectural intent and actual cleanup/migration work now lives in `/Users/mark/Property_Analytics/docs/UNIFIED_SYSTEM_FOUNDATION_2026-04-17.md`
+- the machine-readable companion inventory is `/Users/mark/Property_Analytics/config/system_landscape_manifest.json`
+- together they define the working model for canonical systems, trust zones, nested repo boundaries, and the capabilities that still need governed visibility inside The Pond
+- the enterprise anti-duplication layer now also lives in:
+  - `/Users/mark/Property_Analytics/docs/CANONICAL_OUTCOME_MAP_2026-04-17.md`
+  - `/Users/mark/Property_Analytics/docs/PLATFORM_CONSOLIDATION_PLAN_2026-04-17.md`
+  - `/Users/mark/Property_Analytics/config/platform_outcome_map.json`
+- `/system` now surfaces that outcome architecture directly in the browser so consolidation planning is visible inside the platform itself, not only in docs
+- `/system` is now intentionally being repositioned as an admin/toolbox lane rather than a featured general-audience landing-page surface, which is also the first concrete step toward offering-level permissions across the Pond
+- the web app now also has a shared offering-permissions foundation in `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts`, which centralizes role-aware surface visibility, featured-lane selection, audience labeling, and future offering/action-level permission expansion instead of scattering those rules across individual pages
+
+Operational note added on 2026-04-14:
+
+- the current dirty worktree is best understood as several coherent workstreams stacked together rather than random churn
+- the branch split and release-shaping map now lives in `/Users/mark/Property_Analytics/docs/RELEASE_SPLIT_PLAN_2026-04-14.md`
+- production promotion should come from the clean `codex/release-reconcile` path, while pilot CWV, Intelligence Office / Site Content, Zero Trust / SSO, and EVS work should be separated into follow-up branches
 
 ## 4. Canonical Foundations
 
@@ -148,6 +172,7 @@ Current reporting capability families include:
 
 - Property Intelligence Brief
 - Search Intelligence report builder
+- specialty PIB-style SEO T30 property proof briefs
 - Portfolio Pulse / daily monitoring
 - Daily Health reports
 - Morning Full portfolio report
@@ -168,6 +193,7 @@ Representative scripts:
 - `/Users/mark/Property_Analytics/send_morning_full_report.py`
 - `/Users/mark/Property_Analytics/send_weekly_progress_report.py`
 - `/Users/mark/Property_Analytics/focus_report/scripts/generate_focus_report.py`
+- `/Users/mark/Property_Analytics/scripts/send_seo_t30_property_brief.py`
 - `/Users/mark/Property_Analytics/scripts/generate_portfolio_psi_pib_report.py`
 - `/Users/mark/Property_Analytics/reports/gsc_snapshot/generate_portfolio_gsc_snapshot.py`
 - `/Users/mark/Property_Analytics/apps/api/src/routes/search-intelligence.ts`
@@ -199,11 +225,26 @@ Monitoring note:
   - zero-row daily results are treated as `no activity` rather than automatic failure
   - only mapping gaps and true API failures stay in the retry queue
   - this matters because the current manager-account setup does not reliably produce daily rows for every mapped property, even when attribution is otherwise correct
+- Google Ads collection now also degrades more honestly when Keeper/bootstrap is the problem:
+  - the collector raises a typed bootstrap failure instead of exiting the whole runtime blindly
+  - canonical collection/retry orchestration can record the run as blocked and keep source-level retry intent visible
+- the morning retry loop now closes a major orchestration gap for Google Ads:
+  - a source-level `google_ads` retry item can trigger a full Ads collection pass when no same-day Ads run record exists yet
+  - that prevents the system from leaving Google Ads in a permanent `missing/no_run_recorded` state after the first pass fails to create a run
+- launchd collection and retry wrappers now explicitly export the Keeper home/profile context needed for Google Ads collection instead of relying on ambient shell state
+- the same closure/bookkeeping problem is now fixed for other source-level retries too:
+  - successful `unit_availability` and `d1_mirror` retry actions write/close same-day collection rows
+  - closure and Watchtower can now move those sources out of `missing` once the retry worker actually recovers them
+- prelaunch/non-live registry entries now affect the canonical collection path rather than only alert rendering:
+  - GSC collection, GSC URL inspection, and GSC retry handling suppress those communities while they remain marked `lifecycle: prelaunch`
+  - this removes false operational debt for not-yet-launched sites such as `The Vine Kyle Parkway` and `Sundara at Spring Cypress`
 - Guest cards are currently in an explicit temporary suspension posture rather than an accidental stale/manual-dependency posture:
-  - the source is paused by operator policy
-  - closure logic excludes it from unresolved core work
-  - the retry worker resolves guest-card queue items as suspended
-  - Morning Full now represents the lane as paused instead of treating it like a live freshness miss
+  - this posture was reversed on 2026-04-15
+  - canonical guest card ingest is active again and advanced local guest-card freshness to 2026-04-15
+  - the OneDrive drop remains the shared landing zone for both guest card CSVs and pilot BI / Measurement workbooks
+  - pilot BI snapshot ingestion is now caught up through 2026-04-15 from that same shared directory, but the Measurement workbook itself still lags upstream and only exposes daily sheets through 4.11.26
+  - the post-ingest real D1 mirror also succeeded again on 2026-04-15, and same-day closure now evaluates `complete` with no open retry debt after guest card, Ads, unit availability, and D1 bookkeeping are written honestly into `data_collections`
+  - BI harvest is no longer manual-only: the canonical morning collector now ingests pending `BI-Metrics-RunYYYYMMDD.xlsx` files from the shared drop, and the retry cycle re-checks for late-arriving BI workbooks later in the morning using the same shared helper logic
 - `/watchtower` has now started growing into a live daily collection console as well:
   - the API returns a `daily_collection_status` block derived from canonical `data_collections`
   - the web surface shows a "Today's Collection" panel with source-level status, progress counts, retries, rate-limit hits, timing, and current operator context
@@ -226,6 +267,24 @@ Monitoring note:
   - the retry queue and closure-state worker now exist as the primary morning control-loop foundation
   - targeted retry execution is now live for GA4, GSC, and Google Ads, while source-level follow-up exists for guest cards, unit availability, and D1 mirror
   - the retry cycle is now actually scheduled on the machine through a dedicated LaunchAgent and wrapper, rather than existing only as an on-demand worker
+  - historical retry debt is no longer left open indefinitely: the retry worker now archives unresolved past-date queue items as exhausted reconciliation debt, which keeps old days from masquerading as active live incidents
+  - closure semantics now distinguish current-day operational states from past-date governance states: historical dates outside the retry window evaluate as `archived`, and closure payloads now include advisory-source status for non-core lanes such as BI, Measurement, PSI, GSC URL inspection, SEMrush, GBP, and Cloudflare cache audit
+  - Watchtower now consumes that richer closure structure directly: unresolved sources are shown with reason labels rather than flattened strings, closure badges distinguish `archived` and `blocked`, and a dedicated advisory-governance panel exposes non-core lane coverage without pretending those lanes are part of the narrow morning hard-stop contract
+  - the newer platform-constellation layer is also becoming actionable rather than purely descriptive:
+    - it can now show explicit representation/trust gap counts
+    - and it carries a canonical gap runbook for off-Pond capabilities, machine/API gaps, human-surface gaps, trust-hardening review, and nested repo pressure
+    - it now also attaches a node-specific next move to each landscape card, which makes the tower more like an actual control plane than a static catalog
+    - that node guidance is now partially evidence-driven from live route/trust/representation signals rather than remaining a purely declarative annotation layer
+    - it now distinguishes expected trust mode from observed trust posture, which lets the tower show where auth reality still lags the intended Zero Trust model
+    - and that trust comparison now rolls up into aligned / transitional / review summary counts so the control plane can answer platform trust posture at a glance
+    - the tower now also prioritizes trust work by ranking the most important review/transitional nodes instead of leaving trust debt as an unprioritized list
+    - that ranking is now driven by unmet remediation criteria and stalled closure, not only broad posture tags
+    - the tower can now also roll up recurring closure blockers across the platform, which makes shared trust/migration debt visible as a systems pattern rather than only as isolated node cards
+    - those shared blocker rows now point back to the primary owning remediation track, so the control plane can route from recurring pattern to governed cleanup path directly
+    - those priority nodes now point to explicit remediation tracks, which ties the control-plane signal back to the actual cleanup/hardening documents we expect the team to follow
+    - remediation tracks now also carry lifecycle state, and that lifecycle is now derived from the same machine-evaluated criteria the tower shows on each node
+    - remediation state is now backed by explicit completion criteria, which makes the control plane more rigorous than a simple label-and-link model
+    - those remediation criteria are now machine-evaluated from current node evidence, so the tower can show what is already satisfied versus what still blocks closure
 - pilot morning wrapper hardening also matters operationally:
   - the workflow can now survive the previously observed homepage-audit bootstrap path because canonical DB defaults were corrected and the homepage audit collector now passes the canonical DB path explicitly
   - pilot bootstrap failure alerts now identify the active stage more truthfully instead of making the pipeline tail `tee` command look like the root cause
@@ -367,6 +426,7 @@ Capabilities present or partly present:
 - governed directives
 - approved claims and source-backed guidance
 - structured claims + evidence registry with claim-evidence linking and brief readiness scoring
+- migration tooling from legacy `approved_points` into structured claims
 - content/search governance overlays
 - site copy inventory and rewrite workspace concepts
 - property-aware content generation direction
@@ -377,6 +437,13 @@ Audit judgment:
 
 - this is strategically important and easy to under-credit because some of it is still documentation- or route-level
 - this area should be treated as a real capability program with partial implementation, not as “just docs”
+- VACS current-state reporting should be explicit rather than aspirational:
+  - VACS is a real platform system
+  - the VACS API is implemented and protected under Cloudflare Zero Trust
+  - The Pond now includes a governed `/vacs` bridge surface so VACS is discoverable in the toolbox without pretending the API-first lane is already a full human-first app
+  - the canonical VACS route now expects Access service-token auth without VACS shared-token fallback, so its machine boundary is materially cleaner than earlier transitional drafts
+  - the architecture defines `vacs.venterradev.com` as the intended standalone product surface
+  - the repository does not yet prove that separate frontend host is deployed
 
 ### 5.7 Pilot Monitoring and CWV Program
 
@@ -464,6 +531,9 @@ Audit judgment:
 
 - EVS is a real platform capability with a clear shape, even if full orchestration maturity is still in progress
 - it belongs in planning alongside monitoring and reporting, not in a side note
+- it now has a first-class governed Pond bridge, which is the right inclusion model while execution remains specialized
+- request lifecycle maturity has improved: EVS can now persist request intent, expose execution plans, record external orchestrator handoff, and ingest normalized results without pretending API-dispatch is already live
+- the Pond EVS surface is now a real operator workspace rather than a static posture page: operators can launch governed requests, review lifecycle state, and record external orchestration handoff inside the main platform
 
 ### 5.10 Spotlight Properties Program
 
@@ -747,3 +817,80 @@ The opportunity is:
 - promoting hidden strengths into the main system model
 
 That should be the planning lens for the next phase.
+
+Additional current-state note:
+
+- The active Data Pond web and API layers now carry a shared offering-permissions foundation, with visibility and named action rights separated for canonical offerings. The web catalog lives in `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts`, the API-side action enforcement lives in `/Users/mark/Property_Analytics/apps/api/src/lib/permissions.ts`, and EVS/GBP Posts are the first lanes using named capability actions instead of only generic editor/admin route gates.
+- That permissions model now also governs the steward-owned surfaces end to end: Site Content, Intelligence Office, Admin, and Control Plane use the same offering vocabulary for page visibility, route enforcement, and restricted-surface UX instead of a mix of hidden navigation, blanket admin middleware, and late 403 responses.
+- The landing and Dock surfaces are now beginning to express that same model visually, so role differences are not only enforced in the background; Observers, Curators, and Stewards now get different framing and recommended motion through the Pond’s primary entry surfaces.
+- Watchtower and the curator-heavy operator lanes are now moving in the same direction, with role-specific posture framing and direct-entry restricted states replacing the previous pattern of “hidden in nav but abrupt if opened directly.”
+- the control plane now also carries an explicit enterprise-readiness layer sourced from:
+  - `/Users/mark/Property_Analytics/config/enterprise_gap_register.json`
+  - `/Users/mark/Property_Analytics/docs/ENTERPRISE_READINESS_AUDIT_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/ENTERPRISE_GAP_REGISTER_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/NEXT_90_DAY_PLATFORM_PLAN_2026-04-18.md`
+- `/system` can now show:
+  - enterprise readiness summary
+  - maturity by domain
+  - named priority workstreams
+  - next-90-day sequence
+- that matters because the platform is now self-aware not only about inventory, trust posture, and migration debt, but also about the remaining enterprise-hardening program itself
+- the first active consolidation wave has now also begun in the repo narrative itself:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/README.md` now declares the directory `Legacy-Reusable`
+  - `/Users/mark/Property_Analytics/docs/PORTFOLIO_MONITORING_CONSOLIDATION_MAP_2026-04-18.md` defines the migration path from Portfolio_Monitoring into Data Collection, Watchtower, and Dock
+  - `/Users/mark/Property_Analytics/README.md` now points issue remediation toward canonical Data Collection entrypoints before falling back to legacy Portfolio_Monitoring repair tools
+- that is an important enterprise step because it reduces accidental ownership in the repo’s own operator guidance, not just in planning docs
+- the same consolidation treatment now also applies to `Portfolio_Dashboard`:
+  - `/Users/mark/Property_Analytics/Portfolio_Dashboard/README.md` now declares it `Legacy-Reusable`
+  - `/Users/mark/Property_Analytics/docs/PORTFOLIO_DASHBOARD_CONSOLIDATION_MAP_2026-04-18.md` defines the migration path into Dock, Analysis, Watchtower, and the main app shell
+- that matters because the enterprise problem is not only duplicate logic; it is also duplicate entry surfaces and duplicate product ownership signals
+- the briefing family is now also formally organized:
+  - `/Users/mark/Property_Analytics/docs/BRIEFING_FAMILY_ARCHITECTURE_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/REPORT_FAMILY_MAP_2026-04-18.md`
+- the governed enterprise posture is now:
+  - PIB = protected canonical brief engine
+  - POP Brief = structured operations performance brief system
+  - Spotlight = specialized rotating executive-attention report
+- that matters because the repo no longer has to infer the relationship between these systems from scattered context; the family model is now explicit and compatible with PIB guardrails
+- release discipline is now also being normalized into the control plane:
+  - `/Users/mark/Property_Analytics/config/release_governance.json`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_GOVERNANCE_STANDARD_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_READINESS_CHECKLIST_2026-04-18.md`
+- `/system` now carries:
+  - canonical release path
+  - release gates
+  - workstream release lanes
+  - release anti-patterns
+- that matters because enterprise maturity here depends as much on promotion discipline as on system design
+- Watchtower now also carries a formal service-operations layer sourced from:
+  - `/Users/mark/Property_Analytics/config/service_operations_manifest.json`
+  - `/Users/mark/Property_Analytics/docs/SERVICE_OPERATIONS_MODEL_2026-04-18.md`
+- that layer makes service ownership, runtime, deployment target, release lane, trust boundary, runbook, and live operating pressure visible inside the platform instead of leaving them split across docs and operator memory
+- Watchtower now also carries a deployment provenance and drift layer sourced from:
+  - `/Users/mark/Property_Analytics/config/deployment_provenance_manifest.json`
+  - `/Users/mark/Property_Analytics/docs/DEPLOYMENT_PROVENANCE_MODEL_2026-04-18.md`
+- that layer compares:
+  - current browser host
+  - configured API base
+  - observed API runtime host
+  - current Access runtime policy
+  against the canonical environment model so release and environment drift become visible in the control plane
+- Watchtower now also carries a release pedigree layer sourced from:
+  - `/Users/mark/Property_Analytics/config/release_provenance.json`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_PROVENANCE_MODEL_2026-04-18.md`
+- that layer makes the deployed slice itself visible:
+  - source branch
+  - baseline commit
+  - source mode
+  - runtime identifiers
+  - deploy URLs
+- that matters because enterprise release maturity depends not only on “what should be deployed” but on “what actually is deployed and how it got there”
+- the release pedigree model now also has a canonical operator bridge:
+  - `/Users/mark/Property_Analytics/scripts/update_release_provenance.py`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_PROVENANCE_STAMPING_RUNBOOK_2026-04-18.md`
+- that matters because the current platform is still between ad hoc operator-led deploys and fully issued CI provenance; this bridge reduces stale pedigree drift immediately while preserving the path toward true automation
+- the platform now also has a generated release-reconcile snapshot:
+  - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py`
+  - `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_RECONCILE_SNAPSHOT_MODEL_2026-04-18.md`
+- that matters because the control plane can now quantify the dirty-tree split and show the first clean release-shaped slice directly, instead of treating release reconciliation as only a prose planning concern

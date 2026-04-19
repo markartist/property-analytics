@@ -1,0 +1,47 @@
+{
+  "version": "2026-04-18.release-provenance.v1",
+  "updated_at": "2026-04-18",
+  "purpose": "Canonical release pedigree record for currently promoted platform surfaces until CI-native provenance is in place.",
+  "release_descriptor": {
+    "source_branch": "codex/release-reconcile",
+    "baseline_commit": {
+      "sha": "040b82ea2e53048c10912fda65d830dc5b362e3d",
+      "short_sha": "040b82e",
+      "committed_at": "2026-04-14T20:24:08-05:00",
+      "subject": "Reconcile watchtower and collection reliability"
+    },
+    "source_mode": "clean_release_candidate",
+    "release_lane": "platform_app",
+    "canonical_release_path": "codex/release-reconcile",
+    "provenance_status": "aligned",
+    "provenance_note": "This worktree is aligned to the canonical clean release path. Runtime deployment identifiers may still reflect the last promoted slice until this branch is actually deployed and provenance is restamped."
+  },
+  "deployments": [
+    {
+      "service_id": "data_pond_api",
+      "target": "Cloudflare Workers",
+      "deployed_at": "2026-04-18",
+      "runtime_identifier": "a5455100-fd0a-411a-9f1d-40ca33849023",
+      "public_url": "https://pop-brief-api.mlaufhutte.workers.dev"
+    },
+    {
+      "service_id": "data_pond_web",
+      "target": "Cloudflare Pages",
+      "deployed_at": "2026-04-18",
+      "runtime_identifier": "3df3fbef.property-analytics.pages.dev",
+      "public_url": "https://3df3fbef.property-analytics.pages.dev"
+    },
+    {
+      "service_id": "watchtower_control_plane",
+      "target": "Cloudflare Pages + Workers",
+      "deployed_at": "2026-04-18",
+      "runtime_identifier": "3df3fbef.property-analytics.pages.dev + a5455100-fd0a-411a-9f1d-40ca33849023",
+      "public_url": "https://3df3fbef.property-analytics.pages.dev/watchtower"
+    }
+  ],
+  "next_moves": [
+    "Move production promotion back onto codex/release-reconcile or a clean release-shaped equivalent.",
+    "Replace operator-maintained release pedigree with CI-issued provenance.",
+    "Track clean commit-based promotion for Pages and Worker deploys instead of dirty worktree direct deploys."
+  ]
+}

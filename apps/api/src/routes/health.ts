@@ -42,6 +42,54 @@ const DATA_SOURCES = [
 const CORE_FAILURE_SOURCES = new Set(["ga4", "gsc", "google_ads", "guest_card", "unit_availability", "d1_mirror"]);
 const ACTIVE_COLLECTION_STATUSES = new Set(["in_progress", "partial", "retry_scheduled"]);
 const BLOCKED_COLLECTION_STATUSES = new Set(["blocked", "failed", "exhausted"]);
+type AdvisoryCadenceKey = "same_day_manual" | "daily_diagnostic" | "weekly_manual" | "weekly_automated" | "targeted_manual";
+type AdvisoryFreshnessStatus = "fresh" | "warning" | "stale" | "missing";
+
+type AdvisorySourcePolicy = {
+  cadence_key: AdvisoryCadenceKey;
+  cadence_label: string;
+  latestDataQuery?: { table: string; dateCol: string };
+};
+
+const ADVISORY_SOURCE_POLICIES: Record<string, AdvisorySourcePolicy> = {
+  bi_manual: { cadence_key: "same_day_manual", cadence_label: "Same-day manual" },
+  bi_metrics: { cadence_key: "same_day_manual", cadence_label: "Same-day manual" },
+  bi_report: { cadence_key: "same_day_manual", cadence_label: "Same-day manual" },
+  measurement_dashboard: {
+    cadence_key: "weekly_manual",
+    cadence_label: "Weekly manual workbook",
+    latestDataQuery: { table: "measurement_daily_metrics", dateCol: "snapshot_date" },
+  },
+  psi: {
+    cadence_key: "daily_diagnostic",
+    cadence_label: "Daily diagnostic",
+    latestDataQuery: { table: "pagespeed_metrics", dateCol: "metric_date" },
+  },
+  gsc_url_inspection: {
+    cadence_key: "targeted_manual",
+    cadence_label: "Targeted manual audit",
+    latestDataQuery: { table: "gsc_url_inspection", dateCol: "inspection_date" },
+  },
+  semrush: {
+    cadence_key: "weekly_automated",
+    cadence_label: "Weekly automated",
+    latestDataQuery: { table: "semrush_domain_metrics", dateCol: "metric_date" },
+  },
+  gbp_reviews: {
+    cadence_key: "weekly_automated",
+    cadence_label: "Weekly automated",
+    latestDataQuery: { table: "gbp_reviews", dateCol: "review_create_time" },
+  },
+  gbp_insights: {
+    cadence_key: "weekly_automated",
+    cadence_label: "Weekly automated",
+    latestDataQuery: { table: "gbp_daily_insights", dateCol: "metric_date" },
+  },
+  cloudflare_cache_audit: { cadence_key: "weekly_automated", cadence_label: "Weekly automated" },
+  browserstack: { cadence_key: "targeted_manual", cadence_label: "Targeted manual audit" },
+  evs: { cadence_key: "targeted_manual", cadence_label: "Targeted manual audit" },
+  sightmap: { cadence_key: "targeted_manual", cadence_label: "Targeted manual audit" },
+};
 
 type DataSourceKey = typeof DATA_SOURCES[number]["key"];
 
@@ -107,7 +155,12 @@ function expectedLatestDateForSource(sourceKey: string, now = new Date()): strin
   return formatUtcDateToYmd(yesterday);
 }
 
-function evaluateSourceFreshness(sourceKey: string, latestDate: string | null, now = new Date()) {
+function evaluateSourceFreshness(
+  sourceKey: string,
+  latestDate: string | null,
+  now = new Date(),
+  cadenceKey: AdvisoryCadenceKey | null = null,
+) {
   const expectedLatestDate = expectedLatestDateForSource(sourceKey, now);
   if (!latestDate) {
     return {
@@ -120,6 +173,43 @@ function evaluateSourceFreshness(sourceKey: string, latestDate: string | null, n
 
   const latestYmd = latestDate.slice(0, 10);
   const ageDays = diffCalendarDays(formatDateInTimezone(now).ymd, latestYmd);
+  const normalizedCadence = cadenceKey ?? null;
+
+  if (normalizedCadence === "weekly_manual") {
+    let freshnessStatus: AdvisoryFreshnessStatus = "fresh";
+    if (ageDays >= 11) freshnessStatus = "stale";
+    else if (ageDays >= 8) freshnessStatus = "warning";
+    return {
+      expected_latest_date: expectedLatestDate,
+      age_days: ageDays,
+      business_lag_days: null,
+      freshness_status: freshnessStatus,
+    };
+  }
+
+  if (normalizedCadence === "weekly_automated") {
+    let freshnessStatus: AdvisoryFreshnessStatus = "fresh";
+    if (ageDays >= 10) freshnessStatus = "stale";
+    else if (ageDays >= 7) freshnessStatus = "warning";
+    return {
+      expected_latest_date: expectedLatestDate,
+      age_days: ageDays,
+      business_lag_days: null,
+      freshness_status: freshnessStatus,
+    };
+  }
+
+  if (normalizedCadence === "targeted_manual") {
+    let freshnessStatus: AdvisoryFreshnessStatus = "fresh";
+    if (ageDays >= 30) freshnessStatus = "stale";
+    else if (ageDays >= 14) freshnessStatus = "warning";
+    return {
+      expected_latest_date: expectedLatestDate,
+      age_days: ageDays,
+      business_lag_days: null,
+      freshness_status: freshnessStatus,
+    };
+  }
 
   if (MANUAL_MORNING_SOURCE_KEYS.has(String(sourceKey || "").trim().toLowerCase())) {
     const lagDays = Math.max(0, diffCalendarDays(expectedLatestDate, latestYmd));
@@ -146,6 +236,72 @@ function evaluateSourceFreshness(sourceKey: string, latestDate: string | null, n
   };
 }
 
+function inferCollectionReason(status: string, row: { error_message: string | null; notes: string | null }) {
+  const detail = `${row.error_message ?? ""} ${row.notes ?? ""}`.toLowerCase();
+  if (status === "completed") return "closed";
+  if (status === "retry_scheduled") return "retry_pending";
+  if (status === "in_progress") return "still_running";
+  if (status === "partial") return "partial_results";
+  if (status === "failed" || status === "blocked") {
+    if (detail.includes("auth") || detail.includes("credential") || detail.includes("token")) return "auth_issue";
+    if (detail.includes("rate") || detail.includes("429")) return "rate_limited";
+    if (detail.includes("manual") || detail.includes("file") || detail.includes("csv")) return "manual_dependency";
+    return "blocked";
+  }
+  if (status === "exhausted") return "retry_window_exhausted";
+  return "pending_review";
+}
+
+function formatChicagoCutoff(now = new Date()) {
+  const dateText = new Intl.DateTimeFormat("en-US", {
+    timeZone: LOCAL_TIMEZONE,
+    month: "short",
+    day: "numeric",
+  }).format(now);
+  return `${dateText} 8:00 AM ${LOCAL_TIMEZONE}`;
+}
+
+async function safeQueryLatestDate(
+  db: D1Database,
+  table: string,
+  dateCol: string,
+): Promise<string | null> {
+  try {
+    const row = await queryFirst<{ latest: string | null }>(
+      db,
+      `SELECT MAX(${dateCol}) AS latest FROM ${table}`
+    );
+    return row?.latest ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function safeQueryFirstValue<T>(
+  db: D1Database,
+  sql: string,
+  params: unknown[] = [],
+  fallback: T,
+): Promise<T> {
+  try {
+    return (await queryFirst<T>(db, sql, params)) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function safeQueryAllValues<T>(
+  db: D1Database,
+  sql: string,
+  params: unknown[] = [],
+): Promise<T[]> {
+  try {
+    return await queryAll<T>(db, sql, params);
+  } catch {
+    return [];
+  }
+}
+
 /** GET /status — full health snapshot */
 health.get("/status", async (c) => {
   const db = c.env.POP_BRIEF_DB;
@@ -167,14 +323,23 @@ health.get("/status", async (c) => {
   }> = {};
 
   for (const src of DATA_SOURCES) {
-    const countResult = await queryFirst<{ cnt: number }>(
+    const countResult = await safeQueryFirstValue<{ cnt: number }>(
       db, `SELECT COUNT(*) as cnt FROM ${src.table}`
+      ,
+      [],
+      { cnt: 0 }
     );
-    const latestResult = await queryFirst<{ latest: string }>(
+    const latestResult = await safeQueryFirstValue<{ latest: string | null }>(
       db, `SELECT MAX(${src.dateCol}) as latest FROM ${src.table}`
+      ,
+      [],
+      { latest: null }
     );
-    const weeksResult = await queryFirst<{ cnt: number }>(
+    const weeksResult = await safeQueryFirstValue<{ cnt: number }>(
       db, `SELECT COUNT(DISTINCT ${src.dateCol}) as cnt FROM ${src.table}`
+      ,
+      [],
+      { cnt: 0 }
     );
 
     // Coverage for latest week
@@ -184,10 +349,11 @@ health.get("/status", async (c) => {
       const typeFilter = (src.key === "t7" || src.key === "t30")
         ? ` AND type = 'community'`
         : "";
-      const coverageResult = await queryFirst<{ cnt: number }>(
+      const coverageResult = await safeQueryFirstValue<{ cnt: number }>(
         db,
         `SELECT COUNT(DISTINCT community_id) as cnt FROM ${src.table} WHERE ${src.dateCol} = ?${typeFilter}`,
-        [latestResult.latest]
+        [latestResult.latest],
+        { cnt: 0 }
       );
       latestCoverage = coverageResult?.cnt ?? 0;
     }
@@ -217,7 +383,7 @@ health.get("/status", async (c) => {
     const typeFilter = (src.key === "t7" || src.key === "t30")
       ? ` AND type = 'community'`
       : "";
-    const rows = await queryAll<{ community_id: string }>(
+    const rows = await safeQueryAllValues<{ community_id: string }>(
       db,
       `SELECT DISTINCT community_id FROM ${src.table} WHERE ${src.dateCol} = ?${typeFilter}`,
       [latest]
@@ -247,7 +413,7 @@ health.get("/status", async (c) => {
   const communityCount = communities.length;
 
   // 6. Actual source freshness from canonical DB (pushed by sync script)
-  const sourceFreshness = await queryAll<{
+  const sourceFreshness = await safeQueryAllValues<{
     source_key: string;
     source_label: string;
     latest_date: string | null;
@@ -261,7 +427,7 @@ health.get("/status", async (c) => {
   }));
 
   // 7. Integrity summary from canonical monitoring tables pushed into D1 mirror
-  const collectionFailures = await queryAll<{
+  const collectionFailures = await safeQueryAllValues<{
     data_source: string;
     status: string;
     error_message: string | null;
@@ -314,7 +480,7 @@ health.get("/status", async (c) => {
       })),
   ].slice(0, 6);
 
-  const dailyCollectionRows = await queryAll<{
+  const dailyCollectionRows = await safeQueryAllValues<{
     data_source: string;
     status: string | null;
     properties_total: number | null;
@@ -382,26 +548,8 @@ health.get("/status", async (c) => {
     properties_failed: dailyCollections.reduce((sum, row) => sum + row.failed_count, 0),
     properties_remaining: dailyCollections.reduce((sum, row) => sum + row.remaining_count, 0),
   };
-  const unresolvedSources = dailyCollections
-    .filter((row) => row.status !== "completed")
-    .map((row) => row.source);
-  const dailyCollectionClosure = {
-    state:
-      dailyCollectionSummary.sources_total > 0 && unresolvedSources.length === 0
-        ? "complete"
-        : unresolvedSources.length > 0
-          ? "open"
-          : "not_started",
-    summary_reason:
-      dailyCollectionSummary.sources_total === 0
-        ? "no_runs_recorded"
-        : unresolvedSources.length === 0
-          ? "all_visible_sources_closed"
-          : "visible_sources_still_open",
-    unresolved_sources: unresolvedSources,
-  };
 
-  const retryQueueRows = await queryAll<{
+  const retryQueueRows = await safeQueryAllValues<{
     queue_id: number;
     collection_date: string;
     data_source: string;
@@ -454,8 +602,106 @@ health.get("/status", async (c) => {
     acc[key] = (acc[key] ?? 0) + 1;
     return acc;
   }, {});
+  const nextRetryAt = retryQueueRows
+    .map((row) => row.next_attempt_at)
+    .filter((value): value is string => Boolean(value))
+    .sort()[0] ?? null;
 
-  const collectionHistory = await queryAll<{
+  const unresolvedSources = dailyCollections
+    .filter((row) => row.status !== "completed")
+    .map((row) => ({
+      source: row.source,
+      status: row.status,
+      reason: inferCollectionReason(row.status, row),
+    }));
+
+  const advisoryLatestRunRows = await safeQueryAllValues<{ data_source: string; latest_collection_date: string | null }>(
+    db,
+    `SELECT data_source, MAX(collection_date) AS latest_collection_date
+     FROM data_collections
+     WHERE data_source IN (${Object.keys(ADVISORY_SOURCE_POLICIES).map(() => "?").join(", ")})
+     GROUP BY data_source`,
+    Object.keys(ADVISORY_SOURCE_POLICIES)
+  );
+  const advisoryLatestRunDateBySource = new Map(
+    advisoryLatestRunRows.map((row) => [String(row.data_source || "").toLowerCase(), row.latest_collection_date ?? null])
+  );
+
+  const advisoryLatestDataDateBySource = new Map<string, string | null>();
+  for (const [source, policy] of Object.entries(ADVISORY_SOURCE_POLICIES)) {
+    const queryDef = policy.latestDataQuery;
+    if (!queryDef) {
+      advisoryLatestDataDateBySource.set(source, null);
+      continue;
+    }
+    advisoryLatestDataDateBySource.set(
+      source,
+      await safeQueryLatestDate(db, queryDef.table, queryDef.dateCol)
+    );
+  }
+
+  const advisorySources = Array.from(
+    new Set([
+      ...Object.keys(ADVISORY_SOURCE_POLICIES),
+      ...dailyCollections
+        .filter((row) => {
+          const normalized = String(row.source || "").toLowerCase();
+          return !CORE_FAILURE_SOURCES.has(normalized) || normalized in ADVISORY_SOURCE_POLICIES;
+        })
+        .map((row) => String(row.source || "").toLowerCase())
+        .filter(Boolean),
+    ])
+  ).map((source) => {
+    const policy = ADVISORY_SOURCE_POLICIES[source] ?? {
+      cadence_key: "targeted_manual" as const,
+      cadence_label: "Targeted manual audit",
+    };
+    const todayRow = dailyCollections.find((row) => String(row.source || "").toLowerCase() === source);
+    const latestRecordedDate =
+      advisoryLatestDataDateBySource.get(source) ??
+      advisoryLatestRunDateBySource.get(source) ??
+      null;
+    const freshness = evaluateSourceFreshness(source, latestRecordedDate, new Date(), policy.cadence_key);
+
+    return {
+      source,
+      status: todayRow?.status ?? (latestRecordedDate ? "historical" : "missing"),
+      run_recorded: Boolean(todayRow?.started_at || todayRow?.completed_at),
+      latest_recorded_date: latestRecordedDate,
+      expected_latest_date: freshness.expected_latest_date,
+      freshness_status: freshness.freshness_status,
+      cadence_key: policy.cadence_key,
+      cadence_label: policy.cadence_label,
+    };
+  });
+
+  const hasBlockedSources = unresolvedSources.some((row) => BLOCKED_COLLECTION_STATUSES.has(row.status));
+  const hasActiveSources = unresolvedSources.some((row) => ACTIVE_COLLECTION_STATUSES.has(row.status));
+  const dailyCollectionClosure = {
+    state:
+      dailyCollectionSummary.sources_total === 0
+        ? "not_started"
+        : unresolvedSources.length === 0
+          ? "complete"
+          : hasBlockedSources && !hasActiveSources
+            ? "blocked"
+            : "open",
+    summary_reason:
+      dailyCollectionSummary.sources_total === 0
+        ? "no_runs_recorded"
+        : unresolvedSources.length === 0
+          ? "all_visible_sources_closed"
+          : hasBlockedSources && !hasActiveSources
+            ? "visible_sources_blocked"
+            : "visible_sources_still_open",
+    cutoff_at_local: formatChicagoCutoff(),
+    next_retry_at: nextRetryAt,
+    queue_depth: retryQueueRows.length,
+    unresolved_sources: unresolvedSources,
+    advisory_sources: advisorySources,
+  };
+
+  const collectionHistory = await safeQueryAllValues<{
     collection_date: string;
     sources_total: number;
     sources_completed: number;
@@ -490,7 +736,7 @@ health.get("/status", async (c) => {
       const whereClause = src.key === "t7" || src.key === "t30"
         ? `WHERE ${src.dateCol} IS NOT NULL AND type = 'community'`
         : `WHERE ${src.dateCol} IS NOT NULL`;
-      const points = await queryAll<{ bucket_date: string; coverage: number }>(
+      const points = await safeQueryAllValues<{ bucket_date: string; coverage: number }>(
         db,
         `SELECT
             ${src.dateCol} as bucket_date,
@@ -516,7 +762,7 @@ health.get("/status", async (c) => {
     })
   );
 
-  const sourceTimelineRows = await queryAll<{
+  const sourceTimelineRows = await safeQueryAllValues<{
     collection_date: string;
     data_source: string;
     status: string | null;

@@ -1,0 +1,191 @@
+{
+  "version": "2026-04-17.outcomes.v1",
+  "updated_at": "2026-04-17",
+  "purpose": "Canonical outcome ownership map for consolidating the full web platform into one governed operating system.",
+  "outcomes": [
+    {
+      "id": "operational_health",
+      "name": "Operational Health",
+      "category": "Operate",
+      "canonical_owner": "Watchtower + Data Collection",
+      "canonical_surfaces": [
+        "/Users/mark/Property_Analytics/apps/web/src/app/watchtower",
+        "/Users/mark/Property_Analytics/apps/api/src/routes/health.ts",
+        "/Users/mark/Property_Analytics/Data_Collection"
+      ],
+      "mission": "Own platform health, freshness, closure state, retry posture, trust pressure, and run integrity from one canonical lane.",
+      "allowed_specialized_systems": [
+        "pilot_control_cwv",
+        "pilot_roundup"
+      ],
+      "consolidate_now": [
+        "Portfolio_Monitoring operational visibility overlap",
+        "legacy health and alert viewpoints that duplicate Watchtower outcomes"
+      ],
+      "current_state": "represented_but_maturing",
+      "next_moves": [
+        "Move remaining operational ownership out of Portfolio_Monitoring into Watchtower and canonical health APIs.",
+        "Keep pilot monitoring specialized, but make it consume canonical health and trust signals instead of parallel logic."
+      ]
+    },
+    {
+      "id": "portfolio_briefing",
+      "name": "Portfolio Briefing",
+      "category": "Brief",
+      "canonical_owner": "PIB / POP Brief family through The Pond",
+      "canonical_surfaces": [
+        "/Users/mark/Property_Analytics/Property_Intelligence_Brief",
+        "/Users/mark/Property_Analytics/apps/web/src/app/pib",
+        "/Users/mark/Property_Analytics/apps/web/src/app/analysis"
+      ],
+      "mission": "Provide the canonical portfolio and property briefing family without forking PIB truth or allowing duplicate briefing systems.",
+      "allowed_specialized_systems": [
+        "Spotlight_Properties_Report"
+      ],
+      "consolidate_now": [
+        "brief-family sprawl across PIB, POP Brief, Spotlight, and imported reporting conventions",
+        "parallel report entry points that target the same executive understanding outcome"
+      ],
+      "current_state": "needs_structural_organization",
+      "next_moves": [
+        "Define the formal report-family architecture: PIB, POP Brief, Spotlight, specialty reports, and when each is canonical.",
+        "Keep the locked PIB generator protected and orchestrate around it from the Pond."
+      ]
+    },
+    {
+      "id": "portfolio_insight_navigation",
+      "name": "Portfolio Insight and Navigation",
+      "category": "Navigate",
+      "canonical_owner": "Dock + Pond product surfaces",
+      "canonical_surfaces": [
+        "/Users/mark/Property_Analytics/apps/web/src/app/dock",
+        "/Users/mark/Property_Analytics/apps/web/src/app",
+        "/Users/mark/Property_Analytics/apps/web/src/app/analysis"
+      ],
+      "mission": "Own how operators and stakeholders move through portfolio insight, reports, and tools inside one cohesive product surface.",
+      "allowed_specialized_systems": [
+        "Spotlight_Properties_Report"
+      ],
+      "consolidate_now": [
+        "Portfolio_Dashboard overlap with Dock and modern analysis surfaces",
+        "multiple UI entry layers for similar portfolio-insight outcomes"
+      ],
+      "current_state": "active_consolidation_target",
+      "next_moves": [
+        "Absorb useful Portfolio_Dashboard patterns into Dock, Analysis, or dedicated Pond views.",
+        "Stop treating Portfolio_Dashboard as a parallel default navigation surface."
+      ]
+    },
+    {
+      "id": "content_operations",
+      "name": "Content Operations",
+      "category": "Execute",
+      "canonical_owner": "Intelligence Office + Site Content Creator + VACS",
+      "canonical_surfaces": [
+        "/Users/mark/Property_Analytics/apps/web/src/app/intelligence-office",
+        "/Users/mark/Property_Analytics/apps/web/src/app/site-content",
+        "/Users/mark/Property_Analytics/apps/web/src/app/vacs"
+      ],
+      "mission": "Connect truth, interpretation, structure, and execution into one governed content system rather than parallel planning and generation efforts.",
+      "allowed_specialized_systems": [
+        "Specs"
+      ],
+      "consolidate_now": [
+        "content-planning and generation efforts that bypass the Intelligence Office / Site Content / VACS spine"
+      ],
+      "current_state": "represented_but_maturing",
+      "next_moves": [
+        "Finish Site Content as a settled governed execution lane.",
+        "Keep VACS API-first but aligned to the same truth and directive stack."
+      ]
+    },
+    {
+      "id": "validation_and_experience",
+      "name": "Validation and Experience",
+      "category": "Validate",
+      "canonical_owner": "EVS",
+      "canonical_surfaces": [
+        "/Users/mark/Property_Analytics/apps/web/src/app/evs",
+        "/Users/mark/Property_Analytics/apps/api/src/routes/evs.ts",
+        "/Users/mark/Property_Analytics/evs"
+      ],
+      "mission": "Own staging-first validation, experiential evidence, and mixed human-and-machine execution without scattering validation truth across ad hoc checks.",
+      "allowed_specialized_systems": [
+        "ops/browserstack"
+      ],
+      "consolidate_now": [
+        "ad hoc screenshot/manual validation flows that should route through EVS"
+      ],
+      "current_state": "stable_core_with_execution_growth",
+      "next_moves": [
+        "Keep execution specialized while using the Pond workspace as the canonical operator layer.",
+        "Decide whether workflow dispatch remains external or becomes a governed API action."
+      ]
+    },
+    {
+      "id": "data_truth_and_collection",
+      "name": "Data Truth and Collection",
+      "category": "Truth",
+      "canonical_owner": "Data Pond + Data Collection",
+      "canonical_surfaces": [
+        "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
+        "/Users/mark/Property_Analytics/config/venterra_properties_official.json",
+        "/Users/mark/Property_Analytics/Data_Collection",
+        "/Users/mark/Property_Analytics/apps/api/src"
+      ],
+      "mission": "Own normalized facts, lineage, freshness, and shared APIs for the full web platform.",
+      "allowed_specialized_systems": [
+        "pilot_control_cwv",
+        "Spotlight_Properties_Report"
+      ],
+      "consolidate_now": [
+        "Portfolio_Monitoring retaining canonical collection ownership",
+        "script-only truth assumptions outside the canonical Data Collection path"
+      ],
+      "current_state": "canonical",
+      "next_moves": [
+        "Continue moving overlapping legacy collection ownership into the canonical Data Collection and app API stack.",
+        "Keep all report and product lanes consuming this shared truth rather than private data paths."
+      ]
+    }
+  ],
+  "enterprise_rules": [
+    "One canonical owner per outcome.",
+    "No new parallel dashboards for an existing outcome.",
+    "No new script-only canonical system when a Pond or API contract already exists.",
+    "No private canonical truth outside the Data Pond.",
+    "Keeper plus Cloudflare Zero Trust plus app roles is the default security posture.",
+    "Nested repos must be treated as explicit boundary objects, not accidental homes for net-new canonical ownership."
+  ],
+  "accepted_specializations": [
+    {
+      "system": "pilot_control_cwv",
+      "reason": "Temporary pilot program with distinct monitoring goals"
+    },
+    {
+      "system": "pilot_roundup",
+      "reason": "Temporary pilot reporting layer"
+    },
+    {
+      "system": "Spotlight_Properties_Report",
+      "reason": "Imported POP/brief-family related system that remains specialized while the broader briefing family is organized"
+    }
+  ],
+  "consolidate_now": [
+    {
+      "system": "Portfolio_Monitoring",
+      "target_owner": "Data Collection + Watchtower",
+      "reason": "Still overlaps operational visibility and collection ownership that should live in canonical truth and health lanes"
+    },
+    {
+      "system": "Portfolio_Dashboard",
+      "target_owner": "Dock + Pond product surfaces",
+      "reason": "Still overlaps navigation and insight outcomes that should be represented in the main app"
+    },
+    {
+      "system": "Brief-family sprawl",
+      "target_owner": "PIB / POP Brief family through The Pond",
+      "reason": "PIB, POP Brief, Spotlight, and adjacent executive reporting need one organized architecture rather than loose related systems"
+    }
+  ]
+}

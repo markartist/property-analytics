@@ -1,0 +1,222 @@
+{
+  "version": "2026-04-18.enterprise.v1",
+  "updated_at": "2026-04-18",
+  "purpose": "Enterprise readiness audit, gap register, and next-step program for stabilizing the full MarketingOps web platform.",
+  "readiness_summary": {
+    "overall_state": "strong_platform_backbone_with_consolidation_and_release_discipline_gap",
+    "headline": "The platform now has a credible enterprise backbone, but it still needs consolidation, release discipline, and security completion to become fully enterprise-grade.",
+    "strongest_areas": [
+      "Canonical truth and collection around Data Collection, the master database, and the property registry",
+      "Governed product shell in The Pond with Watchtower, Dock, EVS, VACS, Site Content, and role-aware entry surfaces",
+      "Control-plane awareness and enterprise outcome modeling in the Pond",
+      "Security direction with Keeper-first secrets, Zero Trust boundary, and named offering permissions"
+    ],
+    "most_critical_gaps": [
+      "Duplicate ownership remains across legacy and modern systems for some outcomes",
+      "Release and repo discipline are not yet clean enough for predictable enterprise promotion",
+      "Permission and trust enforcement are strong in major lanes but not yet universal",
+      "Operational maturity still needs stronger release observability and service-level governance"
+    ]
+  },
+  "domains": [
+    {
+      "id": "truth_collection",
+      "name": "Truth and Collection",
+      "readiness": "strong",
+      "owner": "Data Pond + Data Collection",
+      "scope": "Canonical facts, collection orchestration, retry/closure posture, and shared read models.",
+      "strengths": [
+        "Clear canonical ownership exists",
+        "Morning closure and advisory governance are now materially stronger",
+        "Most major reporting and app surfaces already depend on this truth stack"
+      ],
+      "gaps": [
+        "Legacy collection assumptions still exist in Portfolio_Monitoring and adjacent scripts",
+        "Service-level observability is still weaker than source-level observability"
+      ],
+      "next_moves": [
+        "Retire remaining accidental collection ownership outside Data_Collection",
+        "Add release and service provenance to operational monitoring"
+      ]
+    },
+    {
+      "id": "pond_product_shell",
+      "name": "Pond Product Shell",
+      "readiness": "strong",
+      "owner": "apps/web + apps/api",
+      "scope": "Primary operator shell, governed surfaces, role-aware navigation, and control-plane integration.",
+      "strengths": [
+        "The Pond now has a coherent shell and growing system-awareness model",
+        "Role-aware UX and offering-level permissions are established",
+        "Watchtower and /system give the platform an enterprise self-model"
+      ],
+      "gaps": [
+        "Some surfaces still need the same depth of action-level enforcement and role tuning",
+        "Some report and dashboard outcomes still sit outside the canonical app shell"
+      ],
+      "next_moves": [
+        "Complete surface-by-surface action authorization coverage",
+        "Continue absorbing legacy dashboard/navigation outcomes into Dock and app-native views"
+      ]
+    },
+    {
+      "id": "security_identity",
+      "name": "Security and Identity",
+      "readiness": "foundation_strong_transitional_completion_needed",
+      "owner": "Platform Security + Pond",
+      "scope": "Keeper secret authority, Cloudflare Zero Trust boundary, role and offering authorization, and machine identity posture.",
+      "strengths": [
+        "Security architecture direction is now explicit and mostly canonical",
+        "Named offering permissions are now real in both UI and API",
+        "VACS and Site Content trust posture were materially improved"
+      ],
+      "gaps": [
+        "Trust evidence and enforcement are not yet uniformly complete across all lanes",
+        "Some transitional fallback and mixed-boundary assumptions still need closure"
+      ],
+      "next_moves": [
+        "Close remaining trust-review and transitional nodes surfaced by Watchtower",
+        "Make route-level trust evidence and permission evidence part of release readiness"
+      ]
+    },
+    {
+      "id": "outcome_ownership",
+      "name": "Outcome Ownership and Consolidation",
+      "readiness": "medium_high_risk",
+      "owner": "MarketingOps Architecture",
+      "scope": "Canonical ownership by business outcome across reports, dashboards, content ops, validation, and monitoring.",
+      "strengths": [
+        "The canonical outcome map now exists and is browser-visible",
+        "Accepted specialization versus consolidate-now systems are explicitly named"
+      ],
+      "gaps": [
+        "Portfolio_Monitoring still overlaps Watchtower and Data Collection outcomes",
+        "Portfolio_Dashboard still overlaps Dock and analysis/navigation outcomes",
+        "The PIB / POP Brief / Spotlight family still needs one formal architecture"
+      ],
+      "next_moves": [
+        "Run the first consolidation wave on Portfolio_Monitoring and Portfolio_Dashboard",
+        "Publish a formal briefing-family architecture and entry model"
+      ]
+    },
+    {
+      "id": "release_ops",
+      "name": "Release and Operational Maturity",
+      "readiness": "medium",
+      "owner": "Platform Operations",
+      "scope": "Promotion, worktree discipline, branch/release separation, deployment provenance, and service-level runbooks.",
+      "strengths": [
+        "There is now much better awareness of workstreams, lanes, and ownership",
+        "Control-plane visibility and trust remediation are much more mature than before"
+      ],
+      "gaps": [
+        "The repo remains too dirty and mixed for enterprise-grade promotion confidence",
+        "Release provenance and deployment discipline are not yet standardized enough"
+      ],
+      "next_moves": [
+        "Establish a clean release path and stop promoting from mixed dirty worktrees",
+        "Track deployment provenance, environment parity, and service-level incident/runbook readiness"
+      ]
+    }
+  ],
+  "priority_workstreams": [
+    {
+      "id": "owner_consolidation",
+      "name": "Canonical Owner Consolidation",
+      "severity": "critical",
+      "owner": "MarketingOps Architecture",
+      "target_outcomes": [
+        "Operational Health",
+        "Portfolio Insight and Navigation",
+        "Portfolio Briefing"
+      ],
+      "timeframe": "0-30 days",
+      "description": "Remove duplicate ownership across legacy and modern systems so each major outcome has one clear canonical home.",
+      "exit_criteria": [
+        "Portfolio_Monitoring no longer holds canonical operational ownership",
+        "Portfolio_Dashboard no longer acts as a parallel default navigation layer",
+        "PIB / POP Brief / Spotlight family has a published enterprise architecture"
+      ]
+    },
+    {
+      "id": "release_discipline",
+      "name": "Release and Repo Discipline",
+      "severity": "critical",
+      "owner": "Platform Operations",
+      "target_outcomes": [
+        "All canonical product and platform outcomes"
+      ],
+      "timeframe": "0-30 days",
+      "description": "Create a clean promotion model and reduce mixed-workstream release risk.",
+      "exit_criteria": [
+        "Clean release branch path is defined and in use",
+        "Promotion no longer depends on giant mixed worktrees",
+        "Service changes can be traced to coherent release slices"
+      ]
+    },
+    {
+      "id": "security_completion",
+      "name": "Security Completion",
+      "severity": "high",
+      "owner": "Platform Security",
+      "target_outcomes": [
+        "Security and Identity",
+        "Validation and Experience",
+        "Content Operations"
+      ],
+      "timeframe": "0-60 days",
+      "description": "Finish the remaining trust-review and transitional lanes so enterprise posture is enforced, not just described.",
+      "exit_criteria": [
+        "Highest-risk Watchtower trust nodes are closed or moved to aligned posture",
+        "Named offering permissions cover the remaining major governed lanes",
+        "Release readiness includes trust and permission evidence"
+      ]
+    },
+    {
+      "id": "service_observability",
+      "name": "Service Observability and Runbook Maturity",
+      "severity": "high",
+      "owner": "Platform Operations + Watchtower",
+      "target_outcomes": [
+        "Operational Health",
+        "Control Plane Awareness"
+      ],
+      "timeframe": "30-90 days",
+      "description": "Elevate observability from collection/source health into service and release health.",
+      "exit_criteria": [
+        "Watchtower can show service-level release and runtime posture",
+        "Deployment provenance and environment drift are visible",
+        "Canonical runbooks are tied to owned services and outcomes"
+      ]
+    }
+  ],
+  "next_90_days": [
+    {
+      "phase": "Days 0-30",
+      "focus": "Ownership, release hygiene, and top trust closures",
+      "moves": [
+        "Finalize canonical owner enforcement for overlapping outcomes",
+        "Stand up clean release path and promotion rules",
+        "Use Watchtower to close the highest-value trust-review nodes"
+      ]
+    },
+    {
+      "phase": "Days 31-60",
+      "focus": "Consolidation execution and permission completion",
+      "moves": [
+        "Migrate Portfolio_Monitoring outcome ownership into Data Collection + Watchtower",
+        "Migrate Portfolio_Dashboard outcome ownership into Dock + app surfaces",
+        "Complete action-level permission coverage on remaining major offerings"
+      ]
+    },
+    {
+      "phase": "Days 61-90",
+      "focus": "Operational maturity and enterprise standardization",
+      "moves": [
+        "Formalize briefing-family architecture and user entry model",
+        "Add service-level observability and deployment provenance",
+        "Normalize release, security, and runbook discipline across canonical owners"
+      ]
+    }
+  ]
+}

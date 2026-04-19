@@ -4,9 +4,14 @@ import React from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/components/auth-provider";
+import { getRoleTitle, type AppRole } from "@/lib/permissions";
 import {
   getHealthStatus,
-  type HealthStatusResponse, type TableStat, type SourceFreshness, type DailyCollectionSourceStatus,
+  getPondLandscape,
+  API_BASE_URL,
+  SITE_CONTENT_DEBUG_FLAG,
+  type HealthStatusResponse, type TableStat, type SourceFreshness, type DailyCollectionSourceStatus, type PondLandscapeResponse,
 } from "@/lib/api";
 import {
   Eye, Loader2, ArrowLeft, CheckCircle2, XCircle,
@@ -18,6 +23,21 @@ import { format, parseISO, differenceInDays } from "date-fns";
 
 const AUTO_REFRESH_MS = 60_000;
 const CORE_RETRY_SOURCES = new Set(["ga4", "gsc", "google_ads", "guest_card", "unit_availability", "d1_mirror"]);
+
+const ROLE_WATCHTOWER_GUIDANCE: Record<AppRole, { eyebrow: string; summary: string }> = {
+  viewer: {
+    eyebrow: "Observer posture",
+    summary: "Read the health story, spot live pressure, and use the tower to understand what needs attention before you move into reports.",
+  },
+  editor: {
+    eyebrow: "Curator posture",
+    summary: "Use the tower as your operating read, then move directly into the governed lane that needs action with the right context already in hand.",
+  },
+  admin: {
+    eyebrow: "Steward posture",
+    summary: "Balance live collection pressure with trust, remediation, and platform ownership signals from one command deck.",
+  },
+};
 
 function freshnessInfo(src: SourceFreshness | TableStat): { days: number; label: string; color: string; bg: string; tone: "fresh" | "warning" | "stale" | "missing" } {
   const dateStr = src.latest_date;
@@ -76,10 +96,44 @@ function closureBadge(state: string): string {
   switch (state) {
     case "complete":
       return "bg-emerald-100 text-emerald-700 border-0";
+    case "archived":
+      return "bg-sky-100 text-sky-700 border-0";
     case "open":
       return "bg-amber-100 text-amber-700 border-0";
+    case "blocked":
+      return "bg-rose-100 text-rose-700 border-0";
     default:
       return "bg-slate-100 text-slate-600 border-0";
+  }
+}
+
+function closureStateLabel(state: string): string {
+  switch (state) {
+    case "complete":
+      return "Closed";
+    case "open":
+      return "Open";
+    case "archived":
+      return "Archived";
+    case "blocked":
+      return "Blocked";
+    default:
+      return "Idle";
+  }
+}
+
+function closureStateTone(state: string): "emerald" | "cyan" | "amber" | "rose" {
+  switch (state) {
+    case "complete":
+      return "emerald";
+    case "open":
+      return "cyan";
+    case "archived":
+      return "amber";
+    case "blocked":
+      return "rose";
+    default:
+      return "amber";
   }
 }
 
@@ -859,8 +913,587 @@ function CommandRailCard({
   );
 }
 
+function landscapeNodeTone(status: string): "emerald" | "amber" | "rose" | "cyan" {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("canonical") || normalized.includes("active")) return "emerald";
+  if (normalized.includes("planning")) return "amber";
+  if (normalized.includes("legacy")) return "rose";
+  return "cyan";
+}
+
+function postureTone(posture: PondLandscapeResponse["canonical_foundations"][number]["posture"]): "emerald" | "amber" | "rose" | "cyan" {
+  if (posture === "healthy") return "emerald";
+  if (posture === "active_build" || posture === "trust_hardening") return "amber";
+  if (posture === "migration_debt") return "rose";
+  return "cyan";
+}
+
+function postureLabel(posture: PondLandscapeResponse["canonical_foundations"][number]["posture"]): string {
+  return posture.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+type TowerTone = "emerald" | "amber" | "rose" | "cyan";
+type LiveBadge = { label: string; tone: TowerTone };
+
+function zeroTrustModeLabel(mode: PondLandscapeResponse["canonical_foundations"][number]["evidence"]["expected_zero_trust_mode"]): string {
+  switch (mode) {
+    case "human_access":
+      return "Human Access";
+    case "machine_access":
+      return "Machine Access";
+    case "mixed_access":
+      return "Mixed Access";
+    case "local_only":
+      return "Local Only";
+    case "external_governed":
+      return "External Governed";
+    default:
+      return formatSourceName(mode);
+  }
+}
+
+function observedTrustLabel(mode: PondLandscapeResponse["canonical_foundations"][number]["evidence"]["observed_zero_trust_posture"]): string {
+  switch (mode) {
+    case "session_origin_guard":
+      return "Session Guard";
+    case "service_token_capable":
+      return "Service Token";
+    case "mixed_session_and_service":
+      return "Mixed Session + Service";
+    case "session_plus_debug_bypass":
+      return "Session + Debug Review";
+    case "migration_boundary":
+      return "Migration Boundary";
+    case "external_governed":
+      return "External Governed";
+    case "not_inferred":
+      return "Not Inferred";
+    default:
+      return formatSourceName(mode);
+  }
+}
+
+function trustAlignmentTone(alignment: PondLandscapeResponse["canonical_foundations"][number]["evidence"]["trust_alignment"]): "emerald" | "amber" | "rose" {
+  if (alignment === "aligned") return "emerald";
+  if (alignment === "transitional") return "amber";
+  return "rose";
+}
+
+function tonePanelClasses(tone: "emerald" | "amber" | "rose" | "cyan"): string {
+  if (tone === "emerald") return "border-emerald-200 bg-emerald-50";
+  if (tone === "amber") return "border-amber-200 bg-amber-50";
+  if (tone === "rose") return "border-rose-200 bg-rose-50";
+  return "border-cyan-200 bg-cyan-50";
+}
+
+function toneBadgeClasses(tone: "emerald" | "amber" | "rose" | "cyan"): string {
+  if (tone === "emerald") return "border-0 bg-emerald-100 text-emerald-700";
+  if (tone === "amber") return "border-0 bg-amber-100 text-amber-700";
+  if (tone === "rose") return "border-0 bg-rose-100 text-rose-700";
+  return "border-0 bg-cyan-100 text-cyan-700";
+}
+
+function nextActionTone(state: PondLandscapeResponse["canonical_foundations"][number]["evidence"]["next_action"]["state"]): "emerald" | "amber" | "rose" {
+  if (state === "clear") return "emerald";
+  if (state === "watch") return "amber";
+  return "rose";
+}
+
+function remediationStatusTone(status: PondLandscapeResponse["canonical_foundations"][number]["evidence"]["remediation_track"]["status"]): "emerald" | "amber" | "rose" {
+  if (status === "closed") return "emerald";
+  if (status === "active") return "amber";
+  return "rose";
+}
+
+function remediationCriterionTone(met: boolean): "emerald" | "rose" {
+  return met ? "emerald" : "rose";
+}
+
+function serviceTierLabel(tier: string): string {
+  switch (tier) {
+    case "foundation":
+      return "Foundation";
+    case "critical_operator":
+      return "Critical Operator";
+    case "governance":
+      return "Governance";
+    case "governed_workspace":
+      return "Governed Workspace";
+    case "machine_lane":
+      return "Machine Lane";
+    case "mixed_validation":
+      return "Mixed Validation";
+    case "protected_reporting":
+      return "Protected Reporting";
+    default:
+      return formatSourceName(tier);
+  }
+}
+
+function matchDeploymentEnvironment(
+  host: string | null,
+  environments: PondLandscapeResponse["deployment_provenance"]["environments"],
+  kind: "web" | "api",
+): PondLandscapeResponse["deployment_provenance"]["environments"][number] | null {
+  if (!host) return null;
+  return environments.find((environment) => {
+    if (kind === "web") {
+      if (environment.web_hosts?.includes(host)) return true;
+      if (environment.web_host_suffixes?.some((suffix) => host.endsWith(suffix))) return true;
+      return false;
+    }
+    return environment.api_hosts.includes(host);
+  }) ?? null;
+}
+
+function provenanceTone(status: PondLandscapeResponse["release_provenance"]["release_descriptor"]["provenance_status"]): "emerald" | "amber" | "rose" {
+  if (status === "aligned") return "emerald";
+  if (status === "transitional") return "amber";
+  return "rose";
+}
+
+function relatedNodeIdForService(serviceId: string): string | null {
+  switch (serviceId) {
+    case "data_pond_api":
+    case "data_pond_web":
+      return "data_pond_truth";
+    case "watchtower_control_plane":
+      return "watchtower";
+    case "intelligence_office":
+      return "intelligence_office";
+    case "site_content_ops":
+      return "site_content_creator";
+    case "vacs_execution":
+      return "vacs";
+    case "evs_validation":
+      return "evs";
+    case "pib_canonical_engine":
+      return "property_intelligence_brief";
+    default:
+      return null;
+  }
+}
+
+function LandscapeNodeCard({
+  title,
+  subtitle,
+  tone,
+  detail,
+  chips,
+  signal,
+  posture,
+  liveNote,
+  liveBadge,
+  evidence,
+}: {
+  title: string;
+  subtitle: string;
+  tone: "emerald" | "amber" | "rose" | "cyan";
+  detail: string;
+  chips: string[];
+  signal: string;
+  posture: string;
+  liveNote?: string | null;
+  liveBadge?: LiveBadge | null;
+  evidence: {
+    represented_in_pond: boolean;
+    pond_surface_href: string | null;
+    boundary_class: string;
+    web_surface_live: boolean;
+    api_surface_live: boolean;
+    expected_zero_trust_mode: "human_access" | "machine_access" | "mixed_access" | "local_only" | "external_governed";
+    observed_zero_trust_posture: "session_origin_guard" | "service_token_capable" | "mixed_session_and_service" | "session_plus_debug_bypass" | "migration_boundary" | "external_governed" | "not_inferred";
+    trust_alignment: "aligned" | "transitional" | "review";
+    trust_evidence_points: string[];
+    remediation_track: {
+      label: string;
+      doc_path: string | null;
+      route_href: string | null;
+      status: "open" | "active" | "closed";
+      status_detail: string;
+      completion_criteria: Array<{
+        label: string;
+        met: boolean;
+        detail: string | null;
+      }>;
+    };
+    evidence_points: string[];
+    next_action: {
+      state: "clear" | "watch" | "action";
+      title: string;
+      detail: string;
+      href: string | null;
+    };
+  };
+}) {
+  const actionTone = nextActionTone(evidence.next_action.state);
+  const actionStateLabel =
+    evidence.next_action.state === "clear" ? "Clear"
+      : evidence.next_action.state === "watch" ? "Watch"
+        : "Action";
+
+  return (
+    <div className={`rounded-[24px] border p-4 shadow-sm ${tonePanelClasses(tone)}`}>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{subtitle}</p>
+        </div>
+        <Badge className={toneBadgeClasses(tone)}>{posture}</Badge>
+      </div>
+      <p className="text-sm leading-6 text-slate-700">{detail}</p>
+      <div className="mt-3 rounded-[18px] border border-white/70 bg-white/70 p-3">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Tower Signal</p>
+        <p className="mt-1 text-sm text-slate-700">{signal}</p>
+      </div>
+      {liveNote ? (
+        <div className="mt-3 rounded-[18px] border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Live Pressure</p>
+            {liveBadge ? <Badge className={toneBadgeClasses(liveBadge.tone)}>{liveBadge.label}</Badge> : null}
+          </div>
+          <p className="mt-1 text-sm text-slate-700">{liveNote}</p>
+        </div>
+      ) : null}
+      <div className="mt-3 rounded-[18px] border border-slate-200 bg-white/75 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Evidence</p>
+          <div className="flex flex-wrap gap-2">
+            <Badge className={evidence.represented_in_pond ? "border-0 bg-emerald-100 text-emerald-700" : "border-0 bg-slate-200 text-slate-600"}>
+              {evidence.represented_in_pond ? "In Pond" : "Off Pond"}
+            </Badge>
+            <Badge className="border-0 bg-cyan-100 text-cyan-700">
+              {formatSourceName(evidence.boundary_class)}
+            </Badge>
+          </div>
+        </div>
+        <div className="mt-2 grid gap-2 md:grid-cols-3">
+          <div className="rounded-[14px] bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Web Surface</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{evidence.web_surface_live ? "Live" : "None"}</p>
+          </div>
+          <div className="rounded-[14px] bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">API Surface</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{evidence.api_surface_live ? "Live" : "None"}</p>
+          </div>
+          <div className="rounded-[14px] bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Trust Mode</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{zeroTrustModeLabel(evidence.expected_zero_trust_mode)}</p>
+          </div>
+        </div>
+        <div className="mt-2 grid gap-2 md:grid-cols-3">
+          <div className="rounded-[14px] bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Observed Trust</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{observedTrustLabel(evidence.observed_zero_trust_posture)}</p>
+          </div>
+          <div className="rounded-[14px] bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Trust Alignment</p>
+            <Badge className={`mt-1 ${toneBadgeClasses(trustAlignmentTone(evidence.trust_alignment))}`}>{formatSourceName(evidence.trust_alignment)}</Badge>
+          </div>
+          <div className="rounded-[14px] bg-slate-50 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Boundary Class</p>
+            <p className="mt-1 text-sm font-medium text-slate-800">{formatSourceName(evidence.boundary_class)}</p>
+          </div>
+        </div>
+        <div className="mt-2 space-y-2">
+          {evidence.evidence_points.map((point) => (
+            <p key={point} className="text-sm text-slate-700">
+              {point}
+            </p>
+          ))}
+          {evidence.trust_evidence_points.map((point) => (
+            <p key={`trust-${point}`} className="text-sm text-slate-700">
+              {point}
+            </p>
+          ))}
+          {evidence.pond_surface_href ? (
+            <Link href={evidence.pond_surface_href} className="inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+              Open {evidence.pond_surface_href}
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      <div className="mt-3 rounded-[18px] border border-slate-200 bg-white/75 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Remediation Track</p>
+          <Badge className={toneBadgeClasses(remediationStatusTone(evidence.remediation_track.status))}>
+            {formatSourceName(evidence.remediation_track.status)}
+          </Badge>
+        </div>
+        <p className="mt-1 text-sm font-semibold text-slate-900">{evidence.remediation_track.label}</p>
+        <p className="mt-1 text-sm text-slate-700">{evidence.remediation_track.status_detail}</p>
+        {evidence.remediation_track.doc_path ? (
+          <p className="mt-1 break-all text-xs text-slate-500">{evidence.remediation_track.doc_path}</p>
+        ) : null}
+        <p className="mt-2 text-xs font-medium text-slate-500">
+          {evidence.remediation_track.completion_criteria.filter((criterion) => criterion.met).length}
+          /
+          {evidence.remediation_track.completion_criteria.length}
+          {" "}
+          criteria met
+        </p>
+        <div className="mt-2 space-y-1">
+          {evidence.remediation_track.completion_criteria.map((criterion) => (
+            <div key={`${evidence.remediation_track.label}-${criterion.label}`} className="rounded-[14px] bg-slate-50 px-3 py-2">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm text-slate-700">{criterion.label}</p>
+                <Badge className={toneBadgeClasses(remediationCriterionTone(criterion.met))}>{criterion.met ? "Met" : "Open"}</Badge>
+              </div>
+              {criterion.detail ? <p className="mt-1 text-xs text-slate-500">{criterion.detail}</p> : null}
+            </div>
+          ))}
+        </div>
+        {evidence.remediation_track.route_href ? (
+          <Link href={evidence.remediation_track.route_href} className="mt-2 inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+            Open {evidence.remediation_track.route_href}
+          </Link>
+        ) : null}
+      </div>
+      <div className={`mt-3 rounded-[18px] border p-3 ${tonePanelClasses(actionTone)}`}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Node Next Move</p>
+          <Badge className={toneBadgeClasses(actionTone)}>{actionStateLabel}</Badge>
+        </div>
+        <p className="mt-2 text-sm font-semibold text-slate-900">{evidence.next_action.title}</p>
+        <p className="mt-1 text-sm text-slate-700">{evidence.next_action.detail}</p>
+        {evidence.next_action.href ? (
+          <Link href={evidence.next_action.href} className="mt-2 inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+            Open {evidence.next_action.href}
+          </Link>
+        ) : null}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <Badge key={chip} className={toneBadgeClasses(tone)}>
+            {chip}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TrustZoneCard({ zone, surfaceCount }: { zone: PondLandscapeResponse["trust_zones"][number]; surfaceCount: number }) {
+  const tone =
+    zone.id === "access_protected_human_and_machine" ? "cyan"
+      : zone.id === "access_protected_machine" ? "amber"
+        : zone.id === "access_protected_human" ? "emerald"
+          : zone.id === "local_operator_only" ? "rose"
+            : "cyan";
+  return (
+    <div className={`rounded-[24px] border p-4 shadow-sm ${tonePanelClasses(tone)}`}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-900">{formatSourceName(zone.id)}</p>
+        <Badge className={toneBadgeClasses(tone)}>{surfaceCount} mapped</Badge>
+      </div>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{zone.description}</p>
+    </div>
+  );
+}
+
+function gapRunbookTone(state: PondLandscapeResponse["gap_runbook"][number]["state"]): "emerald" | "amber" | "rose" {
+  if (state === "clear") return "emerald";
+  if (state === "watch") return "amber";
+  return "rose";
+}
+
+function GapRunbookCard({ item }: { item: PondLandscapeResponse["gap_runbook"][number] }) {
+  const tone = gapRunbookTone(item.state);
+  const stateLabel = item.state === "clear" ? "Clear" : item.state === "watch" ? "Watch" : "Action";
+
+  return (
+    <div className={`rounded-[24px] border p-4 shadow-sm ${tonePanelClasses(tone)}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">{stateLabel}</p>
+        </div>
+        <Badge className={toneBadgeClasses(tone)}>{item.count}</Badge>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-700">{item.detail}</p>
+      <div className="mt-3 rounded-[18px] border border-white/70 bg-white/70 p-3">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Canonical Next Move</p>
+        <p className="mt-1 text-sm text-slate-700">{item.next_move}</p>
+      </div>
+      {item.href ? (
+        <Link href={item.href} className="mt-3 inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+          Open {item.href}
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function TrustPriorityCard({
+  title,
+  posture,
+  alignment,
+  note,
+  href,
+  trackLabel,
+  trackDocPath,
+  trackStatus,
+  trackStatusDetail,
+  trackCriteria,
+}: {
+  title: string;
+  posture: string;
+  alignment: PondLandscapeResponse["canonical_foundations"][number]["evidence"]["trust_alignment"];
+  note: string;
+  href: string | null;
+  trackLabel: string;
+  trackDocPath: string | null;
+  trackStatus: "open" | "active" | "closed";
+  trackStatusDetail: string;
+  trackCriteria: Array<{
+    label: string;
+    met: boolean;
+    detail: string | null;
+  }>;
+}) {
+  const tone = trustAlignmentTone(alignment);
+  return (
+    <div className={`rounded-[24px] border p-4 shadow-sm ${tonePanelClasses(tone)}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">{posture}</p>
+        </div>
+        <Badge className={toneBadgeClasses(tone)}>{formatSourceName(alignment)}</Badge>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-700">{note}</p>
+      <div className="mt-3 rounded-[18px] border border-white/70 bg-white/70 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Remediation Track</p>
+          <Badge className={toneBadgeClasses(remediationStatusTone(trackStatus))}>{formatSourceName(trackStatus)}</Badge>
+        </div>
+        <p className="mt-1 text-sm font-medium text-slate-900">{trackLabel}</p>
+        <p className="mt-1 text-sm text-slate-700">{trackStatusDetail}</p>
+        {trackDocPath ? <p className="mt-1 break-all text-xs text-slate-500">{trackDocPath}</p> : null}
+        <p className="mt-2 text-xs font-medium text-slate-500">
+          {trackCriteria.filter((criterion) => criterion.met).length}
+          /
+          {trackCriteria.length}
+          {" "}
+          criteria met
+        </p>
+        <div className="mt-2 space-y-1">
+          {trackCriteria.map((criterion) => (
+            <div key={`${trackLabel}-${criterion.label}`} className="rounded-[14px] bg-slate-50 px-3 py-2">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm text-slate-700">{criterion.label}</p>
+                <Badge className={toneBadgeClasses(remediationCriterionTone(criterion.met))}>{criterion.met ? "Met" : "Open"}</Badge>
+              </div>
+              {criterion.detail ? <p className="mt-1 text-xs text-slate-500">{criterion.detail}</p> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+      {href ? (
+        <Link href={href} className="mt-3 inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+          Open {href}
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function ServiceOperationsCard({
+  title,
+  owner,
+  tier,
+  runtime,
+  deploymentTarget,
+  releaseLane,
+  trustBoundary,
+  liveState,
+  liveDetail,
+  runbook,
+  focus,
+  href,
+}: {
+  title: string;
+  owner: string;
+  tier: string;
+  runtime: string;
+  deploymentTarget: string;
+  releaseLane: string;
+  trustBoundary: string;
+  liveState: "stable" | "watch" | "action" | "active";
+  liveDetail: string;
+  runbook: string | null;
+  focus: string[];
+  href: string | null;
+}) {
+  const tone: TowerTone =
+    liveState === "stable" ? "emerald"
+      : liveState === "watch" ? "amber"
+        : liveState === "action" ? "rose"
+          : "cyan";
+  const liveLabel =
+    liveState === "stable" ? "Stable"
+      : liveState === "watch" ? "Watch"
+        : liveState === "action" ? "Action"
+          : "Active";
+
+  return (
+    <div className={`rounded-[24px] border p-4 shadow-sm ${tonePanelClasses(tone)}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">{owner}</p>
+        </div>
+        <Badge className={toneBadgeClasses(tone)}>{liveLabel}</Badge>
+      </div>
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        <div className="rounded-[14px] bg-white/75 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Tier</p>
+          <p className="mt-1 text-sm font-medium text-slate-800">{tier}</p>
+        </div>
+        <div className="rounded-[14px] bg-white/75 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Release Lane</p>
+          <p className="mt-1 text-sm font-medium text-slate-800">{formatSourceName(releaseLane)}</p>
+        </div>
+        <div className="rounded-[14px] bg-white/75 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Runtime</p>
+          <p className="mt-1 text-sm font-medium text-slate-800">{runtime}</p>
+        </div>
+        <div className="rounded-[14px] bg-white/75 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Deploy Target</p>
+          <p className="mt-1 text-sm font-medium text-slate-800">{deploymentTarget}</p>
+        </div>
+      </div>
+      <div className="mt-3 rounded-[18px] border border-white/70 bg-white/70 p-3">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Operational Read</p>
+        <p className="mt-1 text-sm text-slate-700">{liveDetail}</p>
+      </div>
+      <div className="mt-3 rounded-[18px] border border-white/70 bg-white/70 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Trust Boundary</p>
+          <Badge className="border-0 bg-slate-100 text-slate-700">{formatSourceName(trustBoundary)}</Badge>
+        </div>
+        {runbook ? <p className="mt-2 break-all text-xs text-slate-500">{runbook}</p> : null}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {focus.map((item) => (
+          <Badge key={`${title}-${item}`} className="border-0 bg-white/80 text-slate-700">
+            {item}
+          </Badge>
+        ))}
+      </div>
+      {href ? (
+        <Link href={href} className="mt-3 inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+          Open {href}
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
 export default function WatchtowerPage() {
+  const { user } = useAuth();
   const [data, setData] = React.useState<HealthStatusResponse | null>(null);
+  const [landscape, setLandscape] = React.useState<PondLandscapeResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -870,15 +1503,23 @@ export default function WatchtowerPage() {
   const [selectedSource, setSelectedSource] = React.useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
   const [now, setNow] = React.useState<Date>(new Date());
+  const [currentWebOrigin, setCurrentWebOrigin] = React.useState<string | null>(null);
+  const [currentWebHost, setCurrentWebHost] = React.useState<string | null>(null);
+  const role = user?.role ?? "viewer";
+  const roleGuidance = ROLE_WATCHTOWER_GUIDANCE[role];
 
   React.useEffect(() => {
     let active = true;
 
+    setCurrentWebOrigin(window.location.origin);
+    setCurrentWebHost(window.location.host);
+
     async function load() {
       try {
-        const result = await getHealthStatus();
+        const [result, landscapeResult] = await Promise.all([getHealthStatus(), getPondLandscape()]);
         if (!active) return;
         setData(result);
+        setLandscape(landscapeResult);
         setError(null);
         setLastUpdated(new Date());
       } catch (e) {
@@ -1029,6 +1670,458 @@ export default function WatchtowerPage() {
     const focusHottestSources = effectiveSelectedSource
       ? (selectedFreshnessSource ? [selectedFreshnessSource] : hottestSources)
       : hottestSources;
+    const advisoryFreshCount = data.daily_collection_status.closure.advisory_sources.filter(
+      (source) => source.freshness_status === "fresh" || source.freshness_status === "warning"
+    ).length;
+    const advisoryTotalCount = data.daily_collection_status.closure.advisory_sources.length;
+    const closureDetail =
+      data.daily_collection_status.closure.state === "complete"
+        ? "Morning collection can move into steady-state monitoring"
+        : data.daily_collection_status.closure.state === "open"
+          ? data.daily_collection_status.closure.next_retry_at
+            ? `Next retry is ${formatDateTimeLabel(data.daily_collection_status.closure.next_retry_at)}`
+            : `${data.daily_collection_status.closure.queue_depth} retry item${data.daily_collection_status.closure.queue_depth === 1 ? "" : "s"} remain open`
+          : data.daily_collection_status.closure.state === "blocked"
+            ? `${data.daily_collection_status.closure.unresolved_sources.length} source lane${data.daily_collection_status.closure.unresolved_sources.length === 1 ? "" : "s"} are blocked and need intervention`
+            : `Operational cutoff is ${data.daily_collection_status.closure.cutoff_at_local || "not set"}`;
+
+    const landscapeSummary = landscape
+      ? {
+        summary: landscape.summary,
+          postureCounts: {
+            healthy:
+              landscape.canonical_foundations.filter((item) => item.posture === "healthy").length
+              + landscape.product_surfaces.filter((item) => item.posture === "healthy").length
+              + landscape.legacy_or_specialized_systems.filter((item) => item.posture === "healthy").length,
+            attention:
+              landscape.canonical_foundations.filter((item) => item.posture === "active_build" || item.posture === "trust_hardening").length
+              + landscape.product_surfaces.filter((item) => item.posture === "active_build" || item.posture === "trust_hardening").length
+              + landscape.legacy_or_specialized_systems.filter((item) => item.posture === "active_build" || item.posture === "trust_hardening").length,
+            debt:
+              landscape.canonical_foundations.filter((item) => item.posture === "migration_debt").length
+              + landscape.product_surfaces.filter((item) => item.posture === "migration_debt").length
+              + landscape.legacy_or_specialized_systems.filter((item) => item.posture === "migration_debt").length,
+          },
+          trustHeadline:
+            landscape.summary.trust_review_node_count > 0
+              ? `${landscape.summary.trust_review_node_count} node${landscape.summary.trust_review_node_count === 1 ? "" : "s"} need active trust review.`
+              : landscape.summary.trust_transitional_count > 0
+                ? `${landscape.summary.trust_transitional_count} node${landscape.summary.trust_transitional_count === 1 ? "" : "s"} are still in transitional trust posture.`
+                : "The visible platform landscape is reading aligned with the current Zero Trust model.",
+          closureBlockers: [...landscape.canonical_foundations, ...landscape.product_surfaces, ...landscape.legacy_or_specialized_systems]
+            .flatMap((item) =>
+              item.evidence.remediation_track.completion_criteria
+                .filter((criterion) => !criterion.met)
+                .map((criterion) => ({
+                  label: criterion.label,
+                  detail: criterion.detail,
+                  nodeName: item.name,
+                  nodeHref: item.evidence.next_action.href,
+                  trackLabel: item.evidence.remediation_track.label,
+                  trackDocPath: item.evidence.remediation_track.doc_path,
+                  trackRouteHref: item.evidence.remediation_track.route_href,
+                }))
+            )
+            .reduce<Array<{
+              label: string;
+              count: number;
+              detail: string | null;
+              nodes: Array<{ name: string; href: string | null }>;
+              tracks: Array<{ label: string; docPath: string | null; routeHref: string | null; count: number }>;
+            }>>((acc, blocker) => {
+              const existing = acc.find((item) => item.label === blocker.label);
+              if (existing) {
+                existing.count += 1;
+                if (!existing.nodes.some((node) => node.name === blocker.nodeName)) {
+                  existing.nodes.push({ name: blocker.nodeName, href: blocker.nodeHref });
+                }
+                const existingTrack = existing.tracks.find((track) => track.label === blocker.trackLabel);
+                if (existingTrack) {
+                  existingTrack.count += 1;
+                } else {
+                  existing.tracks.push({
+                    label: blocker.trackLabel,
+                    docPath: blocker.trackDocPath,
+                    routeHref: blocker.trackRouteHref,
+                    count: 1,
+                  });
+                }
+                if (!existing.detail && blocker.detail) {
+                  existing.detail = blocker.detail;
+                }
+                return acc;
+              }
+
+              acc.push({
+                label: blocker.label,
+                count: 1,
+                detail: blocker.detail,
+                nodes: [{ name: blocker.nodeName, href: blocker.nodeHref }],
+                tracks: [{
+                  label: blocker.trackLabel,
+                  docPath: blocker.trackDocPath,
+                  routeHref: blocker.trackRouteHref,
+                  count: 1,
+                }],
+              });
+              return acc;
+            }, [])
+            .map((blocker) => ({
+              ...blocker,
+              tracks: blocker.tracks.sort((a, b) => b.count - a.count),
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 5),
+          trustPriorityNodes: [...landscape.canonical_foundations, ...landscape.product_surfaces, ...landscape.legacy_or_specialized_systems]
+            .filter((item) => item.evidence.trust_alignment !== "aligned")
+            .map((item) => {
+              const trackCriteria = item.evidence.remediation_track.completion_criteria;
+              const metCriteriaCount = trackCriteria.filter((criterion) => criterion.met).length;
+              const unmetCriteriaCount = trackCriteria.length - metCriteriaCount;
+              const stalledClosure = item.evidence.remediation_track.status === "open" && metCriteriaCount === 0;
+              const score =
+                (item.evidence.trust_alignment === "review" ? 90 : 45)
+                + (unmetCriteriaCount * 18)
+                + (stalledClosure ? 28 : 0)
+                + (item.posture === "trust_hardening" ? 25 : 0)
+                + (item.posture === "migration_debt" ? 20 : 0)
+                + (!item.evidence.api_surface_live && (item.evidence.expected_zero_trust_mode === "machine_access" || item.evidence.expected_zero_trust_mode === "mixed_access") ? 20 : 0)
+                + (!item.evidence.web_surface_live && (item.evidence.expected_zero_trust_mode === "human_access" || item.evidence.expected_zero_trust_mode === "mixed_access") ? 15 : 0)
+                + (item.evidence.observed_zero_trust_posture === "session_plus_debug_bypass" ? 20 : 0)
+                + (item.evidence.observed_zero_trust_posture === "mixed_session_and_service" ? 10 : 0)
+                - (metCriteriaCount * 6);
+              return {
+                title: item.name,
+                posture: postureLabel(item.posture),
+                alignment: item.evidence.trust_alignment,
+                href: item.evidence.next_action.href,
+                note: `${item.evidence.next_action.detail} ${unmetCriteriaCount} of ${trackCriteria.length} remediation criteria remain open${stalledClosure ? ", and the track has not started closing yet." : "."}`,
+                trackLabel: item.evidence.remediation_track.label,
+                trackDocPath: item.evidence.remediation_track.doc_path,
+                trackStatus: item.evidence.remediation_track.status,
+                trackStatusDetail: item.evidence.remediation_track.status_detail,
+                trackCriteria,
+                score,
+              };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 4),
+          foundationNodes: landscape.canonical_foundations.map((item) => ({
+            title: item.name,
+            subtitle: item.owner,
+            tone: postureTone(item.posture),
+            detail: `${item.responsibilities.slice(0, 3).join(", ")}${item.responsibilities.length > 3 ? "…" : ""}`,
+            chips: [item.status, item.trust_zone],
+            signal: item.signal,
+            posture: postureLabel(item.posture),
+            evidence: item.evidence,
+            liveNote:
+              item.id === "data_pond_truth"
+                ? data.daily_collection_status.closure.state === "blocked"
+                  ? `${data.daily_collection_status.closure.unresolved_sources.length} blocked source lane(s) are pressuring the canonical platform right now.`
+                  : data.integrity_summary.core_failure_sources > 0
+                    ? `${data.integrity_summary.core_failure_sources} core failure source(s) are currently degrading the truth/control-plane layer.`
+                    : data.health_score < 85
+                      ? `Platform health score is ${data.health_score}%, so the canonical layer is stable but not yet in ideal posture.`
+                      : "Core collection and truth systems are reading stable from the tower right now."
+                : item.id === "intelligence_office"
+                  ? "Interpretation and governance are live, but deeper product integration remains an active platform build lane."
+                  : "External governed layer is connected conceptually and should remain structurally linked without moving canonical truth out of the platform.",
+            liveBadge:
+              item.id === "data_pond_truth"
+                ? data.daily_collection_status.closure.state === "blocked" || data.integrity_summary.core_failure_sources > 0
+                  ? { label: "Operational Pressure", tone: data.daily_collection_status.closure.state === "blocked" ? "rose" : "amber" } satisfies LiveBadge
+                  : { label: "Stable", tone: "emerald" } satisfies LiveBadge
+                : item.id === "intelligence_office"
+                  ? ({ label: "Active Build", tone: "amber" } satisfies LiveBadge)
+                  : ({ label: "Governed External", tone: "cyan" } satisfies LiveBadge),
+          })),
+          productNodes: landscape.product_surfaces.map((item) => ({
+            title: item.name,
+            subtitle: item.visibility_target,
+            tone: postureTone(item.posture),
+            detail: `Depends on ${item.depends_on.map(formatSourceName).join(", ")}.`,
+            chips: [item.status, item.trust_zone],
+            signal: item.signal,
+            posture: postureLabel(item.posture),
+            evidence: item.evidence,
+            liveNote:
+              item.id === "watchtower"
+                ? data.telemetry.retry_queue.queue_depth > 0
+                  ? `${data.telemetry.retry_queue.queue_depth} open retry item(s) and ${data.daily_collection_status.summary.sources_active} active source lane(s) are currently flowing through the tower.`
+                  : "The tower is in steady-state watch mode with no open retry load."
+                : item.id === "site_content_creator"
+                  ? "Section mapping, assessment, and rewrite workflow exist, but the surface still reads as an active build rather than a finished operating lane."
+                  : item.id === "vacs"
+                    ? `${landscape.shared_security_posture.migration_debt.length} trust/migration debt item(s) still apply to machine-facing platform systems, so VACS remains under trust hardening pressure.`
+                    : item.id === "evs"
+                      ? `${landscape.shared_security_posture.migration_debt.length} trust/migration debt item(s) still apply to machine-facing platform systems, so EVS stays specialized and under hardening watch.`
+                      : item.id === "pilot_tracker"
+                        ? "Pilot surface is active in the Pond, but still depends on broader pilot/reporting consolidation outside the core app."
+                        : null,
+            liveBadge:
+              item.id === "watchtower"
+                ? data.telemetry.retry_queue.queue_depth > 0 || data.daily_collection_status.summary.sources_active > 0
+                  ? ({ label: "Live Ops", tone: "amber" } satisfies LiveBadge)
+                  : ({ label: "Steady State", tone: "emerald" } satisfies LiveBadge)
+                : item.id === "vacs" || item.id === "evs"
+                  ? ({ label: "Trust Hardening", tone: "amber" } satisfies LiveBadge)
+                  : item.id === "site_content_creator"
+                    ? ({ label: "Active Build", tone: "amber" } satisfies LiveBadge)
+                    : ({ label: "Active", tone: "emerald" } satisfies LiveBadge),
+          })),
+          legacyNodes: landscape.legacy_or_specialized_systems.map((item) => ({
+            title: item.name,
+            subtitle: item.status,
+            tone: postureTone(item.posture),
+            detail: `Migration target: ${item.canonical_migration_target}`,
+            chips: [item.status],
+            signal: item.signal,
+            posture: postureLabel(item.posture),
+            evidence: item.evidence,
+            liveNote:
+              item.id === "property_intelligence_brief"
+                ? "PIB remains canonical and locked. The live pressure here is orchestration discipline, not renderer mutation."
+                : `${landscape.summary.nested_repo_count} nested repo boundary/boundaries remain visible in the workspace, so this lane still carries migration and ownership pressure.`,
+            liveBadge:
+              item.id === "property_intelligence_brief"
+                ? ({ label: "Protected Canonical", tone: "cyan" } satisfies LiveBadge)
+                : ({ label: "Migration Debt", tone: "rose" } satisfies LiveBadge),
+          })),
+          trustZoneCounts: Object.fromEntries(
+            landscape.trust_zones.map((zone) => [
+              zone.id,
+              landscape.canonical_foundations.filter((item) => item.trust_zone === zone.id).length
+              + landscape.product_surfaces.filter((item) => item.trust_zone === zone.id).length,
+            ]),
+          ),
+        }
+      : null;
+
+    const serviceOperationsBoard = landscape
+      ? (() => {
+        const allNodes = [...landscape.canonical_foundations, ...landscape.product_surfaces, ...landscape.legacy_or_specialized_systems];
+        const nodeById = new Map(allNodes.map((item) => [item.id, item] as const));
+        const services = landscape.service_operations.services.map((service) => {
+          const relatedNodeId = relatedNodeIdForService(service.id);
+          const relatedNode = relatedNodeId ? nodeById.get(relatedNodeId) : undefined;
+          const live = (() => {
+            switch (service.id) {
+              case "data_collection":
+                if (data.daily_collection_status.closure.state === "blocked" || data.integrity_summary.core_failure_sources > 0) {
+                  return {
+                    state: "action" as const,
+                    detail: `${Math.max(data.daily_collection_status.closure.unresolved_sources.length, data.integrity_summary.core_failure_sources)} unresolved core lane(s) are blocking canonical daily closure right now.`,
+                  };
+                }
+                if (data.daily_collection_status.closure.state === "open" || data.telemetry.retry_queue.queue_depth > 0) {
+                  return {
+                    state: "watch" as const,
+                    detail: `${data.telemetry.retry_queue.queue_depth} retry item(s) and ${data.daily_collection_status.summary.sources_active} active source lane(s) are still moving toward closure.`,
+                  };
+                }
+                return {
+                  state: "stable" as const,
+                  detail: "Canonical collection closure is reading stable, with no live blockers on the current day.",
+                };
+              case "data_pond_api":
+                return data.health_score < 80
+                  ? {
+                    state: "watch" as const,
+                    detail: `The API is live and authenticated, but the overall platform health score is ${data.health_score}%, so the core service should stay under watch.`,
+                  }
+                  : {
+                    state: "stable" as const,
+                    detail: "The API is live, authenticated, and currently serving both collection health and control-plane payloads cleanly.",
+                  };
+              case "data_pond_web":
+                return data.health_score < 80
+                  ? {
+                    state: "watch" as const,
+                    detail: "The web shell is live, but its operator story is reflecting active platform pressure rather than steady-state posture.",
+                  }
+                  : {
+                    state: "stable" as const,
+                    detail: "The web shell is live and acting as the canonical operator entry surface.",
+                  };
+              case "watchtower_control_plane":
+                if (landscape.summary.trust_review_node_count > 0 || data.telemetry.retry_queue.queue_depth > 0) {
+                  return {
+                    state: "active" as const,
+                    detail: `The tower is live and carrying ${landscape.summary.trust_review_node_count} trust-review node(s) plus ${data.telemetry.retry_queue.queue_depth} retry item(s), so this service is actively in use rather than resting.`,
+                  };
+                }
+                return {
+                  state: "stable" as const,
+                  detail: "The control plane is live and reading in steady-state watch mode.",
+                };
+              case "intelligence_office":
+                return relatedNode?.posture === "healthy"
+                  ? {
+                    state: "stable" as const,
+                    detail: "Governed memory and interpretation are represented cleanly in the platform.",
+                  }
+                  : {
+                    state: "active" as const,
+                    detail: "Interpretation is live, but still part of an active platform build rather than a fully settled governance lane.",
+                  };
+              case "site_content_ops":
+                return relatedNode?.posture === "healthy"
+                  ? {
+                    state: "stable" as const,
+                    detail: "The editorial workspace is live and operating as a governed lane.",
+                  }
+                  : {
+                    state: "active" as const,
+                    detail: "The workspace is materially usable, but still reads as an active build and refinement lane.",
+                  };
+              case "vacs_execution":
+                return relatedNode?.evidence.trust_alignment === "aligned"
+                  ? {
+                    state: "stable" as const,
+                    detail: "VACS is operating as a hardened machine lane with a governed Pond bridge.",
+                  }
+                  : {
+                    state: "watch" as const,
+                    detail: "VACS remains visible, but should stay under trust watch until the lane is fully aligned.",
+                  };
+              case "evs_validation":
+                return relatedNode?.evidence.trust_alignment === "aligned"
+                  ? {
+                    state: "stable" as const,
+                    detail: "EVS is operating as an aligned mixed human-and-machine validation lane.",
+                  }
+                  : {
+                    state: "watch" as const,
+                    detail: "EVS remains active but should stay under trust watch until the mixed boundary is fully aligned.",
+                  };
+              case "pib_canonical_engine":
+                return {
+                  state: "stable" as const,
+                  detail: "PIB remains protected and canonical. The operating concern here is orchestration discipline, not renderer churn.",
+                };
+              default:
+                return {
+                  state: "watch" as const,
+                  detail: "This service is represented, but still needs a more explicit live operating signal.",
+                };
+            }
+          })();
+
+          return {
+            ...service,
+            href: service.canonical_surface,
+            tierLabel: serviceTierLabel(service.service_tier),
+            liveState: live.state,
+            liveDetail: live.detail,
+          };
+        });
+
+        return {
+          summary: landscape.service_operations_summary,
+          stateCounts: {
+            stable: services.filter((item) => item.liveState === "stable").length,
+            watch: services.filter((item) => item.liveState === "watch").length,
+            action: services.filter((item) => item.liveState === "action").length,
+            active: services.filter((item) => item.liveState === "active").length,
+          },
+          services,
+        };
+      })()
+      : null;
+
+    const deploymentProvenanceBoard = landscape
+      ? (() => {
+        const configuredApiUrl = (() => {
+          try {
+            return new URL(API_BASE_URL);
+          } catch {
+            return null;
+          }
+        })();
+        const configuredApiHost = configuredApiUrl?.host ?? null;
+        const webEnvironment = matchDeploymentEnvironment(currentWebHost, landscape.deployment_provenance.environments, "web");
+        const configuredApiEnvironment = matchDeploymentEnvironment(configuredApiHost, landscape.deployment_provenance.environments, "api");
+        const observedApiEnvironment = matchDeploymentEnvironment(landscape.deployment_runtime.api_request_host, landscape.deployment_provenance.environments, "api");
+        const preferredApiHost = (() => {
+          try {
+            return new URL(landscape.deployment_provenance.rules.preferred_api_base).host;
+          } catch {
+            return null;
+          }
+        })();
+        const driftSignals: Array<{ label: string; state: "clear" | "watch" | "action"; detail: string }> = [];
+
+        if (webEnvironment?.id === "production" && SITE_CONTENT_DEBUG_FLAG) {
+          driftSignals.push({
+            label: "Production Debug Flag",
+            state: "action",
+            detail: "The production-style web build still carries NEXT_PUBLIC_SITE_CONTENT_DEBUG=true. Production debug flags should be retired or explicitly justified.",
+          });
+        }
+
+        if (webEnvironment?.id === "production" && preferredApiHost && configuredApiHost && configuredApiHost !== preferredApiHost) {
+          driftSignals.push({
+            label: "Production API Base Drift",
+            state: "action",
+            detail: `The current production-style web surface points at ${configuredApiHost} instead of the preferred API host ${preferredApiHost}.`,
+          });
+        }
+
+        if (configuredApiHost && landscape.deployment_runtime.api_request_host !== configuredApiHost) {
+          driftSignals.push({
+            label: "API Runtime Mismatch",
+            state: "action",
+            detail: `The configured API base targets ${configuredApiHost}, but the current control-plane response is actually coming from ${landscape.deployment_runtime.api_request_host}.`,
+          });
+        }
+
+        if (webEnvironment?.id === "preview" && configuredApiEnvironment?.id === "production") {
+          driftSignals.push({
+            label: "Preview Using Production API",
+            state: "watch",
+            detail: "This preview web surface is using the production API. That is valid for release review, but it should stay a deliberate preview posture rather than a silent default.",
+          });
+        }
+
+        if (!landscape.deployment_runtime.access_auto_provision_enabled) {
+          driftSignals.push({
+            label: "Access Auto-Provision Disabled",
+            state: "watch",
+            detail: "Cloudflare Access browser auto-provisioning is not enabled in the current API runtime, so browser admission and app identity may drift apart.",
+          });
+        }
+
+        if ((landscape.deployment_runtime.access_default_role ?? "viewer") !== "viewer") {
+          driftSignals.push({
+            label: "Default Role Drift",
+            state: "watch",
+            detail: `Cloudflare Access auto-provision is defaulting to ${landscape.deployment_runtime.access_default_role}, not viewer. That should remain a deliberate exception, not a quiet runtime drift.`,
+          });
+        }
+
+        const stateCounts = {
+          clear: Math.max(0, 3 - driftSignals.length),
+          watch: driftSignals.filter((item) => item.state === "watch").length,
+          action: driftSignals.filter((item) => item.state === "action").length,
+        };
+
+        return {
+          currentWebOrigin,
+          currentWebHost,
+          configuredApiBase: API_BASE_URL,
+          configuredApiHost,
+          observedApiOrigin: landscape.deployment_runtime.api_request_origin,
+          observedApiHost: landscape.deployment_runtime.api_request_host,
+          webEnvironment,
+          configuredApiEnvironment,
+          observedApiEnvironment,
+          preferredApiHost,
+          driftSignals,
+          stateCounts,
+        };
+      })()
+      : null;
 
     return {
       sourceSignals,
@@ -1058,6 +2151,12 @@ export default function WatchtowerPage() {
       focusSignalWall,
       focusCoverageSources,
       focusHottestSources,
+      advisoryFreshCount,
+      advisoryTotalCount,
+      closureDetail,
+      landscapeSummary,
+      serviceOperationsBoard,
+      deploymentProvenanceBoard,
       filteredRetryQueue,
       manualQueueCount,
       hardBlockedQueueCount,
@@ -1069,7 +2168,7 @@ export default function WatchtowerPage() {
       topManualItem,
       topHardBlockedItem,
     };
-  }, [data, now, retryFocusMode, retryScope, retrySearchQuery, selectedSource]);
+  }, [data, landscape, now, retryFocusMode, retryScope, retrySearchQuery, selectedSource]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(12,74,110,0.12),_transparent_26%),radial-gradient(circle_at_20%_20%,_rgba(8,145,178,0.08),_transparent_24%),linear-gradient(180deg,_#f8fbfd_0%,_#edf4f8_45%,_#f8fafc_100%)]">
@@ -1082,8 +2181,11 @@ export default function WatchtowerPage() {
             <Eye className="h-6 w-6 text-cyan-200" />
           </div>
           <div>
+            <Badge className="mb-2 border-white/15 bg-white/10 text-white">{getRoleTitle(role)} access</Badge>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-200/70">{roleGuidance.eyebrow}</p>
             <h1 className="text-xl font-bold tracking-[0.12em] text-white">The Watchtower</h1>
             <p className="text-sm text-slate-300">Command deck for live collection ops, data integrity, and morning closure</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{roleGuidance.summary}</p>
           </div>
         </div>
       </div>
@@ -1141,15 +2243,9 @@ export default function WatchtowerPage() {
               />
               <CommandRailCard
                 label="Closure Read"
-                value={data.daily_collection_status.closure.state === "complete" ? "Closed" : data.daily_collection_status.closure.state === "open" ? "Open" : "Idle"}
-                detail={
-                  data.daily_collection_status.closure.state === "complete"
-                    ? "Morning collection can move into steady-state monitoring"
-                    : data.daily_collection_status.closure.state === "open"
-                      ? "Day is still operationally open and should keep recovering"
-                      : "Visible run family has not fully started yet"
-                }
-                tone={data.daily_collection_status.closure.state === "complete" ? "emerald" : data.daily_collection_status.closure.state === "open" ? "cyan" : "amber"}
+                value={closureStateLabel(data.daily_collection_status.closure.state)}
+                detail={derived.closureDetail}
+                tone={closureStateTone(data.daily_collection_status.closure.state)}
                 icon={Target}
               />
             </section>
@@ -1183,6 +2279,10 @@ export default function WatchtowerPage() {
                         ? "Day Closed"
                         : data.daily_collection_status.closure.state === "open"
                           ? "Recovery Loop Active"
+                          : data.daily_collection_status.closure.state === "archived"
+                            ? "Historical Archive"
+                            : data.daily_collection_status.closure.state === "blocked"
+                              ? "Blocked"
                           : "Awaiting First Pass"}
                     </Badge>
                     <Badge className="border-0 bg-white/10 text-cyan-100">
@@ -1271,6 +2371,10 @@ export default function WatchtowerPage() {
                           <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                             <span className="text-slate-400">Warnings / stale</span>
                             <span className="font-semibold text-white">{derived.warningCount} / {derived.staleCount}</span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                            <span className="text-slate-400">Advisory lanes</span>
+                            <span className="font-semibold text-white">{derived.advisoryFreshCount}/{derived.advisoryTotalCount || 0}</span>
                           </div>
                         </div>
                         <div className="mt-4 rounded-[24px] border border-white/10 bg-white/5 p-4">
@@ -1455,6 +2559,618 @@ export default function WatchtowerPage() {
               </div>
             </section>
 
+            {landscape && derived.landscapeSummary && (
+              <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                <Card className="overflow-hidden border-slate-200 bg-white/90 shadow-sm">
+                  <CardContent className="p-0">
+                    <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(21,40,75,0.08),_transparent_48%),linear-gradient(180deg,_rgba(255,255,255,0.98),_rgba(248,250,252,0.96))] px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <Orbit className="h-5 w-5 text-[#15284B]" />
+                        <div>
+                          <h2 className="text-lg font-bold text-slate-900">Platform Constellation</h2>
+                          <p className="mt-1 text-xs text-slate-500">The whole governed landscape, not just the morning collection lane</p>
+                        </div>
+                      </div>
+                    </div>
+                      <div className="grid gap-5 p-5">
+                        <div className="grid gap-4 md:grid-cols-5">
+                        <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Foundations</p>
+                          <p className="mt-2 text-3xl font-bold text-slate-900">{landscape.summary.canonical_foundation_count}</p>
+                        </div>
+                        <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Surfaces</p>
+                          <p className="mt-2 text-3xl font-bold text-slate-900">{landscape.summary.product_surface_count}</p>
+                        </div>
+                        <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Legacy / Special</p>
+                          <p className="mt-2 text-3xl font-bold text-slate-900">{landscape.summary.legacy_or_specialized_count}</p>
+                        </div>
+                        <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Trust Zones</p>
+                          <p className="mt-2 text-3xl font-bold text-slate-900">{landscape.summary.trust_zone_count}</p>
+                        </div>
+                        <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Nested Repos</p>
+                          <p className="mt-2 text-3xl font-bold text-slate-900">{landscape.summary.nested_repo_count}</p>
+                        </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-700">Healthy Nodes</p>
+                            <p className="mt-2 text-3xl font-bold text-emerald-800">{derived.landscapeSummary.postureCounts.healthy}</p>
+                            <p className="mt-1 text-sm text-emerald-700">Canonical or active systems reading cleanly from the tower.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-amber-700">Active Build / Hardening</p>
+                            <p className="mt-2 text-3xl font-bold text-amber-800">{derived.landscapeSummary.postureCounts.attention}</p>
+                            <p className="mt-1 text-sm text-amber-700">Real systems that need continued shaping, trust work, or integration.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-rose-700">Migration Debt</p>
+                            <p className="mt-2 text-3xl font-bold text-rose-800">{derived.landscapeSummary.postureCounts.debt}</p>
+                            <p className="mt-1 text-sm text-rose-700">Legacy ownership or repo-boundary pressure the tower should keep visible.</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-4">
+                          <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">In Pond</p>
+                            <p className="mt-2 text-3xl font-bold text-slate-900">{landscape.summary.represented_in_pond_count}</p>
+                            <p className="mt-1 text-sm text-slate-500">Capabilities with a first-class Pond surface or governed representation.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-rose-700">Off Pond</p>
+                            <p className="mt-2 text-3xl font-bold text-rose-800">{landscape.summary.off_pond_count}</p>
+                            <p className="mt-1 text-sm text-rose-700">Active or governed nodes still lacking direct Pond representation.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-amber-700">Machine API Gaps</p>
+                            <p className="mt-2 text-3xl font-bold text-amber-800">{landscape.summary.machine_api_gap_count}</p>
+                            <p className="mt-1 text-sm text-amber-700">Machine or mixed-access nodes without a visible API contract.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-cyan-200 bg-cyan-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-700">Trust Review</p>
+                            <p className="mt-2 text-3xl font-bold text-cyan-800">{landscape.summary.trust_review_count}</p>
+                            <p className="mt-1 text-sm text-cyan-700">Nodes still under hardening, active build, or migration review.</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-3">
+                          <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-700">Trust Aligned</p>
+                            <p className="mt-2 text-3xl font-bold text-emerald-800">{landscape.summary.trust_aligned_count}</p>
+                            <p className="mt-1 text-sm text-emerald-700">Nodes whose observed auth posture matches the intended Zero Trust shape cleanly.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-amber-700">Trust Transitional</p>
+                            <p className="mt-2 text-3xl font-bold text-amber-800">{landscape.summary.trust_transitional_count}</p>
+                            <p className="mt-1 text-sm text-amber-700">Nodes that are on the right trust path but still carry fallback or mixed transitional behavior.</p>
+                          </div>
+                          <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-rose-700">Trust Review Nodes</p>
+                            <p className="mt-2 text-3xl font-bold text-rose-800">{landscape.summary.trust_review_node_count}</p>
+                            <p className="mt-1 text-sm text-rose-700">Nodes where observed auth reality still needs deliberate trust review or cleanup.</p>
+                          </div>
+                        </div>
+
+                        {derived.serviceOperationsBoard ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Cable className="h-4 w-4 text-[#0D5E6D]" />
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">Service Operations Board</p>
+                                <p className="text-xs text-slate-500">Enterprise service ownership, release lanes, and live operating posture for the canonical platform stack.</p>
+                              </div>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-4">
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Services</p>
+                                <p className="mt-2 text-3xl font-bold text-slate-900">{derived.serviceOperationsBoard.summary.service_count}</p>
+                              </div>
+                              <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-700">Stable</p>
+                                <p className="mt-2 text-3xl font-bold text-emerald-800">{derived.serviceOperationsBoard.stateCounts.stable}</p>
+                              </div>
+                              <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-amber-700">Watch / Active</p>
+                                <p className="mt-2 text-3xl font-bold text-amber-800">
+                                  {derived.serviceOperationsBoard.stateCounts.watch + derived.serviceOperationsBoard.stateCounts.active}
+                                </p>
+                              </div>
+                              <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-rose-700">Action</p>
+                                <p className="mt-2 text-3xl font-bold text-rose-800">{derived.serviceOperationsBoard.stateCounts.action}</p>
+                              </div>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-4">
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Foundations</p>
+                                <p className="mt-2 text-3xl font-bold text-slate-900">{derived.serviceOperationsBoard.summary.foundation_count}</p>
+                                <p className="mt-1 text-sm text-slate-500">Core platform services and shared truth lanes.</p>
+                              </div>
+                              <div className="rounded-[24px] border border-cyan-200 bg-cyan-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-700">Critical Operator</p>
+                                <p className="mt-2 text-3xl font-bold text-cyan-800">{derived.serviceOperationsBoard.summary.critical_operator_count}</p>
+                                <p className="mt-1 text-sm text-cyan-700">Services that keep the operator control loop coherent.</p>
+                              </div>
+                              <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-amber-700">Machine / Mixed</p>
+                                <p className="mt-2 text-3xl font-bold text-amber-800">{derived.serviceOperationsBoard.summary.machine_or_mixed_count}</p>
+                                <p className="mt-1 text-sm text-amber-700">Services that need machine or mixed-boundary discipline.</p>
+                              </div>
+                              <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-rose-700">Local Runtime</p>
+                                <p className="mt-2 text-3xl font-bold text-rose-800">{derived.serviceOperationsBoard.summary.local_runtime_count}</p>
+                                <p className="mt-1 text-sm text-rose-700">Services that still depend on local operator runtime instead of managed deploy targets.</p>
+                              </div>
+                            </div>
+                            <div className="grid gap-4 xl:grid-cols-2">
+                              {derived.serviceOperationsBoard.services.map((service) => (
+                                <ServiceOperationsCard
+                                  key={service.id}
+                                  title={service.name}
+                                  owner={service.owner}
+                                  tier={service.tierLabel}
+                                  runtime={service.runtime}
+                                  deploymentTarget={service.deployment_target}
+                                  releaseLane={service.release_lane}
+                                  trustBoundary={service.trust_boundary}
+                                  liveState={service.liveState}
+                                  liveDetail={service.liveDetail}
+                                  runbook={service.primary_runbook}
+                                  focus={service.operational_focus}
+                                  href={service.href}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {derived.deploymentProvenanceBoard ? (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <RefreshCw className="h-4 w-4 text-[#0D5E6D]" />
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">Deployment Provenance & Drift</p>
+                                <p className="text-xs text-slate-500">Expected environment shape versus the currently observed web and API runtime posture.</p>
+                              </div>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-4">
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Web Surface</p>
+                                <p className="mt-2 text-lg font-bold text-slate-900">{derived.deploymentProvenanceBoard.webEnvironment?.label ?? "Unclassified"}</p>
+                                <p className="mt-1 break-all text-sm text-slate-500">{derived.deploymentProvenanceBoard.currentWebHost ?? "Unknown host"}</p>
+                              </div>
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Configured API Base</p>
+                                <p className="mt-2 text-lg font-bold text-slate-900">{derived.deploymentProvenanceBoard.configuredApiEnvironment?.label ?? "Unclassified"}</p>
+                                <p className="mt-1 break-all text-sm text-slate-500">{derived.deploymentProvenanceBoard.configuredApiHost ?? "Unknown host"}</p>
+                              </div>
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Observed API Runtime</p>
+                                <p className="mt-2 text-lg font-bold text-slate-900">{derived.deploymentProvenanceBoard.observedApiEnvironment?.label ?? "Unclassified"}</p>
+                                <p className="mt-1 break-all text-sm text-slate-500">{derived.deploymentProvenanceBoard.observedApiHost}</p>
+                              </div>
+                              <div className="rounded-[24px] border border-rose-200 bg-rose-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-rose-700">Drift Signals</p>
+                                <p className="mt-2 text-3xl font-bold text-rose-800">
+                                  {derived.deploymentProvenanceBoard.stateCounts.watch + derived.deploymentProvenanceBoard.stateCounts.action}
+                                </p>
+                                <p className="mt-1 text-sm text-rose-700">Open provenance or environment drift conditions requiring review.</p>
+                              </div>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-3">
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Canonical Release Path</p>
+                                <p className="mt-2 text-base font-semibold text-slate-900">{landscape.deployment_provenance.rules.canonical_release_path}</p>
+                                <p className="mt-1 text-sm text-slate-500">Release provenance should converge on this path before production promotion.</p>
+                              </div>
+                              <div className="rounded-[24px] border border-cyan-200 bg-cyan-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-700">Preferred API Host</p>
+                                <p className="mt-2 text-base font-semibold text-cyan-900">{derived.deploymentProvenanceBoard.preferredApiHost ?? "Unknown"}</p>
+                                <p className="mt-1 text-sm text-cyan-700">The production web surface should converge on this API endpoint.</p>
+                              </div>
+                              <div className="rounded-[24px] border border-amber-200 bg-amber-50 p-4">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-amber-700">Access Runtime</p>
+                                <p className="mt-2 text-base font-semibold text-amber-900">
+                                  {landscape.deployment_runtime.access_auto_provision_enabled ? "Auto-Provision On" : "Auto-Provision Off"}
+                                </p>
+                                <p className="mt-1 text-sm text-amber-700">
+                                  Default role: {landscape.deployment_runtime.access_default_role ?? "unset"}
+                                </p>
+                              </div>
+                            </div>
+                            {derived.deploymentProvenanceBoard.driftSignals.length > 0 ? (
+                              <div className="grid gap-4 xl:grid-cols-2">
+                                {derived.deploymentProvenanceBoard.driftSignals.map((signal) => {
+                                  const tone = signal.state === "action" ? "rose" : "amber";
+                                  return (
+                                    <div key={signal.label} className={`rounded-[24px] border p-4 shadow-sm ${tonePanelClasses(tone)}`}>
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                          <p className="text-sm font-semibold text-slate-900">{signal.label}</p>
+                                          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                            {signal.state === "action" ? "Action" : "Watch"}
+                                          </p>
+                                        </div>
+                                        <Badge className={toneBadgeClasses(tone)}>{signal.state === "action" ? "Action" : "Watch"}</Badge>
+                                      </div>
+                                      <p className="mt-3 text-sm leading-6 text-slate-700">{signal.detail}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                                No deployment provenance or environment drift signals are currently elevated from the observed runtime shape.
+                              </div>
+                            )}
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Gauge className="h-4 w-4 text-[#0D5E6D]" />
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-900">Release Pedigree</p>
+                                  <p className="text-xs text-slate-500">What deployed slice is actually running, and how closely it matches the enterprise release standard.</p>
+                                </div>
+                              </div>
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">{landscape.release_provenance.release_descriptor.source_branch}</p>
+                                    <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                                      {formatSourceName(landscape.release_provenance.release_descriptor.source_mode)}
+                                    </p>
+                                  </div>
+                                  <Badge className={toneBadgeClasses(provenanceTone(landscape.release_provenance.release_descriptor.provenance_status))}>
+                                    {formatSourceName(landscape.release_provenance.release_descriptor.provenance_status)}
+                                  </Badge>
+                                </div>
+                                <p className="mt-3 text-sm leading-6 text-slate-700">{landscape.release_provenance.release_descriptor.provenance_note}</p>
+                                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                                  <div className="rounded-[18px] bg-slate-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Baseline Commit</p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">{landscape.release_provenance.release_descriptor.baseline_commit.short_sha}</p>
+                                    <p className="mt-1 text-xs text-slate-500">{landscape.release_provenance.release_descriptor.baseline_commit.subject}</p>
+                                  </div>
+                                  <div className="rounded-[18px] bg-slate-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Release Lane</p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">{formatSourceName(landscape.release_provenance.release_descriptor.release_lane)}</p>
+                                    <p className="mt-1 text-xs text-slate-500">Canonical path: {landscape.release_provenance.release_descriptor.canonical_release_path}</p>
+                                  </div>
+                                  <div className="rounded-[18px] bg-slate-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Committed At</p>
+                                    <p className="mt-1 text-sm font-semibold text-slate-900">{landscape.release_provenance.release_descriptor.baseline_commit.committed_at}</p>
+                                  </div>
+                                </div>
+                                <div className="mt-4 grid gap-4 xl:grid-cols-3">
+                                  {landscape.release_provenance.deployments.map((deployment) => (
+                                    <div key={`${deployment.service_id}-${deployment.runtime_identifier}`} className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+                                      <p className="text-sm font-semibold text-slate-900">{formatSourceName(deployment.service_id)}</p>
+                                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{deployment.target}</p>
+                                      <p className="mt-3 text-xs text-slate-500">Runtime Identifier</p>
+                                      <p className="mt-1 break-all text-sm font-medium text-slate-800">{deployment.runtime_identifier}</p>
+                                      <p className="mt-3 text-xs text-slate-500">Deployed</p>
+                                      <p className="mt-1 text-sm text-slate-700">{deployment.deployed_at}</p>
+                                      <a href={deployment.public_url} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-sm font-medium text-[#0D5E6D] hover:underline">
+                                        Open runtime
+                                      </a>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="mt-4 rounded-[20px] border border-amber-200 bg-amber-50 p-4">
+                                  <p className="text-[10px] uppercase tracking-[0.18em] text-amber-700">Enterprise Next Moves</p>
+                                  <div className="mt-2 space-y-2">
+                                    {landscape.release_provenance.next_moves.map((move) => (
+                                      <p key={move} className="text-sm text-amber-900">{move}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Layers className="h-4 w-4 text-[#0D5E6D]" />
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-900">Release Reconcile Snapshot</p>
+                                  <p className="text-xs text-slate-500">The current dirty-tree split and the first clean release-shaped slice the platform should converge on.</p>
+                                </div>
+                              </div>
+                              <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                                <div className="grid gap-4 md:grid-cols-4">
+                                  <div className="rounded-[18px] bg-slate-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Changed Files</p>
+                                    <p className="mt-1 text-3xl font-bold text-slate-900">{landscape.release_reconcile_snapshot.working_tree.changed_file_count}</p>
+                                  </div>
+                                  <div className="rounded-[18px] bg-emerald-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-700">Primary Slice</p>
+                                    <p className="mt-1 text-3xl font-bold text-emerald-800">{landscape.release_reconcile_snapshot.working_tree.primary_release_slice_count}</p>
+                                  </div>
+                                  <div className="rounded-[18px] bg-rose-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-rose-700">Non-Primary</p>
+                                    <p className="mt-1 text-3xl font-bold text-rose-800">{landscape.release_reconcile_snapshot.working_tree.non_primary_count}</p>
+                                  </div>
+                                  <div className="rounded-[18px] bg-cyan-50 px-3 py-3">
+                                    <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-700">Canonical Branch</p>
+                                    <p className="mt-1 text-base font-semibold text-cyan-900">{landscape.release_reconcile_snapshot.recommended_release_candidate.canonical_branch}</p>
+                                  </div>
+                                </div>
+                                <div className="mt-4 rounded-[20px] border border-emerald-200 bg-emerald-50 p-4">
+                                  <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700">Recommended First Clean Slice</p>
+                                  <p className="mt-1 text-sm font-semibold text-emerald-900">{landscape.release_reconcile_snapshot.recommended_release_candidate.label}</p>
+                                  <p className="mt-2 text-sm text-emerald-900">{landscape.release_reconcile_snapshot.recommended_release_candidate.readiness_note}</p>
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {landscape.release_reconcile_snapshot.recommended_release_candidate.included_lanes.map((lane) => (
+                                      <Badge key={`include-${lane}`} className="border-0 bg-emerald-100 text-emerald-800">
+                                        Include: {formatSourceName(lane)}
+                                      </Badge>
+                                    ))}
+                                    {landscape.release_reconcile_snapshot.recommended_release_candidate.exclude_lanes.map((lane) => (
+                                      <Badge key={`exclude-${lane}`} className="border-0 bg-rose-100 text-rose-800">
+                                        Exclude: {formatSourceName(lane)}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                                  {Object.entries(landscape.release_reconcile_snapshot.lane_counts)
+                                    .sort((a, b) => b[1] - a[1])
+                                    .map(([lane, count]) => (
+                                      <div key={lane} className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                          <div>
+                                            <p className="text-sm font-semibold text-slate-900">{formatSourceName(lane)}</p>
+                                            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">{count} changed path{count === 1 ? "" : "s"}</p>
+                                          </div>
+                                          <Badge className={landscape.release_reconcile_snapshot.recommended_release_candidate.included_lanes.includes(lane) ? "border-0 bg-emerald-100 text-emerald-800" : "border-0 bg-slate-200 text-slate-700"}>
+                                            {landscape.release_reconcile_snapshot.recommended_release_candidate.included_lanes.includes(lane) ? "Primary Slice" : "Follow-On"}
+                                          </Badge>
+                                        </div>
+                                        <div className="mt-3 space-y-1">
+                                          {(landscape.release_reconcile_snapshot.lane_examples[lane] ?? []).slice(0, 4).map((example) => (
+                                            <p key={`${lane}-${example}`} className="break-all text-sm text-slate-600">{example}</p>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Binary className="h-4 w-4 text-[#0D5E6D]" />
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Closure Blockers</p>
+                              <p className="text-xs text-slate-500">Most common unmet remediation conditions across the current platform landscape.</p>
+                            </div>
+                          </div>
+                          {derived.landscapeSummary.closureBlockers.length > 0 ? (
+                            <div className="grid gap-4 xl:grid-cols-2">
+                              {derived.landscapeSummary.closureBlockers.map((blocker) => (
+                                <div key={blocker.label} className="rounded-[24px] border border-rose-200 bg-rose-50 p-4 shadow-sm">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p className="text-sm font-semibold text-slate-900">{blocker.label}</p>
+                                      <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-rose-700">Open Across {blocker.count} Node{blocker.count === 1 ? "" : "s"}</p>
+                                    </div>
+                                    <Badge className="border-0 bg-rose-100 text-rose-700">{blocker.count}</Badge>
+                                  </div>
+                                  {blocker.detail ? <p className="mt-3 text-sm leading-6 text-slate-700">{blocker.detail}</p> : null}
+                                  {blocker.tracks[0] ? (
+                                    <div className="mt-3 rounded-[18px] border border-white/70 bg-white/70 p-3">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                          <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Primary Remediation Track</p>
+                                          <p className="mt-1 text-sm font-medium text-slate-900">{blocker.tracks[0].label}</p>
+                                          <p className="mt-1 text-xs text-slate-500">Currently attached to {blocker.tracks[0].count} impacted node{blocker.tracks[0].count === 1 ? "" : "s"}.</p>
+                                        </div>
+                                        <Badge className="border-0 bg-slate-100 text-slate-700">{blocker.tracks[0].count}</Badge>
+                                      </div>
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {blocker.tracks[0].routeHref ? (
+                                          <Link href={blocker.tracks[0].routeHref} className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700 hover:underline">
+                                            Open {blocker.tracks[0].routeHref}
+                                          </Link>
+                                        ) : null}
+                                        {blocker.tracks[0].docPath ? (
+                                          <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+                                            {blocker.tracks[0].docPath.split("/").slice(-1)[0]}
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                  <div className="mt-3 flex flex-wrap gap-2">
+                                    {blocker.nodes.slice(0, 4).map((node) =>
+                                      node.href ? (
+                                        <Link key={`${blocker.label}-${node.name}`} href={node.href} className="inline-flex rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-700 hover:underline">
+                                          {node.name}
+                                        </Link>
+                                      ) : (
+                                        <span key={`${blocker.label}-${node.name}`} className="inline-flex rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-medium text-rose-700">
+                                          {node.name}
+                                        </span>
+                                      )
+                                    )}
+                                    {blocker.nodes.length > 4 ? (
+                                      <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                                        +{blocker.nodes.length - 4} more
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                              No cross-platform remediation blockers are currently elevated. Closure criteria are reading cleanly across the visible landscape.
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <ShieldAlert className="h-4 w-4 text-[#0D5E6D]" />
+                            <div>
+                              <p className="text-sm font-semibold text-slate-900">Trust Priority Board</p>
+                              <p className="text-xs text-slate-500">{derived.landscapeSummary.trustHeadline}</p>
+                            </div>
+                          </div>
+                          {derived.landscapeSummary.trustPriorityNodes.length > 0 ? (
+                            <div className="grid gap-4 xl:grid-cols-2">
+                              {derived.landscapeSummary.trustPriorityNodes.map((item) => (
+                                <TrustPriorityCard
+                                  key={`${item.title}-${item.alignment}`}
+                                  title={item.title}
+                                  posture={item.posture}
+                                  alignment={item.alignment}
+                                  note={item.note}
+                                  href={item.href}
+                                  trackLabel={item.trackLabel}
+                                  trackDocPath={item.trackDocPath}
+                                  trackStatus={item.trackStatus}
+                                  trackStatusDetail={item.trackStatusDetail}
+                                  trackCriteria={item.trackCriteria}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                              No trust-priority nodes are currently elevated. The visible landscape is reading aligned.
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Target className="h-4 w-4 text-[#0D5E6D]" />
+                            <p className="text-sm font-semibold text-slate-900">Gap Runbook</p>
+                          </div>
+                          <div className="grid gap-4 xl:grid-cols-2">
+                            {landscape.gap_runbook.map((item) => (
+                              <GapRunbookCard key={item.id} item={item} />
+                            ))}
+                          </div>
+                        </div>
+
+                      <div className="grid gap-4 xl:grid-cols-3">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Database className="h-4 w-4 text-[#0D5E6D]" />
+                            <p className="text-sm font-semibold text-slate-900">Canonical Foundations</p>
+                          </div>
+                          {derived.landscapeSummary.foundationNodes.map((item) => (
+                            <LandscapeNodeCard key={`foundation-${item.title}`} {...item} />
+                          ))}
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Layers className="h-4 w-4 text-[#0D5E6D]" />
+                            <p className="text-sm font-semibold text-slate-900">Product Surfaces</p>
+                          </div>
+                          {derived.landscapeSummary.productNodes.map((item) => (
+                            <LandscapeNodeCard key={`surface-${item.title}`} {...item} />
+                          ))}
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <ArrowLeft className="h-4 w-4 text-[#0D5E6D]" />
+                            <p className="text-sm font-semibold text-slate-900">Legacy / Migration Pressure</p>
+                          </div>
+                          {derived.landscapeSummary.legacyNodes.map((item) => (
+                            <LandscapeNodeCard key={`legacy-${item.title}`} {...item} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-6">
+                  <Card className="overflow-hidden border-slate-200 bg-white/90 shadow-sm">
+                    <CardContent className="p-0">
+                      <div className="border-b border-slate-200 bg-slate-50/80 px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-5 w-5 text-[#0D5E6D]" />
+                          <div>
+                            <h3 className="text-sm font-semibold text-slate-900">Boundary Radar</h3>
+                            <p className="mt-1 text-xs text-slate-500">Trust zones and security posture for the wider platform</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid gap-4 p-5">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {landscape.trust_zones.map((zone) => (
+                            <TrustZoneCard
+                              key={zone.id}
+                              zone={zone}
+                              surfaceCount={derived.landscapeSummary?.trustZoneCounts[zone.id] ?? 0}
+                            />
+                          ))}
+                        </div>
+                        <div className="rounded-[26px] border border-slate-200 bg-gradient-to-br from-[#15284B] to-[#0D5E6D] p-5 text-white">
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-200">Shared Security Posture</p>
+                          <div className="mt-4 grid gap-3 md:grid-cols-2">
+                            <div className="rounded-[20px] border border-white/10 bg-white/10 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-white/60">Secret authority</p>
+                              <p className="mt-1 text-sm font-semibold text-white">{landscape.shared_security_posture.secret_authority}</p>
+                            </div>
+                            <div className="rounded-[20px] border border-white/10 bg-white/10 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-white/60">Outer boundary</p>
+                              <p className="mt-1 text-sm font-semibold text-white">{landscape.shared_security_posture.outer_trust_boundary}</p>
+                            </div>
+                            <div className="rounded-[20px] border border-white/10 bg-white/10 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-white/60">Authorization</p>
+                              <p className="mt-1 text-sm font-semibold text-white">{landscape.shared_security_posture.business_authorization}</p>
+                            </div>
+                            <div className="rounded-[20px] border border-white/10 bg-white/10 p-3">
+                              <p className="text-[10px] uppercase tracking-[0.18em] text-white/60">Machine identity</p>
+                              <p className="mt-1 text-sm font-semibold text-white">{landscape.shared_security_posture.preferred_machine_identity}</p>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {landscape.shared_security_posture.migration_debt.map((item) => (
+                              <span
+                                key={item}
+                                className="rounded-full border border-amber-200/40 bg-amber-400/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-100"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="overflow-hidden border-slate-200 bg-white/90 shadow-sm">
+                    <CardContent className="p-0">
+                      <div className="border-b border-slate-200 bg-slate-50/80 px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <Cable className="h-5 w-5 text-[#0D5E6D]" />
+                          <div>
+                            <h3 className="text-sm font-semibold text-slate-900">Nested Repo Boundaries</h3>
+                            <p className="mt-1 text-xs text-slate-500">Explicit Git ownership lines inside the workspace</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid gap-3 p-5">
+                        {landscape.nested_git_repos.map((path) => (
+                          <div key={path} className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-3">
+                            <p className="text-sm text-slate-700">{path}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </section>
+            )}
+
             <section className="grid gap-6 2xl:grid-cols-[1.1fr_0.9fr]">
               <Card className="overflow-hidden border-slate-200 bg-white/90 shadow-sm">
                 <CardContent className="p-0">
@@ -1468,7 +3184,13 @@ export default function WatchtowerPage() {
                         </div>
                       </div>
                       <Badge className={closureBadge(data.daily_collection_status.closure.state)}>
-                        {data.daily_collection_status.closure.state === "complete" ? "Day Closed" : data.daily_collection_status.closure.state === "open" ? "Still Working" : "Pending"}
+                        {data.daily_collection_status.closure.state === "complete"
+                          ? "Day Closed"
+                          : data.daily_collection_status.closure.state === "open"
+                            ? "Still Working"
+                            : data.daily_collection_status.closure.state === "blocked"
+                              ? "Blocked"
+                              : "Pending"}
                       </Badge>
                     </div>
                   </div>
@@ -2010,6 +3732,25 @@ export default function WatchtowerPage() {
                         <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Summary Reason</p>
                         <p className="mt-2 text-sm font-medium text-slate-900">{formatSourceName(data.daily_collection_status.closure.summary_reason)}</p>
                       </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className="rounded-[24px] bg-slate-100 p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Operational Cutoff</p>
+                          <p className="mt-2 text-sm font-medium text-slate-900">
+                            {data.daily_collection_status.closure.cutoff_at_local || "Not set"}
+                          </p>
+                        </div>
+                        <div className="rounded-[24px] bg-slate-100 p-4">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Next Retry Window</p>
+                          <p className="mt-2 text-sm font-medium text-slate-900">
+                            {data.daily_collection_status.closure.next_retry_at
+                              ? formatDateTimeLabel(data.daily_collection_status.closure.next_retry_at)
+                              : "No retry scheduled"}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Queue depth {data.daily_collection_status.closure.queue_depth}
+                          </p>
+                        </div>
+                      </div>
                       <div className="rounded-[24px] bg-slate-100 p-4">
                         <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Unresolved Sources</p>
                         {data.daily_collection_status.closure.unresolved_sources.length === 0 ? (
@@ -2017,12 +3758,58 @@ export default function WatchtowerPage() {
                         ) : (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {data.daily_collection_status.closure.unresolved_sources.map((source) => (
-                              <Badge key={source} className="border-0 bg-amber-100 text-amber-700">
-                                {formatSourceName(source)}
+                              <Badge key={`${source.source}:${source.reason}`} className="border-0 bg-amber-100 text-amber-700">
+                                {formatSourceName(source.source)}: {formatSourceName(source.reason)}
                               </Badge>
                             ))}
                           </div>
                         )}
+                      </div>
+                      <div className="rounded-[24px] bg-slate-100 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Advisory Governance</p>
+                            <p className="mt-2 text-sm font-medium text-slate-900">
+                              {derived.advisoryFreshCount}/
+                              {data.daily_collection_status.closure.advisory_sources.length} advisory lanes are fresh or near cadence
+                            </p>
+                          </div>
+                          <Badge className="border-0 bg-sky-100 text-sky-700">
+                            Advisory
+                          </Badge>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {data.daily_collection_status.closure.advisory_sources.map((source) => (
+                            <div
+                              key={`${source.source}:${source.status}`}
+                              className="rounded-2xl border border-slate-200 bg-white px-3 py-2"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  className={
+                                    source.freshness_status === "fresh"
+                                      ? "border-0 bg-emerald-100 text-emerald-700"
+                                      : source.freshness_status === "warning"
+                                        ? "border-0 bg-sky-100 text-sky-700"
+                                        : source.freshness_status === "stale"
+                                          ? "border-0 bg-amber-100 text-amber-700"
+                                          : "border-0 bg-slate-200 text-slate-600"
+                                  }
+                                >
+                                  {source.freshness_status === "fresh"
+                                    ? "Fresh"
+                                    : source.freshness_status === "warning"
+                                      ? "Near Cadence"
+                                      : source.freshness_status === "stale"
+                                        ? "Stale"
+                                        : "No Record"}
+                                </Badge>
+                                <p className="text-sm font-medium text-slate-900">{formatSourceName(source.source)}</p>
+                              </div>
+                              <p className="mt-1 text-xs text-slate-500">{source.cadence_label}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

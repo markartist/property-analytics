@@ -1,0 +1,212 @@
+{
+  "version": "2026-04-18.service-ops.v1",
+  "updated_at": "2026-04-18",
+  "purpose": "Canonical service-operations model for enterprise service ownership, runtime posture, release lanes, and operational runbooks.",
+  "services": [
+    {
+      "id": "data_collection",
+      "name": "Data Collection",
+      "owner": "Data Collection",
+      "service_tier": "foundation",
+      "runtime": "Python orchestration + launchd",
+      "deployment_target": "local operator runtime",
+      "release_lane": "data_collection_hardening",
+      "trust_boundary": "local_operator_only",
+      "canonical_surface": "/watchtower",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/WORKTREE_DATA_COLLECTION_FINISH_ORDER_2026-04-16.md",
+      "depends_on": [
+        "property_registry",
+        "master_database",
+        "keeper",
+        "cloudflare_zero_trust"
+      ],
+      "operational_focus": [
+        "daily closure",
+        "retry discipline",
+        "freshness governance",
+        "source recovery"
+      ]
+    },
+    {
+      "id": "data_pond_api",
+      "name": "Data Pond API",
+      "owner": "Platform / App",
+      "service_tier": "foundation",
+      "runtime": "Cloudflare Workers + Hono",
+      "deployment_target": "Cloudflare Workers",
+      "release_lane": "platform_app",
+      "trust_boundary": "access_protected_human_and_machine",
+      "canonical_surface": "/system",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/PHASE1_CUTOVER_RUNBOOK.md",
+      "depends_on": [
+        "cloudflare_zero_trust",
+        "keeper",
+        "master_database"
+      ],
+      "operational_focus": [
+        "governed APIs",
+        "trust enforcement",
+        "control-plane payloads",
+        "service provenance"
+      ]
+    },
+    {
+      "id": "data_pond_web",
+      "name": "Data Pond Web",
+      "owner": "Platform / App",
+      "service_tier": "foundation",
+      "runtime": "Next.js app",
+      "deployment_target": "Cloudflare Pages",
+      "release_lane": "platform_app",
+      "trust_boundary": "access_protected_human",
+      "canonical_surface": "/",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/RELEASE_READINESS_CHECKLIST_2026-04-18.md",
+      "depends_on": [
+        "data_pond_api",
+        "cloudflare_zero_trust"
+      ],
+      "operational_focus": [
+        "operator UX",
+        "role-aware surfaces",
+        "navigation discipline",
+        "governed entry points"
+      ]
+    },
+    {
+      "id": "watchtower_control_plane",
+      "name": "Watchtower Control Plane",
+      "owner": "Platform / App",
+      "service_tier": "critical_operator",
+      "runtime": "Web + API composite surface",
+      "deployment_target": "Cloudflare Pages + Workers",
+      "release_lane": "platform_app",
+      "trust_boundary": "access_protected_human",
+      "canonical_surface": "/watchtower",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/UNIFIED_SYSTEM_FOUNDATION_2026-04-17.md",
+      "depends_on": [
+        "data_collection",
+        "data_pond_api",
+        "system_landscape_manifest"
+      ],
+      "operational_focus": [
+        "live ops visibility",
+        "trust posture",
+        "remediation guidance",
+        "release awareness"
+      ]
+    },
+    {
+      "id": "intelligence_office",
+      "name": "Intelligence Office",
+      "owner": "Intelligence Office",
+      "service_tier": "governance",
+      "runtime": "Web + API governed memory lane",
+      "deployment_target": "Cloudflare Pages + Workers",
+      "release_lane": "content_operations",
+      "trust_boundary": "access_protected_human",
+      "canonical_surface": "/intelligence-office",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/INTELLIGENCE_OFFICE_MODEL.md",
+      "depends_on": [
+        "data_pond_api",
+        "master_database"
+      ],
+      "operational_focus": [
+        "governed interpretation",
+        "claims and evidence",
+        "criteria",
+        "memory discipline"
+      ]
+    },
+    {
+      "id": "site_content_ops",
+      "name": "Site Content Ops",
+      "owner": "Content Operations",
+      "service_tier": "governed_workspace",
+      "runtime": "Web + API editorial workflow",
+      "deployment_target": "Cloudflare Pages + Workers",
+      "release_lane": "content_operations",
+      "trust_boundary": "access_protected_human",
+      "canonical_surface": "/site-content",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/SITE_CONTENT_CREATOR_MODEL.md",
+      "depends_on": [
+        "intelligence_office",
+        "data_pond_api",
+        "specs"
+      ],
+      "operational_focus": [
+        "crawl and mapping",
+        "assessment",
+        "rewrite workflow",
+        "governed editorial execution"
+      ]
+    },
+    {
+      "id": "vacs_execution",
+      "name": "VACS",
+      "owner": "Content Operations",
+      "service_tier": "machine_lane",
+      "runtime": "API-first machine service with Pond bridge",
+      "deployment_target": "Cloudflare Workers + Pond bridge",
+      "release_lane": "content_operations",
+      "trust_boundary": "access_protected_machine",
+      "canonical_surface": "/vacs",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_WORKER_SECRET_CUTOVER_2026-04-13.md",
+      "depends_on": [
+        "intelligence_office",
+        "data_pond_api",
+        "cloudflare_zero_trust"
+      ],
+      "operational_focus": [
+        "machine execution contract",
+        "service identity",
+        "Pond bridge visibility",
+        "content lane trust hardening"
+      ]
+    },
+    {
+      "id": "evs_validation",
+      "name": "EVS",
+      "owner": "Validation",
+      "service_tier": "mixed_validation",
+      "runtime": "Web + API request lane with machine ingest",
+      "deployment_target": "Cloudflare Pages + Workers",
+      "release_lane": "evs_browserstack",
+      "trust_boundary": "access_protected_human_and_machine",
+      "canonical_surface": "/evs",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/WORKTREE_EVS_BROWSERSTACK_FINISH_ORDER_2026-04-16.md",
+      "depends_on": [
+        "data_pond_api",
+        "cloudflare_zero_trust",
+        "browserstack"
+      ],
+      "operational_focus": [
+        "request lifecycle",
+        "orchestrator handoff",
+        "validation ingest",
+        "mixed human + machine posture"
+      ]
+    },
+    {
+      "id": "pib_canonical_engine",
+      "name": "PIB Canonical Engine",
+      "owner": "Property Intelligence Brief",
+      "service_tier": "protected_reporting",
+      "runtime": "Protected Python reporting engine",
+      "deployment_target": "local operator runtime + governed app orchestration",
+      "release_lane": "platform_app",
+      "trust_boundary": "access_protected_human",
+      "canonical_surface": "/pib",
+      "primary_runbook": "/Users/mark/Property_Analytics/AGENTS.md",
+      "depends_on": [
+        "master_database",
+        "property_registry"
+      ],
+      "operational_focus": [
+        "locked canonical rendering",
+        "governed orchestration",
+        "report-family integrity",
+        "PIB guardrails"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "version": "2026-04-18.deployment-provenance.v1",
+  "updated_at": "2026-04-18",
+  "purpose": "Canonical deployment provenance and environment-drift model for the MarketingOps platform.",
+  "environments": [
+    {
+      "id": "local",
+      "label": "Local Operator",
+      "web_hosts": [
+        "localhost:3000",
+        "127.0.0.1:3000"
+      ],
+      "api_hosts": [
+        "localhost:8787",
+        "127.0.0.1:8787"
+      ],
+      "release_posture": "local verification and build discipline"
+    },
+    {
+      "id": "preview",
+      "label": "Pages Preview",
+      "web_host_suffixes": [
+        ".pages.dev"
+      ],
+      "api_hosts": [
+        "api.venterradev.com",
+        "pop-brief-api.mlaufhutte.workers.dev"
+      ],
+      "release_posture": "preview validation and release candidate review"
+    },
+    {
+      "id": "production",
+      "label": "Production",
+      "web_hosts": [
+        "app.venterradev.com",
+        "app.venterraliving.com"
+      ],
+      "api_hosts": [
+        "api.venterradev.com"
+      ],
+      "release_posture": "canonical promoted surface"
+    }
+  ],
+  "rules": {
+    "canonical_release_path": "codex/release-reconcile",
+    "preferred_api_base": "https://api.venterradev.com",
+    "production_debug_flags_must_be_false": [
+      "NEXT_PUBLIC_SITE_CONTENT_DEBUG"
+    ],
+    "preview_hosts_are_allowed": true,
+    "custom_pages_aliases_are_release_review_only": true
+  },
+  "service_bindings": [
+    {
+      "service_id": "data_pond_web",
+      "expected_environment": "production",
+      "managed_target": "Cloudflare Pages"
+    },
+    {
+      "service_id": "data_pond_api",
+      "expected_environment": "production",
+      "managed_target": "Cloudflare Workers"
+    },
+    {
+      "service_id": "watchtower_control_plane",
+      "expected_environment": "production",
+      "managed_target": "Cloudflare Pages + Workers"
+    },
+    {
+      "service_id": "data_collection",
+      "expected_environment": "local",
+      "managed_target": "local operator runtime"
+    },
+    {
+      "service_id": "pib_canonical_engine",
+      "expected_environment": "local",
+      "managed_target": "local operator runtime + governed app orchestration"
+    }
+  ]
+}
