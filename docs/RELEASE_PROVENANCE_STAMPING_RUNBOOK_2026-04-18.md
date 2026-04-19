@@ -33,6 +33,29 @@ This is the correct bridge step for enterprise hardening right now because it re
 - hand-edited baseline commit drift
 - runtime identifier drift between docs and live deployment
 
+The script can now also publish the stamped release pedigree into runtime state:
+
+- D1 table: `runtime_release_state`
+- key: `release_provenance`
+
+That means Watchtower can read runtime-issued release state from the platform database when it exists, instead of depending only on the bundled JSON file.
+
+Recommended invocation after a clean promotion:
+
+```bash
+python3 scripts/update_release_provenance.py \
+  --source-mode clean_release_candidate \
+  --release-lane platform_app+enterprise_control \
+  --canonical-release-path codex/release-reconcile \
+  --worker-version <worker-version-id> \
+  --worker-url https://pop-brief-api.mlaufhutte.workers.dev \
+  --pages-url https://<pages-runtime>.property-analytics.pages.dev \
+  --pages-watchtower-url https://<pages-runtime>.property-analytics.pages.dev/watchtower \
+  --pages-alias-url https://codex-release-reconcile.property-analytics.pages.dev \
+  --pages-runtime-id <pages-runtime> \
+  --publish-runtime-state
+```
+
 ## Current Limitation
 
 This is still local/operator stamping, not CI-issued provenance.
@@ -46,6 +69,15 @@ The final target is:
 
 - deploy pipeline emits release provenance automatically
 - Watchtower consumes issued provenance artifacts directly
+
+## Auth Note
+
+Cloudflare release auth should now be treated as valid when either of these verification paths succeeds:
+
+- user token verify
+- account token verify
+
+That matters because the current Keeper-backed release token is account-scoped rather than user-scoped.
 
 ## Operational Hygiene Rule
 

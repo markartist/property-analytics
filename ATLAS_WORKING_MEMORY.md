@@ -3960,3 +3960,13 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Current effect:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
+
+### 2026-04-19 04:10 UTC - Release provenance is now moving to D1-backed runtime state
+
+- Added migration `/Users/mark/Property_Analytics/apps/api/migrations/0022_create_runtime_release_state.sql`.
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so `/v1/pond/landscape` prefers D1-backed `runtime_release_state` for `release_provenance` when present and falls back safely to bundled config otherwise.
+- Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so it can publish stamped release pedigree into D1 with `--publish-runtime-state`.
+- Corrected `/Users/mark/Property_Analytics/scripts/check_cloudflare_release_auth.py` so Cloudflare release preflight now accepts both user-token and account-token verification success.
+- Current effect:
+  - the platform now has a real path away from bundled release-provenance artifacts toward runtime-issued state
+  - account-scoped Keeper-backed Cloudflare tokens are now treated as valid by the release preflight, matching actual production promotion behavior

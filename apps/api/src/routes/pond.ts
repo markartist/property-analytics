@@ -253,6 +253,14 @@ type ReleaseProvenanceResponse = typeof releaseProvenance & {
   };
 };
 
+interface RuntimeReleaseStateRow {
+  payload_json: string;
+  source_mode: "operator_bridge" | "ci_issued" | "runtime_bridge";
+  updated_at: string;
+  published_by: string | null;
+  notes: string | null;
+}
+
 const releaseReconcileSnapshot = releaseReconcileSnapshotConfig as {
   version: string;
   updated_at: string;
@@ -531,6 +539,40 @@ function buildRuntimeManagedReleaseProvenance(
       runtime_note: runtimeNote,
     },
   };
+}
+
+async function loadRuntimeIssuedReleaseProvenance(db: D1Database): Promise<typeof releaseProvenance | null> {
+  try {
+    const row = await queryFirst<RuntimeReleaseStateRow>(
+      db,
+      `SELECT payload_json, source_mode, updated_at, published_by, notes
+       FROM runtime_release_state
+       WHERE state_key = ?
+       LIMIT 1`,
+      ["release_provenance"]
+    );
+    if (!row?.payload_json) return null;
+
+    const payload = JSON.parse(row.payload_json) as typeof releaseProvenance;
+    if (!payload?.release_descriptor || !Array.isArray(payload?.deployments)) {
+      return null;
+    }
+
+    return {
+      ...payload,
+      updated_at: row.updated_at || payload.updated_at,
+      purpose:
+        row.source_mode === "ci_issued"
+          ? `${payload.purpose} Runtime-issued provenance is currently active.`
+          : `${payload.purpose} Runtime D1 state is currently active.`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.toLowerCase().includes("no such table")) {
+      return null;
+    }
+    return null;
+  }
 }
 
 function expectedZeroTrustMode(boundaryClass: string): LandscapeEvidence["expected_zero_trust_mode"] {
@@ -1503,6 +1545,7 @@ pond.get("/dock-preview", async (c) => {
 pond.get("/landscape", async (c) => {
   const manifest = landscapeManifest;
   const serviceOperations = serviceOperationsManifest;
+  const runtimeIssuedReleaseProvenance = await loadRuntimeIssuedReleaseProvenance(c.env.POP_BRIEF_DB);
   const webRequestOrigin = deriveRequestingWebOrigin(c);
   const deploymentRuntime = {
     api_request_origin: new URL(c.req.url).origin,
@@ -1513,7 +1556,10 @@ pond.get("/landscape", async (c) => {
     access_auto_provision_enabled: c.env.CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED === "true",
     access_default_role: c.env.CLOUDFLARE_ACCESS_DEFAULT_ROLE ?? null,
   };
-  const runtimeManagedReleaseProvenance = buildRuntimeManagedReleaseProvenance(releaseProvenance, deploymentRuntime);
+  const runtimeManagedReleaseProvenance = buildRuntimeManagedReleaseProvenance(
+    runtimeIssuedReleaseProvenance ?? releaseProvenance,
+    deploymentRuntime
+  );
 
   const canonicalFoundations = manifest.canonical_foundations.map((item) => withMachineEvaluatedRemediation(withConditionAwareNextAction({
     ...item,

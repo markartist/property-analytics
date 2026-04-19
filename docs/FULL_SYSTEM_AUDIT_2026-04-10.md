@@ -896,6 +896,10 @@ Additional current-state note:
   - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` overlays the stamped release manifest with the currently observed API host, requesting web host, and inferred Pages runtime id
   - `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` presents that runtime observation in the Release Pedigree board
 - that matters because the control plane is now less dependent on a bundled static provenance file and can cross-check the live promoted surface against the stamped release record at request time
+- runtime release provenance now also has a persistence bridge in D1:
+  - migration `0022_create_runtime_release_state.sql`
+  - `scripts/update_release_provenance.py --publish-runtime-state`
+- that matters because Watchtower can now be moved toward runtime-issued release state instead of depending only on repo-bundled config artifacts
 - release reconciliation also now ignores post-deploy provenance bridge artifacts when reading branch cleanliness:
   - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py` excludes `config/release_provenance.json` and `config/release_reconcile_snapshot.json` from dirty-tree lane counts
 - that matters because a successfully promoted clean branch should not immediately look dirty only because the operator bridge restamped deployment pedigree after release

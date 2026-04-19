@@ -3,6 +3,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+const MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
+
 class SqlitePreparedStatement {
   private readonly boundParams: unknown[];
 
@@ -77,11 +79,79 @@ export async function createTestD1Database(): Promise<{
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "phase1-platform-"));
   const tempPath = path.join(tempDir, "test.sqlite");
   const sqlite = new DatabaseSync(tempPath);
-  const migrationSql = fs.readFileSync(
-    "/Users/mark/Property_Analytics/apps/api/migrations/0021_create_phase1_platform_tables.sql",
-    "utf8"
-  );
-  sqlite.exec(migrationSql);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS communities (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      external_key TEXT,
+      region TEXT,
+      status TEXT NOT NULL DEFAULT 'active'
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      full_name TEXT,
+      password_hash TEXT,
+      role TEXT NOT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      last_login_at TEXT,
+      created_at TEXT,
+      created_by TEXT,
+      updated_at TEXT,
+      updated_by TEXT,
+      deleted_at TEXT,
+      deleted_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      session_token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      revoked_at TEXT,
+      created_at TEXT NOT NULL,
+      created_by TEXT,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id TEXT PRIMARY KEY,
+      actor_user_id TEXT,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      before_json TEXT,
+      after_json TEXT,
+      request_id TEXT,
+      ip_hash TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS invites (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      role TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      redeemed_at TEXT,
+      redeemed_user_id TEXT,
+      created_at TEXT NOT NULL,
+      created_by TEXT,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT
+    );
+  `);
+  const migrationFiles = fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((file) => file.endsWith(".sql"))
+    .sort();
+
+  for (const migrationFile of migrationFiles) {
+    const migrationSql = fs.readFileSync(path.join(MIGRATIONS_DIR, migrationFile), "utf8");
+    sqlite.exec(migrationSql);
+  }
   const wrapped = new SqliteD1Database(sqlite);
   return {
     db: wrapped as unknown as D1Database,

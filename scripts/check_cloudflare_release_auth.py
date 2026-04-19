@@ -19,7 +19,8 @@ from utils.ksm import KsmResolutionError, resolve_secret
 
 DEFAULT_KSM_PROFILE = "marketingops"
 DEFAULT_CLOUDFLARE_TOKEN_NOTATION = "keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password"
-VERIFY_URL = "https://api.cloudflare.com/client/v4/user/tokens/verify"
+DEFAULT_ACCOUNT_ID = "5a5a60afaad00085864fe6bab7eb2882"
+USER_VERIFY_URL = "https://api.cloudflare.com/client/v4/user/tokens/verify"
 
 
 def resolve_cloudflare_token() -> str:
@@ -32,9 +33,9 @@ def resolve_cloudflare_token() -> str:
     )
 
 
-def verify_token(token: str) -> dict:
+def verify_token(url: str, token: str) -> dict:
     req = urllib.request.Request(
-        VERIFY_URL,
+        url,
         headers={"Authorization": f"Bearer {token}"},
         method="GET",
     )
@@ -48,6 +49,7 @@ def main() -> int:
         description="Verify that the current Cloudflare admin token is valid for non-interactive release promotion."
     )
     parser.add_argument("--json", action="store_true", help="Print machine-readable output.")
+    parser.add_argument("--account-id", default=os.getenv("CLOUDFLARE_ACCOUNT_ID", DEFAULT_ACCOUNT_ID))
     args = parser.parse_args()
 
     result = {
@@ -68,11 +70,29 @@ def main() -> int:
             print(result["message"])
         return 1
 
-    try:
-        payload = verify_token(token)
-    except Exception as exc:  # pragma: no cover - network/runtime dependent
+    verification_attempts = [
+        ("user_token", USER_VERIFY_URL),
+        ("account_token", f"https://api.cloudflare.com/client/v4/accounts/{args.account_id}/tokens/verify"),
+    ]
+
+    payload = None
+    last_error = None
+    verification_mode = None
+    for mode, url in verification_attempts:
+        try:
+            candidate = verify_token(url, token)
+            if candidate.get("success"):
+                payload = candidate
+                verification_mode = mode
+                break
+            last_error = candidate
+        except Exception as exc:  # pragma: no cover - network/runtime dependent
+            last_error = exc
+            continue
+
+    if payload is None:
         result["status"] = "blocked"
-        result["message"] = f"Cloudflare token verification request failed: {exc}"
+        result["message"] = f"Cloudflare token verification request failed: {last_error}"
         if args.json:
             print(json.dumps(result, indent=2))
         else:
@@ -82,6 +102,7 @@ def main() -> int:
     if payload.get("success"):
         result["status"] = "healthy"
         result["message"] = "Cloudflare admin token is valid for release promotion."
+        result["verification_mode"] = verification_mode
         result["verification"] = payload.get("result")
         if args.json:
             print(json.dumps(result, indent=2))
