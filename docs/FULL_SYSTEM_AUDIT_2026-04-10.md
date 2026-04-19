@@ -446,6 +446,9 @@ Audit judgment:
   - Intelligence Office owns interpretation and governed editorial reasoning
   - Property Captain owns property-specific strategy
   - Site Content Creator owns synthesis, diagnosis, and rewrite workflow
+- the promoted web surface now reflects that more honestly:
+  - Site Content Creator is no longer only a crawl-and-inventory view
+  - it now presents site-level story posture, page composition posture, explicit missing-structure review, and active section rewrite workspaces on top of the persisted mapping/assessment model
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system

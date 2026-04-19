@@ -3961,6 +3961,20 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 15:05 UTC - Site Content Creator now operates as a page-and-story workspace, not just a crawl viewer
+
+- Refined `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` into a fuller content-operations surface aligned to the new canonical model.
+- The page now includes:
+  - a site-level story board with harmonization and storytelling posture
+  - a page composition board with per-page posture, next-move framing, and structural drift signals
+  - richer page workspaces that foreground expected Specs slots, live baselines, assessment posture, and missing expected structure
+  - an active rewrite workspace on each mapped section using the existing persisted rewrite API instead of leaving the page as a mostly read-only crawl view
+- This brings the current promoted UI closer to the already-persisted data model:
+  - Specs mapping
+  - section assessment
+  - rewrite workflow
+- The product now reads much more like a governed content operating system and much less like a crawl report.
+
 ### 2026-04-19 14:35 UTC - Site Content canonical architecture aligned to Specs, EVS, Intelligence Office, and Property Captain
 
 - Added the first explicit clean-branch architecture docs for Site Content and the wider content-operations system:

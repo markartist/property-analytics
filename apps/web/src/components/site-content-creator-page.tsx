@@ -6,26 +6,197 @@ import {
   getIntelligenceOffice,
   getSiteContentInventory,
   getSiteContentProperty,
+  saveSiteContentSectionRewrite,
   type IntelligenceDirective,
   type IntelligenceSource,
   type SiteContentPage,
   type SiteContentPropertySummary,
   type SiteContentSection,
+  type SiteContentSectionAssessment,
+  type SiteContentSectionMapping,
+  type SiteContentSectionRewrite,
 } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { BookText, FileSearch, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import {
+  BookText,
+  Brain,
+  Compass,
+  FileSearch,
+  Layers3,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  Target,
+  Wand2,
+} from "lucide-react";
 
 type Flash = { type: "success" | "error"; text: string } | null;
+
+type SiteSummary = {
+  pagesCaptured: number;
+  sectionsCaptured: number;
+  matchedSections: number;
+  partialSections: number;
+  missingSections: number;
+  extraSections: number;
+  healthySections: number;
+  watchSections: number;
+  needsAttentionSections: number;
+  approvedRewrites: number;
+  inReviewRewrites: number;
+  draftedRewrites: number;
+  storyScore: number;
+  harmonizationScore: number;
+  nextMove: string;
+};
+
+type PagePosture = {
+  storyScore: number;
+  harmonizationScore: number;
+  posture: "healthy" | "watch" | "needs-attention";
+  nextMove: string;
+};
 
 function formatStamp(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
+}
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function summarizeSite(pages: SiteContentPage[]): SiteSummary {
+  const mappings = pages.flatMap((page) => page.section_mappings);
+  const assessments = pages.flatMap((page) => page.section_assessments);
+  const rewrites = pages.flatMap((page) => page.section_rewrites);
+
+  const harmonizationScore = clampScore(average(assessments.map((assessment) => assessment.harmonization_score)));
+  const storyScore = clampScore(
+    average(
+      assessments.map((assessment) =>
+        average([assessment.messaging_score, assessment.specificity_score, assessment.harmonization_score])
+      )
+    )
+  );
+
+  let nextMove = "Run the first crawl and establish a real site snapshot.";
+  if (pages.length > 0) {
+    if (mappings.some((mapping) => mapping.match_status === "missing-from-live")) {
+      nextMove = "Resolve the missing expected sections first so page contracts and live structure stop drifting.";
+    } else if (assessments.some((assessment) => assessment.overall_status === "needs-attention")) {
+      nextMove = "Work the sections marked needs attention before broad rewrite expansion.";
+    } else if (rewrites.some((rewrite) => rewrite.draft_status === "in_review")) {
+      nextMove = "Close in-review rewrites and promote approved copy into the harmonized story.";
+    } else if (rewrites.some((rewrite) => rewrite.draft_status === "drafted")) {
+      nextMove = "Advance drafted sections into review so the page-level story can stabilize.";
+    } else {
+      nextMove = "Use this site snapshot to evaluate page composition and cross-page storytelling coherence.";
+    }
+  }
+
+  return {
+    pagesCaptured: pages.length,
+    sectionsCaptured: pages.reduce((sum, page) => sum + page.sections.length, 0),
+    matchedSections: mappings.filter((mapping) => mapping.match_status === "matched").length,
+    partialSections: mappings.filter((mapping) => mapping.match_status === "partial").length,
+    missingSections: mappings.filter((mapping) => mapping.match_status === "missing-from-live").length,
+    extraSections: mappings.filter((mapping) => mapping.match_status === "extra-on-live").length,
+    healthySections: assessments.filter((assessment) => assessment.overall_status === "healthy").length,
+    watchSections: assessments.filter((assessment) => assessment.overall_status === "watch").length,
+    needsAttentionSections: assessments.filter((assessment) => assessment.overall_status === "needs-attention").length,
+    approvedRewrites: rewrites.filter((rewrite) => rewrite.draft_status === "approved").length,
+    inReviewRewrites: rewrites.filter((rewrite) => rewrite.draft_status === "in_review").length,
+    draftedRewrites: rewrites.filter((rewrite) => rewrite.draft_status === "drafted").length,
+    storyScore,
+    harmonizationScore,
+    nextMove,
+  };
+}
+
+function summarizePage(page: SiteContentPage): PagePosture {
+  const assessments = page.section_assessments;
+  const harmonizationScore = clampScore(average(assessments.map((assessment) => assessment.harmonization_score)));
+  const storyScore = clampScore(
+    average(
+      assessments.map((assessment) =>
+        average([assessment.messaging_score, assessment.specificity_score, assessment.harmonization_score])
+      )
+    )
+  );
+
+  if (page.section_mapping_summary.missing_from_live > 0) {
+    return {
+      storyScore,
+      harmonizationScore,
+      posture: "needs-attention",
+      nextMove: "Expected structure is missing on the live page. Resolve the composition gap before polishing copy.",
+    };
+  }
+
+  if (page.section_assessment_summary.needs_attention > 0) {
+    return {
+      storyScore,
+      harmonizationScore,
+      posture: "needs-attention",
+      nextMove: "At least one live block is materially off. Rewrite the weak sections before broader harmonization.",
+    };
+  }
+
+  if (
+    page.section_mapping_summary.partial > 0 ||
+    page.section_assessment_summary.watch > 0 ||
+    page.section_rewrite_summary.in_review > 0 ||
+    page.section_rewrite_summary.drafted > 0
+  ) {
+    return {
+      storyScore,
+      harmonizationScore,
+      posture: "watch",
+      nextMove: "The page is structurally present but still needs alignment or rewrite closure.",
+    };
+  }
+
+  return {
+    storyScore,
+    harmonizationScore,
+    posture: "healthy",
+    nextMove: "This page reads structurally healthy. Use it as a benchmark for adjacent pages in the same story.",
+  };
+}
+
+function toneForPosture(posture: "healthy" | "watch" | "needs-attention") {
+  switch (posture) {
+    case "healthy":
+      return {
+        badge: "bg-emerald-100 text-emerald-800",
+        border: "border-emerald-200",
+        bg: "bg-emerald-50/70",
+      };
+    case "watch":
+      return {
+        badge: "bg-amber-100 text-amber-800",
+        border: "border-amber-200",
+        bg: "bg-amber-50/70",
+      };
+    default:
+      return {
+        badge: "bg-rose-100 text-rose-800",
+        border: "border-rose-200",
+        bg: "bg-rose-50/70",
+      };
+  }
 }
 
 export function SiteContentCreatorPage() {
@@ -93,12 +264,29 @@ export function SiteContentCreatorPage() {
       setSelectedPages(detail.pages);
       setFocusedPageId("all");
       setActiveTab("inventory");
-      setFlash({ type: "success", text: `Crawled ${detail.pages.length} pages for ${detail.property.property_name}.` });
+      setFlash({
+        type: "success",
+        text: `Crawled ${detail.pages.length} pages for ${detail.property.property_name}.`,
+      });
     } catch (err: any) {
       setFlash({ type: "error", text: err.message });
     } finally {
       setCrawling(false);
     }
+  }
+
+  function handleRewriteSaved(pageId: string, rewrite: SiteContentSectionRewrite) {
+    setSelectedPages((pages) =>
+      pages.map((page) =>
+        page.id !== pageId
+          ? page
+          : {
+              ...page,
+              section_rewrites: upsertById(page.section_rewrites, rewrite),
+              section_rewrite_summary: summarizeRewrites(upsertById(page.section_rewrites, rewrite)),
+            }
+      )
+    );
   }
 
   if (loading) {
@@ -112,32 +300,59 @@ export function SiteContentCreatorPage() {
 
   const selectedSummary = properties.find((property) => property.property_id === selectedPropertyId) ?? null;
   const visiblePages = focusedPageId === "all" ? selectedPages : selectedPages.filter((page) => page.id === focusedPageId);
+  const siteSummary = summarizeSite(selectedPages);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <FileSearch className="h-6 w-6 text-[#0D5E6D]" />
-            <h1 className="text-2xl font-bold text-slate-900">Site Content Creator</h1>
+      <Card className="overflow-hidden border-[#15284B]/10 bg-[linear-gradient(150deg,#0f2745_0%,#124766_46%,#1e7d68_100%)] text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
+        <CardContent className="space-y-6 p-6 md:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-4xl space-y-3">
+              <div className="flex items-center gap-3 text-white/85">
+                <FileSearch className="h-6 w-6" />
+                <p className="text-xs font-semibold uppercase tracking-[0.28em]">Content Operations Workspace</p>
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-4xl font-black tracking-tight md:text-5xl">Site Content Creator</h1>
+                <p className="max-w-4xl text-base leading-8 text-white/78 md:text-lg">
+                  Capture the live site, compare it against Specs, bring in governed Intelligence Office context, and
+                  review the whole property story from block to page to full-site harmonization.
+                </p>
+              </div>
+            </div>
+            <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
+              <HeroStat label="Story score" value={`${siteSummary.storyScore}`} helper="Message strength across the captured site" />
+              <HeroStat
+                label="Harmonization"
+                value={`${siteSummary.harmonizationScore}`}
+                helper="Cross-page alignment against one coherent story"
+              />
+            </div>
           </div>
-          <p className="max-w-5xl text-sm leading-6 text-slate-600">
-            Crawl live property pages, capture the original section copy as historic baseline, and line it up next to the
-            Intelligence Office rules, criteria, and source documents that should guide new short-form SEO copy.
-          </p>
-        </div>
-      </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <MetricChip icon={<Layers3 className="h-4 w-4" />} label="Pages captured" value={String(siteSummary.pagesCaptured)} />
+            <MetricChip icon={<Compass className="h-4 w-4" />} label="Specs matched" value={String(siteSummary.matchedSections)} />
+            <MetricChip icon={<Brain className="h-4 w-4" />} label="Needs attention" value={String(siteSummary.needsAttentionSections)} />
+            <MetricChip icon={<Wand2 className="h-4 w-4" />} label="Approved rewrites" value={String(siteSummary.approvedRewrites)} />
+          </div>
+        </CardContent>
+      </Card>
 
       {flash && (
-        <div className={`rounded-md px-4 py-3 text-sm ${flash.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+        <div
+          className={`rounded-md px-4 py-3 text-sm ${
+            flash.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+          }`}
+        >
           {flash.text}
         </div>
       )}
 
       <Card>
-        <CardContent className="grid gap-4 p-6 lg:grid-cols-[1.6fr_0.8fr_0.6fr_auto]">
+        <CardContent className="grid gap-4 p-6 lg:grid-cols-[1.5fr_0.65fr_0.7fr_auto]">
           <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pilot property</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Property site</label>
             <select
               className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
               value={selectedPropertyId}
@@ -163,65 +378,126 @@ export function SiteContentCreatorPage() {
           <div className="flex items-end">
             <Button onClick={runCrawl} disabled={!selectedPropertyId || crawling}>
               {crawling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Crawl Site
+              Refresh Site Snapshot
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center gap-2 text-slate-900">
+              <Target className="h-5 w-5 text-[#0D5E6D]" />
+              <h2 className="text-lg font-semibold">Site story board</h2>
+            </div>
+            <p className="text-sm leading-6 text-slate-600">
+              Site Content now evaluates the property site as a composed narrative system. Use this board to understand
+              whether the site is structurally aligned, story-consistent, and ready for rewrite closure.
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <SurfaceMetric label="Partial mappings" value={String(siteSummary.partialSections)} helper="Live sections that only partially fit the intended Specs role." />
+              <SurfaceMetric label="Missing expected sections" value={String(siteSummary.missingSections)} helper="Governed sections expected by Specs but absent on the live page." />
+              <SurfaceMetric label="Drafted rewrites" value={String(siteSummary.draftedRewrites)} helper="Sections with a first rewrite pass but not yet reviewed." />
+              <SurfaceMetric label="In review" value={String(siteSummary.inReviewRewrites)} helper="Sections already moving toward approved harmonized copy." />
+            </div>
+            <div className="rounded-2xl border border-[#15284B]/10 bg-[#15284B]/[0.035] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Next move</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700">{siteSummary.nextMove}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center gap-2 text-slate-900">
+              <Sparkles className="h-5 w-5 text-[#0D5E6D]" />
+              <h2 className="text-lg font-semibold">Operating contract</h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ContractTile title="Specs" detail="Intended structure, expected sections, and page-purpose contract." />
+              <ContractTile title="EVS / BrowserStack" detail="Observed rendered structure and journey truth." />
+              <ContractTile title="Intelligence Office" detail="Directives, claims, evidence, and governed interpretation." />
+              <ContractTile title="Property Captain" detail="Property-specific priorities, differentiation, and storytelling emphasis." />
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm leading-7 text-slate-700">
+                Site Content Creator should be the place where these truths meet. It should diagnose the content, not
+                duplicate the structural work already owned by Specs or the rendered-evidence work already owned by EVS.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="brief">Brief Intelligence</TabsTrigger>
+          <TabsTrigger value="inventory">Site Workspace</TabsTrigger>
+          <TabsTrigger value="brief">Governed Inputs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="mt-4 space-y-4">
           <Card>
-            <CardContent className="grid gap-4 p-6 md:grid-cols-4">
-              <StatCard label="Property" value={selectedPropertyName || "—"} />
-              <StatCard label="Pages captured" value={String(selectedSummary?.page_count ?? 0)} />
-              <StatCard label="Sections mapped" value={String(selectedSummary?.section_count ?? 0)} />
-              <StatCard label="Last crawled" value={formatStamp(selectedSummary?.last_crawled_at)} />
-            </CardContent>
-          </Card>
-
-          {selectedPages.length > 0 && (
-            <Card>
-              <CardContent className="space-y-3 p-6">
-                <div>
-                  <p className="text-base font-semibold text-slate-900">Captured pages</p>
-                  <p className="text-sm text-slate-600">
-                    These are the pages found in the crawl. Select them below in order as a quick map before reviewing
-                    section-level copy.
-                  </p>
+            <CardContent className="space-y-4 p-6">
+              <div>
+                <p className="text-base font-semibold text-slate-900">Page composition board</p>
+                <p className="text-sm text-slate-600">
+                  This is the triage layer between raw crawl output and section work. Review which pages are already
+                  coherent, which pages are structurally drifting, and which ones are still missing their intended story.
+                </p>
+              </div>
+              {selectedPages.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  Run a crawl for the selected property and the page board will populate with page composition posture.
                 </div>
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {selectedPages.map((page) => (
-                    <button
-                      key={`nav-${page.id}`}
-                      type="button"
-                      onClick={() => setFocusedPageId(page.id)}
-                      className={`rounded-lg border p-4 text-left transition ${
-                        focusedPageId === page.id
-                          ? "border-[#0D5E6D] bg-[#0D5E6D]/5"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
-                      }`}
-                    >
-                      <p className="font-semibold text-slate-900">
-                        {page.spec_page_name || page.page_title || page.page_path || page.page_url}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
-                        {page.page_type || "page"} • {page.sections.length} sections
-                      </p>
-                      {page.spec_archetype_name && (
-                        <p className="mt-1 text-xs text-slate-500">
-                          {page.spec_archetype_name} · {page.spec_page_id}
-                        </p>
-                      )}
-                      <p className="mt-2 break-words text-sm text-slate-600">{page.page_path || page.page_url}</p>
-                    </button>
-                  ))}
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {selectedPages.map((page) => {
+                    const posture = summarizePage(page);
+                    const tone = toneForPosture(posture.posture);
+                    return (
+                      <button
+                        key={page.id}
+                        type="button"
+                        onClick={() => setFocusedPageId(page.id)}
+                        className={`rounded-2xl border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_18px_35px_rgba(15,23,42,0.08)] ${tone.border} ${tone.bg}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-lg font-semibold text-slate-900">
+                              {page.spec_page_name || page.page_title || page.page_path || page.page_url}
+                            </p>
+                            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-500">
+                              {page.page_type || "page"} • {page.sections.length} blocks
+                            </p>
+                          </div>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${tone.badge}`}>
+                            {posture.posture.replace("-", " ")}
+                          </span>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <MiniScore label="Story" value={posture.storyScore} />
+                          <MiniScore label="Harmony" value={posture.harmonizationScore} />
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                          <InlinePill label={`${page.section_mapping_summary.matched} matched`} />
+                          {page.section_mapping_summary.partial > 0 && (
+                            <InlinePill label={`${page.section_mapping_summary.partial} partial`} tone="amber" />
+                          )}
+                          {page.section_mapping_summary.missing_from_live > 0 && (
+                            <InlinePill label={`${page.section_mapping_summary.missing_from_live} missing`} tone="rose" />
+                          )}
+                          {page.section_rewrite_summary.in_review > 0 && (
+                            <InlinePill label={`${page.section_rewrite_summary.in_review} in review`} tone="blue" />
+                          )}
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-slate-700">{posture.nextMove}</p>
+                      </button>
+                    );
+                  })}
                 </div>
+              )}
+              {selectedPages.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -241,79 +517,45 @@ export function SiteContentCreatorPage() {
                     </Button>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
 
           {selectedPages.length === 0 ? (
             <Card>
               <CardContent className="space-y-2 p-6">
-                <p className="text-base font-semibold text-slate-900">No page inventory yet</p>
+                <p className="text-base font-semibold text-slate-900">No site snapshot yet</p>
                 <p className="text-sm text-slate-600">
-                  Run a crawl for the selected property and this tab will populate with the captured pages, section map,
-                  and original copy baseline.
+                  Refresh the selected property to capture live page structure, section copy, and rewrite posture.
                 </p>
               </CardContent>
             </Card>
           ) : (
             visiblePages.map((page) => (
-              <Card key={page.id} id={`page-${page.id}`}>
-                <CardContent className="space-y-4 p-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {page.spec_page_name || page.page_title || page.page_path || page.page_url}
-                      </h3>
-                      <p className="text-xs uppercase tracking-wide text-slate-500">
-                        {page.page_type || "page"} • {page.page_path || "/"} • {page.sections.length} sections
-                      </p>
-                      {page.spec_layout_path && (
-                        <p className="text-xs text-slate-500">
-                          Specs: {page.spec_layout_path}
-                        </p>
-                      )}
-                      <p className="text-sm text-slate-600">{page.page_url}</p>
-                      {page.meta_description && <p className="text-sm text-slate-500">Meta: {page.meta_description}</p>}
-                    </div>
-                    <Badge className="border-0 bg-slate-100 text-slate-700">{page.crawl_status}</Badge>
-                  </div>
-
-                  {page.sections.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                      This page was discovered, but no section blocks were extracted yet.
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {page.sections.map((section) => (
-                        <SectionCard key={`${page.id}-${section.section_order}`} section={section} />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <PageWorkspace key={page.id} page={page} onRewriteSaved={handleRewriteSaved} />
             ))
           )}
         </TabsContent>
 
-        <TabsContent value="brief" className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
+        <TabsContent value="brief" className="mt-4 grid gap-4 lg:grid-cols-[1.15fr_1fr]">
           <Card>
             <CardContent className="space-y-4 p-6">
               <div className="flex items-center gap-2 text-[#0D5E6D]">
                 <Sparkles className="h-5 w-5" />
-                <h2 className="text-lg font-semibold text-slate-900">Brief Intelligence for site copy</h2>
+                <h2 className="text-lg font-semibold text-slate-900">Intelligence Office directives</h2>
               </div>
               <p className="text-sm leading-6 text-slate-600">
-                These directives and source notes are the visible rules behind section rewrites. They should shape how
-                homepage, amenities, floor plan, and neighborhood copy is regenerated for the pilot properties.
+                These are the governed rules that should shape storytelling, search posture, and rewrite decisions before
+                a single block is changed.
               </p>
               <div className="space-y-3">
                 {directives.map((directive) => (
-                  <div key={directive.id} className="rounded-lg border border-slate-200 bg-white p-4">
+                  <div key={directive.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-semibold text-slate-900">{directive.title}</p>
                       <Badge className="border-0 bg-[#15284B]/10 text-[#15284B]">{directive.category}</Badge>
                     </div>
-                    <p className="mt-2 text-sm text-slate-700">{directive.directive_text}</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-700">{directive.directive_text}</p>
                     <p className="mt-2 text-xs text-slate-500">{directive.rationale}</p>
                   </div>
                 ))}
@@ -327,12 +569,16 @@ export function SiteContentCreatorPage() {
                 <BookText className="h-5 w-5" />
                 <h2 className="text-lg font-semibold text-slate-900">Source documents in play</h2>
               </div>
+              <p className="text-sm leading-6 text-slate-600">
+                These source notes are the evidence base behind rewrite and harmonization choices. Site Content should
+                consume them, not hide them.
+              </p>
               <div className="space-y-3">
                 {sources.map((source) => (
-                  <div key={source.id} className="rounded-lg border border-slate-200 bg-white p-4">
+                  <div key={source.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                     <p className="font-semibold text-slate-900">{source.title}</p>
                     <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">{source.source_kind}</p>
-                    <p className="mt-2 text-sm text-slate-700">{source.summary}</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-700">{source.summary}</p>
                     <p className="mt-2 text-xs text-slate-500">{source.evidence_excerpt}</p>
                   </div>
                 ))}
@@ -345,122 +591,440 @@ export function SiteContentCreatorPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function PageWorkspace({
+  page,
+  onRewriteSaved,
+}: {
+  page: SiteContentPage;
+  onRewriteSaved: (pageId: string, rewrite: SiteContentSectionRewrite) => void;
+}) {
+  const posture = summarizePage(page);
+  const tone = toneForPosture(posture.posture);
+  const missingMappings = page.section_mappings.filter((mapping) => mapping.match_status === "missing-from-live");
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
-    </div>
+    <Card id={`page-${page.id}`} className={`overflow-hidden border ${tone.border}`}>
+      <CardContent className="space-y-5 p-0">
+        <div className={`sticky top-0 z-10 border-b px-6 py-5 backdrop-blur ${tone.bg} ${tone.border}`}>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {page.spec_page_name || page.page_title || page.page_path || page.page_url}
+                </h3>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${tone.badge}`}>
+                  {posture.posture.replace("-", " ")}
+                </span>
+              </div>
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                {page.page_type || "page"} • {page.page_path || "/"} • {page.sections.length} observed blocks
+              </p>
+              {page.spec_layout_path && <p className="text-sm text-slate-600">Specs contract: {page.spec_layout_path}</p>}
+              <p className="text-sm text-slate-500">{page.page_url}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <MiniScore label="Story" value={posture.storyScore} />
+              <MiniScore label="Harmony" value={posture.harmonizationScore} />
+              <MiniMetric label="Needs attention" value={String(page.section_assessment_summary.needs_attention)} />
+              <MiniMetric label="Approved rewrites" value={String(page.section_rewrite_summary.approved)} />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <InlinePill label={`${page.section_mapping_summary.matched} matched`} />
+            {page.section_mapping_summary.partial > 0 && (
+              <InlinePill label={`${page.section_mapping_summary.partial} partial`} tone="amber" />
+            )}
+            {page.section_mapping_summary.missing_from_live > 0 && (
+              <InlinePill label={`${page.section_mapping_summary.missing_from_live} missing from live`} tone="rose" />
+            )}
+            {page.section_mapping_summary.extra_on_live > 0 && (
+              <InlinePill label={`${page.section_mapping_summary.extra_on_live} extra on live`} tone="slate" />
+            )}
+          </div>
+          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700">{posture.nextMove}</p>
+        </div>
+
+        <div className="space-y-4 px-6 pb-6">
+          {missingMappings.length > 0 && (
+            <Card className="border-rose-200 bg-rose-50/70">
+              <CardContent className="space-y-3 p-5">
+                <div>
+                  <p className="text-base font-semibold text-slate-900">Expected structure missing from the live page</p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    These sections exist in the governed contract but were not found in the current crawl. This is a page
+                    composition issue, not just a section rewrite issue.
+                  </p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {missingMappings.map((mapping) => (
+                    <div key={mapping.id} className="rounded-xl border border-rose-200 bg-white p-4">
+                      <p className="font-semibold text-slate-900">
+                        {mapping.expected_section_label || mapping.expected_section_key || "Expected section"}
+                      </p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                        {mapping.expected_section_role || "expected role"}
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-slate-700">{mapping.rationale}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {page.sections.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              This page was discovered, but no section blocks were extracted yet.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {page.sections.map((section) => {
+                const mapping = resolveMappingForSection(page, section);
+                const assessment = mapping ? page.section_assessments.find((item) => item.mapping_id === mapping.id) ?? null : null;
+                const rewrite = mapping ? page.section_rewrites.find((item) => item.mapping_id === mapping.id) ?? null : null;
+                return (
+                  <SectionWorkspace
+                    key={`${page.id}-${section.id ?? section.section_order}`}
+                    propertyId={page.property_id}
+                    pageId={page.id}
+                    section={section}
+                    mapping={mapping}
+                    assessment={assessment}
+                    rewrite={rewrite}
+                    onRewriteSaved={onRewriteSaved}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
-function SectionCard({ section }: { section: SiteContentSection }) {
-  const hasMedia = section.image_count > 0;
-  const mediaSide = hasMedia ? section.media_side ?? "right" : "none";
+function SectionWorkspace({
+  propertyId,
+  pageId,
+  section,
+  mapping,
+  assessment,
+  rewrite,
+  onRewriteSaved,
+}: {
+  propertyId: string;
+  pageId: string;
+  section: SiteContentSection;
+  mapping: SiteContentSectionMapping | null;
+  assessment: SiteContentSectionAssessment | null;
+  rewrite: SiteContentSectionRewrite | null;
+  onRewriteSaved: (pageId: string, rewrite: SiteContentSectionRewrite) => void;
+}) {
+  const [draftStatus, setDraftStatus] = React.useState<SiteContentSectionRewrite["draft_status"]>(
+    rewrite?.draft_status ?? "not_started"
+  );
+  const [rewriteBrief, setRewriteBrief] = React.useState(rewrite?.rewrite_brief ?? "");
+  const [proposedCopy, setProposedCopy] = React.useState(rewrite?.proposed_copy ?? "");
+  const [refinementNotes, setRefinementNotes] = React.useState(rewrite?.refinement_notes ?? "");
+  const [saving, setSaving] = React.useState(false);
+  const [saveFlash, setSaveFlash] = React.useState<Flash>(null);
+
+  React.useEffect(() => {
+    setDraftStatus(rewrite?.draft_status ?? "not_started");
+    setRewriteBrief(rewrite?.rewrite_brief ?? "");
+    setProposedCopy(rewrite?.proposed_copy ?? "");
+    setRefinementNotes(rewrite?.refinement_notes ?? "");
+  }, [rewrite]);
+
   const title = section.title || section.section_label || section.heading || `Section ${section.section_order + 1}`;
-  const isHero = hasMedia && section.section_order === 0;
-  const hasBullets = section.bullet_points.length > 0;
-  const isSplitFeature = hasMedia && (hasBullets || section.section_type === "amenities" || section.section_type === "features");
-  const isTextOnly = !hasMedia;
-  const originalCopy = section.original_copy ?? "";
-  const textColumnOrder = mediaSide === "left" ? "lg:order-2" : "lg:order-1";
-  const mediaColumnOrder = mediaSide === "left" ? "lg:order-1" : "lg:order-2";
-  const cardTone = isHero
-    ? "border-[#15284B]/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(13,94,109,0.04))] shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
-    : isSplitFeature
-      ? "border-[#15284B]/8 bg-white shadow-[0_10px_26px_rgba(15,23,42,0.04)]"
-      : "border-slate-200 bg-slate-50";
-  const titleClass = isHero ? "text-[2rem] leading-tight md:text-[2.4rem]" : "text-xl leading-tight";
-  const textWrapClass = isHero ? "space-y-6 lg:pr-6" : "space-y-5";
-  const bodyClass = isHero ? "text-[1.02rem] leading-8 text-slate-700" : "text-sm leading-7 text-slate-700";
-  const bodyLines = originalCopy
-    .split(/\n{2,}/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const topBody = bodyLines[0] ?? originalCopy;
-  const remainingBody = bodyLines.slice(1);
-  const mediaPlaceholderClass = isHero
-    ? "min-h-[420px] rounded-[1.6rem]"
-    : isSplitFeature
-      ? "min-h-[320px] rounded-[1.35rem]"
-      : "min-h-[240px] rounded-[1.15rem]";
+  const assessmentTone = assessment ? toneForPosture(assessment.overall_status) : toneForPosture("watch");
+
+  async function handleSave() {
+    if (!mapping) {
+      setSaveFlash({ type: "error", text: "This section is not mapped to a governed Specs slot yet." });
+      return;
+    }
+
+    setSaving(true);
+    setSaveFlash(null);
+    try {
+      const response = await saveSiteContentSectionRewrite(propertyId, {
+        page_id: pageId,
+        mapping_id: mapping.id,
+        section_id: section.id ?? null,
+        draft_status: draftStatus,
+        rewrite_brief: rewriteBrief,
+        proposed_copy: proposedCopy,
+        refinement_notes: refinementNotes,
+      });
+      onRewriteSaved(pageId, response.rewrite);
+      setSaveFlash({ type: "success", text: "Rewrite workspace saved." });
+    } catch (error: any) {
+      setSaveFlash({ type: "error", text: error.message ?? "Failed to save rewrite." });
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
-    <div className={`rounded-[1.6rem] border p-6 shadow-[0_1px_0_rgba(15,23,42,0.03)] ${cardTone}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          {section.eyebrow && (
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#0D5E6D]">{section.eyebrow}</p>
-          )}
-          <p className={`mt-1 font-semibold text-slate-900 ${titleClass}`}>{title}</p>
-          {section.subtitle && (
-            <p className="mt-2 max-w-3xl text-base leading-7 text-slate-600">{section.subtitle}</p>
-          )}
-          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">{section.section_type || "standard"}</p>
+    <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+      <div className="grid gap-5 border-b border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] p-5 lg:grid-cols-[0.95fr_1.05fr_0.95fr]">
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Expected Specs slot</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">
+              {mapping?.expected_section_label || mapping?.expected_section_key || "Unmapped section"}
+            </p>
+            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+              {mapping?.expected_section_role || "No governed role attached yet"}
+            </p>
+          </div>
+          <p className="text-sm leading-6 text-slate-600">
+            {mapping?.rationale ||
+              "This live section has not yet been reconciled cleanly against the intended section contract."}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Badge className="border-0 bg-white text-slate-700">{section.image_count} images</Badge>
-          <Badge className="border-0 bg-white text-slate-700">{section.link_count} links</Badge>
+
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Live baseline</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{title}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+              {section.section_type || "standard"} • {section.image_count} images • {section.link_count} links
+            </p>
+          </div>
+          <p className="line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+            {section.original_copy || "No captured copy was extracted for this block."}
+          </p>
+        </div>
+
+        <div className={`space-y-3 rounded-2xl border p-4 ${assessmentTone.border} ${assessmentTone.bg}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Assessment posture</p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">
+                {assessment?.overall_status ? assessment.overall_status.replace("-", " ") : "Needs review"}
+              </p>
+            </div>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${assessmentTone.badge}`}>
+              {assessment?.overall_status?.replace("-", " ") || "watch"}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <InlineScore label="Structure" value={assessment?.structural_score ?? 0} />
+            <InlineScore label="Message" value={assessment?.messaging_score ?? 0} />
+            <InlineScore label="Specificity" value={assessment?.specificity_score ?? 0} />
+            <InlineScore label="Search" value={assessment?.search_value_score ?? 0} />
+            <InlineScore label="CTA" value={assessment?.cta_score ?? 0} />
+            <InlineScore label="Harmony" value={assessment?.harmonization_score ?? 0} />
+          </div>
+          <p className="text-sm leading-6 text-slate-700">
+            {assessment?.summary || "This section needs explicit assessment before rewrite decisions are trusted."}
+          </p>
         </div>
       </div>
 
-      <div
-        className={`mt-5 grid items-stretch gap-6 ${
-          hasMedia
-            ? isHero
-              ? "lg:grid-cols-[minmax(340px,0.85fr)_minmax(440px,1.15fr)]"
-              : "lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)]"
-            : ""
-        }`}
-      >
-        <div className={`${textWrapClass} ${textColumnOrder}`}>
-          <div className={`whitespace-pre-wrap ${bodyClass}`}>{topBody}</div>
-
-          {hasBullets && (
-            <div className="rounded-2xl border border-[#15284B]/10 bg-[#15284B]/[0.035] p-4">
-              <ul
-                className={`list-disc pl-5 text-slate-700 ${
-                  isHero || isSplitFeature
-                    ? "grid gap-x-8 gap-y-1 md:grid-cols-2 text-sm leading-7"
-                    : "space-y-1 text-sm"
-                }`}
-              >
+      <div className="grid gap-5 p-5 lg:grid-cols-[1fr_1fr]">
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Observed copy</p>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
+              {section.original_copy || "No extracted copy available."}
+            </p>
+            {section.bullet_points.length > 0 && (
+              <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-700">
                 {section.bullet_points.map((point, index) => (
                   <li key={index}>{point}</li>
                 ))}
               </ul>
-            </div>
-          )}
-
-          {remainingBody.length > 0 && (
-            <div className="space-y-4">
-              {remainingBody.map((block, index) => (
-                <p key={index} className={bodyClass}>
-                  {block}
-                </p>
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {hasMedia && (
-          <div className={`flex h-full ${mediaColumnOrder}`}>
-            <div
-              className={`w-full self-stretch border border-slate-200/90 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.72),transparent_38%),linear-gradient(145deg,rgba(21,40,75,0.09),rgba(13,94,109,0.2))] shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] ${mediaPlaceholderClass}`}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Rewrite workspace</p>
+              <select
+                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
+                value={draftStatus}
+                onChange={(event) =>
+                  setDraftStatus(event.target.value as SiteContentSectionRewrite["draft_status"])
+                }
+              >
+                <option value="not_started">Not started</option>
+                <option value="drafted">Drafted</option>
+                <option value="in_review">In review</option>
+                <option value="approved">Approved</option>
+              </select>
+            </div>
+            <textarea
+              className="min-h-[88px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
+              value={rewriteBrief}
+              onChange={(event) => setRewriteBrief(event.target.value)}
+              placeholder="What should this section do in the site story?"
             />
           </div>
-        )}
-      </div>
 
-      {!isTextOnly && (
-        <div className="mt-3 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
-      )}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Proposed rewrite</p>
+            <textarea
+              className="min-h-[168px] w-full rounded-xl border border-slate-200 px-3 py-3 text-sm leading-7 text-slate-800"
+              value={proposedCopy}
+              onChange={(event) => setProposedCopy(event.target.value)}
+              placeholder="Draft the harmonized section copy here."
+            />
+          </div>
 
-      {section.heading && section.heading !== title && section.heading !== section.subtitle && (
-        <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
-          Captured heading: {section.heading}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Refinement notes</p>
+            <textarea
+              className="min-h-[92px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
+              value={refinementNotes}
+              onChange={(event) => setRefinementNotes(event.target.value)}
+              placeholder="Note what changed, what still feels weak, or what story tension remains."
+            />
+          </div>
+
+          {saveFlash && (
+            <div
+              className={`rounded-lg px-3 py-2 text-sm ${
+                saveFlash.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+              }`}
+            >
+              {saveFlash.text}
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={saving || !mapping}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+              Save Rewrite
+            </Button>
+          </div>
         </div>
-      )}
+      </div>
+    </div>
+  );
+}
+
+function resolveMappingForSection(page: SiteContentPage, section: SiteContentSection): SiteContentSectionMapping | null {
+  return (
+    page.section_mappings.find((mapping) => mapping.section_id && section.id && mapping.section_id === section.id) ??
+    page.section_mappings.find(
+      (mapping) =>
+        !mapping.section_id &&
+        mapping.match_status !== "missing-from-live" &&
+        mapping.expected_order === section.section_order
+    ) ??
+    null
+  );
+}
+
+function summarizeRewrites(rewrites: SiteContentSectionRewrite[]) {
+  return {
+    not_started: rewrites.filter((rewrite) => rewrite.draft_status === "not_started").length,
+    drafted: rewrites.filter((rewrite) => rewrite.draft_status === "drafted").length,
+    in_review: rewrites.filter((rewrite) => rewrite.draft_status === "in_review").length,
+    approved: rewrites.filter((rewrite) => rewrite.draft_status === "approved").length,
+  };
+}
+
+function upsertById<T extends { id: string }>(items: T[], nextItem: T): T[] {
+  const existing = items.find((item) => item.id === nextItem.id);
+  if (!existing) return [...items, nextItem];
+  return items.map((item) => (item.id === nextItem.id ? nextItem : item));
+}
+
+function HeroStat({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="rounded-2xl border border-white/12 bg-white/8 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/62">{label}</p>
+      <p className="mt-2 text-3xl font-black text-white">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-white/68">{helper}</p>
+    </div>
+  );
+}
+
+function MetricChip({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-full border border-white/16 bg-white/8 px-4 py-3 text-sm">
+      <span className="text-white/78">{icon}</span>
+      <div>
+        <p className="text-[11px] uppercase tracking-[0.2em] text-white/55">{label}</p>
+        <p className="font-semibold text-white">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function SurfaceMetric({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-black text-slate-900">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>
+    </div>
+  );
+}
+
+function ContractTile({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="font-semibold text-slate-900">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+    </div>
+  );
+}
+
+function MiniScore({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-black text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-black text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function InlinePill({
+  label,
+  tone = "emerald",
+}: {
+  label: string;
+  tone?: "emerald" | "amber" | "rose" | "blue" | "slate";
+}) {
+  const styles = {
+    emerald: "bg-emerald-100 text-emerald-800",
+    amber: "bg-amber-100 text-amber-800",
+    rose: "bg-rose-100 text-rose-800",
+    blue: "bg-sky-100 text-sky-800",
+    slate: "bg-slate-100 text-slate-700",
+  } as const;
+  return <span className={`rounded-full px-2.5 py-1 font-medium ${styles[tone]}`}>{label}</span>;
+}
+
+function InlineScore({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-white/70 bg-white/65 px-2.5 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-black text-slate-900">{clampScore(value)}</p>
     </div>
   );
 }
