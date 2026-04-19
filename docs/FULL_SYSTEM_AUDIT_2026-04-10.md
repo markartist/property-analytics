@@ -452,6 +452,10 @@ Audit judgment:
 - the next refinement step is now also present in the clean branch:
   - property brief inputs and Captain's Log signals are surfaced directly in the site story layer
   - page posture now reflects real governed claim/readiness context in addition to section assessment
+- Site Content now also includes a first-pass cross-page narrative consistency layer:
+  - governed claims are compared against captured page copy
+  - the board can now surface aligned, partial, and missing claim coverage across the site
+  - this is the right direction because it makes the site-level story review more explicit without creating a parallel truth system outside existing Intelligence Office and crawl evidence
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system

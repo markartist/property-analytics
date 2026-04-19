@@ -73,6 +73,13 @@ type PropertySignals = {
   captainLog: GovernedMemoryEntryWithEvidence[];
 };
 
+type NarrativeCoverage = {
+  claim: IntelligenceClaim;
+  pagesCovered: string[];
+  coverageRatio: number;
+  posture: "aligned" | "partial" | "missing";
+};
+
 function formatStamp(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -221,6 +228,60 @@ function toneForPosture(posture: "healthy" | "watch" | "needs-attention") {
   }
 }
 
+function pageSearchText(page: SiteContentPage): string {
+  return [
+    page.page_title,
+    page.page_path,
+    page.page_type,
+    ...page.sections.flatMap((section) => [
+      section.section_label,
+      section.heading,
+      section.title,
+      section.subtitle,
+      section.original_copy,
+      ...section.bullet_points,
+    ]),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function claimKeywords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 5);
+}
+
+function buildNarrativeCoverage(pages: SiteContentPage[], claims: IntelligenceClaim[]): NarrativeCoverage[] {
+  const pageIndex = pages.map((page) => ({
+    id: page.id,
+    label: page.spec_page_name || page.page_title || page.page_path || page.page_url,
+    text: pageSearchText(page),
+  }));
+
+  return claims.map((claim) => {
+    const tokens = claimKeywords(claim.claim_text).slice(0, 8);
+    const coveredPages = pageIndex
+      .filter((page) => tokens.some((token) => page.text.includes(token)))
+      .map((page) => page.label);
+    const coverageRatio = pages.length > 0 ? coveredPages.length / pages.length : 0;
+
+    let posture: NarrativeCoverage["posture"] = "aligned";
+    if (coveredPages.length === 0) posture = "missing";
+    else if (coverageRatio < 0.4) posture = "partial";
+
+    return {
+      claim,
+      pagesCovered: coveredPages,
+      coverageRatio,
+      posture,
+    };
+  });
+}
+
 export function SiteContentCreatorPage() {
   const [loading, setLoading] = React.useState(true);
   const [crawling, setCrawling] = React.useState(false);
@@ -350,6 +411,9 @@ export function SiteContentCreatorPage() {
   const propertyClaims = propertySignals.brief?.claims ?? [];
   const propertyEvidence = propertySignals.brief?.evidence ?? [];
   const latestCaptainEntry = propertySignals.captainLog[0] ?? null;
+  const narrativeCoverage = buildNarrativeCoverage(selectedPages, propertyClaims);
+  const missingNarrativeClaims = narrativeCoverage.filter((item) => item.posture === "missing");
+  const partialNarrativeClaims = narrativeCoverage.filter((item) => item.posture === "partial");
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -561,6 +625,79 @@ export function SiteContentCreatorPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardContent className="space-y-4 p-6">
+          <div className="flex items-center gap-2 text-slate-900">
+            <Target className="h-5 w-5 text-[#0D5E6D]" />
+            <h2 className="text-lg font-semibold">Narrative consistency board</h2>
+          </div>
+          <p className="text-sm leading-6 text-slate-600">
+            This layer checks whether the active governed property claims are actually echoed across the captured site.
+            It helps surface where the property story is fragmented, under-supported, or absent from key pages.
+          </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            <SurfaceMetric
+              label="Governed claims"
+              value={String(narrativeCoverage.length)}
+              helper="Claims available to measure against the captured site copy."
+            />
+            <SurfaceMetric
+              label="Missing claims"
+              value={String(missingNarrativeClaims.length)}
+              helper="Claims not reflected on any captured page yet."
+            />
+            <SurfaceMetric
+              label="Partial coverage"
+              value={String(partialNarrativeClaims.length)}
+              helper="Claims present somewhere, but not distributed strongly enough across the site."
+            />
+          </div>
+          {narrativeCoverage.length > 0 ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {narrativeCoverage.map((item) => {
+                const tone =
+                  item.posture === "aligned"
+                    ? "border-emerald-200 bg-emerald-50/70"
+                    : item.posture === "partial"
+                      ? "border-amber-200 bg-amber-50/70"
+                      : "border-rose-200 bg-rose-50/70";
+                const label =
+                  item.posture === "aligned" ? "Aligned" : item.posture === "partial" ? "Partial" : "Missing";
+                return (
+                  <div key={item.claim.id} className={`rounded-2xl border p-4 ${tone}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-semibold text-slate-900">{item.claim.claim_text}</p>
+                      <InlinePill
+                        label={label}
+                        tone={item.posture === "aligned" ? "emerald" : item.posture === "partial" ? "amber" : "rose"}
+                      />
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      Coverage: {Math.round(item.coverageRatio * 100)}% of captured pages
+                    </p>
+                    {item.pagesCovered.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.pagesCovered.slice(0, 5).map((pageLabel) => (
+                          <InlinePill key={pageLabel} label={pageLabel} tone="slate" />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        No captured page currently reflects this governed claim strongly enough to register.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              No governed property claims are loaded for this site yet, so narrative consistency cannot be assessed.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>

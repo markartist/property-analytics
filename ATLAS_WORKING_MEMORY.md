@@ -3961,6 +3961,18 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 15:45 UTC - Site Content now flags cross-page narrative fragmentation
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` with a new `Narrative consistency board`.
+- The board now compares governed property claims from Intelligence Office against captured page copy to estimate:
+  - claims that are aligned across the site
+  - claims that appear only partially
+  - claims that are currently missing from the captured site narrative
+- This is intentionally a first-pass derived read-model using existing claim and crawl data, not a new parallel backend system.
+- Current effect:
+  - Site Content can now call out where the property story is fragmented or under-supported across pages
+  - the site-level storytelling layer is moving from generic posture into explicit cross-page narrative consistency review
+
 ### 2026-04-19 15:30 UTC - Site Content story board now consumes governed property signals
 
 - Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so Site Content Creator now pulls:
