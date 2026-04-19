@@ -11,6 +11,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_PATH = ROOT / "config" / "release_reconcile_snapshot.json"
+OPERATIONAL_ARTIFACTS = {
+    "config/release_provenance.json",
+    "config/release_reconcile_snapshot.json",
+}
 
 LANE_RULES = [
     (
@@ -124,6 +128,8 @@ def git_changed_files() -> list[str]:
         path = parts[1].strip()
         if " -> " in path:
             path = path.split(" -> ", 1)[1]
+        if path in OPERATIONAL_ARTIFACTS:
+            continue
         files.append(path)
     return files
 
@@ -163,6 +169,7 @@ def main() -> int:
       "version": "2026-04-18.release-reconcile-snapshot.v1",
       "updated_at": str(date.today()),
       "purpose": "Current dirty-tree release reconciliation snapshot grouped by canonical workstream lane.",
+      "operational_artifacts_ignored": sorted(OPERATIONAL_ARTIFACTS),
       "working_tree": {
         "changed_file_count": total_count,
         "primary_release_slice_count": primary_count,

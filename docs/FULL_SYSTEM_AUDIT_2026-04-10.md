@@ -896,6 +896,9 @@ Additional current-state note:
   - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` overlays the stamped release manifest with the currently observed API host, requesting web host, and inferred Pages runtime id
   - `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` presents that runtime observation in the Release Pedigree board
 - that matters because the control plane is now less dependent on a bundled static provenance file and can cross-check the live promoted surface against the stamped release record at request time
+- release reconciliation also now ignores post-deploy provenance bridge artifacts when reading branch cleanliness:
+  - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py` excludes `config/release_provenance.json` and `config/release_reconcile_snapshot.json` from dirty-tree lane counts
+- that matters because a successfully promoted clean branch should not immediately look dirty only because the operator bridge restamped deployment pedigree after release
 - that matters because the current platform is still between ad hoc operator-led deploys and fully issued CI provenance; this bridge reduces stale pedigree drift immediately while preserving the path toward true automation
 - the platform now also has a generated release-reconcile snapshot:
   - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py`

@@ -1,10 +1,14 @@
 {
   "version": "2026-04-18.release-reconcile-snapshot.v1",
-  "updated_at": "2026-04-18",
+  "updated_at": "2026-04-19",
   "purpose": "Current dirty-tree release reconciliation snapshot grouped by canonical workstream lane.",
+  "operational_artifacts_ignored": [
+    "config/release_provenance.json",
+    "config/release_reconcile_snapshot.json"
+  ],
   "working_tree": {
-    "changed_file_count": 22,
-    "primary_release_slice_count": 22,
+    "changed_file_count": 4,
+    "primary_release_slice_count": 4,
     "non_primary_count": 0
   },
   "recommended_release_candidate": {
@@ -26,28 +30,16 @@
     "readiness_note": "The first clean enterprise release slice should converge on platform/app plus data-collection hardening, with the other lanes explicitly separated."
   },
   "lane_counts": {
-    "docs_and_memory": 13,
-    "platform_app": 9
+    "docs_and_memory": 3,
+    "platform_app": 1
   },
   "lane_examples": {
     "docs_and_memory": [
       "ATLAS_WORKING_MEMORY.md",
       "docs/CAPABILITY_REGISTER_2026-04-10.md",
-      "docs/FULL_SYSTEM_AUDIT_2026-04-10.md",
-      "docs/DEPLOYMENT_PROVENANCE_MODEL_2026-04-18.md",
-      "docs/ENTERPRISE_GAP_REGISTER_2026-04-18.md",
-      "docs/ENTERPRISE_READINESS_AUDIT_2026-04-18.md",
-      "docs/NEXT_90_DAY_PLATFORM_PLAN_2026-04-18.md",
-      "docs/RELEASE_GOVERNANCE_STANDARD_2026-04-18.md"
+      "docs/RELEASE_PROVENANCE_STAMPING_RUNBOOK_2026-04-18.md"
     ],
     "platform_app": [
-      "apps/api/src/env.ts",
-      "apps/api/src/routes/health.ts",
-      "apps/api/src/routes/pond.ts",
-      "apps/web/.env.production",
-      "apps/web/src/app/watchtower/page.tsx",
-      "apps/web/src/lib/api.ts",
-      "apps/web/src/lib/permissions.ts",
       "scripts/generate_release_reconcile_snapshot.py"
     ]
   }

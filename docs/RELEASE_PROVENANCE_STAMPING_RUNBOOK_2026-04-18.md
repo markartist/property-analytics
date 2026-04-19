@@ -46,3 +46,22 @@ The final target is:
 
 - deploy pipeline emits release provenance automatically
 - Watchtower consumes issued provenance artifacts directly
+
+## Operational Hygiene Rule
+
+The current runtime-stamped files:
+
+- `/Users/mark/Property_Analytics/config/release_provenance.json`
+- `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`
+
+are operational bridge artifacts.
+
+That means:
+
+- they may be refreshed after deployment to reflect current runtime identifiers
+- they should not be treated as meaningful feature drift in release-reconcile hygiene
+- release reconciliation tools should ignore them when calculating whether the branch is otherwise clean
+
+Practical effect:
+
+- a successfully promoted clean branch should not look dirty only because provenance was restamped afterward

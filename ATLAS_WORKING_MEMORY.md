@@ -3950,3 +3950,13 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Watchtower no longer relies purely on the bundled release-provenance JSON to describe the currently promoted web/API slice
   - the release pedigree remains stampable, but it is now cross-checked against the live runtime at request time
   - this reduces the “one deploy behind” problem while the platform still uses operator-bridge provenance instead of CI-issued provenance
+
+### 2026-04-19 03:45 UTC - Release reconcile now ignores post-deploy provenance stamp noise
+
+- Updated `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py` so runtime-stamped bridge artifacts are excluded from dirty-tree lane counting:
+  - `/Users/mark/Property_Analytics/config/release_provenance.json`
+  - `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`
+- Updated `/Users/mark/Property_Analytics/docs/RELEASE_PROVENANCE_STAMPING_RUNBOOK_2026-04-18.md` to formalize that those files are operational bridge artifacts rather than meaningful feature drift.
+- Current effect:
+  - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
+  - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
