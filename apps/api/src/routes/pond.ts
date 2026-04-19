@@ -261,6 +261,26 @@ interface RuntimeReleaseStateRow {
   notes: string | null;
 }
 
+type DeploymentProvenanceResponse = typeof deploymentProvenance & {
+  state_source: "runtime_d1" | "bundled_config";
+  runtime_state: {
+    source_mode: RuntimeReleaseStateRow["source_mode"];
+    updated_at: string;
+    published_by: string | null;
+    notes: string | null;
+  } | null;
+};
+
+type ReleaseReconcileSnapshotResponse = typeof releaseReconcileSnapshot & {
+  state_source: "runtime_d1" | "bundled_config";
+  runtime_state: {
+    source_mode: RuntimeReleaseStateRow["source_mode"];
+    updated_at: string;
+    published_by: string | null;
+    notes: string | null;
+  } | null;
+};
+
 const releaseReconcileSnapshot = releaseReconcileSnapshotConfig as {
   version: string;
   updated_at: string;
@@ -542,6 +562,25 @@ function buildRuntimeManagedReleaseProvenance(
 }
 
 async function loadRuntimeIssuedReleaseProvenance(db: D1Database): Promise<typeof releaseProvenance | null> {
+  const row = await loadRuntimeStateRow(db, "release_provenance");
+  if (!row?.payload_json) return null;
+
+  const payload = JSON.parse(row.payload_json) as typeof releaseProvenance;
+  if (!payload?.release_descriptor || !Array.isArray(payload?.deployments)) {
+    return null;
+  }
+
+  return {
+    ...payload,
+    updated_at: row.updated_at || payload.updated_at,
+    purpose:
+      row.source_mode === "ci_issued"
+        ? `${payload.purpose} Runtime-issued provenance is currently active.`
+        : `${payload.purpose} Runtime D1 state is currently active.`,
+  };
+}
+
+async function loadRuntimeStateRow(db: D1Database, stateKey: string): Promise<RuntimeReleaseStateRow | null> {
   try {
     const row = await queryFirst<RuntimeReleaseStateRow>(
       db,
@@ -549,23 +588,9 @@ async function loadRuntimeIssuedReleaseProvenance(db: D1Database): Promise<typeo
        FROM runtime_release_state
        WHERE state_key = ?
        LIMIT 1`,
-      ["release_provenance"]
+      [stateKey]
     );
-    if (!row?.payload_json) return null;
-
-    const payload = JSON.parse(row.payload_json) as typeof releaseProvenance;
-    if (!payload?.release_descriptor || !Array.isArray(payload?.deployments)) {
-      return null;
-    }
-
-    return {
-      ...payload,
-      updated_at: row.updated_at || payload.updated_at,
-      purpose:
-        row.source_mode === "ci_issued"
-          ? `${payload.purpose} Runtime-issued provenance is currently active.`
-          : `${payload.purpose} Runtime D1 state is currently active.`,
-    };
+    return row?.payload_json ? row : null;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.toLowerCase().includes("no such table")) {
@@ -573,6 +598,58 @@ async function loadRuntimeIssuedReleaseProvenance(db: D1Database): Promise<typeo
     }
     return null;
   }
+}
+
+async function loadRuntimeIssuedDeploymentProvenance(db: D1Database): Promise<DeploymentProvenanceResponse | null> {
+  const row = await loadRuntimeStateRow(db, "deployment_provenance");
+  if (!row?.payload_json) return null;
+
+  const payload = JSON.parse(row.payload_json) as typeof deploymentProvenance;
+  if (!Array.isArray(payload?.environments) || !payload?.rules || !Array.isArray(payload?.service_bindings)) {
+    return null;
+  }
+
+  return {
+    ...payload,
+    updated_at: row.updated_at || payload.updated_at,
+    purpose:
+      row.source_mode === "ci_issued"
+        ? `${payload.purpose} Runtime-issued deployment provenance is currently active.`
+        : `${payload.purpose} Runtime D1 deployment provenance is currently active.`,
+    state_source: "runtime_d1",
+    runtime_state: {
+      source_mode: row.source_mode,
+      updated_at: row.updated_at,
+      published_by: row.published_by,
+      notes: row.notes,
+    },
+  };
+}
+
+async function loadRuntimeIssuedReleaseReconcileSnapshot(db: D1Database): Promise<ReleaseReconcileSnapshotResponse | null> {
+  const row = await loadRuntimeStateRow(db, "release_reconcile_snapshot");
+  if (!row?.payload_json) return null;
+
+  const payload = JSON.parse(row.payload_json) as typeof releaseReconcileSnapshot;
+  if (!payload?.working_tree || !payload?.recommended_release_candidate || !payload?.lane_counts || !payload?.lane_examples) {
+    return null;
+  }
+
+  return {
+    ...payload,
+    updated_at: row.updated_at || payload.updated_at,
+    purpose:
+      row.source_mode === "ci_issued"
+        ? `${payload.purpose} Runtime-issued release reconcile state is currently active.`
+        : `${payload.purpose} Runtime D1 release reconcile state is currently active.`,
+    state_source: "runtime_d1",
+    runtime_state: {
+      source_mode: row.source_mode,
+      updated_at: row.updated_at,
+      published_by: row.published_by,
+      notes: row.notes,
+    },
+  };
 }
 
 function expectedZeroTrustMode(boundaryClass: string): LandscapeEvidence["expected_zero_trust_mode"] {
@@ -1546,6 +1623,8 @@ pond.get("/landscape", async (c) => {
   const manifest = landscapeManifest;
   const serviceOperations = serviceOperationsManifest;
   const runtimeIssuedReleaseProvenance = await loadRuntimeIssuedReleaseProvenance(c.env.POP_BRIEF_DB);
+  const runtimeIssuedDeploymentProvenance = await loadRuntimeIssuedDeploymentProvenance(c.env.POP_BRIEF_DB);
+  const runtimeIssuedReleaseReconcileSnapshot = await loadRuntimeIssuedReleaseReconcileSnapshot(c.env.POP_BRIEF_DB);
   const webRequestOrigin = deriveRequestingWebOrigin(c);
   const deploymentRuntime = {
     api_request_origin: new URL(c.req.url).origin,
@@ -1560,6 +1639,18 @@ pond.get("/landscape", async (c) => {
     runtimeIssuedReleaseProvenance ?? releaseProvenance,
     deploymentRuntime
   );
+  const runtimeManagedDeploymentProvenance: DeploymentProvenanceResponse =
+    runtimeIssuedDeploymentProvenance ?? {
+      ...deploymentProvenance,
+      state_source: "bundled_config",
+      runtime_state: null,
+    };
+  const runtimeManagedReleaseReconcileSnapshot: ReleaseReconcileSnapshotResponse =
+    runtimeIssuedReleaseReconcileSnapshot ?? {
+      ...releaseReconcileSnapshot,
+      state_source: "bundled_config",
+      runtime_state: null,
+    };
 
   const canonicalFoundations = manifest.canonical_foundations.map((item) => withMachineEvaluatedRemediation(withConditionAwareNextAction({
     ...item,
@@ -1716,10 +1807,10 @@ pond.get("/landscape", async (c) => {
     release_governance: releaseGovernance,
     service_operations: serviceOperations,
     service_operations_summary: serviceOperationsSummary,
-    deployment_provenance: deploymentProvenance,
+    deployment_provenance: runtimeManagedDeploymentProvenance,
     deployment_runtime: deploymentRuntime,
     release_provenance: runtimeManagedReleaseProvenance,
-    release_reconcile_snapshot: releaseReconcileSnapshot,
+    release_reconcile_snapshot: runtimeManagedReleaseReconcileSnapshot,
   });
 });
 

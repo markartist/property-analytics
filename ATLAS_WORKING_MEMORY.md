@@ -4003,3 +4003,25 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - remote schema truth and Wrangler migration ledger are aligned again
   - future D1 promotion can return to the normal declarative migration path
   - the release branch no longer carries unresolved legacy migration-history drift as an enterprise blocker
+
+### 2026-04-19 05:40 UTC - Control-plane runtime state now covers deployment provenance and release reconcile boards
+
+- Added shared runtime-state publisher `/Users/mark/Property_Analytics/scripts/runtime_state_bridge.py`.
+- Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so `--publish-runtime-state` now publishes both:
+  - `release_provenance`
+  - `deployment_provenance`
+- Extended `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py` so it can publish:
+  - `release_reconcile_snapshot`
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so `/v1/pond/landscape` now prefers D1-backed runtime state for:
+  - release provenance
+  - deployment provenance
+  - release reconcile snapshot
+- Extended `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so the Deployment Provenance and Release Reconcile sections now show whether the current board is coming from bundled config or runtime D1 state.
+- Verified live D1 rows now exist for:
+  - `release_provenance`
+  - `deployment_provenance`
+  - `release_reconcile_snapshot`
+- Current effect:
+  - the service/deploy control plane depends less on bundled repo config and more on runtime-issued platform state
+  - Watchtower can now distinguish runtime-backed versus bundled deployment/reconcile truth directly in the UI
+  - the remaining enterprise bridge work is to move more of this operator-issued runtime state toward CI-issued or service-native issuance over time

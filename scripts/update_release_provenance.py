@@ -8,11 +8,16 @@ import subprocess
 from datetime import date
 from pathlib import Path
 
+from runtime_state_bridge import (
+    DEFAULT_ACCOUNT_ID,
+    publish_runtime_state,
+    resolve_cloudflare_token,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config" / "release_provenance.json"
+DEPLOYMENT_PROVENANCE_PATH = ROOT / "config" / "deployment_provenance_manifest.json"
 API_ROOT = ROOT / "apps" / "api"
-DEFAULT_ACCOUNT_ID = "5a5a60afaad00085864fe6bab7eb2882"
 
 
 def run_git(*args: str) -> str:
@@ -28,79 +33,6 @@ def run_git(*args: str) -> str:
 
 def current_dirty() -> bool:
     return bool(run_git("status", "--short"))
-
-
-def escape_sql(value: str) -> str:
-    return value.replace("'", "''")
-
-
-def resolve_cloudflare_token() -> str | None:
-    direct = os.getenv("CLOUDFLARE_API_TOKEN") or os.getenv("CF_API_TOKEN")
-    if direct:
-        return direct.strip()
-
-    try:
-        from utils.ksm import resolve_secret  # type: ignore
-    except Exception:
-        return None
-
-    try:
-        return resolve_secret(
-            description="Cloudflare API token",
-            notation_env_var="KSM_CLOUDFLARE_TOKEN_NOTATION",
-            default_notation="keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password",
-            direct_env_var="CLOUDFLARE_API_TOKEN",
-            default_profile="marketingops",
-        )
-    except Exception:
-        return None
-
-
-def publish_runtime_state(data: dict, *, account_id: str, token: str | None) -> None:
-    if not token:
-        print("Skipped D1 runtime state publish: no Cloudflare token available.")
-        return
-
-    payload_json = json.dumps(data, separators=(",", ":"))
-    sql = f"""
-INSERT INTO runtime_release_state (state_key, payload_json, source_mode, updated_at, published_by, notes)
-VALUES (
-  'release_provenance',
-  '{escape_sql(payload_json)}',
-  'operator_bridge',
-  datetime('now'),
-  'update_release_provenance.py',
-  'Runtime release provenance bridge'
-)
-ON CONFLICT(state_key) DO UPDATE SET
-  payload_json = excluded.payload_json,
-  source_mode = excluded.source_mode,
-  updated_at = excluded.updated_at,
-  published_by = excluded.published_by,
-  notes = excluded.notes;
-""".strip()
-
-    env = os.environ.copy()
-    env["CLOUDFLARE_API_TOKEN"] = token
-    env["CLOUDFLARE_ACCOUNT_ID"] = account_id
-
-    subprocess.run(
-        [
-            "npx",
-            "wrangler",
-            "d1",
-            "execute",
-            "pop-brief-db",
-            "--remote",
-            "--command",
-            sql,
-        ],
-        cwd=API_ROOT,
-        check=True,
-        env=env,
-        capture_output=True,
-        text=True,
-    )
 
 
 def infer_provenance_status(source_mode: str, source_branch: str, canonical_release_path: str) -> str:
@@ -218,7 +150,26 @@ def main() -> int:
 
     CONFIG_PATH.write_text(json.dumps(data, indent=2) + "\n")
     if args.publish_runtime_state:
-        publish_runtime_state(data, account_id=args.account_id, token=resolve_cloudflare_token())
+        token = resolve_cloudflare_token()
+        publish_runtime_state(
+            state_key="release_provenance",
+            payload=data,
+            source_mode="operator_bridge",
+            published_by="update_release_provenance.py",
+            notes="Runtime release provenance bridge",
+            account_id=args.account_id,
+            token=token,
+        )
+        deployment_provenance = json.loads(DEPLOYMENT_PROVENANCE_PATH.read_text())
+        publish_runtime_state(
+            state_key="deployment_provenance",
+            payload=deployment_provenance,
+            source_mode="operator_bridge",
+            published_by="update_release_provenance.py",
+            notes="Runtime deployment provenance bridge",
+            account_id=args.account_id,
+            token=token,
+        )
     print(f"Updated {CONFIG_PATH}")
     print(f"source_branch={source_branch}")
     print(f"source_mode={source_mode}")

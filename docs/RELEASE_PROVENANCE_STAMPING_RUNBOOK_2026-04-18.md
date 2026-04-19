@@ -33,12 +33,18 @@ This is the correct bridge step for enterprise hardening right now because it re
 - hand-edited baseline commit drift
 - runtime identifier drift between docs and live deployment
 
-The script can now also publish the stamped release pedigree into runtime state:
+The script can now also publish control-plane release state into runtime D1:
 
 - D1 table: `runtime_release_state`
-- key: `release_provenance`
+- keys:
+  - `release_provenance`
+  - `deployment_provenance`
 
-That means Watchtower can read runtime-issued release state from the platform database when it exists, instead of depending only on the bundled JSON file.
+And the reconcile snapshot publisher can also write:
+
+- `release_reconcile_snapshot`
+
+That means Watchtower can read runtime-issued control-plane state from the platform database when it exists, instead of depending only on bundled JSON files.
 
 Recommended invocation after a clean promotion:
 

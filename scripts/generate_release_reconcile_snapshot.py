@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
+from runtime_state_bridge import DEFAULT_ACCOUNT_ID, publish_runtime_state
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_PATH = ROOT / "config" / "release_reconcile_snapshot.json"
@@ -150,7 +151,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Generate the canonical release-reconcile snapshot from the current worktree."
     )
-    parser.parse_args()
+    parser.add_argument("--publish-runtime-state", action="store_true")
+    parser.add_argument("--account-id", default=DEFAULT_ACCOUNT_ID)
+    args = parser.parse_args()
 
     changed = git_changed_files()
     grouped: dict[str, list[str]] = defaultdict(list)
@@ -200,6 +203,15 @@ def main() -> int:
     }
 
     OUTPUT_PATH.write_text(json.dumps(data, indent=2) + "\n")
+    if args.publish_runtime_state:
+        publish_runtime_state(
+            state_key="release_reconcile_snapshot",
+            payload=data,
+            source_mode="operator_bridge",
+            published_by="generate_release_reconcile_snapshot.py",
+            notes="Runtime release reconcile snapshot bridge",
+            account_id=args.account_id,
+        )
     print(f"Updated {OUTPUT_PATH}")
     print(f"changed_file_count={total_count}")
     print(f"primary_release_slice_count={primary_count}")

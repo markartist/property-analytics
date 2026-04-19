@@ -904,6 +904,12 @@ Additional current-state note:
   - `runtime_release_state.state_key = release_provenance` has been published in the live D1 environment
   - `/v1/pond/landscape` prefers that runtime state when present
 - that matters because live release pedigree is now beginning to move from repo-state truth to platform-state truth
+- the runtime control-plane bridge now also covers:
+  - `runtime_release_state.state_key = deployment_provenance`
+  - `runtime_release_state.state_key = release_reconcile_snapshot`
+  - `/v1/pond/landscape` now prefers those runtime rows when present instead of defaulting immediately to bundled config
+  - Watchtower now labels whether the deployment and reconcile boards are coming from bundled config or runtime D1 state
+- that matters because the enterprise control plane is moving away from repo-bundled operational truth and toward platform-issued runtime truth, even before full CI-native provenance exists
 - D1 migration-history drift on the live `pop-brief-db` environment is now explicitly governed instead of being an operator-only known issue:
   - `/Users/mark/Property_Analytics/scripts/reconcile_d1_migration_history.py` probes remote schema before reconciling missing `d1_migrations` rows
   - `/Users/mark/Property_Analytics/docs/D1_MIGRATION_LEDGER_RECONCILIATION_RUNBOOK_2026-04-19.md` defines the safe dry-run/apply/verify path

@@ -2735,6 +2735,9 @@ export default function WatchtowerPage() {
                               <div>
                                 <p className="text-sm font-semibold text-slate-900">Deployment Provenance & Drift</p>
                                 <p className="text-xs text-slate-500">Expected environment shape versus the currently observed web and API runtime posture.</p>
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                                  {landscape.deployment_provenance.state_source === "runtime_d1" ? "Runtime D1 State" : "Bundled Config"} · Updated {landscape.deployment_provenance.updated_at}
+                                </p>
                               </div>
                             </div>
                             <div className="grid gap-4 md:grid-cols-4">
@@ -2782,6 +2785,18 @@ export default function WatchtowerPage() {
                                 </p>
                               </div>
                             </div>
+                            {landscape.deployment_provenance.runtime_state ? (
+                              <div className="rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                Deployment provenance state is currently published from{" "}
+                                <span className="font-medium text-slate-800">{formatSourceName(landscape.deployment_provenance.runtime_state.source_mode)}</span>
+                                {landscape.deployment_provenance.runtime_state.published_by ? (
+                                  <>
+                                    {" "}by <span className="font-medium text-slate-800">{landscape.deployment_provenance.runtime_state.published_by}</span>
+                                  </>
+                                ) : null}
+                                .
+                              </div>
+                            ) : null}
                             {derived.deploymentProvenanceBoard.driftSignals.length > 0 ? (
                               <div className="grid gap-4 xl:grid-cols-2">
                                 {derived.deploymentProvenanceBoard.driftSignals.map((signal) => {
@@ -2917,9 +2932,24 @@ export default function WatchtowerPage() {
                                 <div>
                                   <p className="text-sm font-semibold text-slate-900">Release Reconcile Snapshot</p>
                                   <p className="text-xs text-slate-500">The current dirty-tree split and the first clean release-shaped slice the platform should converge on.</p>
+                                  <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                                    {landscape.release_reconcile_snapshot.state_source === "runtime_d1" ? "Runtime D1 State" : "Bundled Config"} · Updated {landscape.release_reconcile_snapshot.updated_at}
+                                  </p>
                                 </div>
                               </div>
                               <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                                {landscape.release_reconcile_snapshot.runtime_state ? (
+                                  <div className="mb-4 rounded-[18px] border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                                    Reconcile state is currently published from{" "}
+                                    <span className="font-medium text-slate-800">{formatSourceName(landscape.release_reconcile_snapshot.runtime_state.source_mode)}</span>
+                                    {landscape.release_reconcile_snapshot.runtime_state.published_by ? (
+                                      <>
+                                        {" "}by <span className="font-medium text-slate-800">{landscape.release_reconcile_snapshot.runtime_state.published_by}</span>
+                                      </>
+                                    ) : null}
+                                    .
+                                  </div>
+                                ) : null}
                                 <div className="grid gap-4 md:grid-cols-4">
                                   <div className="rounded-[18px] bg-slate-50 px-3 py-3">
                                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Changed Files</p>
