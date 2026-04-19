@@ -2662,8 +2662,23 @@ export default function WatchtowerPage() {
                               <div>
                                 <p className="text-sm font-semibold text-slate-900">Service Operations Board</p>
                                 <p className="text-xs text-slate-500">Enterprise service ownership, release lanes, and live operating posture for the canonical platform stack.</p>
+                                <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                                  {landscape.service_operations.state_source === "runtime_d1" ? "Runtime D1 State" : "Bundled Config"} · Updated {landscape.service_operations.updated_at}
+                                </p>
                               </div>
                             </div>
+                            {landscape.service_operations.runtime_state ? (
+                              <div className="rounded-[20px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                Service operations state is currently published from{" "}
+                                <span className="font-medium text-slate-800">{formatSourceName(landscape.service_operations.runtime_state.source_mode)}</span>
+                                {landscape.service_operations.runtime_state.published_by ? (
+                                  <>
+                                    {" "}by <span className="font-medium text-slate-800">{landscape.service_operations.runtime_state.published_by}</span>
+                                  </>
+                                ) : null}
+                                .
+                              </div>
+                            ) : null}
                             <div className="grid gap-4 md:grid-cols-4">
                               <div className="rounded-[24px] border border-slate-200 bg-white p-4">
                                 <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Services</p>

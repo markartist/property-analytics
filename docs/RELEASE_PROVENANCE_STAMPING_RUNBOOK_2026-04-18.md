@@ -39,6 +39,7 @@ The script can now also publish control-plane release state into runtime D1:
 - keys:
   - `release_provenance`
   - `deployment_provenance`
+  - `service_operations`
 
 And the reconcile snapshot publisher can also write:
 

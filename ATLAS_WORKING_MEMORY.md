@@ -4025,3 +4025,18 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - the service/deploy control plane depends less on bundled repo config and more on runtime-issued platform state
   - Watchtower can now distinguish runtime-backed versus bundled deployment/reconcile truth directly in the UI
   - the remaining enterprise bridge work is to move more of this operator-issued runtime state toward CI-issued or service-native issuance over time
+
+### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
+
+- Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:
+  - `runtime_release_state.state_key = service_operations`
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so `/v1/pond/landscape` prefers runtime D1 state for the Service Operations Board, matching the release and deployment boards.
+- Extended `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so Service Operations now labels whether it is rendering from runtime D1 state or bundled config.
+- Extended `/Users/mark/Property_Analytics/apps/api/test/platform/pond-landscape-runtime-state.test.ts` to cover runtime-issued service operations state alongside the existing runtime provenance and reconcile coverage.
+- Redeployed the live control plane after the runtime-state expansion:
+  - Worker version `c4d33670-ebe4-4ef0-8f11-1f64ac891960`
+  - Pages runtime `8d1d1846`
+  - alias `https://codex-release-reconcile-nshu.property-analytics.pages.dev`
+- Current effect:
+  - Watchtower’s three main enterprise ops boards now share one consistent truth model: runtime D1 state first, bundled config second
+  - the reconcile branch is in a cleaner handoff state for the next program phase because service, deployment, release pedigree, and reconcile posture are all aligned under the same runtime-state bridge

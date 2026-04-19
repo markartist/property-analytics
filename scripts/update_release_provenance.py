@@ -17,6 +17,7 @@ from runtime_state_bridge import (
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config" / "release_provenance.json"
 DEPLOYMENT_PROVENANCE_PATH = ROOT / "config" / "deployment_provenance_manifest.json"
+SERVICE_OPERATIONS_PATH = ROOT / "config" / "service_operations_manifest.json"
 API_ROOT = ROOT / "apps" / "api"
 
 
@@ -167,6 +168,16 @@ def main() -> int:
             source_mode="operator_bridge",
             published_by="update_release_provenance.py",
             notes="Runtime deployment provenance bridge",
+            account_id=args.account_id,
+            token=token,
+        )
+        service_operations = json.loads(SERVICE_OPERATIONS_PATH.read_text())
+        publish_runtime_state(
+            state_key="service_operations",
+            payload=service_operations,
+            source_mode="operator_bridge",
+            published_by="update_release_provenance.py",
+            notes="Runtime service operations bridge",
             account_id=args.account_id,
             token=token,
         )

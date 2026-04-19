@@ -147,6 +147,35 @@ test("pond landscape prefers runtime control-plane state from D1 when present", 
       ["deployment_provenance", JSON.stringify(runtimeDeploymentProvenance), "operator_bridge", "test", "deployment note"]
     );
 
+    const runtimeServiceOperations = {
+      version: "runtime-service-ops.v1",
+      updated_at: "2026-04-19",
+      purpose: "runtime service operations",
+      services: [
+        {
+          id: "data_pond_api",
+          name: "Data Pond API",
+          owner: "Platform / App",
+          service_tier: "foundation",
+          runtime: "Cloudflare Workers + Hono",
+          deployment_target: "Cloudflare Workers",
+          release_lane: "platform_app",
+          trust_boundary: "access_protected_human_and_machine",
+          canonical_surface: "/system",
+          primary_runbook: "/runbook",
+          depends_on: ["keeper"],
+          operational_focus: ["governed APIs"],
+        },
+      ],
+    };
+
+    await run(
+      db,
+      `INSERT INTO runtime_release_state (state_key, payload_json, source_mode, updated_at, published_by, notes)
+       VALUES (?, ?, ?, datetime('now'), ?, ?)`,
+      ["service_operations", JSON.stringify(runtimeServiceOperations), "operator_bridge", "test", "service note"]
+    );
+
     const runtimeReconcileSnapshot = {
       version: "runtime-reconcile.v1",
       updated_at: "2026-04-19",
@@ -192,6 +221,8 @@ test("pond landscape prefers runtime control-plane state from D1 when present", 
 
     assert.equal(response.status, 200);
     const json = await response.json();
+    assert.equal(json.service_operations.version, "runtime-service-ops.v1");
+    assert.equal(json.service_operations.state_source, "runtime_d1");
     assert.equal(json.release_provenance.release_descriptor.source_branch, "codex/runtime-issued");
     assert.equal(json.release_provenance.deployments[0].runtime_identifier, "runtime-worker");
     assert.equal(json.deployment_provenance.version, "runtime-deployment.v1");

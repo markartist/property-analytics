@@ -187,6 +187,16 @@ const serviceOperationsManifest = serviceOperationsManifestConfig as {
   }>;
 };
 
+type ServiceOperationsResponse = typeof serviceOperationsManifest & {
+  state_source: "runtime_d1" | "bundled_config";
+  runtime_state: {
+    source_mode: RuntimeReleaseStateRow["source_mode"];
+    updated_at: string;
+    published_by: string | null;
+    notes: string | null;
+  } | null;
+};
+
 const deploymentProvenance = deploymentProvenanceConfig as {
   version: string;
   updated_at: string;
@@ -616,6 +626,32 @@ async function loadRuntimeIssuedDeploymentProvenance(db: D1Database): Promise<De
       row.source_mode === "ci_issued"
         ? `${payload.purpose} Runtime-issued deployment provenance is currently active.`
         : `${payload.purpose} Runtime D1 deployment provenance is currently active.`,
+    state_source: "runtime_d1",
+    runtime_state: {
+      source_mode: row.source_mode,
+      updated_at: row.updated_at,
+      published_by: row.published_by,
+      notes: row.notes,
+    },
+  };
+}
+
+async function loadRuntimeIssuedServiceOperations(db: D1Database): Promise<ServiceOperationsResponse | null> {
+  const row = await loadRuntimeStateRow(db, "service_operations");
+  if (!row?.payload_json) return null;
+
+  const payload = JSON.parse(row.payload_json) as typeof serviceOperationsManifest;
+  if (!Array.isArray(payload?.services)) {
+    return null;
+  }
+
+  return {
+    ...payload,
+    updated_at: row.updated_at || payload.updated_at,
+    purpose:
+      row.source_mode === "ci_issued"
+        ? `${payload.purpose} Runtime-issued service operations state is currently active.`
+        : `${payload.purpose} Runtime D1 service operations state is currently active.`,
     state_source: "runtime_d1",
     runtime_state: {
       source_mode: row.source_mode,
@@ -1621,7 +1657,13 @@ pond.get("/dock-preview", async (c) => {
 /** GET /landscape — control-plane landscape awareness snapshot */
 pond.get("/landscape", async (c) => {
   const manifest = landscapeManifest;
-  const serviceOperations = serviceOperationsManifest;
+  const runtimeIssuedServiceOperations = await loadRuntimeIssuedServiceOperations(c.env.POP_BRIEF_DB);
+  const serviceOperations: ServiceOperationsResponse =
+    runtimeIssuedServiceOperations ?? {
+      ...serviceOperationsManifest,
+      state_source: "bundled_config",
+      runtime_state: null,
+    };
   const runtimeIssuedReleaseProvenance = await loadRuntimeIssuedReleaseProvenance(c.env.POP_BRIEF_DB);
   const runtimeIssuedDeploymentProvenance = await loadRuntimeIssuedDeploymentProvenance(c.env.POP_BRIEF_DB);
   const runtimeIssuedReleaseReconcileSnapshot = await loadRuntimeIssuedReleaseReconcileSnapshot(c.env.POP_BRIEF_DB);

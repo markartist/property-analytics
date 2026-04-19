@@ -690,6 +690,13 @@ export interface PondLandscapeResponse {
     version: string;
     updated_at: string;
     purpose: string;
+    state_source: "runtime_d1" | "bundled_config";
+    runtime_state: {
+      source_mode: "operator_bridge" | "ci_issued" | "runtime_bridge";
+      updated_at: string;
+      published_by: string | null;
+      notes: string | null;
+    } | null;
     services: Array<{
       id: string;
       name: string;
