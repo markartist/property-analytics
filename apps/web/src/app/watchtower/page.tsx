@@ -2828,6 +2828,48 @@ export default function WatchtowerPage() {
                                   </Badge>
                                 </div>
                                 <p className="mt-3 text-sm leading-6 text-slate-700">{landscape.release_provenance.release_descriptor.provenance_note}</p>
+                                <div className="mt-3 rounded-[18px] border border-cyan-200 bg-cyan-50 px-3 py-3">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-700">Runtime Observation</p>
+                                      <p className="mt-1 text-sm font-semibold text-slate-900">
+                                        {formatSourceName(landscape.release_provenance.runtime_observation.runtime_alignment)}
+                                      </p>
+                                    </div>
+                                    <Badge className={toneBadgeClasses(
+                                      landscape.release_provenance.runtime_observation.runtime_alignment === "aligned"
+                                        ? "emerald"
+                                        : landscape.release_provenance.runtime_observation.runtime_alignment === "partial"
+                                          ? "amber"
+                                          : "rose"
+                                    )}>
+                                      Live Overlay
+                                    </Badge>
+                                  </div>
+                                  <p className="mt-2 text-sm leading-6 text-slate-700">
+                                    {landscape.release_provenance.runtime_observation.runtime_note}
+                                  </p>
+                                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                                    <div className="rounded-[14px] bg-white/80 px-3 py-3">
+                                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Observed Web Host</p>
+                                      <p className="mt-1 break-all text-sm font-medium text-slate-800">
+                                        {landscape.release_provenance.runtime_observation.observed_web_host ?? "Not observed"}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-[14px] bg-white/80 px-3 py-3">
+                                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Observed API Host</p>
+                                      <p className="mt-1 break-all text-sm font-medium text-slate-800">
+                                        {landscape.release_provenance.runtime_observation.observed_api_host}
+                                      </p>
+                                    </div>
+                                    <div className="rounded-[14px] bg-white/80 px-3 py-3">
+                                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Observed Pages Runtime</p>
+                                      <p className="mt-1 break-all text-sm font-medium text-slate-800">
+                                        {landscape.release_provenance.runtime_observation.observed_pages_runtime_id ?? "Alias / custom host"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
                                 <div className="mt-3 grid gap-3 md:grid-cols-3">
                                   <div className="rounded-[18px] bg-slate-50 px-3 py-3">
                                     <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Baseline Commit</p>

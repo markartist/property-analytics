@@ -241,6 +241,18 @@ const releaseProvenance = releaseProvenanceConfig as {
   next_moves: string[];
 };
 
+type ReleaseProvenanceResponse = typeof releaseProvenance & {
+  runtime_observation: {
+    observed_api_origin: string;
+    observed_api_host: string;
+    observed_web_origin: string | null;
+    observed_web_host: string | null;
+    observed_pages_runtime_id: string | null;
+    runtime_alignment: "aligned" | "partial" | "review";
+    runtime_note: string;
+  };
+};
+
 const releaseReconcileSnapshot = releaseReconcileSnapshotConfig as {
   version: string;
   updated_at: string;
@@ -420,6 +432,105 @@ function derivePondHref(path: string): string | null {
     return route === "" ? "/" : route;
   }
   return null;
+}
+
+function firstHeaderValue(raw: string | null): string | null {
+  if (!raw) return null;
+  const trimmed = raw.split(",")[0]?.trim();
+  return trimmed || null;
+}
+
+function deriveRequestingWebOrigin(c: { req: { header(name: string): string | undefined } }): string | null {
+  const origin = firstHeaderValue(c.req.header("origin") ?? null);
+  if (origin) {
+    return origin.replace(/\/$/, "");
+  }
+
+  const referer = firstHeaderValue(c.req.header("referer") ?? null);
+  if (!referer) return null;
+
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return null;
+  }
+}
+
+function derivePagesRuntimeIdFromHost(host: string | null): string | null {
+  if (!host) return null;
+  const match = host.match(/^([a-z0-9-]+)\.property-analytics\.pages\.dev$/i);
+  return match ? match[1] : null;
+}
+
+function buildRuntimeManagedReleaseProvenance(
+  provenance: typeof releaseProvenance,
+  deploymentRuntime: {
+    api_request_origin: string;
+    api_request_host: string;
+    web_request_origin: string | null;
+    web_request_host: string | null;
+  },
+): ReleaseProvenanceResponse {
+  const observedPagesRuntimeId = derivePagesRuntimeIdFromHost(deploymentRuntime.web_request_host);
+  const deployments = provenance.deployments.map((deployment) => {
+    if (deployment.service_id === "data_pond_api") {
+      return {
+        ...deployment,
+        runtime_identifier: deployment.runtime_identifier,
+        public_url: deploymentRuntime.api_request_origin,
+      };
+    }
+
+    if (deployment.service_id === "data_pond_web" && deploymentRuntime.web_request_origin) {
+      return {
+        ...deployment,
+        runtime_identifier: observedPagesRuntimeId ?? deployment.runtime_identifier,
+        public_url: deploymentRuntime.web_request_origin,
+      };
+    }
+
+    if (deployment.service_id === "watchtower_control_plane" && deploymentRuntime.web_request_origin) {
+      return {
+        ...deployment,
+        runtime_identifier: observedPagesRuntimeId
+          ? `${observedPagesRuntimeId} + ${provenance.deployments.find((item) => item.service_id === "data_pond_api")?.runtime_identifier ?? "unknown-api"}`
+          : deployment.runtime_identifier,
+        public_url: `${deploymentRuntime.web_request_origin}/watchtower`,
+      };
+    }
+
+    return deployment;
+  });
+
+  const webAligned =
+    !deploymentRuntime.web_request_host ||
+    deploymentRuntime.web_request_host === new URL(deployments.find((item) => item.service_id === "data_pond_web")?.public_url ?? "https://invalid.local").host;
+  const apiAligned =
+    deploymentRuntime.api_request_host === new URL(deployments.find((item) => item.service_id === "data_pond_api")?.public_url ?? "https://invalid.local").host;
+
+  const runtimeAlignment: ReleaseProvenanceResponse["runtime_observation"]["runtime_alignment"] =
+    apiAligned && webAligned ? "aligned" : deploymentRuntime.web_request_origin ? "partial" : "review";
+
+  const runtimeNote =
+    runtimeAlignment === "aligned"
+      ? "Release pedigree is now overlaid with the currently observed web and API runtime hosts, so Watchtower reflects the live promoted slice instead of only the baked release manifest."
+      : runtimeAlignment === "partial"
+        ? "The API runtime is observed directly and the web runtime is partially inferred from the current request origin. Treat the runtime overlay as a live cross-check alongside the stamped release manifest."
+        : "The release pedigree still depends primarily on the stamped manifest because no current web request origin was available for runtime overlay.";
+
+  return {
+    ...provenance,
+    deployments,
+    runtime_observation: {
+      observed_api_origin: deploymentRuntime.api_request_origin,
+      observed_api_host: deploymentRuntime.api_request_host,
+      observed_web_origin: deploymentRuntime.web_request_origin,
+      observed_web_host: deploymentRuntime.web_request_host,
+      observed_pages_runtime_id: observedPagesRuntimeId,
+      runtime_alignment: runtimeAlignment,
+      runtime_note: runtimeNote,
+    },
+  };
 }
 
 function expectedZeroTrustMode(boundaryClass: string): LandscapeEvidence["expected_zero_trust_mode"] {
@@ -1392,13 +1503,17 @@ pond.get("/dock-preview", async (c) => {
 pond.get("/landscape", async (c) => {
   const manifest = landscapeManifest;
   const serviceOperations = serviceOperationsManifest;
+  const webRequestOrigin = deriveRequestingWebOrigin(c);
   const deploymentRuntime = {
     api_request_origin: new URL(c.req.url).origin,
     api_request_host: new URL(c.req.url).host,
+    web_request_origin: webRequestOrigin,
+    web_request_host: webRequestOrigin ? new URL(webRequestOrigin).host : null,
     cloudflare_access_team_domain: c.env.CLOUDFLARE_ACCESS_TEAM_DOMAIN ?? null,
     access_auto_provision_enabled: c.env.CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED === "true",
     access_default_role: c.env.CLOUDFLARE_ACCESS_DEFAULT_ROLE ?? null,
   };
+  const runtimeManagedReleaseProvenance = buildRuntimeManagedReleaseProvenance(releaseProvenance, deploymentRuntime);
 
   const canonicalFoundations = manifest.canonical_foundations.map((item) => withMachineEvaluatedRemediation(withConditionAwareNextAction({
     ...item,
@@ -1557,7 +1672,7 @@ pond.get("/landscape", async (c) => {
     service_operations_summary: serviceOperationsSummary,
     deployment_provenance: deploymentProvenance,
     deployment_runtime: deploymentRuntime,
-    release_provenance: releaseProvenance,
+    release_provenance: runtimeManagedReleaseProvenance,
     release_reconcile_snapshot: releaseReconcileSnapshot,
   });
 });

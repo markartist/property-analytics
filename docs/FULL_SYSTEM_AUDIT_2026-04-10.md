@@ -888,6 +888,14 @@ Additional current-state note:
 - the release pedigree model now also has a canonical operator bridge:
   - `/Users/mark/Property_Analytics/scripts/update_release_provenance.py`
   - `/Users/mark/Property_Analytics/docs/RELEASE_PROVENANCE_STAMPING_RUNBOOK_2026-04-18.md`
+- the clean-branch release path is now no longer theoretical:
+  - `codex/release-reconcile` has been promoted live to Cloudflare Workers + Pages
+  - current live release pedigree should now resolve to Worker version `cf89ba18-bd69-4601-8854-eb8b937ab18c` and Pages runtime `ad8bbc7e`
+- that matters because the enterprise release model is now proven in operation, not only documented in planning artifacts
+- release pedigree is now also partially runtime-managed:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` overlays the stamped release manifest with the currently observed API host, requesting web host, and inferred Pages runtime id
+  - `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` presents that runtime observation in the Release Pedigree board
+- that matters because the control plane is now less dependent on a bundled static provenance file and can cross-check the live promoted surface against the stamped release record at request time
 - that matters because the current platform is still between ad hoc operator-led deploys and fully issued CI provenance; this bridge reduces stale pedigree drift immediately while preserving the path toward true automation
 - the platform now also has a generated release-reconcile snapshot:
   - `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py`

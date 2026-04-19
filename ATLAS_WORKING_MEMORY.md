@@ -3918,3 +3918,35 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - the clean `codex/release-reconcile` branch is validated, committed, and pushed, but live promotion is honestly blocked because the Keeper-backed Cloudflare admin token currently fails verification with `401 Unauthorized`
   - release governance now treats Cloudflare admin token health as a first-class gate instead of letting Wrangler fail mid-promotion
   - the remaining blocker is no longer code or branch discipline; it is credential rotation/replacement for Cloudflare release operations
+
+### 2026-04-19 03:10 UTC - Clean release promotion succeeded from codex/release-reconcile
+
+- Verified that the Keeper-backed `Cloudflare API Token` is valid on the account-scoped Cloudflare token verify endpoint, even though the user-scoped Wrangler OAuth session had expired and the user-token verify endpoint still failed.
+- Deployed the clean reconcile branch directly with explicit account-scoped auth context:
+  - API from `/private/tmp/property_analytics_reconcile/apps/api`
+  - Pages from `/private/tmp/property_analytics_reconcile/apps/web`
+- Promoted live runtime identifiers:
+  - Worker version `cf89ba18-bd69-4601-8854-eb8b937ab18c`
+  - Pages runtime `ad8bbc7e`
+  - Pages alias `https://codex-release-reconcile.property-analytics.pages.dev`
+- Restamped:
+  - `/Users/mark/Property_Analytics/config/release_provenance.json`
+  - `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`
+- Current effect:
+  - the platform is now running from the clean `codex/release-reconcile` slice instead of only describing that branch as a future target
+  - Watchtower can now show aligned live release pedigree for the reconciled branch and current runtime IDs
+  - the remaining release-maturity work is now CI-issued provenance and ongoing reduction of follow-on lanes, not basic clean-branch promotion itself
+
+### 2026-04-19 03:30 UTC - Release pedigree now carries a runtime observation overlay
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so `release_provenance` now includes a `runtime_observation` block derived from the live request shape.
+- The overlay now captures:
+  - observed API origin/host
+  - observed requesting web origin/host
+  - inferred Pages runtime id when the current web host is a Pages runtime host
+  - runtime alignment status and note
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so `Release Pedigree` shows the live runtime overlay alongside the stamped manifest.
+- Current effect:
+  - Watchtower no longer relies purely on the bundled release-provenance JSON to describe the currently promoted web/API slice
+  - the release pedigree remains stampable, but it is now cross-checked against the live runtime at request time
+  - this reduces the “one deploy behind” problem while the platform still uses operator-bridge provenance instead of CI-issued provenance

@@ -742,6 +742,8 @@ export interface PondLandscapeResponse {
   deployment_runtime: {
     api_request_origin: string;
     api_request_host: string;
+    web_request_origin: string | null;
+    web_request_host: string | null;
     cloudflare_access_team_domain: string | null;
     access_auto_provision_enabled: boolean;
     access_default_role: string | null;
@@ -771,6 +773,15 @@ export interface PondLandscapeResponse {
       runtime_identifier: string;
       public_url: string;
     }>;
+    runtime_observation: {
+      observed_api_origin: string;
+      observed_api_host: string;
+      observed_web_origin: string | null;
+      observed_web_host: string | null;
+      observed_pages_runtime_id: string | null;
+      runtime_alignment: "aligned" | "partial" | "review";
+      runtime_note: string;
+    };
     next_moves: string[];
   };
   release_reconcile_snapshot: {
