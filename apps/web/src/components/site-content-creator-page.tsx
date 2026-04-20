@@ -92,6 +92,25 @@ type PageClaimFocus = {
   claims: IntelligenceClaim[];
 };
 
+type StoryTheme =
+  | "lifestyle"
+  | "location"
+  | "amenities"
+  | "floorplans"
+  | "trust"
+  | "conversion"
+  | "differentiation";
+
+const STORY_THEME_KEYWORDS: Record<StoryTheme, string[]> = {
+  lifestyle: ["lifestyle", "community", "experience", "living", "resident", "feel", "home"],
+  location: ["location", "neighborhood", "district", "walkable", "nearby", "local", "connected"],
+  amenities: ["amenities", "pool", "fitness", "clubhouse", "features", "spaces", "pet", "parking"],
+  floorplans: ["floorplan", "plans", "layouts", "studio", "bedroom", "residences", "apartments"],
+  trust: ["quality", "managed", "service", "team", "maintenance", "trusted", "confidence", "proof"],
+  conversion: ["tour", "apply", "lease", "availability", "contact", "schedule", "cta", "book"],
+  differentiation: ["unique", "distinctive", "elevated", "designed", "crafted", "signature", "standout"],
+};
+
 function formatStamp(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -267,6 +286,23 @@ function claimKeywords(text: string): string[] {
     .filter((token) => token.length >= 5);
 }
 
+function inferStoryThemes(text: string): StoryTheme[] {
+  const lowered = text.toLowerCase();
+  const matches = Object.entries(STORY_THEME_KEYWORDS)
+    .filter(([, keywords]) => keywords.some((keyword) => lowered.includes(keyword)))
+    .map(([theme]) => theme as StoryTheme);
+  return matches.length > 0 ? matches : ["differentiation"];
+}
+
+function themeLabel(theme: StoryTheme): string {
+  switch (theme) {
+    case "floorplans":
+      return "Floor Plans";
+    default:
+      return theme.charAt(0).toUpperCase() + theme.slice(1);
+  }
+}
+
 function pageIntentTokens(page: SiteContentPage): string[] {
   return [
     page.page_type,
@@ -283,6 +319,14 @@ function pageIntentTokens(page: SiteContentPage): string[] {
     .filter((token) => token.length >= 4);
 }
 
+function pageIntentThemes(page: SiteContentPage): StoryTheme[] {
+  return inferStoryThemes(
+    [page.page_type, page.page_path, page.spec_page_name, page.spec_archetype_name, page.page_title]
+      .filter(Boolean)
+      .join(" ")
+  );
+}
+
 function sectionRoleTokens(mapping: SiteContentSectionMapping | null): string[] {
   return [mapping?.expected_section_label, mapping?.expected_section_role, mapping?.expected_section_key]
     .filter(Boolean)
@@ -291,6 +335,10 @@ function sectionRoleTokens(mapping: SiteContentSectionMapping | null): string[] 
     .split(/[^a-z0-9]+/)
     .map((token) => token.trim())
     .filter((token) => token.length >= 4);
+}
+
+function sectionRoleThemes(mapping: SiteContentSectionMapping | null): StoryTheme[] {
+  return inferStoryThemes([mapping?.expected_section_label, mapping?.expected_section_role, mapping?.expected_section_key].filter(Boolean).join(" "));
 }
 
 function buildNarrativeCoverage(pages: SiteContentPage[], claims: IntelligenceClaim[]): NarrativeCoverage[] {
@@ -388,18 +436,21 @@ function buildNarrativePriorityPages(
 function selectClaimsForPage(page: SiteContentPage, narrativeCoverage: NarrativeCoverage[]): IntelligenceClaim[] {
   const unresolved = narrativeCoverage.filter((item) => item.posture !== "aligned");
   const pageTokens = new Set(pageIntentTokens(page));
+  const pageThemes = new Set(pageIntentThemes(page));
   const pageText = pageSearchText(page);
 
   return unresolved
     .map((item) => {
       const tokens = claimKeywords(item.claim.claim_text).slice(0, 8);
+      const claimThemes = inferStoryThemes(item.claim.claim_text);
       const roleHits = tokens.filter((token) => pageTokens.has(token)).length;
       const textHits = tokens.filter((token) => pageText.includes(token)).length;
+      const themeHits = claimThemes.filter((theme) => pageThemes.has(theme)).length;
       const homeBoost = ((page.page_path ?? "/") === "/" || page.page_type?.toLowerCase().includes("home")) ? 2 : 0;
       const postureBoost = item.posture === "missing" ? 2 : 1;
       return {
         claim: item.claim,
-        score: roleHits * 3 + textHits + homeBoost + postureBoost,
+        score: roleHits * 3 + textHits + themeHits * 4 + homeBoost + postureBoost,
       };
     })
     .filter((item) => item.score > 0)
@@ -413,9 +464,15 @@ function suggestedRewriteBrief(
   focusedClaims: IntelligenceClaim[]
 ): string {
   const sectionRole = mapping?.expected_section_label || mapping?.expected_section_role || mapping?.expected_section_key || "this section";
+  const themes = Array.from(
+    new Set(
+      focusedClaims.flatMap((claim) => inferStoryThemes(claim.claim_text))
+    )
+  );
   const claimLead = focusedClaims[0]?.claim_text;
   if (claimLead) {
-    return `Use ${sectionRole} to reinforce the property story around: ${claimLead}`;
+    const themeLead = themes.length > 0 ? ` Focus the rewrite on ${themes.map(themeLabel).join(", ")}.` : "";
+    return `Use ${sectionRole} to reinforce the property story around: ${claimLead}.${themeLead}`;
   }
   return `Use ${sectionRole} to support the page purpose, maintain cross-page harmony, and strengthen the most important property differentiators.`;
 }
@@ -897,6 +954,9 @@ export function SiteContentCreatorPage() {
                     const posture = summarizePage(page, propertyClaims, briefReadiness);
                     const tone = toneForPosture(posture.posture);
                     const focusedClaims = pageClaimFocus.get(page.id) ?? [];
+                    const focusedThemes = Array.from(
+                      new Set(focusedClaims.flatMap((claim) => inferStoryThemes(claim.claim_text)))
+                    );
                     return (
                       <button
                         key={page.id}
@@ -937,6 +997,13 @@ export function SiteContentCreatorPage() {
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             {focusedClaims.map((claim) => (
                               <InlinePill key={claim.id} label={`Focus: ${claim.claim_text}`} tone="slate" />
+                            ))}
+                          </div>
+                        )}
+                        {focusedThemes.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                            {focusedThemes.map((theme) => (
+                              <InlinePill key={`${page.id}-${theme}`} label={`Theme: ${themeLabel(theme)}`} tone="blue" />
                             ))}
                           </div>
                         )}
@@ -1063,6 +1130,7 @@ function PageWorkspace({
   const posture = summarizePage(page, propertyClaims, briefReadiness);
   const tone = toneForPosture(posture.posture);
   const missingMappings = page.section_mappings.filter((mapping) => mapping.match_status === "missing-from-live");
+  const focusedThemes = Array.from(new Set(focusedClaims.flatMap((claim) => inferStoryThemes(claim.claim_text))));
 
   return (
     <Card id={`page-${page.id}`} className={`overflow-hidden border ${tone.border}`}>
@@ -1108,6 +1176,13 @@ function PageWorkspace({
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               {focusedClaims.map((claim) => (
                 <InlinePill key={claim.id} label={`Narrative focus: ${claim.claim_text}`} tone="slate" />
+              ))}
+            </div>
+          )}
+          {focusedThemes.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {focusedThemes.map((theme) => (
+                <InlinePill key={`${page.id}-${theme}`} label={`Theme: ${themeLabel(theme)}`} tone="blue" />
               ))}
             </div>
           )}
@@ -1215,6 +1290,13 @@ function SectionWorkspace({
     const roleTokens = new Set(sectionRoleTokens(mapping));
     return claimTokens.some((token) => roleTokens.has(token));
   });
+  const sectionThemes = Array.from(
+    new Set(
+      (sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims).flatMap((claim) =>
+        inferStoryThemes(claim.claim_text)
+      )
+    )
+  );
   const recommendedBrief = suggestedRewriteBrief(mapping, sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims);
 
   async function handleSave() {
@@ -1344,6 +1426,13 @@ function SectionWorkspace({
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims).slice(0, 2).map((claim) => (
                       <InlinePill key={claim.id} label={claim.claim_text} tone="slate" />
+                    ))}
+                  </div>
+                )}
+                {sectionThemes.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {sectionThemes.map((theme) => (
+                      <InlinePill key={`${mapping?.id ?? section.section_order}-${theme}`} label={themeLabel(theme)} tone="blue" />
                     ))}
                   </div>
                 )}

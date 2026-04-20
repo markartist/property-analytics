@@ -3961,6 +3961,23 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 16:40 UTC - Site Content now routes story work through reusable themes
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` with a first-pass story-theme layer.
+- Added reusable theme groupings for:
+  - lifestyle
+  - location
+  - amenities
+  - floor plans
+  - trust
+  - conversion
+  - differentiation
+- Current effect:
+  - page-level claim routing now considers page-intent themes in addition to token overlap
+  - page cards and page workspaces now expose theme chips alongside narrative focus claims
+  - section rewrite workspaces now show theme-aware suggested focus rather than only raw claim text
+  - rewrite brief guidance is becoming more portable and editorially legible
+
 ### 2026-04-19 16:20 UTC - Site Content claim routing is now page-aware and rewrite-guiding
 
 - Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so unresolved governed claims are now routed more intentionally by page role and section role.
