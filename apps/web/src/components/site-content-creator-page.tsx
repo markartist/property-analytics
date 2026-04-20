@@ -535,7 +535,7 @@ export function SiteContentCreatorPage() {
       const [detail] = await Promise.all([getSiteContentProperty(nextPropertyId), loadPropertySignals(nextPropertyId)]);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
-      setFocusedPageId("all");
+      setFocusedPageId(detail.pages[0]?.id ?? "all");
     }
   }, [loadPropertySignals]);
 
@@ -551,7 +551,7 @@ export function SiteContentCreatorPage() {
       const [detail] = await Promise.all([getSiteContentProperty(propertyId), loadPropertySignals(propertyId)]);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
-      setFocusedPageId("all");
+      setFocusedPageId(detail.pages[0]?.id ?? "all");
     } catch (err: any) {
       setFlash({ type: "error", text: err.message });
     }
@@ -573,7 +573,7 @@ export function SiteContentCreatorPage() {
       setProperties(inventory.properties);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
-      setFocusedPageId("all");
+      setFocusedPageId(detail.pages[0]?.id ?? "all");
       setActiveTab("inventory");
       setFlash({
         type: "success",
@@ -626,37 +626,28 @@ export function SiteContentCreatorPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
-      <Card className="overflow-hidden border-[#15284B]/10 bg-[linear-gradient(150deg,#0f2745_0%,#124766_46%,#1e7d68_100%)] text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
-        <CardContent className="space-y-6 p-6 md:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-4xl space-y-3">
-              <div className="flex items-center gap-3 text-white/85">
-                <FileSearch className="h-6 w-6" />
-                <p className="text-xs font-semibold uppercase tracking-[0.28em]">Content Operations Workspace</p>
-              </div>
-              <div className="space-y-3">
-                <h1 className="text-4xl font-black tracking-tight md:text-5xl">Site Content Creator</h1>
-                <p className="max-w-4xl text-base leading-8 text-white/78 md:text-lg">
-                  Capture the live site, compare it against Specs, bring in governed Intelligence Office context, and
-                  review the whole property story from block to page to full-site harmonization.
-                </p>
-              </div>
+      <Card className="overflow-hidden border-[#15284B]/10 bg-[linear-gradient(150deg,#f7fbfd_0%,#eef6fb_48%,#edf8f3_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+        <CardContent className="space-y-4 p-6 md:p-8">
+          <div className="flex items-center gap-3 text-[#0D5E6D]">
+            <FileSearch className="h-6 w-6" />
+            <p className="text-xs font-semibold uppercase tracking-[0.28em]">Content Ops</p>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[1.45fr_0.95fr] lg:items-start">
+            <div className="space-y-3">
+              <h1 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl">Site Content Creator</h1>
+              <p className="max-w-4xl text-base leading-8 text-slate-600 md:text-lg">
+                Pick a property, open a page, and work block by block on content that visually matches the live site.
+              </p>
             </div>
-            <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
-              <HeroStat label="Story score" value={`${siteSummary.storyScore}`} helper="Message strength across the captured site" />
-              <HeroStat
-                label="Harmonization"
-                value={`${siteSummary.harmonizationScore}`}
-                helper="Cross-page alignment against one coherent story"
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SimpleHeroTile label="Properties" value={String(properties.length)} helper="available" />
+              <SimpleHeroTile label="Pages" value={String(siteSummary.pagesCaptured)} helper="captured" />
+              <SimpleHeroTile
+                label="Brief"
+                value={briefReadiness?.completeness_status === "ready" ? "Ready" : "Needs work"}
+                helper={briefReadiness ? `${briefReadiness.missing_components.length} gaps` : "no governed brief"}
               />
             </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <MetricChip icon={<Layers3 className="h-4 w-4" />} label="Pages captured" value={String(siteSummary.pagesCaptured)} />
-            <MetricChip icon={<Compass className="h-4 w-4" />} label="Specs matched" value={String(siteSummary.matchedSections)} />
-            <MetricChip icon={<Brain className="h-4 w-4" />} label="Needs attention" value={String(siteSummary.needsAttentionSections)} />
-            <MetricChip icon={<Wand2 className="h-4 w-4" />} label="Approved rewrites" value={String(siteSummary.approvedRewrites)} />
           </div>
         </CardContent>
       </Card>
@@ -672,7 +663,8 @@ export function SiteContentCreatorPage() {
       )}
 
       <Card>
-        <CardContent className="grid gap-4 p-6 lg:grid-cols-[1.5fr_0.65fr_0.7fr_auto]">
+        <CardContent className="space-y-4 p-6">
+          <div className="grid gap-4 lg:grid-cols-[1.45fr_0.6fr_auto]">
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Property site</label>
             <select
@@ -686,16 +678,15 @@ export function SiteContentCreatorPage() {
                 </option>
               ))}
             </select>
+            <p className="text-sm text-slate-500">
+              {selectedSummary
+                ? `${selectedSummary.page_count} pages captured`
+                : "Choose a property to load its captured pages."}
+            </p>
           </div>
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Page crawl limit</label>
             <Input value={selectedPageLimit} onChange={(e) => setSelectedPageLimit(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Current crawl</label>
-            <div className="flex h-10 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700">
-              {selectedSummary ? `${selectedSummary.page_count} pages / ${selectedSummary.section_count} sections` : "—"}
-            </div>
           </div>
           <div className="flex items-end">
             <Button onClick={runCrawl} disabled={!selectedPropertyId || crawling}>
@@ -703,238 +694,7 @@ export function SiteContentCreatorPage() {
               Refresh Site Snapshot
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <div className="flex items-center gap-2 text-slate-900">
-              <Target className="h-5 w-5 text-[#0D5E6D]" />
-              <h2 className="text-lg font-semibold">Site story board</h2>
-            </div>
-            <p className="text-sm leading-6 text-slate-600">
-              Site Content now evaluates the property site as a composed narrative system. Use this board to understand
-              whether the site is structurally aligned, story-consistent, and ready for rewrite closure.
-            </p>
-            <div className="grid gap-3 md:grid-cols-2">
-              <SurfaceMetric label="Partial mappings" value={String(siteSummary.partialSections)} helper="Live sections that only partially fit the intended Specs role." />
-              <SurfaceMetric label="Missing expected sections" value={String(siteSummary.missingSections)} helper="Governed sections expected by Specs but absent on the live page." />
-              <SurfaceMetric label="Drafted rewrites" value={String(siteSummary.draftedRewrites)} helper="Sections with a first rewrite pass but not yet reviewed." />
-              <SurfaceMetric label="In review" value={String(siteSummary.inReviewRewrites)} helper="Sections already moving toward approved harmonized copy." />
-            </div>
-            <div className="rounded-2xl border border-[#15284B]/10 bg-[#15284B]/[0.035] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Next move</p>
-              <p className="mt-2 text-sm leading-7 text-slate-700">{siteSummary.nextMove}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <div className="flex items-center gap-2 text-slate-900">
-              <Sparkles className="h-5 w-5 text-[#0D5E6D]" />
-              <h2 className="text-lg font-semibold">Operating contract</h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ContractTile title="Specs" detail="Intended structure, expected sections, and page-purpose contract." />
-              <ContractTile title="EVS / BrowserStack" detail="Observed rendered structure and journey truth." />
-              <ContractTile title="Intelligence Office" detail="Directives, claims, evidence, and governed interpretation." />
-              <ContractTile title="Property Captain" detail="Property-specific priorities, differentiation, and storytelling emphasis." />
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm leading-7 text-slate-700">
-                Site Content Creator should be the place where these truths meet. It should diagnose the content, not
-                duplicate the structural work already owned by Specs or the rendered-evidence work already owned by EVS.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <div className="flex items-center gap-2 text-slate-900">
-              <Brain className="h-5 w-5 text-[#0D5E6D]" />
-              <h2 className="text-lg font-semibold">Intelligence and Captain signals</h2>
-            </div>
-            <p className="text-sm leading-6 text-slate-600">
-              These are the governed narrative inputs behind the site story. They should influence rewrite priority and
-              storytelling judgment before section copy gets polished in isolation.
-            </p>
-            <div className="grid gap-3 md:grid-cols-3">
-              <SurfaceMetric
-                label="Claims"
-                value={String(propertyClaims.length)}
-                helper="Property-scoped narrative claims that should be reinforced or reconciled on the site."
-              />
-              <SurfaceMetric
-                label="Evidence refs"
-                value={String(propertyEvidence.length)}
-                helper="Evidence objects supporting the active property story and its major proof points."
-              />
-              <SurfaceMetric
-                label="Brief readiness"
-                value={briefReadiness ? `${briefReadiness.completeness_score}` : "—"}
-                helper={briefReadiness ? briefReadiness.completeness_status : "No readiness signal loaded for this property."}
-              />
-            </div>
-            {briefReadiness && (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Readiness posture</p>
-                <p className="mt-2 text-sm leading-7 text-slate-700">
-                  Captain inputs: {briefReadiness.captain_log_count} · Claims: {briefReadiness.claim_count} · Evidence:{" "}
-                  {briefReadiness.evidence_count}
-                </p>
-                {briefReadiness.missing_components.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {briefReadiness.missing_components.map((item) => (
-                      <InlinePill key={item} label={item.replace(/_/g, " ")} tone="amber" />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <div className="flex items-center gap-2 text-slate-900">
-              <Compass className="h-5 w-5 text-[#0D5E6D]" />
-              <h2 className="text-lg font-semibold">Captain’s Brief lead signal</h2>
-            </div>
-            <p className="text-sm leading-6 text-slate-600">
-              The current property story should stay anchored to the latest Captain guidance, not only to structural and
-              section-level assessment output.
-            </p>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              {latestCaptainEntry ? (
-                <>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Latest Captain entry</p>
-                  <p className="mt-3 text-base font-semibold text-slate-900">{latestCaptainEntry.entry.summary}</p>
-                  <p className="mt-2 text-sm leading-7 text-slate-700">
-                    Confidence {Math.round((latestCaptainEntry.entry.confidence ?? 0) * 100)} · Updated{" "}
-                    {formatStamp(latestCaptainEntry.entry.updated_at)}
-                  </p>
-                  {latestCaptainEntry.evidence.length > 0 && (
-                    <p className="mt-2 text-sm leading-7 text-slate-600">
-                      Evidence attached: {latestCaptainEntry.evidence.length} supporting references
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm leading-7 text-slate-600">
-                  No Captain’s Brief signal is currently available for this property. The site story should be treated as
-                  under-governed until property strategy is supplied.
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardContent className="space-y-4 p-6">
-          <div className="flex items-center gap-2 text-slate-900">
-            <Target className="h-5 w-5 text-[#0D5E6D]" />
-            <h2 className="text-lg font-semibold">Narrative consistency board</h2>
           </div>
-          <p className="text-sm leading-6 text-slate-600">
-            This layer checks whether the active governed property claims are actually echoed across the captured site.
-            It helps surface where the property story is fragmented, under-supported, or absent from key pages.
-          </p>
-          <div className="grid gap-3 md:grid-cols-3">
-            <SurfaceMetric
-              label="Governed claims"
-              value={String(narrativeCoverage.length)}
-              helper="Claims available to measure against the captured site copy."
-            />
-            <SurfaceMetric
-              label="Missing claims"
-              value={String(missingNarrativeClaims.length)}
-              helper="Claims not reflected on any captured page yet."
-            />
-            <SurfaceMetric
-              label="Partial coverage"
-              value={String(partialNarrativeClaims.length)}
-              helper="Claims present somewhere, but not distributed strongly enough across the site."
-            />
-          </div>
-          {narrativeCoverage.length > 0 ? (
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-              <div className="grid gap-3 md:grid-cols-2">
-                {narrativeCoverage.map((item) => {
-                  const tone =
-                    item.posture === "aligned"
-                      ? "border-emerald-200 bg-emerald-50/70"
-                      : item.posture === "partial"
-                        ? "border-amber-200 bg-amber-50/70"
-                        : "border-rose-200 bg-rose-50/70";
-                  const label =
-                    item.posture === "aligned" ? "Aligned" : item.posture === "partial" ? "Partial" : "Missing";
-                  return (
-                    <div key={item.claim.id} className={`rounded-2xl border p-4 ${tone}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-semibold text-slate-900">{item.claim.claim_text}</p>
-                        <InlinePill
-                          label={label}
-                          tone={item.posture === "aligned" ? "emerald" : item.posture === "partial" ? "amber" : "rose"}
-                        />
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-700">
-                        Coverage: {Math.round(item.coverageRatio * 100)}% of captured pages
-                      </p>
-                      {item.pagesCovered.length > 0 ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {item.pagesCovered.slice(0, 5).map((pageLabel) => (
-                            <InlinePill key={pageLabel} label={pageLabel} tone="slate" />
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-3 text-sm leading-6 text-slate-600">
-                          No captured page currently reflects this governed claim strongly enough to register.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-slate-900">
-                  <Wand2 className="h-4 w-4 text-[#0D5E6D]" />
-                  <p className="font-semibold">Narrative priority pages</p>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  These pages are the best places to absorb unresolved story work first based on current structure,
-                  section posture, and governed claim gaps.
-                </p>
-                <div className="mt-4 space-y-3">
-                  {narrativePriorityPages.map((page) => (
-                    <div key={page.pageId} className="rounded-xl border border-slate-200 bg-white p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-semibold text-slate-900">{page.label}</p>
-                        <InlinePill label={`Priority ${page.score}`} tone={page.score >= 6 ? "rose" : page.score >= 4 ? "amber" : "slate"} />
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {page.reasons.map((reason) => (
-                          <p key={reason} className="text-sm leading-6 text-slate-700">
-                            {reason}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-              No governed property claims are loaded for this site yet, so narrative consistency cannot be assessed.
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -948,10 +708,9 @@ export function SiteContentCreatorPage() {
           <Card>
             <CardContent className="space-y-4 p-6">
               <div>
-                <p className="text-base font-semibold text-slate-900">Page composition board</p>
+                <p className="text-base font-semibold text-slate-900">Pages</p>
                 <p className="text-sm text-slate-600">
-                  This is the triage layer between raw crawl output and section work. Review which pages are already
-                  coherent, which pages are structurally drifting, and which ones are still missing their intended story.
+                  Pick a page to open its content layout and edit one block at a time.
                 </p>
               </div>
               {selectedPages.length === 0 ? (
@@ -1000,37 +759,10 @@ export function SiteContentCreatorPage() {
                             {posture.posture.replace("-", " ")}
                           </span>
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                          <MiniScore label="Story" value={posture.storyScore} />
-                          <MiniScore label="Harmony" value={posture.harmonizationScore} />
-                        </div>
                         <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                          <InlinePill label={`${page.section_mapping_summary.matched} matched`} />
-                          {page.section_mapping_summary.partial > 0 && (
-                            <InlinePill label={`${page.section_mapping_summary.partial} partial`} tone="amber" />
-                          )}
-                          {page.section_mapping_summary.missing_from_live > 0 && (
-                            <InlinePill label={`${page.section_mapping_summary.missing_from_live} missing`} tone="rose" />
-                          )}
-                          {page.section_rewrite_summary.in_review > 0 && (
-                            <InlinePill label={`${page.section_rewrite_summary.in_review} in review`} tone="blue" />
-                          )}
+                          <InlinePill label={`${page.sections.filter((section) => section.image_count > 0).length} visual blocks`} tone="blue" />
+                          <InlinePill label={`${page.sections.length} sections`} tone="slate" />
                         </div>
-                        {focusedClaims.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                            {focusedClaims.map((claim) => (
-                              <InlinePill key={claim.id} label={`Focus: ${claim.claim_text}`} tone="slate" />
-                            ))}
-                          </div>
-                        )}
-                        {focusedThemes.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                            {focusedThemes.map((theme) => (
-                              <InlinePill key={`${page.id}-${theme}`} label={`Theme: ${themeLabel(theme)}`} tone="blue" />
-                            ))}
-                          </div>
-                        )}
-                        <p className="mt-4 text-sm leading-6 text-slate-700">{posture.nextMove}</p>
                       </button>
                     );
                   })}
@@ -1038,13 +770,6 @@ export function SiteContentCreatorPage() {
               )}
               {selectedPages.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant={focusedPageId === "all" ? "default" : "outline"}
-                    onClick={() => setFocusedPageId("all")}
-                  >
-                    Show all pages
-                  </Button>
                   {selectedPages.map((page) => (
                     <Button
                       key={`filter-${page.id}`}
@@ -1070,7 +795,7 @@ export function SiteContentCreatorPage() {
               </CardContent>
             </Card>
           ) : (
-            visiblePages.map((page) => (
+            visiblePages.slice(0, 1).map((page) => (
               <PageWorkspace
                 key={page.id}
                 page={page}
@@ -1191,11 +916,12 @@ function PageWorkspace({
               {page.spec_layout_path && <p className="text-sm text-slate-600">Specs contract: {page.spec_layout_path}</p>}
               <p className="text-sm text-slate-500">{page.page_url}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:min-w-[420px]">
-              <MiniScore label="Story" value={posture.storyScore} />
-              <MiniScore label="Harmony" value={posture.harmonizationScore} />
-              <MiniMetric label="Needs attention" value={String(page.section_assessment_summary.needs_attention)} />
-              <MiniMetric label="Approved rewrites" value={String(page.section_rewrite_summary.approved)} />
+            <div className="flex flex-wrap gap-2 text-xs">
+              <InlinePill label={`${page.sections.length} blocks`} tone="slate" />
+              <InlinePill label={`${page.sections.filter((section) => section.image_count > 0).length} with visuals`} tone="blue" />
+              {page.section_rewrite_summary.in_review > 0 && (
+                <InlinePill label={`${page.section_rewrite_summary.in_review} in review`} tone="amber" />
+              )}
             </div>
           </div>
           <div className="mt-5 grid gap-4 xl:grid-cols-[320px_1fr]">
@@ -1214,83 +940,29 @@ function PageWorkspace({
               )}
             </div>
             <div className="rounded-[1.15rem] border border-slate-200 bg-white/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">How to use this page workbench</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">How to use this page</p>
               <div className="mt-3 grid gap-3 md:grid-cols-3">
                 <WorkbenchStep
                   step="1"
-                  title="Scan the page flow"
-                  detail="Read the page left to right by block order to see what exists, where it lives, and whether imagery is present."
+                  title="Pick a block"
+                  detail="Use the page flow below to choose the part of the page you want to work on."
                 />
                 <WorkbenchStep
                   step="2"
-                  title="Open one block"
-                  detail="Use the selected block drawer below for live copy, Specs contract, posture, and rewrite decisions."
+                  title="Compare to the live layout"
+                  detail="Each tile shows whether the block is mostly text, image-led, or gallery-heavy."
                 />
                 <WorkbenchStep
                   step="3"
-                  title="Close the story gap"
-                  detail="Use focus claims and rewrite guidance to strengthen the page’s role in the site-wide narrative."
+                  title="Edit the copy"
+                  detail="Open the selected block below and rewrite only that section before moving on."
                 />
               </div>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <InlinePill label={`${page.section_mapping_summary.matched} matched`} />
-            {page.section_mapping_summary.partial > 0 && (
-              <InlinePill label={`${page.section_mapping_summary.partial} partial`} tone="amber" />
-            )}
-            {page.section_mapping_summary.missing_from_live > 0 && (
-              <InlinePill label={`${page.section_mapping_summary.missing_from_live} missing from live`} tone="rose" />
-            )}
-            {page.section_mapping_summary.extra_on_live > 0 && (
-              <InlinePill label={`${page.section_mapping_summary.extra_on_live} extra on live`} tone="slate" />
-            )}
-          </div>
-          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700">{posture.nextMove}</p>
-          {focusedClaims.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {focusedClaims.map((claim) => (
-                <InlinePill key={claim.id} label={`Narrative focus: ${claim.claim_text}`} tone="slate" />
-              ))}
-            </div>
-          )}
-          {focusedThemes.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              {focusedThemes.map((theme) => (
-                <InlinePill key={`${page.id}-${theme}`} label={`Theme: ${themeLabel(theme)}`} tone="blue" />
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="space-y-4 px-6 pb-6">
-          {missingMappings.length > 0 && (
-            <Card className="border-rose-200 bg-rose-50/70">
-              <CardContent className="space-y-3 p-5">
-                <div>
-                  <p className="text-base font-semibold text-slate-900">Expected structure missing from the live page</p>
-                  <p className="text-sm leading-6 text-slate-600">
-                    These sections exist in the governed contract but were not found in the current crawl. This is a page
-                    composition issue, not just a section rewrite issue.
-                  </p>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {missingMappings.map((mapping) => (
-                    <div key={mapping.id} className="rounded-xl border border-rose-200 bg-white p-4">
-                      <p className="font-semibold text-slate-900">
-                        {mapping.expected_section_label || mapping.expected_section_key || "Expected section"}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-                        {mapping.expected_section_role || "expected role"}
-                      </p>
-                      <p className="mt-3 text-sm leading-6 text-slate-700">{mapping.rationale}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {page.sections.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
               This page was discovered, but no section blocks were extracted yet.
@@ -1301,15 +973,10 @@ function PageWorkspace({
                 <CardContent className="space-y-4 p-5">
                   <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                     <div>
-                      <p className="text-base font-semibold text-slate-900">Page flow map</p>
+                      <p className="text-base font-semibold text-slate-900">Page layout</p>
                       <p className="text-sm leading-6 text-slate-600">
-                        Scan the live page from top to bottom, then open one block at a time in the drawer below.
+                        These tiles approximate the blocks on the live page. Choose one to edit below.
                       </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <InlinePill label={`${page.sections.length} live blocks`} tone="slate" />
-                      <InlinePill label={`${page.sections.filter((section) => section.image_count > 0).length} with imagery`} tone="blue" />
-                      <InlinePill label={`${page.section_mapping_summary.missing_from_live} missing slots`} tone={page.section_mapping_summary.missing_from_live > 0 ? "rose" : "emerald"} />
                     </div>
                   </div>
 
@@ -1543,65 +1210,9 @@ function SectionWorkspace({
         </div>
       </div>
 
-      <div className="grid gap-5 border-b border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] p-5 lg:grid-cols-[0.95fr_1.05fr_0.95fr]">
-        <div className="space-y-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Expected Specs slot</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">
-              {mapping?.expected_section_label || mapping?.expected_section_key || "Unmapped section"}
-            </p>
-            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-              {mapping?.expected_section_role || "No governed role attached yet"}
-            </p>
-          </div>
-          <p className="text-sm leading-6 text-slate-600">
-            {mapping?.rationale ||
-              "This live section has not yet been reconciled cleanly against the intended section contract."}
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Live baseline</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{title}</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-              {section.section_type || "standard"} • {section.image_count} images • {section.link_count} links
-            </p>
-          </div>
-          <p className="line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-            {section.original_copy || "No captured copy was extracted for this block."}
-          </p>
-        </div>
-
-        <div className={`space-y-3 rounded-2xl border p-4 ${assessmentTone.border} ${assessmentTone.bg}`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Assessment posture</p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">
-                {assessment?.overall_status ? assessment.overall_status.replace("-", " ") : "Needs review"}
-              </p>
-            </div>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${assessmentTone.badge}`}>
-              {assessment?.overall_status?.replace("-", " ") || "watch"}
-            </span>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <InlineScore label="Structure" value={assessment?.structural_score ?? 0} />
-            <InlineScore label="Message" value={assessment?.messaging_score ?? 0} />
-            <InlineScore label="Specificity" value={assessment?.specificity_score ?? 0} />
-            <InlineScore label="Search" value={assessment?.search_value_score ?? 0} />
-            <InlineScore label="CTA" value={assessment?.cta_score ?? 0} />
-            <InlineScore label="Harmony" value={assessment?.harmonization_score ?? 0} />
-          </div>
-          <p className="text-sm leading-6 text-slate-700">
-            {assessment?.summary || "This section needs explicit assessment before rewrite decisions are trusted."}
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-5 p-5 lg:grid-cols-[1fr_1fr]">
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Observed copy</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Live content</p>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
               {section.original_copy || "No extracted copy available."}
@@ -1698,6 +1309,69 @@ function SectionWorkspace({
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="border-t border-slate-100 bg-slate-50/70 p-5">
+        <details className="group">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-slate-700">
+            Show Specs and diagnostics
+          </summary>
+          <div className="mt-4 grid gap-5 lg:grid-cols-[0.95fr_1.05fr_0.95fr]">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Expected Specs slot</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {mapping?.expected_section_label || mapping?.expected_section_key || "Unmapped section"}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                  {mapping?.expected_section_role || "No governed role attached yet"}
+                </p>
+              </div>
+              <p className="text-sm leading-6 text-slate-600">
+                {mapping?.rationale ||
+                  "This live section has not yet been reconciled cleanly against the intended section contract."}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Captured baseline</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">{title}</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+                  {section.section_type || "standard"} • {section.image_count} images • {section.link_count} links
+                </p>
+              </div>
+              <p className="line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                {section.original_copy || "No captured copy was extracted for this block."}
+              </p>
+            </div>
+
+            <div className={`space-y-3 rounded-2xl border p-4 ${assessmentTone.border} ${assessmentTone.bg}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Assessment</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">
+                    {assessment?.overall_status ? assessment.overall_status.replace("-", " ") : "Needs review"}
+                  </p>
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${assessmentTone.badge}`}>
+                  {assessment?.overall_status?.replace("-", " ") || "watch"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <InlineScore label="Structure" value={assessment?.structural_score ?? 0} />
+                <InlineScore label="Message" value={assessment?.messaging_score ?? 0} />
+                <InlineScore label="Specificity" value={assessment?.specificity_score ?? 0} />
+                <InlineScore label="Search" value={assessment?.search_value_score ?? 0} />
+                <InlineScore label="CTA" value={assessment?.cta_score ?? 0} />
+                <InlineScore label="Harmony" value={assessment?.harmonization_score ?? 0} />
+              </div>
+              <p className="text-sm leading-6 text-slate-700">
+                {assessment?.summary || "This section needs explicit assessment before rewrite decisions are trusted."}
+              </p>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   );
@@ -1975,6 +1649,16 @@ function HeroStat({ label, value, helper }: { label: string; value: string; help
       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/62">{label}</p>
       <p className="mt-2 text-3xl font-black text-white">{value}</p>
       <p className="mt-2 text-sm leading-6 text-white/68">{helper}</p>
+    </div>
+  );
+}
+
+function SimpleHeroTile({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
+      <p className="mt-2 text-3xl font-black text-slate-900">{value}</p>
+      <p className="mt-2 text-sm text-slate-500">{helper}</p>
     </div>
   );
 }

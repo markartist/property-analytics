@@ -478,6 +478,10 @@ Audit judgment:
   - the page-flow tiles now render as small structure previews instead of plain text-heavy audit cards
   - the active editing target is now surfaced as an explicit band above the page flow
   - that makes the page board read more like a storyboard / page outline and less like a diagnostic list
+- the next major usability reset is now also present:
+  - the default Site Content view no longer leads with a stack of story / contract / intelligence / narrative boards
+  - the primary path is now closer to `choose property -> choose page -> edit block`
+  - Specs and diagnostics are still available, but they now sit behind progressive disclosure instead of dominating the first screen
 - the clean release branch now also carries the Site Content admin API again after branch drift briefly left the UI without `/v1/admin/site-content`:
   - inventory, property detail, crawl, and rewrite flows are back on the promoted branch instead of only existing in the dirty main worktree
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally

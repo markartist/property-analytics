@@ -4208,6 +4208,19 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - switching properties now stays in the property-detail lane instead of retriggering the whole inventory bootstrap
   - the workbench should stop falling into redraw / reload loops when the operator selects a different property
 
+### 2026-04-20 11:28 UTC - Site Content default view was simplified into an editorial-first workbench
+
+- Refactored `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` again to reduce cognitive overload in the default operator path.
+- Major default-view changes:
+  - removed the large stack of story, contract, intelligence, and narrative analysis boards from the primary screen
+  - reduced the top area to property selection, page count, brief readiness, and refresh controls
+  - changed property load behavior so the first real page opens by default instead of falling back into an all-pages mode
+  - simplified the page board so it reads as a page chooser, not a diagnostics wall
+  - moved Specs and diagnostic detail in the section editor behind a collapsed `Show Specs and diagnostics` disclosure
+- Current effect:
+  - the default Site Content experience is now much closer to `choose property -> choose page -> edit block`
+  - the editing surface is more progressive and editorially understandable
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:
