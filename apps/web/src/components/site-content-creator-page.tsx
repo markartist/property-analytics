@@ -737,16 +737,28 @@ export function SiteContentCreatorPage() {
                         className={`rounded-2xl border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_18px_35px_rgba(15,23,42,0.08)] ${tone.border} ${tone.bg}`}
                       >
                         <div className="mb-4">
-                          {page.spec_screenshot ? (
+                          {hasRenderablePreviewImage(page.spec_screenshot) ? (
                             <div className="overflow-hidden rounded-[1.15rem] border border-slate-200 bg-slate-100">
                               <img
-                                src={page.spec_screenshot}
+                                src={page.spec_screenshot ?? ""}
                                 alt={`${page.spec_page_name || page.page_title || "Page"} preview`}
                                 className="h-32 w-full object-cover object-top"
                               />
                             </div>
                           ) : (
-                            renderSectionPreviewBars(page)
+                            <div className="rounded-[1.15rem] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#eef6f7_100%)] p-3">
+                              <div className="rounded-[0.9rem] border border-slate-200 bg-white p-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                    {page.spec_page_name || page.page_type || "Page layout"}
+                                  </span>
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0D5E6D]">
+                                    preview
+                                  </span>
+                                </div>
+                                <div className="mt-3">{renderSectionPreviewBars(page)}</div>
+                              </div>
+                            </div>
                           )}
                         </div>
                         <div className="flex items-start justify-between gap-3">
@@ -930,16 +942,28 @@ function PageWorkspace({
           <div className="mt-5 grid gap-4 xl:grid-cols-[320px_1fr]">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Page visual cue</p>
-              {page.spec_screenshot ? (
+              {hasRenderablePreviewImage(page.spec_screenshot) ? (
                 <div className="overflow-hidden rounded-[1.15rem] border border-slate-200 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
                   <img
-                    src={page.spec_screenshot}
+                    src={page.spec_screenshot ?? ""}
                     alt={`${page.spec_page_name || page.page_title || "Page"} visual preview`}
                     className="h-44 w-full object-cover object-top"
                   />
                 </div>
               ) : (
-                renderSectionPreviewBars(page, activeSectionKey)
+                <div className="rounded-[1.15rem] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#eef6f7_100%)] p-3 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+                    <div className="rounded-[0.9rem] border border-slate-200 bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {page.spec_page_name || page.page_type || "Page layout"}
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0D5E6D]">
+                          preview
+                        </span>
+                      </div>
+                      <div className="mt-3">{renderSectionPreviewBars(page, activeSectionKey)}</div>
+                    </div>
+                  </div>
               )}
             </div>
             <div className="rounded-[1.15rem] border border-slate-200 bg-white/80 p-4">
@@ -1458,6 +1482,11 @@ function sectionMediaGlyph(section: SiteContentSection): string {
   if (section.image_count === 2) return "▣▣";
   if (section.image_count === 1) return "▣";
   return "—";
+}
+
+function hasRenderablePreviewImage(src: string | null | undefined): boolean {
+  if (!src) return false;
+  return src.startsWith("http://") || src.startsWith("https://") || src.startsWith("/");
 }
 
 function mappingLabel(mapping: SiteContentSectionMapping | null): string {

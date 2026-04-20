@@ -4247,6 +4247,14 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Site Content can load its property/site workspace again on the clean promoted branch
   - a missing secondary guidance route no longer leaves the operator with an empty broken shell before content work begins
 
+### 2026-04-20 14:02 UTC - Site Content preview cards now handle non-browser Specs assets correctly
+
+- Fixed `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so page preview cards and the page visual cue stop trying to render `figma:asset/...` Specs screenshot references as browser `<img>` URLs.
+- The workbench now treats only real browser-loadable paths (`http`, `https`, or rooted asset paths) as preview images and falls back to the designed page-layout placeholder for Figma-only references.
+- Current effect:
+  - the page board no longer shows broken-image icons
+  - content creators now see an intentional visual placeholder when a true screenshot is not available yet
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:
