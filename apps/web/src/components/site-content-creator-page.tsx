@@ -940,24 +940,16 @@ function PageWorkspace({
               )}
             </div>
             <div className="rounded-[1.15rem] border border-slate-200 bg-white/80 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">How to use this page</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <WorkbenchStep
-                  step="1"
-                  title="Pick a block"
-                  detail="Use the page flow below to choose the part of the page you want to work on."
-                />
-                <WorkbenchStep
-                  step="2"
-                  title="Compare to the live layout"
-                  detail="Each tile shows whether the block is mostly text, image-led, or gallery-heavy."
-                />
-                <WorkbenchStep
-                  step="3"
-                  title="Edit the copy"
-                  detail="Open the selected block below and rewrite only that section before moving on."
-                />
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Editing flow</p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <InlinePill label="1. Choose a page block" tone="blue" />
+                <InlinePill label="2. Compare layout and copy" tone="slate" />
+                <InlinePill label="3. Rewrite only this block" tone="emerald" />
               </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Treat this like a page mock. Pick the block you recognize, review the current copy, then rewrite that
+                block before moving on.
+              </p>
             </div>
           </div>
         </div>
@@ -1053,14 +1045,7 @@ function PageWorkspace({
                               {rewrite && rewrite.draft_status !== "not_started" && (
                                 <InlinePill label={rewrite.draft_status.replace("_", " ")} tone="blue" />
                               )}
-                              {mapping?.expected_section_label && (
-                                <InlinePill label={mapping.expected_section_label} tone="slate" />
-                              )}
                             </div>
-
-                            <p className="mt-3 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                              {section.original_copy || "No captured copy was extracted for this block."}
-                            </p>
                           </button>
                         );
                       })}
@@ -1188,49 +1173,77 @@ function SectionWorkspace({
               {mapping && <InlinePill label={mappingLabel(mapping)} tone={mappingTone(mapping)} />}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs">
-            <InlinePill label={`${section.link_count} links`} tone="slate" />
-            <InlinePill label={`${section.image_count} images`} tone={section.image_count > 0 ? "blue" : "slate"} />
-            {renderSectionAssessmentPill(assessment)}
-          </div>
+          <div className="flex flex-wrap gap-2 text-xs">{renderSectionAssessmentPill(assessment)}</div>
         </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr_1fr_1fr]">
-          <PagePositionDiagram totalSections={totalSections} activeIndex={sectionIndex} />
+        <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Block on page</p>
+            <div className="mt-3 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+              <PagePositionDiagram totalSections={totalSections} activeIndex={sectionIndex} />
+              <SectionStructurePreview section={section} />
+            </div>
+          </div>
           <SectionMediaTile section={section} />
-          <DrawerCueTile
-            label="Specs fit"
-            value={mappingLabel(mapping)}
-            detail={mapping?.expected_section_label || "This block is not fully mapped yet"}
-          />
-          <DrawerCueTile
-            label="Rewrite state"
-            value={(rewrite?.draft_status ?? "not_started").replace("_", " ")}
-            detail={assessment?.summary || "Needs assessment and rewrite guidance"}
-          />
         </div>
       </div>
 
-      <div className="grid gap-5 p-5 lg:grid-cols-[1fr_1fr]">
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Live content</p>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-700">
-              {section.original_copy || "No extracted copy available."}
-            </p>
-            {section.bullet_points.length > 0 && (
-              <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                {section.bullet_points.map((point, index) => (
-                  <li key={index}>{point}</li>
-                ))}
-              </ul>
-            )}
+      <div className="grid gap-5 p-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="space-y-4">
+          <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/80 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Current block copy</p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <InlinePill label={sectionPositionLabel(sectionIndex, totalSections)} tone="slate" />
+                <InlinePill label={sectionMediaLabel(section)} tone={section.image_count > 0 ? "blue" : "slate"} />
+              </div>
+            </div>
+            <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+              <p className="whitespace-pre-wrap text-[15px] leading-8 text-slate-700">
+                {section.original_copy || "No extracted copy available for this block yet."}
+              </p>
+              {section.bullet_points.length > 0 && (
+                <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-700">
+                  {section.bullet_points.map((point, index) => (
+                    <li key={index}>{point}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
+
+          <details className="group rounded-[1.25rem] border border-slate-200 bg-white p-4">
+            <summary className="cursor-pointer list-none text-sm font-semibold text-slate-700">
+              Show block details
+            </summary>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <DrawerCueTile
+                label="Specs fit"
+                value={mappingLabel(mapping)}
+                detail={mapping?.expected_section_label || "This block is not fully mapped yet"}
+              />
+              <DrawerCueTile
+                label="Rewrite state"
+                value={(rewrite?.draft_status ?? "not_started").replace("_", " ")}
+                detail={assessment?.summary || "No formal assessment note yet"}
+              />
+              <DrawerCueTile
+                label="Observed content"
+                value={`${section.image_count} image${section.image_count === 1 ? "" : "s"}`}
+                detail={`${section.link_count} links in this block`}
+              />
+            </div>
+          </details>
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Rewrite workspace</p>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Rewrite this block</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Keep the same job on the page, but make the content clearer, stronger, and more property-specific.
+                </p>
+              </div>
               <select
                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
                 value={draftStatus}
@@ -1244,52 +1257,51 @@ function SectionWorkspace({
                 <option value="approved">Approved</option>
               </select>
             </div>
-            {(sectionFocusedClaims.length > 0 || focusedClaims.length > 0) && (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Suggested focus</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{recommendedBrief}</p>
-                {(sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims).length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {(sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims).slice(0, 2).map((claim) => (
-                      <InlinePill key={claim.id} label={claim.claim_text} tone="slate" />
-                    ))}
-                  </div>
-                )}
-                {sectionThemes.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {sectionThemes.map((theme) => (
-                      <InlinePill key={`${mapping?.id ?? section.section_order}-${theme}`} label={themeLabel(theme)} tone="blue" />
-                    ))}
-                  </div>
-                )}
+            <div className="mt-4 space-y-4">
+              {(sectionFocusedClaims.length > 0 || focusedClaims.length > 0) && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Rewrite direction</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{recommendedBrief}</p>
+                  {sectionThemes.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {sectionThemes.map((theme) => (
+                        <InlinePill key={`${mapping?.id ?? section.section_order}-${theme}`} label={themeLabel(theme)} tone="blue" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Rewrite brief</p>
+                <textarea
+                  className="min-h-[88px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
+                  value={rewriteBrief}
+                  onChange={(event) => setRewriteBrief(event.target.value)}
+                  placeholder={recommendedBrief}
+                />
               </div>
-            )}
-            <textarea
-              className="min-h-[88px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
-              value={rewriteBrief}
-              onChange={(event) => setRewriteBrief(event.target.value)}
-              placeholder={recommendedBrief}
-            />
-          </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Proposed rewrite</p>
-            <textarea
-              className="min-h-[168px] w-full rounded-xl border border-slate-200 px-3 py-3 text-sm leading-7 text-slate-800"
-              value={proposedCopy}
-              onChange={(event) => setProposedCopy(event.target.value)}
-              placeholder="Draft the harmonized section copy here."
-            />
-          </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">New copy</p>
+                <textarea
+                  className="min-h-[220px] w-full rounded-xl border border-slate-200 px-3 py-3 text-sm leading-7 text-slate-800"
+                  value={proposedCopy}
+                  onChange={(event) => setProposedCopy(event.target.value)}
+                  placeholder="Write the revised content for this block here."
+                />
+              </div>
 
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Refinement notes</p>
-            <textarea
-              className="min-h-[92px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
-              value={refinementNotes}
-              onChange={(event) => setRefinementNotes(event.target.value)}
-              placeholder="Note what changed, what still feels weak, or what story tension remains."
-            />
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Editor notes</p>
+                <textarea
+                  className="min-h-[92px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
+                  value={refinementNotes}
+                  onChange={(event) => setRefinementNotes(event.target.value)}
+                  placeholder="Optional notes for reviewers or future passes."
+                />
+              </div>
+            </div>
           </div>
 
           {saveFlash && (
@@ -1314,7 +1326,7 @@ function SectionWorkspace({
       <div className="border-t border-slate-100 bg-slate-50/70 p-5">
         <details className="group">
           <summary className="cursor-pointer list-none text-sm font-semibold text-slate-700">
-            Show Specs and diagnostics
+            Advanced diagnostics
           </summary>
           <div className="mt-4 grid gap-5 lg:grid-cols-[0.95fr_1.05fr_0.95fr]">
             <div className="space-y-3">

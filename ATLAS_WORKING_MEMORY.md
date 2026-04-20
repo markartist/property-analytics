@@ -4221,6 +4221,21 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - the default Site Content experience is now much closer to `choose property -> choose page -> edit block`
   - the editing surface is more progressive and editorially understandable
 
+### 2026-04-20 12:07 UTC - Site Content block editing is now content-first instead of diagnostics-first
+
+- Refactored `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` again after direct operator feedback that the current section view still felt like an internal analysis console.
+- Main workbench changes:
+  - removed repeated baseline/reference text dumps from the default editing path
+  - reduced the selected-block header down to page position, media cue, and simple status
+  - changed the main section workspace to a two-part editorial canvas:
+    - `Current block copy`
+    - `Rewrite this block`
+  - moved Specs fit, rewrite state, mapping rationale, scores, and captured-baseline diagnostics behind secondary disclosures (`Show block details` and `Advanced diagnostics`)
+  - removed the long copy excerpt from the page-flow tiles so they behave more like recognizable block selectors than audit cards
+- Current effect:
+  - Site Content now behaves much more like a human content workbench
+  - operators can recognize the block, read the current copy, and rewrite it without being forced through dense system-language panels first
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:
