@@ -3961,6 +3961,18 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - a clean promoted branch no longer reads as dirty just because release provenance was refreshed after deploy
   - release reconciliation is now closer to an enterprise-grade read of true workstream drift instead of operator-maintained stamp churn
 
+### 2026-04-19 16:20 UTC - Site Content claim routing is now page-aware and rewrite-guiding
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so unresolved governed claims are now routed more intentionally by page role and section role.
+- Added:
+  - page-level `Focus` claim chips in the page composition board
+  - page-level narrative focus chips in the page workspace header
+  - section-level `Suggested focus` blocks inside rewrite workspaces
+  - role-aware rewrite-brief placeholders derived from the mapped Specs role plus the best-fit governed claim
+- Current effect:
+  - the storytelling layer is now more actionable at the exact page and section where rewrite work happens
+  - rewrite guidance is becoming page-aware and role-aware rather than generic
+
 ### 2026-04-19 16:00 UTC - Site Content narrative gaps now point back to priority pages
 
 - Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the narrative consistency layer is no longer only descriptive.

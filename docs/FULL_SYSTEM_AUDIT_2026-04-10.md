@@ -459,6 +459,10 @@ Audit judgment:
 - the next refinement step is also now present:
   - unresolved claim gaps are routed back into a `Narrative priority pages` board
   - that means the site-level story layer now helps operators decide where to rewrite first rather than only describing fragmentation
+- the next refinement step after that is now also present in the clean branch:
+  - page cards now surface claim focus
+  - page workspaces carry narrative focus chips
+  - section rewrite workspaces now receive suggested focus and smarter brief prompts based on mapped Specs role plus best-fit governed claims
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system

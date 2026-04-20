@@ -87,6 +87,11 @@ type NarrativePriorityPage = {
   reasons: string[];
 };
 
+type PageClaimFocus = {
+  pageId: string;
+  claims: IntelligenceClaim[];
+};
+
 function formatStamp(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
@@ -262,6 +267,32 @@ function claimKeywords(text: string): string[] {
     .filter((token) => token.length >= 5);
 }
 
+function pageIntentTokens(page: SiteContentPage): string[] {
+  return [
+    page.page_type,
+    page.page_path,
+    page.spec_page_name,
+    page.spec_archetype_name,
+    page.page_title,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 4);
+}
+
+function sectionRoleTokens(mapping: SiteContentSectionMapping | null): string[] {
+  return [mapping?.expected_section_label, mapping?.expected_section_role, mapping?.expected_section_key]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 4);
+}
+
 function buildNarrativeCoverage(pages: SiteContentPage[], claims: IntelligenceClaim[]): NarrativeCoverage[] {
   const pageIndex = pages.map((page) => ({
     id: page.id,
@@ -352,6 +383,41 @@ function buildNarrativePriorityPages(
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 4);
+}
+
+function selectClaimsForPage(page: SiteContentPage, narrativeCoverage: NarrativeCoverage[]): IntelligenceClaim[] {
+  const unresolved = narrativeCoverage.filter((item) => item.posture !== "aligned");
+  const pageTokens = new Set(pageIntentTokens(page));
+  const pageText = pageSearchText(page);
+
+  return unresolved
+    .map((item) => {
+      const tokens = claimKeywords(item.claim.claim_text).slice(0, 8);
+      const roleHits = tokens.filter((token) => pageTokens.has(token)).length;
+      const textHits = tokens.filter((token) => pageText.includes(token)).length;
+      const homeBoost = ((page.page_path ?? "/") === "/" || page.page_type?.toLowerCase().includes("home")) ? 2 : 0;
+      const postureBoost = item.posture === "missing" ? 2 : 1;
+      return {
+        claim: item.claim,
+        score: roleHits * 3 + textHits + homeBoost + postureBoost,
+      };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map((item) => item.claim);
+}
+
+function suggestedRewriteBrief(
+  mapping: SiteContentSectionMapping | null,
+  focusedClaims: IntelligenceClaim[]
+): string {
+  const sectionRole = mapping?.expected_section_label || mapping?.expected_section_role || mapping?.expected_section_key || "this section";
+  const claimLead = focusedClaims[0]?.claim_text;
+  if (claimLead) {
+    return `Use ${sectionRole} to reinforce the property story around: ${claimLead}`;
+  }
+  return `Use ${sectionRole} to support the page purpose, maintain cross-page harmony, and strengthen the most important property differentiators.`;
 }
 
 export function SiteContentCreatorPage() {
@@ -487,6 +553,9 @@ export function SiteContentCreatorPage() {
   const missingNarrativeClaims = narrativeCoverage.filter((item) => item.posture === "missing");
   const partialNarrativeClaims = narrativeCoverage.filter((item) => item.posture === "partial");
   const narrativePriorityPages = buildNarrativePriorityPages(selectedPages, narrativeCoverage, briefReadiness);
+  const pageClaimFocus = new Map<string, IntelligenceClaim[]>(
+    selectedPages.map((page) => [page.id, selectClaimsForPage(page, narrativeCoverage)])
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-6">
@@ -827,6 +896,7 @@ export function SiteContentCreatorPage() {
                   {selectedPages.map((page) => {
                     const posture = summarizePage(page, propertyClaims, briefReadiness);
                     const tone = toneForPosture(posture.posture);
+                    const focusedClaims = pageClaimFocus.get(page.id) ?? [];
                     return (
                       <button
                         key={page.id}
@@ -863,6 +933,13 @@ export function SiteContentCreatorPage() {
                             <InlinePill label={`${page.section_rewrite_summary.in_review} in review`} tone="blue" />
                           )}
                         </div>
+                        {focusedClaims.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            {focusedClaims.map((claim) => (
+                              <InlinePill key={claim.id} label={`Focus: ${claim.claim_text}`} tone="slate" />
+                            ))}
+                          </div>
+                        )}
                         <p className="mt-4 text-sm leading-6 text-slate-700">{posture.nextMove}</p>
                       </button>
                     );
@@ -910,6 +987,7 @@ export function SiteContentCreatorPage() {
                 onRewriteSaved={handleRewriteSaved}
                 propertyClaims={propertyClaims}
                 briefReadiness={briefReadiness}
+                focusedClaims={pageClaimFocus.get(page.id) ?? []}
               />
             ))
           )}
@@ -974,11 +1052,13 @@ function PageWorkspace({
   onRewriteSaved,
   propertyClaims,
   briefReadiness,
+  focusedClaims,
 }: {
   page: SiteContentPage;
   onRewriteSaved: (pageId: string, rewrite: SiteContentSectionRewrite) => void;
   propertyClaims: IntelligenceClaim[];
   briefReadiness: BriefReadiness | null;
+  focusedClaims: IntelligenceClaim[];
 }) {
   const posture = summarizePage(page, propertyClaims, briefReadiness);
   const tone = toneForPosture(posture.posture);
@@ -1024,6 +1104,13 @@ function PageWorkspace({
             )}
           </div>
           <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700">{posture.nextMove}</p>
+          {focusedClaims.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              {focusedClaims.map((claim) => (
+                <InlinePill key={claim.id} label={`Narrative focus: ${claim.claim_text}`} tone="slate" />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-4 px-6 pb-6">
@@ -1073,6 +1160,7 @@ function PageWorkspace({
                     mapping={mapping}
                     assessment={assessment}
                     rewrite={rewrite}
+                    focusedClaims={focusedClaims}
                     onRewriteSaved={onRewriteSaved}
                   />
                 );
@@ -1092,6 +1180,7 @@ function SectionWorkspace({
   mapping,
   assessment,
   rewrite,
+  focusedClaims,
   onRewriteSaved,
 }: {
   propertyId: string;
@@ -1100,6 +1189,7 @@ function SectionWorkspace({
   mapping: SiteContentSectionMapping | null;
   assessment: SiteContentSectionAssessment | null;
   rewrite: SiteContentSectionRewrite | null;
+  focusedClaims: IntelligenceClaim[];
   onRewriteSaved: (pageId: string, rewrite: SiteContentSectionRewrite) => void;
 }) {
   const [draftStatus, setDraftStatus] = React.useState<SiteContentSectionRewrite["draft_status"]>(
@@ -1120,6 +1210,12 @@ function SectionWorkspace({
 
   const title = section.title || section.section_label || section.heading || `Section ${section.section_order + 1}`;
   const assessmentTone = assessment ? toneForPosture(assessment.overall_status) : toneForPosture("watch");
+  const sectionFocusedClaims = focusedClaims.filter((claim) => {
+    const claimTokens = claimKeywords(claim.claim_text);
+    const roleTokens = new Set(sectionRoleTokens(mapping));
+    return claimTokens.some((token) => roleTokens.has(token));
+  });
+  const recommendedBrief = suggestedRewriteBrief(mapping, sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims);
 
   async function handleSave() {
     if (!mapping) {
@@ -1240,11 +1336,24 @@ function SectionWorkspace({
                 <option value="approved">Approved</option>
               </select>
             </div>
+            {(sectionFocusedClaims.length > 0 || focusedClaims.length > 0) && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Suggested focus</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{recommendedBrief}</p>
+                {(sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims).length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(sectionFocusedClaims.length > 0 ? sectionFocusedClaims : focusedClaims).slice(0, 2).map((claim) => (
+                      <InlinePill key={claim.id} label={claim.claim_text} tone="slate" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <textarea
               className="min-h-[88px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm leading-6 text-slate-800"
               value={rewriteBrief}
               onChange={(event) => setRewriteBrief(event.target.value)}
-              placeholder="What should this section do in the site story?"
+              placeholder={recommendedBrief}
             />
           </div>
 
