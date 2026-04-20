@@ -4200,6 +4200,14 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - the page workbench now behaves more like a storyboard / page outline than a flat list of audit cards
   - operators can infer block shape before opening the drawer
 
+### 2026-04-20 11:05 UTC - Site Content property switching no longer reboots the workbench
+
+- Fixed `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the initial inventory bootstrap no longer re-runs whenever `selectedPropertyId` changes.
+- Replaced the bootstrap dependency on live selection state with a ref-backed current selection read for the initial load path.
+- Current effect:
+  - switching properties now stays in the property-detail lane instead of retriggering the whole inventory bootstrap
+  - the workbench should stop falling into redraw / reload loops when the operator selects a different property
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:

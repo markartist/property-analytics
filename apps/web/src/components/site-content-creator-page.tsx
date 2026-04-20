@@ -497,6 +497,11 @@ export function SiteContentCreatorPage() {
     brief: null,
     captainLog: [],
   });
+  const selectedPropertyIdRef = React.useRef(selectedPropertyId);
+
+  React.useEffect(() => {
+    selectedPropertyIdRef.current = selectedPropertyId;
+  }, [selectedPropertyId]);
 
   const loadPropertySignals = React.useCallback(async (propertyId: string) => {
     try {
@@ -522,15 +527,17 @@ export function SiteContentCreatorPage() {
     setDirectives(office.directives);
     setSources(office.sources);
 
-    const nextPropertyId = selectedPropertyId || inventory.properties[0]?.property_id || "";
+    const nextPropertyId = selectedPropertyIdRef.current || inventory.properties[0]?.property_id || "";
     if (nextPropertyId) {
-      setSelectedPropertyId(nextPropertyId);
+      if (selectedPropertyIdRef.current !== nextPropertyId) {
+        setSelectedPropertyId(nextPropertyId);
+      }
       const [detail] = await Promise.all([getSiteContentProperty(nextPropertyId), loadPropertySignals(nextPropertyId)]);
       setSelectedPropertyName(detail.property.property_name);
       setSelectedPages(detail.pages);
       setFocusedPageId("all");
     }
-  }, [selectedPropertyId, loadPropertySignals]);
+  }, [loadPropertySignals]);
 
   React.useEffect(() => {
     loadInventory()
