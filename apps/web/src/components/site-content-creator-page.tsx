@@ -522,10 +522,13 @@ export function SiteContentCreatorPage() {
   }, []);
 
   const loadInventory = React.useCallback(async () => {
-    const [inventory, office] = await Promise.all([getSiteContentInventory(), getIntelligenceOffice()]);
+    const inventory = await getSiteContentInventory();
+    const officeResult = await getIntelligenceOffice()
+      .then((office) => ({ ok: true as const, office }))
+      .catch(() => ({ ok: false as const, office: null }));
     setProperties(inventory.properties);
-    setDirectives(office.directives);
-    setSources(office.sources);
+    setDirectives(officeResult.ok ? officeResult.office.directives : []);
+    setSources(officeResult.ok ? officeResult.office.sources : []);
 
     const nextPropertyId = selectedPropertyIdRef.current || inventory.properties[0]?.property_id || "";
     if (nextPropertyId) {

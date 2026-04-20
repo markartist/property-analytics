@@ -4236,6 +4236,17 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Site Content now behaves much more like a human content workbench
   - operators can recognize the block, read the current copy, and rewrite it without being forced through dense system-language panels first
 
+### 2026-04-20 13:46 UTC - Site Content no longer hard-fails when Intelligence Office guidance is unavailable
+
+- Restored the missing clean-branch Intelligence Office admin API surface by adding:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-intelligence.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/evs/pilot-properties.ts`
+  - route mount in `/Users/mark/Property_Analytics/apps/api/src/index.ts`
+- Also hardened `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the workbench no longer fails its entire initial load when `getIntelligenceOffice()` is temporarily unavailable; inventory remains primary and governed guidance now degrades gracefully.
+- Current effect:
+  - Site Content can load its property/site workspace again on the clean promoted branch
+  - a missing secondary guidance route no longer leaves the operator with an empty broken shell before content work begins
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:
