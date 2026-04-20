@@ -4190,6 +4190,16 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - operators can orient themselves faster without parsing chips alone
   - the drawer now answers “where is this on the page?” and “does this section have imagery?” more directly
 
+### 2026-04-20 10:48 UTC - Site Content page flow now reads more like a storyboard
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` again so the page-flow tiles themselves are more visually meaningful:
+  - added an `Active block` band above the page flow
+  - replaced plain section tiles with wireframe-style structure previews for text, image-left, image-right, and gallery-heavy blocks
+  - increased the active block contrast so the current editing target stands out immediately
+- Current effect:
+  - the page workbench now behaves more like a storyboard / page outline than a flat list of audit cards
+  - operators can infer block shape before opening the drawer
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:

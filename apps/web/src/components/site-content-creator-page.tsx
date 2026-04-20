@@ -29,15 +29,18 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import {
+  Image as ImageIcon,
   BookText,
   Brain,
   Compass,
   FileSearch,
   Layers3,
   Loader2,
+  MousePointerClick,
   RefreshCw,
   Sparkles,
   Target,
+  Type,
   Wand2,
 } from "lucide-react";
 
@@ -1303,6 +1306,30 @@ function PageWorkspace({
                     </div>
                   </div>
 
+                  {activeSection && (
+                    <div className="flex flex-wrap items-center gap-3 rounded-[1.15rem] border border-[#0D5E6D]/15 bg-[#0D5E6D]/[0.05] px-4 py-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0D5E6D] text-white">
+                        <MousePointerClick className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0D5E6D]">Active block</p>
+                        <p className="truncate text-base font-semibold text-slate-900">
+                          {activeSection.title || activeSection.section_label || activeSection.heading || `Section ${activeSection.section_order + 1}`}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <InlinePill
+                          label={sectionPositionLabel(
+                            page.sections.findIndex((section) => sectionIdentity(section) === sectionIdentity(activeSection)),
+                            page.sections.length
+                          )}
+                          tone="blue"
+                        />
+                        <InlinePill label={sectionMediaLabel(activeSection)} tone={activeSection.image_count > 0 ? "blue" : "slate"} />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="-mx-1 overflow-x-auto pb-2">
                     <div className="flex min-w-max gap-3 px-1">
                       {page.sections.map((section, index) => {
@@ -1317,7 +1344,7 @@ function PageWorkspace({
                             onClick={() => setActiveSectionKey(sectionIdentity(section))}
                             className={`w-[290px] shrink-0 rounded-[1.35rem] border p-4 text-left transition ${
                               isActive
-                                ? "border-[#0D5E6D] bg-[#0D5E6D]/[0.06] shadow-[0_16px_30px_rgba(13,94,109,0.12)]"
+                                ? "border-[#0D5E6D] bg-[linear-gradient(180deg,rgba(13,94,109,0.08),rgba(255,255,255,1))] shadow-[0_16px_30px_rgba(13,94,109,0.18)]"
                                 : "border-slate-200 bg-white hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]"
                             }`}
                           >
@@ -1331,6 +1358,10 @@ function PageWorkspace({
                                 </span>
                               </div>
                               {renderSectionAssessmentPill(assessment)}
+                            </div>
+
+                            <div className="mt-3">
+                              <SectionStructurePreview section={section} />
                             </div>
 
                             <div className="mt-3 space-y-2">
@@ -1789,6 +1820,83 @@ function renderSectionPreviewBars(page: SiteContentPage, activeSectionId?: strin
           />
         );
       })}
+    </div>
+  );
+}
+
+function SectionStructurePreview({ section }: { section: SiteContentSection }) {
+  const baseCard = "rounded-[0.9rem] border border-slate-200 bg-white p-3";
+
+  if (section.image_count >= 3) {
+    return (
+      <div className={`${baseCard} space-y-2`}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Gallery block</span>
+          <ImageIcon className="h-3.5 w-3.5 text-[#0D5E6D]" />
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          <div className="h-10 rounded-md bg-sky-100" />
+          <div className="h-10 rounded-md bg-sky-100" />
+          <div className="h-10 rounded-md bg-sky-100" />
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-2.5 w-4/5 rounded-full bg-slate-200" />
+          <div className="h-2.5 w-3/5 rounded-full bg-slate-200" />
+        </div>
+      </div>
+    );
+  }
+
+  if (section.image_count >= 1 && section.media_side === "left") {
+    return (
+      <div className={`${baseCard} space-y-2`}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Image left</span>
+          <ImageIcon className="h-3.5 w-3.5 text-[#0D5E6D]" />
+        </div>
+        <div className="grid grid-cols-[0.65fr_1fr] gap-2">
+          <div className="h-14 rounded-lg bg-sky-100" />
+          <div className="space-y-1.5 pt-1">
+            <div className="h-2.5 w-11/12 rounded-full bg-slate-200" />
+            <div className="h-2.5 w-4/5 rounded-full bg-slate-200" />
+            <div className="h-2.5 w-3/5 rounded-full bg-slate-200" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (section.image_count >= 1 && section.media_side === "right") {
+    return (
+      <div className={`${baseCard} space-y-2`}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Image right</span>
+          <ImageIcon className="h-3.5 w-3.5 text-[#0D5E6D]" />
+        </div>
+        <div className="grid grid-cols-[1fr_0.65fr] gap-2">
+          <div className="space-y-1.5 pt-1">
+            <div className="h-2.5 w-11/12 rounded-full bg-slate-200" />
+            <div className="h-2.5 w-4/5 rounded-full bg-slate-200" />
+            <div className="h-2.5 w-3/5 rounded-full bg-slate-200" />
+          </div>
+          <div className="h-14 rounded-lg bg-sky-100" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${baseCard} space-y-2`}>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Text block</span>
+        <Type className="h-3.5 w-3.5 text-slate-500" />
+      </div>
+      <div className="space-y-1.5 pt-1">
+        <div className="h-3 w-10/12 rounded-full bg-slate-200" />
+        <div className="h-2.5 w-full rounded-full bg-slate-200" />
+        <div className="h-2.5 w-11/12 rounded-full bg-slate-200" />
+        <div className="h-2.5 w-8/12 rounded-full bg-slate-200" />
+      </div>
     </div>
   );
 }

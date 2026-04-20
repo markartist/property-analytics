@@ -474,6 +474,10 @@ Audit judgment:
 - the next readability refinement step is also now present:
   - the selected block drawer now includes a real page-position diagram instead of relying only on text labels
   - media posture is now surfaced in a dedicated visual tile so image presence is easier to understand at a glance
+- the next workbench refinement step is now also present:
+  - the page-flow tiles now render as small structure previews instead of plain text-heavy audit cards
+  - the active editing target is now surfaced as an explicit band above the page flow
+  - that makes the page board read more like a storyboard / page outline and less like a diagnostic list
 - the clean release branch now also carries the Site Content admin API again after branch drift briefly left the UI without `/v1/admin/site-content`:
   - inventory, property detail, crawl, and rewrite flows are back on the promoted branch instead of only existing in the dirty main worktree
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
