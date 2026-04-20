@@ -471,6 +471,9 @@ Audit judgment:
   - each page now renders as a horizontal page-flow strip of block tiles rather than opening every section in one long stack
   - detailed editing is now focused through one active section drawer at a time, with explicit cues for location on page, media presence, Specs fit, and rewrite state
   - Site Content is therefore becoming a usable editorial workbench rather than reading like a stacked audit report
+- the next readability refinement step is also now present:
+  - the selected block drawer now includes a real page-position diagram instead of relying only on text labels
+  - media posture is now surfaced in a dedicated visual tile so image presence is easier to understand at a glance
 - the clean release branch now also carries the Site Content admin API again after branch drift briefly left the UI without `/v1/admin/site-content`:
   - inventory, property detail, crawl, and rewrite flows are back on the promoted branch instead of only existing in the dirty main worktree
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally

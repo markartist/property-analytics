@@ -4181,6 +4181,15 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - operators can identify where a block lives on the page and whether imagery exists before opening detailed rewrite controls
   - the product is moving from “analysis dump” toward a usable editorial workbench
 
+### 2026-04-20 10:32 UTC - Site Content now has stronger visual orientation cues
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` again so the selected block drawer is more visually legible:
+  - added an explicit page-position diagram showing where the active block sits in the page sequence
+  - added a dedicated media tile with a simple visual glyph plus image-side / image-count explanation
+- Current effect:
+  - operators can orient themselves faster without parsing chips alone
+  - the drawer now answers “where is this on the page?” and “does this section have imagery?” more directly
+
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 
 - Extended `/Users/mark/Property_Analytics/scripts/update_release_provenance.py` so runtime publishing now also writes:

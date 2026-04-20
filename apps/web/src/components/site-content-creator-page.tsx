@@ -1489,9 +1489,9 @@ function SectionWorkspace({
             {renderSectionAssessmentPill(assessment)}
           </div>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-4">
-          <DrawerCueTile label="Location on page" value={sectionPositionLabel(sectionIndex, totalSections)} detail="Reading order cue for this block" />
-          <DrawerCueTile label="Media" value={sectionMediaLabel(section)} detail={sectionMediaDetail(section)} />
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_0.9fr_1fr_1fr]">
+          <PagePositionDiagram totalSections={totalSections} activeIndex={sectionIndex} />
+          <SectionMediaTile section={section} />
           <DrawerCueTile
             label="Specs fit"
             value={mappingLabel(mapping)}
@@ -1705,6 +1705,14 @@ function sectionPositionLabel(index: number, totalSections: number): string {
   return "Mid-page";
 }
 
+function sectionPositionShortLabel(index: number, totalSections: number): string {
+  if (index <= 0) return "Top";
+  if (index === totalSections - 1) return "Bottom";
+  if (index >= totalSections - 2) return "Lower";
+  if (index <= Math.max(1, Math.floor(totalSections / 3))) return "Upper";
+  return "Middle";
+}
+
 function sectionMediaLabel(section: SiteContentSection): string {
   if (section.image_count >= 3) return "Gallery-rich";
   if (section.image_count >= 1) return "Has imagery";
@@ -1716,6 +1724,13 @@ function sectionMediaDetail(section: SiteContentSection): string {
   if (section.media_side === "left") return `${section.image_count} image${section.image_count > 1 ? "s" : ""} on the left`;
   if (section.media_side === "right") return `${section.image_count} image${section.image_count > 1 ? "s" : ""} on the right`;
   return `${section.image_count} image${section.image_count > 1 ? "s" : ""} detected`;
+}
+
+function sectionMediaGlyph(section: SiteContentSection): string {
+  if (section.image_count >= 3) return "▣▣▣";
+  if (section.image_count === 2) return "▣▣";
+  if (section.image_count === 1) return "▣";
+  return "—";
 }
 
 function mappingLabel(mapping: SiteContentSectionMapping | null): string {
@@ -1774,6 +1789,58 @@ function renderSectionPreviewBars(page: SiteContentPage, activeSectionId?: strin
           />
         );
       })}
+    </div>
+  );
+}
+
+function PagePositionDiagram({
+  totalSections,
+  activeIndex,
+}: {
+  totalSections: number;
+  activeIndex: number;
+}) {
+  const slots = Math.max(totalSections, 1);
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Page position</p>
+        <p className="text-xs text-slate-500">{activeIndex + 1} of {totalSections}</p>
+      </div>
+      <div className="mt-4 flex items-center gap-2">
+        {Array.from({ length: slots }).map((_, index) => {
+          const isActive = index === activeIndex;
+          return (
+            <div key={index} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+              <div
+                className={`w-full rounded-full transition-all ${
+                  isActive ? "h-4 bg-[#0D5E6D]" : "h-2.5 bg-slate-200"
+                }`}
+              />
+              <span className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                isActive ? "text-[#0D5E6D]" : "text-slate-400"
+              }`}>
+                {sectionPositionShortLabel(index, slots)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SectionMediaTile({ section }: { section: SiteContentSection }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Visual cue</p>
+      <div className="mt-3 flex min-h-[96px] items-center justify-center rounded-[1rem] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#edf7f8_100%)]">
+        <div className="text-center">
+          <p className="text-3xl tracking-[0.35em] text-[#0D5E6D]">{sectionMediaGlyph(section)}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-800">{sectionMediaLabel(section)}</p>
+          <p className="mt-1 text-xs text-slate-500">{sectionMediaDetail(section)}</p>
+        </div>
+      </div>
     </div>
   );
 }
