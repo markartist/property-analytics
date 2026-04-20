@@ -4156,7 +4156,30 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Current effect:
   - the service/deploy control plane depends less on bundled repo config and more on runtime-issued platform state
   - Watchtower can now distinguish runtime-backed versus bundled deployment/reconcile truth directly in the UI
-  - the remaining enterprise bridge work is to move more of this operator-issued runtime state toward CI-issued or service-native issuance over time
+- the remaining enterprise bridge work is to move more of this operator-issued runtime state toward CI-issued or service-native issuance over time
+
+### 2026-04-20 10:05 UTC - Site Content moved toward a horizontal workbench model
+
+- Refactored `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the active page now reads as a horizontal workbench instead of a fully expanded stacked audit view.
+- Added page-level visual cues:
+  - page preview tiles now use `spec_screenshot` when available
+  - fallback page previews now render a compact structural mini-map from observed blocks
+- Added a page workbench instruction band so operators can immediately understand the intended flow:
+  - scan the page flow
+  - open one block
+  - close the story gap
+- Replaced the “all sections open at once” pattern with:
+  - a horizontal page-flow strip of section tiles
+  - one active section drawer at a time
+- Added stronger human-readable section cues:
+  - location on page
+  - media presence and side
+  - Specs-fit state
+  - rewrite state
+- Current effect:
+  - Site Content is materially easier to scan as a working surface
+  - operators can identify where a block lives on the page and whether imagery exists before opening detailed rewrite controls
+  - the product is moving from “analysis dump” toward a usable editorial workbench
 
 ### 2026-04-19 06:10 UTC - Service Operations Board now uses the same runtime-state bridge
 

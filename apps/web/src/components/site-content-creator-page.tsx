@@ -964,6 +964,19 @@ export function SiteContentCreatorPage() {
                         onClick={() => setFocusedPageId(page.id)}
                         className={`rounded-2xl border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-[0_18px_35px_rgba(15,23,42,0.08)] ${tone.border} ${tone.bg}`}
                       >
+                        <div className="mb-4">
+                          {page.spec_screenshot ? (
+                            <div className="overflow-hidden rounded-[1.15rem] border border-slate-200 bg-slate-100">
+                              <img
+                                src={page.spec_screenshot}
+                                alt={`${page.spec_page_name || page.page_title || "Page"} preview`}
+                                className="h-32 w-full object-cover object-top"
+                              />
+                            </div>
+                          ) : (
+                            renderSectionPreviewBars(page)
+                          )}
+                        </div>
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-lg font-semibold text-slate-900">
@@ -1131,12 +1144,28 @@ function PageWorkspace({
   const tone = toneForPosture(posture.posture);
   const missingMappings = page.section_mappings.filter((mapping) => mapping.match_status === "missing-from-live");
   const focusedThemes = Array.from(new Set(focusedClaims.flatMap((claim) => inferStoryThemes(claim.claim_text))));
+  const [activeSectionKey, setActiveSectionKey] = React.useState<string | null>(page.sections[0] ? sectionIdentity(page.sections[0]) : null);
+
+  React.useEffect(() => {
+    setActiveSectionKey(page.sections[0] ? sectionIdentity(page.sections[0]) : null);
+  }, [page.id, page.sections]);
+
+  const activeSection = page.sections.find((section) => sectionIdentity(section) === activeSectionKey) ?? page.sections[0] ?? null;
+  const activeSectionMapping = activeSection ? resolveMappingForSection(page, activeSection) : null;
+  const activeSectionAssessment =
+    activeSectionMapping && activeSection
+      ? page.section_assessments.find((item) => item.mapping_id === activeSectionMapping.id) ?? null
+      : null;
+  const activeSectionRewrite =
+    activeSectionMapping && activeSection
+      ? page.section_rewrites.find((item) => item.mapping_id === activeSectionMapping.id) ?? null
+      : null;
 
   return (
     <Card id={`page-${page.id}`} className={`overflow-hidden border ${tone.border}`}>
       <CardContent className="space-y-5 p-0">
-        <div className={`sticky top-0 z-10 border-b px-6 py-5 backdrop-blur ${tone.bg} ${tone.border}`}>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className={`border-b px-6 py-5 backdrop-blur ${tone.bg} ${tone.border}`}>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1.5">
               <div className="flex items-center gap-3">
                 <h3 className="text-2xl font-bold text-slate-900">
@@ -1152,11 +1181,47 @@ function PageWorkspace({
               {page.spec_layout_path && <p className="text-sm text-slate-600">Specs contract: {page.spec_layout_path}</p>}
               <p className="text-sm text-slate-500">{page.page_url}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:min-w-[420px]">
               <MiniScore label="Story" value={posture.storyScore} />
               <MiniScore label="Harmony" value={posture.harmonizationScore} />
               <MiniMetric label="Needs attention" value={String(page.section_assessment_summary.needs_attention)} />
               <MiniMetric label="Approved rewrites" value={String(page.section_rewrite_summary.approved)} />
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 xl:grid-cols-[320px_1fr]">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Page visual cue</p>
+              {page.spec_screenshot ? (
+                <div className="overflow-hidden rounded-[1.15rem] border border-slate-200 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+                  <img
+                    src={page.spec_screenshot}
+                    alt={`${page.spec_page_name || page.page_title || "Page"} visual preview`}
+                    className="h-44 w-full object-cover object-top"
+                  />
+                </div>
+              ) : (
+                renderSectionPreviewBars(page, activeSectionKey)
+              )}
+            </div>
+            <div className="rounded-[1.15rem] border border-slate-200 bg-white/80 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">How to use this page workbench</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <WorkbenchStep
+                  step="1"
+                  title="Scan the page flow"
+                  detail="Read the page left to right by block order to see what exists, where it lives, and whether imagery is present."
+                />
+                <WorkbenchStep
+                  step="2"
+                  title="Open one block"
+                  detail="Use the selected block drawer below for live copy, Specs contract, posture, and rewrite decisions."
+                />
+                <WorkbenchStep
+                  step="3"
+                  title="Close the story gap"
+                  detail="Use focus claims and rewrite guidance to strengthen the page’s role in the site-wide narrative."
+                />
+              </div>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -1221,25 +1286,99 @@ function PageWorkspace({
               This page was discovered, but no section blocks were extracted yet.
             </div>
           ) : (
-            <div className="grid gap-4">
-              {page.sections.map((section) => {
-                const mapping = resolveMappingForSection(page, section);
-                const assessment = mapping ? page.section_assessments.find((item) => item.mapping_id === mapping.id) ?? null : null;
-                const rewrite = mapping ? page.section_rewrites.find((item) => item.mapping_id === mapping.id) ?? null : null;
-                return (
-                  <SectionWorkspace
-                    key={`${page.id}-${section.id ?? section.section_order}`}
-                    propertyId={page.property_id}
-                    pageId={page.id}
-                    section={section}
-                    mapping={mapping}
-                    assessment={assessment}
-                    rewrite={rewrite}
-                    focusedClaims={focusedClaims}
-                    onRewriteSaved={onRewriteSaved}
-                  />
-                );
-              })}
+            <div className="space-y-4">
+              <Card className="border-slate-200">
+                <CardContent className="space-y-4 p-5">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <p className="text-base font-semibold text-slate-900">Page flow map</p>
+                      <p className="text-sm leading-6 text-slate-600">
+                        Scan the live page from top to bottom, then open one block at a time in the drawer below.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <InlinePill label={`${page.sections.length} live blocks`} tone="slate" />
+                      <InlinePill label={`${page.sections.filter((section) => section.image_count > 0).length} with imagery`} tone="blue" />
+                      <InlinePill label={`${page.section_mapping_summary.missing_from_live} missing slots`} tone={page.section_mapping_summary.missing_from_live > 0 ? "rose" : "emerald"} />
+                    </div>
+                  </div>
+
+                  <div className="-mx-1 overflow-x-auto pb-2">
+                    <div className="flex min-w-max gap-3 px-1">
+                      {page.sections.map((section, index) => {
+                        const mapping = resolveMappingForSection(page, section);
+                        const assessment = mapping ? page.section_assessments.find((item) => item.mapping_id === mapping.id) ?? null : null;
+                        const rewrite = mapping ? page.section_rewrites.find((item) => item.mapping_id === mapping.id) ?? null : null;
+                        const isActive = activeSection ? sectionIdentity(activeSection) === sectionIdentity(section) : false;
+                        return (
+                          <button
+                            key={`${page.id}-${section.id ?? section.section_order}`}
+                            type="button"
+                            onClick={() => setActiveSectionKey(sectionIdentity(section))}
+                            className={`w-[290px] shrink-0 rounded-[1.35rem] border p-4 text-left transition ${
+                              isActive
+                                ? "border-[#0D5E6D] bg-[#0D5E6D]/[0.06] shadow-[0_16px_30px_rgba(13,94,109,0.12)]"
+                                : "border-slate-200 bg-white hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(15,23,42,0.08)]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+                                  {index + 1}
+                                </span>
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  {sectionPositionLabel(index, page.sections.length)}
+                                </span>
+                              </div>
+                              {renderSectionAssessmentPill(assessment)}
+                            </div>
+
+                            <div className="mt-3 space-y-2">
+                              <p className="line-clamp-2 text-lg font-semibold text-slate-900">
+                                {section.title || section.section_label || section.heading || `Section ${index + 1}`}
+                              </p>
+                              <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                                {section.section_type || "standard"} • {sectionMediaLabel(section)}
+                              </p>
+                              <p className="text-sm text-slate-500">{sectionMediaDetail(section)}</p>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                              <InlinePill label={mappingLabel(mapping)} tone={mappingTone(mapping)} />
+                              {rewrite && rewrite.draft_status !== "not_started" && (
+                                <InlinePill label={rewrite.draft_status.replace("_", " ")} tone="blue" />
+                              )}
+                              {mapping?.expected_section_label && (
+                                <InlinePill label={mapping.expected_section_label} tone="slate" />
+                              )}
+                            </div>
+
+                            <p className="mt-3 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                              {section.original_copy || "No captured copy was extracted for this block."}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {activeSection && (
+                <SectionWorkspace
+                  key={`${page.id}-${activeSection.id ?? activeSection.section_order}`}
+                  propertyId={page.property_id}
+                  pageId={page.id}
+                  section={activeSection}
+                  mapping={activeSectionMapping}
+                  assessment={activeSectionAssessment}
+                  rewrite={activeSectionRewrite}
+                  focusedClaims={focusedClaims}
+                  onRewriteSaved={onRewriteSaved}
+                  sectionIndex={page.sections.findIndex((section) => sectionIdentity(section) === sectionIdentity(activeSection))}
+                  totalSections={page.sections.length}
+                />
+              )}
             </div>
           )}
         </div>
@@ -1257,6 +1396,8 @@ function SectionWorkspace({
   rewrite,
   focusedClaims,
   onRewriteSaved,
+  sectionIndex,
+  totalSections,
 }: {
   propertyId: string;
   pageId: string;
@@ -1266,6 +1407,8 @@ function SectionWorkspace({
   rewrite: SiteContentSectionRewrite | null;
   focusedClaims: IntelligenceClaim[];
   onRewriteSaved: (pageId: string, rewrite: SiteContentSectionRewrite) => void;
+  sectionIndex: number;
+  totalSections: number;
 }) {
   const [draftStatus, setDraftStatus] = React.useState<SiteContentSectionRewrite["draft_status"]>(
     rewrite?.draft_status ?? "not_started"
@@ -1328,6 +1471,40 @@ function SectionWorkspace({
 
   return (
     <div className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.05)]">
+      <div className="border-b border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0D5E6D]">Selected block</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="text-xl font-semibold text-slate-900">{title}</p>
+              <InlinePill label={`${sectionIndex + 1} of ${totalSections}`} tone="slate" />
+              <InlinePill label={sectionPositionLabel(sectionIndex, totalSections)} tone="blue" />
+              <InlinePill label={sectionMediaLabel(section)} tone={section.image_count > 0 ? "blue" : "slate"} />
+              {mapping && <InlinePill label={mappingLabel(mapping)} tone={mappingTone(mapping)} />}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <InlinePill label={`${section.link_count} links`} tone="slate" />
+            <InlinePill label={`${section.image_count} images`} tone={section.image_count > 0 ? "blue" : "slate"} />
+            {renderSectionAssessmentPill(assessment)}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-4">
+          <DrawerCueTile label="Location on page" value={sectionPositionLabel(sectionIndex, totalSections)} detail="Reading order cue for this block" />
+          <DrawerCueTile label="Media" value={sectionMediaLabel(section)} detail={sectionMediaDetail(section)} />
+          <DrawerCueTile
+            label="Specs fit"
+            value={mappingLabel(mapping)}
+            detail={mapping?.expected_section_label || "This block is not fully mapped yet"}
+          />
+          <DrawerCueTile
+            label="Rewrite state"
+            value={(rewrite?.draft_status ?? "not_started").replace("_", " ")}
+            detail={assessment?.summary || "Needs assessment and rewrite guidance"}
+          />
+        </div>
+      </div>
+
       <div className="grid gap-5 border-b border-slate-100 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,1))] p-5 lg:grid-cols-[0.95fr_1.05fr_0.95fr]">
         <div className="space-y-3">
           <div>
@@ -1516,6 +1693,100 @@ function upsertById<T extends { id: string }>(items: T[], nextItem: T): T[] {
   return items.map((item) => (item.id === nextItem.id ? nextItem : item));
 }
 
+function sectionIdentity(section: SiteContentSection): string {
+  return section.id ?? `order-${section.section_order}`;
+}
+
+function sectionPositionLabel(index: number, totalSections: number): string {
+  if (index <= 0) return "Top of page";
+  if (index === totalSections - 1) return "Bottom of page";
+  if (index >= totalSections - 2) return "Lower page";
+  if (index <= Math.max(1, Math.floor(totalSections / 3))) return "Upper page";
+  return "Mid-page";
+}
+
+function sectionMediaLabel(section: SiteContentSection): string {
+  if (section.image_count >= 3) return "Gallery-rich";
+  if (section.image_count >= 1) return "Has imagery";
+  return "Text-only";
+}
+
+function sectionMediaDetail(section: SiteContentSection): string {
+  if (section.image_count <= 0) return "No images detected in this block";
+  if (section.media_side === "left") return `${section.image_count} image${section.image_count > 1 ? "s" : ""} on the left`;
+  if (section.media_side === "right") return `${section.image_count} image${section.image_count > 1 ? "s" : ""} on the right`;
+  return `${section.image_count} image${section.image_count > 1 ? "s" : ""} detected`;
+}
+
+function mappingLabel(mapping: SiteContentSectionMapping | null): string {
+  if (!mapping) return "Unmapped";
+  switch (mapping.match_status) {
+    case "matched":
+      return "Matches Specs";
+    case "partial":
+      return "Partial match";
+    case "missing-from-live":
+      return "Missing from live";
+    case "extra-on-live":
+      return "Extra live block";
+    default:
+      return "Mapped";
+  }
+}
+
+function mappingTone(mapping: SiteContentSectionMapping | null): "emerald" | "amber" | "rose" | "slate" {
+  if (!mapping) return "rose";
+  switch (mapping.match_status) {
+    case "matched":
+      return "emerald";
+    case "partial":
+      return "amber";
+    case "missing-from-live":
+      return "rose";
+    case "extra-on-live":
+      return "slate";
+    default:
+      return "slate";
+  }
+}
+
+function renderSectionPreviewBars(page: SiteContentPage, activeSectionId?: string | null) {
+  return (
+    <div className="flex h-24 items-end gap-1.5 rounded-[1.15rem] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#eef6f7_100%)] px-3 py-3">
+      {page.sections.slice(0, 8).map((section, index) => {
+        const mapping = resolveMappingForSection(page, section);
+        const assessment = mapping
+          ? page.section_assessments.find((item) => item.mapping_id === mapping.id) ?? null
+          : null;
+        const tone =
+          assessment?.overall_status === "healthy"
+            ? "bg-emerald-300/85"
+            : assessment?.overall_status === "needs-attention"
+              ? "bg-rose-300/90"
+              : "bg-sky-300/85";
+        const active = activeSectionId ? sectionIdentity(section) === activeSectionId : false;
+        const height = 34 + (((index % 4) + 1) * 10);
+        return (
+          <div
+            key={`${page.id}-${section.id ?? section.section_order}`}
+            className={`flex-1 rounded-t-md ${tone} ${active ? "ring-2 ring-[#0D5E6D] ring-offset-2 ring-offset-white" : ""}`}
+            style={{ height }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function renderSectionAssessmentPill(assessment: SiteContentSectionAssessment | null) {
+  const tone = assessment ? toneForPosture(assessment.overall_status) : toneForPosture("watch");
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${tone.badge}`}>
+      {(assessment?.overall_status ?? "watch").replace("-", " ")}
+    </span>
+  );
+}
+
 function HeroStat({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <div className="rounded-2xl border border-white/12 bg-white/8 p-4">
@@ -1560,6 +1831,46 @@ function ContractTile({ title, detail }: { title: string; detail: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4">
       <p className="font-semibold text-slate-900">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+    </div>
+  );
+}
+
+function WorkbenchStep({
+  step,
+  title,
+  detail,
+}: {
+  step: string;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center gap-3">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0D5E6D] text-sm font-bold text-white">
+          {step}
+        </span>
+        <p className="font-semibold text-slate-900">{title}</p>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p>
+    </div>
+  );
+}
+
+function DrawerCueTile({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold capitalize text-slate-900">{value}</p>
       <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
     </div>
   );
