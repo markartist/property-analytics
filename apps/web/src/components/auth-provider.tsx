@@ -2,7 +2,17 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import {
+  apiFetch,
+  buildCloudflareAccessBootstrapUrl,
+  buildCloudflareAccessBootstrapRetryUrl,
+  buildCloudflareAccessLogoutUrl,
+  clearCloudflareLoggedOutFlag,
+  markCloudflareLoggedOut,
+  hasCloudflareBootstrapMarker,
+  hasCloudflareBootstrapRetryMarker,
+  stripCloudflareBootstrapMarker,
+} from "@/lib/api";
 
 export interface AuthUser {
   id: string;
@@ -40,22 +50,85 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    apiFetch("/v1/auth/me")
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-          // Redirect to login
-          window.location.href = "/login";
+    let cancelled = false;
+    const currentSearch = typeof window !== "undefined" ? window.location.search : "";
+    const currentHash = typeof window !== "undefined" ? window.location.hash : "";
+    const hasBootstrapMarker = hasCloudflareBootstrapMarker(currentSearch);
+    const hasBootstrapRetryMarker = hasCloudflareBootstrapRetryMarker(currentSearch);
+
+    async function checkSession() {
+      const maxAttempts = hasBootstrapMarker ? 3 : 1;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          const res = await apiFetch("/v1/auth/me");
+          if (res.ok) {
+            const data = await res.json();
+            if (!cancelled) {
+              clearCloudflareLoggedOutFlag();
+              setUser(data.user);
+              if (hasBootstrapMarker) {
+                const cleanUrl = stripCloudflareBootstrapMarker(window.location.pathname, currentSearch, currentHash);
+                window.history.replaceState({}, "", cleanUrl);
+              }
+            }
+            return;
+          }
+
+          if (attempt < maxAttempts) {
+            await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
+            continue;
+          }
+
+          if (!cancelled) {
+            setUser(null);
+            if (hasBootstrapMarker) {
+              if (!hasBootstrapRetryMarker) {
+                const retryPath = stripCloudflareBootstrapMarker(window.location.pathname, currentSearch, currentHash);
+                window.location.href = buildCloudflareAccessBootstrapRetryUrl(retryPath);
+                return;
+              }
+              window.location.href = "/login?error=cloudflare_access_no_session";
+              return;
+            }
+            const nextPath = window.location.pathname + currentSearch + currentHash;
+            window.location.href = buildCloudflareAccessBootstrapUrl(nextPath);
+          }
+          return;
+        } catch {
+          if (attempt < maxAttempts) {
+            await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
+            continue;
+          }
+
+          if (!cancelled) {
+            setUser(null);
+            if (hasBootstrapMarker) {
+              if (!hasBootstrapRetryMarker) {
+                const retryPath = stripCloudflareBootstrapMarker(window.location.pathname, currentSearch, currentHash);
+                window.location.href = buildCloudflareAccessBootstrapRetryUrl(retryPath);
+                return;
+              }
+              window.location.href = "/login?error=cloudflare_access_api_unreachable";
+              return;
+            }
+            const nextPath = window.location.pathname + currentSearch + currentHash;
+            window.location.href = buildCloudflareAccessBootstrapUrl(nextPath);
+          }
+          return;
         }
-      })
-      .catch(() => {
-        setUser(null);
-        window.location.href = "/login";
-      })
-      .finally(() => setLoading(false));
+      }
+    }
+
+    void checkSession().finally(() => {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   const logout = React.useCallback(async () => {
@@ -65,7 +138,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     setUser(null);
-    window.location.href = "/login";
+    markCloudflareLoggedOut();
+    window.location.href = buildCloudflareAccessLogoutUrl();
   }, []);
 
   return (

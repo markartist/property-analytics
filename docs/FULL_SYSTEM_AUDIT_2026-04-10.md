@@ -59,7 +59,7 @@ At minimum, the current codebase holds:
 - a full pilot monitoring program with KPI tracker, CWV comparison, exports, and daily roundups
 - an EVS / BrowserStack experiential validation system with a governed Pond bridge and explicit mixed human-and-machine lane posture
 - multiple specialized reporting products: Spotlight, Focus Report, Weekly Progress, Daily Health, Morning Full Report, Paid Media Workbook, Resi diagnostics, site audits, and GSC/PSI snapshots
-- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`, plus Data Pond session bootstrap from Cloudflare Access identity for human browsers, preserved browser handoff across both `app.venterradev.com` and `app.venterraliving.com`, and least-privilege auto-provisioning so Zero Trust can act as the primary browser admission gate
+- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`, plus Data Pond session bootstrap from Cloudflare Access identity for human browsers, restored clean-branch `/v1/auth/access-bootstrap` support after release-branch drift, preserved browser handoff across both `app.venterradev.com` and `app.venterraliving.com`, and least-privilege auto-provisioning so Zero Trust can act as the primary browser admission gate
 
 The most important planning truth is this:
 

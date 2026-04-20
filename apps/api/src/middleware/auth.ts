@@ -65,14 +65,14 @@ export function requireRole(...roles: AuthUser["role"][]) {
   };
 }
 
-function getCookie(c: Context, name: string): string | undefined {
+export function getCookie(c: Context, name: string): string | undefined {
   const header = c.req.header("cookie") ?? "";
   const match = header.split(";").map((s) => s.trim()).find((s) => s.startsWith(`${name}=`));
   return match ? match.slice(name.length + 1) : undefined;
 }
 
 /** Hash the raw session token and look up against sessions + users via D1. */
-async function resolveSession(
+export async function resolveSession(
   db: D1Database,
   rawToken: string
 ): Promise<{ id: string; email: string; role: AuthUser["role"]; isActive: boolean } | null> {

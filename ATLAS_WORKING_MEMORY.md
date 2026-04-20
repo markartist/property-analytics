@@ -3978,6 +3978,21 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - section rewrite workspaces now show theme-aware suggested focus rather than only raw claim text
   - rewrite brief guidance is becoming more portable and editorially legible
 
+### 2026-04-20 08:25 UTC - Clean release branch auth bootstrap was restored for Cloudflare login
+
+- Restored the current Cloudflare Access browser bootstrap path on the clean release branch after confirming the live error was caused by branch drift, not a Cloudflare edge failure.
+- Synced the working auth implementation back into `/private/tmp/property_analytics_reconcile` for:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/middleware/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/lib/service-auth.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/auth-provider.tsx`
+- Current effect:
+  - `/v1/auth/access-bootstrap` exists again on the promoted branch
+  - Cloudflare-authenticated browsers can bootstrap a first-party Data Pond session instead of falling into API `NOT_FOUND`
+  - login/logout behavior is back on the intended Zero Trust path, including retry handling and explicit fallback messaging
+
 ### 2026-04-19 16:20 UTC - Site Content claim routing is now page-aware and rewrite-guiding
 
 - Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so unresolved governed claims are now routed more intentionally by page role and section role.

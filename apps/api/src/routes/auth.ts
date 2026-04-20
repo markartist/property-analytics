@@ -2,24 +2,25 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
-import { requireAuth } from "../middleware/auth";
+import { getCookie, requireAuth, resolveSession } from "../middleware/auth";
 import { queryFirst, run } from "../lib/db";
 import { verifyPassword, hashPassword, generateToken, hashToken } from "../lib/crypto";
 import { newId } from "../lib/id";
 import { nowISO, errJson } from "../lib/validate";
 import { loginLimiter, magicLinkLimiter } from "../lib/rate-limit";
 import { sendEmail } from "../email/resend";
+import { resolveCloudflareAccessIdentity } from "../lib/service-auth";
+import { writeAuditLog } from "../lib/audit";
 
 const SESSION_TTL_HOURS = 72;
 
-/**
- * Cookie posture: HttpOnly (no JS access), Secure (HTTPS only),
- * SameSite=Lax (CSRF protection while allowing top-level navigation),
- * Path=/ (scoped to entire API). Max-Age set per-use.
- */
-const COOKIE_OPTS = "HttpOnly; Secure; SameSite=None; Path=/; Domain=.venterradev.com";
-
 const MAGIC_LINK_TTL_MINUTES = 15;
+const DEFAULT_FRONTEND_URL = "https://app.venterradev.com";
+const VALID_APP_ROLES = new Set(["admin", "editor", "viewer"] as const);
+const KNOWN_FRONTEND_ORIGINS = new Set([
+  DEFAULT_FRONTEND_URL,
+  "https://app.venterraliving.com",
+]);
 
 const LoginBody = z.object({
   email: z.string().email().transform((v) => v.toLowerCase().trim()),
@@ -79,7 +80,7 @@ auth.post("/login", async (c) => {
   // Update last_login_at
   await run(c.env.POP_BRIEF_DB, "UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?", [now, now, user.id]);
 
-  c.header("Set-Cookie", `pop_session=${raw}; ${COOKIE_OPTS}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
+  c.header("Set-Cookie", `pop_session=${raw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
   return c.json({ user: { id: user.id, email: user.email, role: user.role } });
 });
 
@@ -95,7 +96,7 @@ auth.post("/logout", requireAuth, async (c) => {
       [now, now, tokenHash]
     );
   }
-  c.header("Set-Cookie", `pop_session=; ${COOKIE_OPTS}; Max-Age=0`);
+  c.header("Set-Cookie", `pop_session=; ${cookieOpts(c)}; Max-Age=0`);
   return c.json({ ok: true });
 });
 
@@ -146,7 +147,7 @@ auth.post("/magic-link", async (c) => {
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
           <div style="text-align: center; margin-bottom: 32px;">
             <h1 style="color: #15284B; font-size: 24px; margin: 0;">The Data Pond</h1>
-            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Venterra WebOps</p>
+            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">MarketingOps</p>
           </div>
           <p style="color: #334155; font-size: 16px; line-height: 1.5;">Click the button below to sign in. This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
           <div style="text-align: center; margin: 32px 0;">
@@ -173,7 +174,14 @@ auth.post("/magic-link", async (c) => {
 auth.get("/verify", async (c) => {
   const raw = c.req.query("token");
   if (!raw) return c.redirect(frontendUrl(c) + "/login?error=missing_token");
-  // Redirect to frontend verify page — does NOT consume the token
+  const complete = c.req.query("complete");
+  if (complete === "1") {
+    const result = await consumeMagicLinkToken(c.env.POP_BRIEF_DB, raw);
+    if (!result.ok) return c.redirect(`${frontendUrl(c)}/login?error=${result.errorCode}`);
+    c.header("Set-Cookie", `pop_session=${result.sessionRaw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
+    return c.redirect(frontendUrl(c) + "/");
+  }
+  // Default: redirect to frontend verify page — does NOT consume the token
   return c.redirect(frontendUrl(c) + `/login/verify?token=${raw}`);
 });
 
@@ -181,52 +189,56 @@ auth.get("/verify", async (c) => {
 auth.post("/verify", async (c) => {
   const body = z.object({ token: z.string().min(1) }).safeParse(await c.req.json());
   if (!body.success) return c.json(errJson("VALIDATION_ERROR", "Missing token"), 400);
-  const raw = body.data.token;
+  const result = await consumeMagicLinkToken(c.env.POP_BRIEF_DB, body.data.token);
+  if (!result.ok) return c.json(errJson(result.errorCode.toUpperCase(), result.message), result.status as 400 | 403);
 
-  const tokenHash = await hashToken(raw);
-  const token = await queryFirst<{ id: string; email: string; expires_at: string; used_at: string | null }>(
-    c.env.POP_BRIEF_DB,
-    "SELECT id, email, expires_at, used_at FROM magic_tokens WHERE token_hash = ?",
-    [tokenHash]
-  );
+  c.header("Set-Cookie", `pop_session=${result.sessionRaw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
+  return c.json({ user: { id: result.user.id, email: result.user.email, role: result.user.role } });
+});
 
-  if (!token) return c.json(errJson("INVALID_TOKEN", "This login link is invalid."), 400);
-  if (token.used_at) return c.json(errJson("TOKEN_USED", "This login link has already been used."), 400);
-  if (new Date(token.expires_at) <= new Date()) return c.json(errJson("TOKEN_EXPIRED", "This login link has expired."), 400);
+/** GET /v1/auth/access-bootstrap — establish api-domain session from Cloudflare Access browser identity */
+auth.get("/access-bootstrap", async (c) => {
+  const nextPath = safeFrontendPath(c.req.query("next"));
+  const fallback = (error: string) => c.redirect(`${frontendUrl(c)}/login?error=${encodeURIComponent(error)}`);
 
-  // Mark token as used
-  const now = nowISO();
-  await run(c.env.POP_BRIEF_DB, "UPDATE magic_tokens SET used_at = ? WHERE id = ?", [now, token.id]);
+  const sessionToken = getCookie(c, "pop_session");
+  if (sessionToken) {
+    const sessionUser = await resolveSession(c.env.POP_BRIEF_DB, sessionToken);
+    if (sessionUser?.isActive) {
+      return c.redirect(`${frontendUrl(c)}${nextPath}`);
+    }
+  }
 
-  // Look up user
-  const user = await queryFirst<{ id: string; email: string; role: string; is_active: number }>(
-    c.env.POP_BRIEF_DB,
-    "SELECT id, email, role, is_active FROM users WHERE email = ? AND deleted_at IS NULL",
-    [token.email]
-  );
-  if (!user || !user.is_active) return c.json(errJson("USER_INACTIVE", "Account is inactive."), 403);
+  const bootstrapped = await bootstrapCloudflareAccessSession(c);
+  if (!bootstrapped) {
+    const headers = c.req.raw?.headers;
+    const hasAccessIdentity = Boolean(
+      headers?.get("cf-access-jwt-assertion") || headers?.get("cf-access-authenticated-user-email")
+    );
+    return fallback(hasAccessIdentity ? "cloudflare_access_unavailable" : "cloudflare_access_missing");
+  }
 
-  // Create session
-  const session = await generateToken();
-  const sessionId = newId();
-  const expiresAt = new Date(Date.now() + SESSION_TTL_HOURS * 3600_000).toISOString();
-
-  await run(c.env.POP_BRIEF_DB,
-    `INSERT INTO sessions (id, user_id, session_token_hash, expires_at, created_at, created_by, updated_at, updated_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [sessionId, user.id, session.hash, expiresAt, now, user.id, now, user.id]
-  );
-
-  // Update last_login_at
-  await run(c.env.POP_BRIEF_DB, "UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?", [now, now, user.id]);
-
-  c.header("Set-Cookie", `pop_session=${session.raw}; ${COOKIE_OPTS}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
-  return c.json({ user: { id: user.id, email: user.email, role: user.role } });
+  c.header("Set-Cookie", `pop_session=${bootstrapped.sessionRaw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
+  return c.redirect(`${frontendUrl(c)}${nextPath}`);
 });
 
 /** GET /v1/auth/me — current user context */
-auth.get("/me", requireAuth, async (c) => {
-  return c.json({ user: c.get("user") });
+auth.get("/me", async (c) => {
+  const sessionToken = getCookie(c, "pop_session");
+  if (sessionToken) {
+    const sessionUser = await resolveSession(c.env.POP_BRIEF_DB, sessionToken);
+    if (sessionUser?.isActive) {
+      return c.json({ user: { id: sessionUser.id, email: sessionUser.email, role: sessionUser.role } });
+    }
+  }
+
+  const bootstrapped = await bootstrapCloudflareAccessSession(c);
+  if (bootstrapped) {
+    c.header("Set-Cookie", `pop_session=${bootstrapped.sessionRaw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
+    return c.json({ user: bootstrapped.user, bootstrap: "cloudflare_access" });
+  }
+
+  return c.json({ error: { code: "UNAUTHORIZED", message: "Authentication required", details: [] } }, 401);
 });
 
 /** POST /v1/auth/redeem-invite — create account from invite token */
@@ -273,15 +285,259 @@ auth.post("/redeem-invite", async (c) => {
     [sessionId, userId, hash, expiresAt, now, userId, now, userId]
   );
 
-  c.header("Set-Cookie", `pop_session=${raw}; ${COOKIE_OPTS}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
+  c.header("Set-Cookie", `pop_session=${raw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
   return c.json({ user: { id: userId, email: invite.email, role: invite.role } });
 });
 
-/** Derive frontend URL from the API request for redirects. */
-function frontendUrl(c: { req: { url: string } }): string {
+/** Derive frontend URL for redirects and magic links. */
+function frontendUrl(c: { req: { url: string; header: (name: string) => string | undefined } }): string {
+  const host = c.req.header("x-forwarded-host") ?? c.req.header("host") ?? "";
+  if (host.includes("localhost:3000") || host.includes("localhost:3001")) {
+    return host.includes("3001") ? "http://localhost:3001" : "http://localhost:3000";
+  }
+  if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "http://localhost:3000";
+  }
+
+  const origin = c.req.header("origin");
+  const referer = c.req.header("referer");
+
+  // In local dev with remote preview, API host is remote, so prefer browser origin/referer.
+  for (const candidate of [origin, referer]) {
+    if (!candidate) continue;
+    try {
+      const u = new URL(candidate);
+      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+        return `${u.protocol}//${u.host}`;
+      }
+      if (KNOWN_FRONTEND_ORIGINS.has(u.origin)) {
+        return u.origin;
+      }
+    } catch {
+      // Ignore malformed header values.
+    }
+  }
+
   const url = new URL(c.req.url);
   if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return "http://localhost:3000";
-  return "https://app.venterradev.com";
+  return DEFAULT_FRONTEND_URL;
+}
+
+function safeFrontendPath(nextValue?: string | null): string {
+  const normalized = (nextValue ?? "/").trim();
+  if (!normalized.startsWith("/") || normalized.startsWith("//")) {
+    return "/";
+  }
+  return normalized;
 }
 
 export { auth };
+
+type AppRole = "admin" | "editor" | "viewer";
+
+function parseCsvList(value?: string | null): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function normalizeBoolean(value?: string | null): boolean {
+  const normalized = (value ?? "").trim().toLowerCase();
+  return normalized === "true" || normalized === "1" || normalized === "yes";
+}
+
+function resolveAutoProvisionRole(c: { env: Env }, email: string): AppRole | null {
+  const normalizedEmail = email.trim().toLowerCase();
+  const adminEmails = new Set(parseCsvList(c.env.CLOUDFLARE_ACCESS_ADMIN_EMAILS));
+  if (adminEmails.has(normalizedEmail)) {
+    return "admin";
+  }
+
+  const editorEmails = new Set(parseCsvList(c.env.CLOUDFLARE_ACCESS_EDITOR_EMAILS));
+  if (editorEmails.has(normalizedEmail)) {
+    return "editor";
+  }
+
+  const allowedEmails = new Set(parseCsvList(c.env.CLOUDFLARE_ACCESS_ALLOWED_EMAILS));
+  const allowedDomains = new Set(parseCsvList(c.env.CLOUDFLARE_ACCESS_ALLOWED_DOMAINS));
+  const emailDomain = normalizedEmail.split("@")[1] ?? "";
+  const allowlistsConfigured = allowedEmails.size > 0 || allowedDomains.size > 0;
+
+  if (allowlistsConfigured && !allowedEmails.has(normalizedEmail) && !allowedDomains.has(emailDomain)) {
+    return null;
+  }
+
+  const configuredDefaultRole = (c.env.CLOUDFLARE_ACCESS_DEFAULT_ROLE ?? "viewer").trim().toLowerCase();
+  return VALID_APP_ROLES.has(configuredDefaultRole as AppRole) ? (configuredDefaultRole as AppRole) : "viewer";
+}
+
+async function bootstrapCloudflareAccessSession(
+  c: {
+    env: Env;
+    req: {
+      header: (name: string) => string | undefined | null;
+      raw?: { headers: Headers };
+    };
+  }
+): Promise<{ user: { id: string; email: string; role: string }; sessionRaw: string } | null> {
+  const identity = await resolveCloudflareAccessIdentity(c.req.raw?.headers ?? { get: c.req.header }, c.env.CLOUDFLARE_ACCESS_TEAM_DOMAIN);
+  if (!identity?.email) {
+    return null;
+  }
+
+  let user = await queryFirst<{ id: string; email: string; role: string; is_active: number }>(
+    c.env.POP_BRIEF_DB,
+    "SELECT id, email, role, is_active FROM users WHERE email = ? AND deleted_at IS NULL",
+    [identity.email]
+  );
+
+  if (!user && normalizeBoolean(c.env.CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED)) {
+    const provisionedRole = resolveAutoProvisionRole(c, identity.email);
+    if (provisionedRole) {
+      const userId = newId();
+      const now = nowISO();
+      const fullName =
+        identity.commonName && !identity.commonName.includes("@")
+          ? identity.commonName.trim().slice(0, 255)
+          : null;
+
+      await run(
+        c.env.POP_BRIEF_DB,
+        `INSERT INTO users (id, email, full_name, role, is_active, created_at, created_by, updated_at, updated_by)
+         VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+        [userId, identity.email, fullName, provisionedRole, now, userId, now, userId]
+      );
+
+      await writeAuditLog(c.env.POP_BRIEF_DB, {
+        actorUserId: userId,
+        action: "user.auto_provision",
+        entityType: "user",
+        entityId: userId,
+        after: {
+          email: identity.email,
+          full_name: fullName,
+          role: provisionedRole,
+          source: "cloudflare_access",
+        },
+      });
+
+      user = {
+        id: userId,
+        email: identity.email,
+        role: provisionedRole,
+        is_active: 1,
+      };
+    }
+  }
+
+  if (!user || !user.is_active) {
+    return null;
+  }
+
+  const session = await generateToken();
+  const sessionId = newId();
+  const now = nowISO();
+  const expiresAt = new Date(Date.now() + SESSION_TTL_HOURS * 3600_000).toISOString();
+
+  await run(
+    c.env.POP_BRIEF_DB,
+    `INSERT INTO sessions (id, user_id, session_token_hash, expires_at, created_at, created_by, updated_at, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [sessionId, user.id, session.hash, expiresAt, now, user.id, now, user.id]
+  );
+  await run(c.env.POP_BRIEF_DB, "UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?", [now, now, user.id]);
+
+  return {
+    user: { id: user.id, email: user.email, role: user.role },
+    sessionRaw: session.raw,
+  };
+}
+
+async function consumeMagicLinkToken(
+  db: D1Database,
+  raw: string
+): Promise<
+  | { ok: true; user: { id: string; email: string; role: string }; sessionRaw: string }
+  | { ok: false; status: number; errorCode: "invalid_token" | "token_used" | "token_expired" | "user_inactive"; message: string }
+> {
+  const tokenHash = await hashToken(raw);
+  const token = await queryFirst<{ id: string; email: string; expires_at: string; used_at: string | null }>(
+    db,
+    "SELECT id, email, expires_at, used_at FROM magic_tokens WHERE token_hash = ?",
+    [tokenHash]
+  );
+
+  if (!token) return { ok: false, status: 400, errorCode: "invalid_token", message: "This login link is invalid." };
+  if (token.used_at) return { ok: false, status: 400, errorCode: "token_used", message: "This login link has already been used." };
+  if (new Date(token.expires_at) <= new Date()) return { ok: false, status: 400, errorCode: "token_expired", message: "This login link has expired." };
+
+  const now = nowISO();
+  await run(db, "UPDATE magic_tokens SET used_at = ? WHERE id = ?", [now, token.id]);
+
+  const user = await queryFirst<{ id: string; email: string; role: string; is_active: number }>(
+    db,
+    "SELECT id, email, role, is_active FROM users WHERE email = ? AND deleted_at IS NULL",
+    [token.email]
+  );
+  if (!user || !user.is_active) return { ok: false, status: 403, errorCode: "user_inactive", message: "Account is inactive." };
+
+  const session = await generateToken();
+  const sessionId = newId();
+  const expiresAt = new Date(Date.now() + SESSION_TTL_HOURS * 3600_000).toISOString();
+
+  await run(
+    db,
+    `INSERT INTO sessions (id, user_id, session_token_hash, expires_at, created_at, created_by, updated_at, updated_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [sessionId, user.id, session.hash, expiresAt, now, user.id, now, user.id]
+  );
+  await run(db, "UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?", [now, now, user.id]);
+
+  return { ok: true, user: { id: user.id, email: user.email, role: user.role }, sessionRaw: session.raw };
+}
+
+function cookieOpts(c: { req: { header: (name: string) => string | undefined; url: string } }): string {
+  const host = c.req.header("x-forwarded-host") ?? c.req.header("host") ?? "";
+  if (host.includes("localhost") || host.includes("127.0.0.1")) {
+    // Local HTTP dev cannot use Secure cookies or cross-domain cookie scope.
+    return "HttpOnly; SameSite=Lax; Path=/";
+  }
+
+  const origin = c.req.header("origin");
+  const referer = c.req.header("referer");
+  for (const candidate of [origin, referer]) {
+    if (!candidate) continue;
+    try {
+      const u = new URL(candidate);
+      if (u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+        // Local HTTP dev cannot use Secure cookies or cross-domain cookie scope.
+        return "HttpOnly; SameSite=Lax; Path=/";
+      }
+    } catch {
+      // Ignore malformed header values.
+    }
+  }
+
+  const url = new URL(c.req.url);
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    return "HttpOnly; SameSite=Lax; Path=/";
+  }
+  const frontendOrigin = frontendUrl(c as { req: { url: string; header: (name: string) => string | undefined } });
+  const cookieDomain = cookieDomainForFrontend(frontendOrigin);
+  return cookieDomain
+    ? `HttpOnly; Secure; SameSite=None; Path=/; Domain=${cookieDomain}`
+    : "HttpOnly; Secure; SameSite=None; Path=/";
+}
+
+function cookieDomainForFrontend(frontendOrigin: string): string | null {
+  try {
+    const hostname = new URL(frontendOrigin).hostname.toLowerCase();
+    if (hostname === "localhost" || hostname === "127.0.0.1") return null;
+    if (hostname.endsWith(".venterradev.com")) return ".venterradev.com";
+    if (hostname.endsWith(".venterraliving.com")) return ".venterraliving.com";
+  } catch {
+    return null;
+  }
+  return null;
+}

@@ -1,4 +1,10 @@
 export type ServiceAccessMode = "access_service_token" | "shared_token";
+export type CloudflareAccessIdentity = {
+  jwt: string;
+  issuer: string;
+  commonName: string | null;
+  email: string | null;
+};
 type AccessCertJwk = JsonWebKey & { kid?: string };
 
 type HeadersLike = {
@@ -77,6 +83,7 @@ type AccessJwtClaims = {
   exp?: number;
   nbf?: number;
   common_name?: string;
+  email?: string;
 };
 
 const accessCertCache = new Map<string, { expiresAt: number; keys: Map<string, JsonWebKey> }>();
@@ -110,25 +117,24 @@ async function loadAccessCerts(teamDomain: string): Promise<Map<string, JsonWebK
 
 async function validateAccessJwtAssertion(
   token: string,
-  expectedClientId: string,
   accessTeamDomain?: string | null
-): Promise<boolean> {
+): Promise<AccessJwtClaims | null> {
   const parts = token.split(".");
   if (parts.length !== 3) {
-    return false;
+    return null;
   }
 
   const header = parseJwtPart<AccessJwtHeader>(parts[0]);
   const claims = parseJwtPart<AccessJwtClaims>(parts[1]);
   if (!header || !claims || header.alg !== "RS256" || !header.kid) {
-    return false;
+    return null;
   }
 
   const teamDomain = normalizeTeamDomain(accessTeamDomain);
   const certs = await loadAccessCerts(teamDomain);
   const jwk = certs.get(header.kid);
   if (!jwk) {
-    return false;
+    return null;
   }
 
   const cryptoKey = await crypto.subtle.importKey(
@@ -146,15 +152,46 @@ async function validateAccessJwtAssertion(
     new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
   );
   if (!verified) {
-    return false;
+    return null;
   }
 
   const now = Math.floor(Date.now() / 1000);
   if ((claims.nbf && now < claims.nbf) || (claims.exp && now >= claims.exp)) {
-    return false;
+    return null;
   }
 
-  return claims.iss === teamDomain && claims.common_name === expectedClientId;
+  if (claims.iss !== teamDomain) {
+    return null;
+  }
+
+  return claims;
+}
+
+export async function resolveCloudflareAccessIdentity(
+  headers: HeadersLike,
+  accessTeamDomain?: string | null
+): Promise<CloudflareAccessIdentity | null> {
+  const headerEmail = normalize(headers.get("cf-access-authenticated-user-email"));
+  const token = cloudflareAccessJwtFromHeaders(headers);
+  if (!token) {
+    return null;
+  }
+
+  const claims = await validateAccessJwtAssertion(token, accessTeamDomain);
+  if (!claims) {
+    return null;
+  }
+
+  const claimEmail = normalize(claims.email);
+  const commonName = normalize(claims.common_name);
+  const emailSource = headerEmail || claimEmail || (commonName.includes("@") ? commonName : "");
+
+  return {
+    jwt: token,
+    issuer: claims.iss ?? normalizeTeamDomain(accessTeamDomain),
+    commonName: commonName || null,
+    email: emailSource ? emailSource.toLowerCase() : null,
+  };
 }
 
 export function hasServiceAuthConfig(options: ServiceAuthOptions): boolean {
@@ -187,7 +224,7 @@ export async function resolveServiceAccessMode(
     expectedClientId &&
     expectedClientSecret &&
     accessJwt &&
-    (await validateAccessJwtAssertion(accessJwt, expectedClientId, options.accessTeamDomain))
+    (await validateAccessJwtAssertion(accessJwt, options.accessTeamDomain))?.common_name === expectedClientId
   ) {
     return "access_service_token";
   }
