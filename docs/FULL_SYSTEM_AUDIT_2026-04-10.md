@@ -466,6 +466,8 @@ Audit judgment:
 - the next refinement step after that is also now present:
   - claim routing now uses reusable story themes in addition to token overlap
   - page and section guidance is beginning to read as location / lifestyle / amenities / trust / conversion work, not only as literal claim text matching
+- the clean release branch now also carries the Site Content admin API again after branch drift briefly left the UI without `/v1/admin/site-content`:
+  - inventory, property detail, crawl, and rewrite flows are back on the promoted branch instead of only existing in the dirty main worktree
 - future refinement should move upward from section-only editing into page composition and site-level harmonization/storytelling without recreating Specs or EVS logic locally
 - VACS current-state reporting should be explicit rather than aspirational:
   - VACS is a real platform system

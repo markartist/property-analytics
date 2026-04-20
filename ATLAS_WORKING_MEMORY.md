@@ -3993,6 +3993,21 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Cloudflare-authenticated browsers can bootstrap a first-party Data Pond session instead of falling into API `NOT_FOUND`
   - login/logout behavior is back on the intended Zero Trust path, including retry handling and explicit fallback messaging
 
+### 2026-04-20 08:45 UTC - Site Content inventory API was restored on the clean release branch
+
+- Investigated the live `Failed to load site content inventory` state and confirmed the web surface was healthy, but the branch was missing the Site Content admin API route stack.
+- Restored the canonical Site Content API slice into `/private/tmp/property_analytics_reconcile`:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/index.ts` route mount
+  - `/Users/mark/Property_Analytics/apps/api/src/lib/permissions.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/shared/specs-property-marketing-v1.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/intelligence/brief-completeness.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/memory/governed-memory.ts`
+- Current effect:
+  - `/v1/admin/site-content` exists again on the promoted branch
+  - the Site Content Creator can load inventory data instead of failing immediately at the first API request
+  - Specs bindings and brief-readiness posture are back behind the Site Content API instead of only existing in the main dirty repo
+
 ### 2026-04-19 16:20 UTC - Site Content claim routing is now page-aware and rewrite-guiding
 
 - Extended `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so unresolved governed claims are now routed more intentionally by page role and section role.
