@@ -1048,6 +1048,16 @@ Additional current-state note:
   - `/Users/mark/Property_Analytics/apps/web/src/components/shared/community-selector.tsx` can now receive a curated property list directly, which lets POP Brief preserve monthly Spotlight ordering instead of forcing a generic alphabetical sort
 - This is still a workflow-default change rather than a functional-model change, but it materially reduces repeated operator setup clicks on the main POP Brief screen.
 
+## Addendum: 2026-04-22 POP Brief header actions consolidated into navigation
+
+- Operator review identified another source of page-top clutter:
+  - the header mixed primary selectors with two one-off buttons that did not deserve equal visual weight on every visit
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` now uses a sticky header/control bar
+  - the old `Export PDF` and `Update` buttons were removed from that top row
+  - a single `Navigate` dropdown now exposes the main POP Brief route family and adjacent workflow destinations instead
+- This is a navigation/control-surface cleanup, not a reporting-model change, but it makes the page top feel more like a stable operator console and less like a row of unrelated buttons.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

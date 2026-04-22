@@ -239,6 +239,7 @@ The next high-value documents to create from this register are:
     - the Base44 Website & SEO importer now resolves the known shorthand property labels `1604`, `Oakleaf`, and `Whitney` instead of requiring exact canonical community names
     - the Marketing operator surface now has explicit visual hierarchy for upload, import, edit, save, and mention-scan actions instead of relying on near-monochrome neutral controls
     - the main POP Brief page now defaults to the upcoming Friday and scopes the property selector to the active monthly Spotlight property list, auto-selecting the first Spotlight property on open
+    - the main POP Brief header now uses a sticky control bar with a single navigation dropdown in place of the prior one-off `Export PDF` and `Update` buttons
   - current posture:
     - visible POP Brief is now anchored on `weekly_metrics` + `marketing_weekly`
     - compatibility with Base44 Website & SEO CSV ingest is restored alongside the canonical workflow

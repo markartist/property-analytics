@@ -4385,3 +4385,15 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - POP Brief header simplified into sticky controls plus navigation menu
+
+- Continued the operator-friction cleanup on the main POP Brief page without altering the report logic itself.
+- `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` now:
+  - uses a sticky top control bar
+  - removes the old `Export PDF` and `Update` buttons from the main header
+  - replaces them with a single `Navigate` dropdown that exposes POP Brief routes and adjacent workflow entry points
+- This keeps the date/property controls dominant while still making movement across the POP Brief lane accessible from the header.
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`

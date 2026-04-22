@@ -5,6 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CommunitySelector } from "@/components/shared/community-selector";
 import { WeekDatePicker } from "@/components/shared/week-date-picker";
@@ -19,9 +20,9 @@ import {
 } from "@/lib/api";
 import { getSpotlightCommunities, getUpcomingFriday } from "@/lib/spotlight-properties";
 import {
-  BarChart2, Building, RefreshCw, FileDown, Calendar as CalendarIcon,
+  BarChart2, Building, FileDown, Calendar as CalendarIcon,
   AlertCircle, DollarSign, FileText, TrendingUp, TrendingDown,
-  Search, MessageSquare, Percent, Users, ArrowRightLeft, NotebookText, UserCircle2,
+  Search, MessageSquare, Percent, Users, ArrowRightLeft, NotebookText, UserCircle2, ChevronDown,
 } from "lucide-react";
 
 const BRIEF_NAV_ITEMS: Array<{
@@ -337,7 +338,6 @@ export default function AnalysisPage() {
   const [analysisData, setAnalysisData] = React.useState<AnalysisResponse | null>(null);
   const [spotlightCommunities, setSpotlightCommunities] = React.useState<Community[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
 
   React.useEffect(() => {
     setWeekDate((current) => current ?? getUpcomingFriday());
@@ -374,7 +374,6 @@ export default function AnalysisPage() {
       setAnalysisData(null);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   }, [communityId, weekDate]);
 
@@ -383,7 +382,8 @@ export default function AnalysisPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="sticky top-4 z-20 mb-8 rounded-[24px] border border-slate-200 bg-white/95 px-6 py-5 shadow-[0_16px_36px_rgba(21,40,75,0.08)] backdrop-blur print:static print:border-0 print:bg-transparent print:px-0 print:py-0 print:shadow-none">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-[#15284B]">POP Brief</h1>
             <p className="mt-2 text-slate-600">Unified property operations performance brief.</p>
@@ -396,13 +396,55 @@ export default function AnalysisPage() {
               placeholder="Select community to analyze"
               communities={spotlightCommunities}
             />
-            <Button variant="outline" size="sm" onClick={() => window.print()} disabled={!communityId || !weekDate}>
-              <FileDown className="mr-2 h-4 w-4" />Export PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => { setRefreshing(true); load(); }} disabled={refreshing || loading || !communityId || !weekDate}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />Update
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="min-w-[148px] justify-between">
+                  Navigate
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="right-0 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(21,40,75,0.12)]">
+                <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  POP Brief Navigation
+                </div>
+                <div className="space-y-1">
+                  {[...BRIEF_NAV_ITEMS, { href: "/analysis/search-intelligence", label: "Search Intelligence", description: "Keyword, competitor, and search brief workflow.", icon: Search }, { href: "/metrics-import", label: "Weekly Metrics Import", description: "Import canonical weekly metrics files.", icon: CalendarIcon }].map((item) => {
+                    const Icon = item.icon;
+                    if (!item.href) {
+                      return (
+                        <div key={item.label} className="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">
+                          <div className="flex items-start gap-3">
+                            <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                            <div>
+                              <div className="font-semibold">{item.label}</div>
+                              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={item.label}
+                        href={item.href}
+                        className="block rounded-xl px-3 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#15284B]"
+                      >
+                        <div className="flex items-start gap-3">
+                          <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                          <div>
+                            <div className="font-semibold">{item.label}</div>
+                            <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
+        </div>
         </div>
 
         <Card className="mb-6 border-slate-200 print:hidden">
