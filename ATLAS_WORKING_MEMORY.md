@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-04-15 15:20 UTC  
+**Last Updated:** 2026-04-20 17:58 UTC  
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -74,15 +74,24 @@
 - Daily closure semantics are now split between live operations and historical governance: current-day closure can still be `open` / `blocked` / `complete`, while past dates now evaluate `archived` once outside the retry window, with unresolved source gaps preserved as informational context rather than pretending old debt is still an active live incident
 - Closure output now also includes `advisory_sources` for non-core lanes such as BI, Measurement, PSI, GSC URL inspection, SEMrush, GBP, and Cloudflare cache audit so Watchtower/API consumers can see governance breadth without forcing every advisory source to block the daily summary lane
 - Watchtower now renders that richer closure payload too: structured unresolved-source reasons, `archived` historical closure state, `blocked` live closure state, and an advisory-governance panel so the operator surface reflects broader governance posture instead of only the narrow core closure lane
-- The production Watchtower health route now degrades gracefully when D1 is behind the newest local telemetry schema: optional `data_collections` / `collection_retry_queue` telemetry queries fall back to empty sections instead of 500ing the whole `/v1/health/status` payload, which keeps the live Watchtower usable during mirror/schema lag
+- Pilot morning CWV recovery note for 2026-04-20: the pilot workflow failed at the `Homepage audit evidence` stage after GTMetrix and PSI had already completed because a single-property Chrome LCP probe for Calais Midtown hit a transient remote disconnect; same-day reruns of homepage evidence, GTMetrix/PSI exports, merged evaluation, and pilot roundup all succeeded, recovery mail was sent, and `pilot_control_cwv/scripts/collect_pilot_homepage_audit_evidence.py` now retries per-property transient probe failures before treating the whole stage as failed
+- D1 mirror incident note for 2026-04-20: the real mirror succeeded at `06:29 CDT`, but a later same-day rerun failed at `07:37 CDT` on Wrangler refresh-token auth (`Failed to fetch auth token: 400 Bad Request`); `generate_morning_full_report.py` and `Data_Collection/monitoring/alert_sender.py` now prefer a successful same-day mirror report over a later failed rerun, and `run_daily_health_report.sh` now exports the same Keeper/Cloudflare runtime envelope as the collection stack so summary/report workflows do not depend on stripped launchd defaults
+- The pilot morning wrapper at `/Users/mark/Property_Analytics/run_pilot_morning_daily.sh` now also has a true stage-level remediation loop for homepage audit evidence (`MAX_HOMEPAGE_ATTEMPTS=3`) and an explicit intentional-failure guard so deliberate stage failures no longer cascade into a second misleading `Bootstrap / Shell` alert from the Bash `ERR` trap
+- Site Content homepage rendering is now partially normalized from the live page HTML on read for the first two key homepage content sections, so the editor can show the real `Welcome to <Property>` intro block and `Apartment Features` / `Stylish Living Spaces` block with the correct title hierarchy, CTA labels, one-image split layout, and quieter content-first presentation even when the stored extracted section rows are still imperfect
 - `apps/api/src/lib/service-auth.ts` is now type-safe around Cloudflare Access cert JWK `kid` handling, which clears the API-side TypeScript issue that was blocking cleaner release verification
 - The current repo-noise situation now has a canonical branch split map in `/Users/mark/Property_Analytics/docs/RELEASE_SPLIT_PLAN_2026-04-14.md`: production promotion should come from `codex/release-reconcile`, while the remaining dirty-tree work is primarily pilot CWV/reporting, Intelligence Office / Site Content / Search Intelligence / VACS, Zero Trust / SSO docs/tooling, and EVS / BrowserStack follow-up streams
+- The repo now also has an explicit foundation layer for system awareness and migration planning:
+  - `/Users/mark/Property_Analytics/docs/UNIFIED_SYSTEM_FOUNDATION_2026-04-17.md`
+  - `/Users/mark/Property_Analytics/config/system_landscape_manifest.json`
+  These are meant to make the platform self-aware across canonical systems, trust zones, nested Git boundaries, and off-Pond capabilities that still need governed visibility
 - The canonical launch role model is now documented in `/Users/mark/Property_Analytics/docs/DATA_POND_ROLE_MODEL_2026-04-14.md`: technical keys remain `viewer`, `editor`, and `admin`, while product-facing titles are `Observer`, `Curator`, and `Steward`
 - The preferred workforce SSO model is now explicitly documented as Microsoft Entra ID -> Cloudflare Access -> Data Pond role mapping, with canonical cohort names `Data Pond Observers`, `Data Pond Curators`, and `Data Pond Stewards`
 - The dedicated workforce identity setup doc is now `/Users/mark/Property_Analytics/docs/ENTRA_CLOUDFLARE_SSO_BLUEPRINT_2026-04-14.md`, which defines the group model, Access app mapping, launch assignment guidance, and phased setup sequence for internal SSO
 - `apps/api/src/lib/service-auth.ts` now supports origin-side validation of Cloudflare Access JWT assertions for machine routes using the team cert endpoint, so `platform`, `vacs`, and `evs` can authenticate through Access service-token apps after Cloudflare consumes the raw client id/secret at the edge
 - `apps/api/src/routes/auth.ts` now bootstraps a first-party `pop_session` from a valid Cloudflare Access browser identity on `/v1/auth/me`, and the web app now uses a same-origin bridge at `apps/web/src/app/auth/access-bootstrap/route.ts` plus `apps/web/src/components/auth-provider.tsx` to forward Cloudflare Access headers server-side and capture that session before falling back to app-native login
 - `apps/web/src/app/login/page.tsx` now uses that same app-host bootstrap bridge before rendering Magic Link/password UI, and the bridge returns more specific fallback states (`cloudflare_access_missing`, `cloudflare_access_api_unreachable`, `cloudflare_access_no_session`, `cloudflare_access_unavailable`) so Cloudflare-vs-app-session failures can be distinguished instead of silently landing on the generic Data Pond login page
+- Browser bootstrap and API CORS now recognize both `app.venterradev.com` and `app.venterraliving.com`, so Cloudflare Access can hand users back to the hostname they actually entered instead of defaulting to the legacy app host or falling through to the native login screen
+- Cloudflare Access browser identities can now be auto-provisioned into Data Pond as least-privilege app users during `/v1/auth/me` and `/v1/auth/access-bootstrap`, which lets Zero Trust act as the gatekeeper of record while preserving app-level role enforcement for `viewer` / `editor` / `admin`
 - `apps/api/migrations/0023_seed_phase1_platform_control_plane.sql` is now the canonical idempotent bootstrap for Phase 1 control-plane rows (`mirror_domains`, `cb_phase1_v1`, `exec_policy_property_advocate`, `agent_prop_1`, and related governance seed data) after `0021_create_phase1_platform_tables.sql`
 
 ### Platform Security Boundary (Cloudflare Zero Trust + Keeper) ✅
@@ -95,8 +104,8 @@
 - **Security model:** Keeper is the source of truth for secrets; Cloudflare Zero Trust is the outer trust boundary; app auth remains responsible for authorization and product roles
 - **Primary user model:** internal users via SSO, external users via Cloudflare Access email OTP, automation via service tokens, admin/operator access strengthened with MFA and device posture over time
 - **Current production-facing hosts:** `app.venterradev.com` (Pages) and `api.venterradev.com` (Workers)
-- **Repo-observed hardening item:** `DEBUG_SITE_CONTENT_IPS` and the `x-debug-site-content` bypass path should be treated as controlled-development-only and reviewed before broader production exposure
-- **Current service-identity inputs in app layer:** `PLATFORM_SHARED_TOKEN`, `VACS_SHARED_TOKEN`, and `EVS_SHARED_TOKEN` exist today and should be reconciled with the Keeper + Cloudflare service-token model
+- **Repo-observed hardening item:** the former Site Content debug-bypass path was retired on 2026-04-17 and should not be reintroduced into production auth flow
+- **Current service-identity inputs in app layer:** `PLATFORM_SHARED_TOKEN` and `EVS_SHARED_TOKEN` remain transitional fallback concepts; VACS now uses Access service-token auth as its canonical route model
 
 ### Master Database ✅
 **Location:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
@@ -374,6 +383,211 @@ Data_Collection/
 
 ## 📝 SESSION LOG
 
+### 2026-04-16 - Watchtower Phase 1: health contract stabilized for closure context
+**Actions:**
+- Stabilized the first core seam in the `platform-app` lane by aligning the Watchtower backend contract with the frontend closure model already in use.
+- `apps/api/src/routes/health.ts` now returns a richer `daily_collection_status.closure` payload including:
+  - structured `unresolved_sources`
+  - structured `advisory_sources`
+  - `queue_depth`
+  - `next_retry_at`
+  - `cutoff_at_local`
+  - more meaningful closure-state reasoning (`open`, `complete`, `blocked`, `not_started`)
+- This removes a real backend/frontend mismatch where Watchtower expected structured closure context but the API only returned a flat unresolved-source string list.
+- Added targeted regression coverage so the closure payload shape is now protected as part of the Watchtower contract.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/routes/health.ts`
+- `/Users/mark/Property_Analytics/apps/api/test/platform/health-status.test.ts`
+- `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
+
+**Verification completed:**
+- `npx tsx --test test/platform/health-status.test.ts` in `apps/api`
+- `npm run typecheck` in `apps/api`
+- `npm run build` in `apps/web`
+
+### 2026-04-16 - Watchtower Phase 2: operator deck now uses closure context more directly
+**Actions:**
+- Tightened the Watchtower page so the stabilized closure contract now shows up in the actual operator-facing deck instead of sitting mostly unused behind the scenes.
+- `apps/web/src/app/watchtower/page.tsx` now:
+  - uses closure detail text in the top command rail
+  - reflects blocked/open/complete state more clearly in the collection deck badge
+  - surfaces advisory lane posture in the operations core
+  - exposes operational cutoff, next retry timing, and queue depth directly in the Closure Context section
+- This makes the page read more like a live operating surface for morning closure and retry posture rather than a generic status dashboard.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+- `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
+
+**Verification completed:**
+- `npm run build` in `apps/web`
+
+### 2026-04-16 - Cloudflare bootstrap now scopes browser session cookies to the active frontend domain
+**Actions:**
+- Fixed a real cross-host bootstrap bug in the `platform-app` auth lane: browser sessions issued by `/v1/auth/access-bootstrap` were still hardcoded to `Domain=.venterradev.com`, which could break bootstrap when the active frontend host was `app.venterraliving.com`.
+- `apps/api/src/routes/auth.ts` now derives the cookie domain from the resolved frontend origin so browser session cookies follow the active app host family:
+  - `.venterradev.com`
+  - `.venterraliving.com`
+  - no forced domain in localhost/dev cases
+- Strengthened regression coverage so the Cloudflare bootstrap test now asserts that the redirected `app.venterraliving.com` flow also gets a cookie scoped to `.venterraliving.com`.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+- `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
+
+**Verification completed:**
+- `npx tsx --test test/auth/cloudflare-bootstrap.test.ts` in `apps/api`
+- `npm run typecheck` in `apps/api`
+
+### 2026-04-16 - Frontend auth flow now clears stale signed-out browser state on successful session resolution
+**Actions:**
+- Tightened the browser-side half of the Cloudflare bootstrap loop so the app clears stale signed-out state once a valid Data Pond session is resolved again.
+- Updated:
+  - `/Users/mark/Property_Analytics/apps/web/src/components/auth-provider.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/verify/page.tsx`
+- New behavior:
+  - successful `/v1/auth/me` resolution now clears the `cloudflare_logged_out` browser flag
+  - successful password login clears the stale signed-out flag before returning to the app
+  - magic-link completion clears the stale signed-out flag before redirecting to API verification
+- This reduces a subtle class of frontend auth inconsistencies where the browser could still behave like it was intentionally signed out even after the app had a valid session again.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/web/src/components/auth-provider.tsx`
+- `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+- `/Users/mark/Property_Analytics/apps/web/src/app/login/verify/page.tsx`
+- `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
+
+**Verification completed:**
+- `npm run build` in `apps/web`
+
+### 2026-04-16 - Worktree cleanup and compartment map
+**Actions:**
+- Assessed the current dirty worktree as several overlapping live workstreams rather than one unresolved change set.
+- Wrote an explicit compartment map so ongoing work can be finished intentionally by lane instead of staying mixed together:
+  - platform / app rollout
+  - data collection hardening
+  - pilot / CWV reporting expansion
+  - content operations / Intelligence / Site Content
+- Tightened artifact hygiene in `.gitignore` so generated browser-capture screenshots with hyphenated names and packaged `*.tgz` artifacts stop resurfacing in normal worktree review.
+- Added explicit lane manifests for the first two active workstreams we know are still in motion:
+  - `platform-app`
+  - `data-collection-hardening`
+- Broke `platform-app` down one level further into practical finish order:
+  - Watchtower / health contract
+  - Cloudflare auth / bootstrap
+  - EVS / Browserstack adjacent work
+- This cleanup pass is organizational rather than a capability change: the goal is to preserve active work while reducing root-level noise and giving the repo a workable finish order.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/.gitignore`
+- `/Users/mark/Property_Analytics/docs/WORKTREE_COMPARTMENT_MAP_2026-04-16.md`
+- `/Users/mark/Property_Analytics/docs/WORKTREE_PLATFORM_APP_MANIFEST_2026-04-16.md`
+- `/Users/mark/Property_Analytics/docs/WORKTREE_PLATFORM_APP_FINISH_ORDER_2026-04-16.md`
+- `/Users/mark/Property_Analytics/docs/WORKTREE_DATA_COLLECTION_MANIFEST_2026-04-16.md`
+- `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
+
+### 2026-04-16 - Site Content Creator Milestone 3: persisted rewrite workflow
+**Actions:**
+- Added the first persisted editorial execution layer to Site Content Creator so rewrite work now lives on the same governed section records as the crawl, Specs mapping, and assessment.
+- `admin-site-content` now:
+  - creates and maintains `site_content_section_rewrites`
+  - keeps section mapping ids stable across syncs so rewrites remain attached after reloads
+  - seeds one rewrite record per mapping with a default rewrite brief plus governed-input snapshot
+  - exposes a canonical save route for section rewrite updates and approval state
+- Site Content Creator now renders a section-level rewrite workspace directly under each mapped section with:
+  - draft status (`not_started`, `drafted`, `in_review`, `approved`)
+  - rewrite brief
+  - proposed rewrite copy
+  - refinement notes
+  - governed-input context from the current Specs/assessment layer
+- This shifts the product from diagnosis-only into a real editorial workflow where operators can draft, review, and approve replacement section copy without leaving the section workspace.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
+- `/Users/mark/Property_Analytics/apps/api/test/platform/site-content-mapping.test.ts`
+
+**Verification completed:**
+- `npx tsx --test test/platform/site-content-mapping.test.ts` in `apps/api`
+- `npm run typecheck` in `apps/api`
+- `npm run build` in `apps/web`
+
+### 2026-04-16 - Site Content Creator Milestone 2: persisted section assessment
+**Actions:**
+- Added a persisted section assessment layer on top of Specs section mappings so each mapped live section now carries a structured diagnosis before rewrite work begins.
+- `admin-site-content` now computes and stores `site_content_section_assessments` with:
+  - overall status (`healthy`, `watch`, `needs-attention`)
+  - structural score
+  - messaging score
+  - property-specificity score
+  - search/local value score
+  - CTA score
+  - harmonization score
+  - machine-readable flags and human-readable summary
+- Site Content Creator now surfaces those section assessments directly in the mapping workspace, which upgrades the product from a structural inventory to a structural-diagnosis workspace.
+- This sets up the next milestone cleanly: rewrite drafts can now be grounded in visible assessment output instead of raw crawl content alone.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
+- `/Users/mark/Property_Analytics/apps/api/test/platform/site-content-mapping.test.ts`
+
+**Verification completed:**
+- `npx tsx --test test/platform/site-content-mapping.test.ts` in `apps/api`
+- `npm run typecheck` in `apps/api`
+- `npm run build` in `apps/web`
+
+### 2026-04-16 - Site Content Creator Milestone 1: persisted Specs section mapping
+**Actions:**
+- Added the first real section-structure layer to Site Content Creator so the workspace can compare extracted live sections against expected Specs sections instead of only listing raw crawl output.
+- Extended the shared property-marketing Specs model with page-type section templates, expected section roles, order, and keyword/type hints.
+- `admin-site-content` now computes and persists `site_content_section_mappings` for captured pages, including `matched`, `partial`, `missing-from-live`, and `extra-on-live` states with confidence and rationale.
+- Site Content Creator now renders those mappings directly in the page workspace so operators can see:
+  - which Specs sections were found
+  - which expected sections are missing
+  - which live sections do not confidently map to the governed structure
+- This establishes the structural bridge needed for the next phase: section assessment and rewrite workflow.
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/platform/shared/specs-property-marketing-v1.ts`
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
+- `/Users/mark/Property_Analytics/apps/api/test/platform/site-content-mapping.test.ts`
+
+**Verification completed:**
+- `npx tsx --test test/platform/site-content-mapping.test.ts` in `apps/api`
+- `npm run typecheck` in `apps/api`
+- `npm run build` in `apps/web`
+
+### 2026-04-16 - Site Content Creator workspace hardening and property-resolution repair
+**Actions:**
+- Repaired a key Site Content Creator failure mode where the page treated crawl inventory, brief inputs, and governed memory as one all-or-nothing load.
+- The Site Content Creator UI now keeps the core page inventory usable even when governed memory or brief-input side lanes fail to load.
+- `admin-site-content` now uses the canonical resolved property id consistently after lookup, so page reads and crawl rewrites do not depend on the raw request key matching stored `property_id` exactly.
+- Intelligence Office brief-input reads now resolve pilot properties by canonical id, property name, and normalized fallback forms instead of exact-id-only.
+- Governed memory property lookup now falls back to `intelligence_pilot_properties` when a pilot property is not yet present in `communities`, which prevents Site Content Creator from breaking on mixed pilot/admin data states.
+- Follow-up UI hardening removed an inconsistent mixed-state failure mode in Site Content Creator:
+  - property detail state now resets when selection changes or detail loads fail
+  - the inventory summary card now falls back to the selected inventory property name instead of rendering a blank property tile
+  - the inventory empty state now distinguishes between "no crawl exists yet" and "summary exists but detailed page rows failed to load"
+
+**Created / Updated:**
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+- `/Users/mark/Property_Analytics/apps/api/src/routes/admin-intelligence.ts`
+- `/Users/mark/Property_Analytics/apps/api/src/platform/memory/governed-memory.ts`
+- `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
+- `/Users/mark/Property_Analytics/apps/api/test/platform/intelligence-memory.test.ts`
+
+**Verification completed:**
+- `npx tsx --test test/platform/intelligence-memory.test.ts` in `apps/api`
+- `npx tsx --test test/platform/intelligence-brief-readiness.test.ts` in `apps/api`
+
 ### 2026-04-13 - Cloudflare Zero Trust security architecture baseline
 **Actions:**
 - Added the canonical Cloudflare Zero Trust security architecture document:
@@ -399,10 +613,9 @@ Data_Collection/
 - Updated the repo-wide narrative in:
   - `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
 - Captured repo-observed hardening follow-up:
-  - `DEBUG_SITE_CONTENT_IPS` and `x-debug-site-content` bypass logic should be treated as controlled-development-only and reviewed before broader production exposure
+  - the former Site Content debug-bypass path was a production-trust review item and is now retired
 - Captured current app-layer service identity inputs for follow-up:
   - `PLATFORM_SHARED_TOKEN`
-  - `VACS_SHARED_TOKEN`
   - `EVS_SHARED_TOKEN`
 
 ### 2026-04-13 - Repo-side Zero Trust hardening implementation
@@ -414,9 +627,9 @@ Data_Collection/
   - or Cloudflare-style `CF-Access-Client-Id` + `CF-Access-Client-Secret` headers
 - Added new worker env bindings for route-specific Access service credentials in:
   - `/Users/mark/Property_Analytics/apps/api/src/env.ts`
-- Tightened the temporary site-content debug bypass:
-  - bypass now requires explicit `DEBUG_SITE_CONTENT_BYPASS_ENABLED=true`
-  - production `wrangler.toml` now defaults that flag to `"false"`
+- Retired the temporary Site Content debug bypass from the production auth path:
+  - removed the `x-debug-site-content` bypass logic from `apps/api/src/middleware/auth.ts`
+  - removed the related `DEBUG_SITE_CONTENT_BYPASS_ENABLED` worker var from `apps/api/wrangler.toml`
 - Updated local platform clients and cutover/sync scripts so they can use either:
   - `PLATFORM_SHARED_TOKEN`
   - or `PLATFORM_ACCESS_CLIENT_ID` + `PLATFORM_ACCESS_CLIENT_SECRET`
@@ -2123,3 +2336,1998 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Keeper-backed SEMrush notation now has an explicit canonical deployment path for the API Worker:
   - `KSM_PROFILE=marketingops`
   - `KSM_SEMRUSH_API_KEY_NOTATION=keeper://q1dizD20qVFSS1ZCYoRPEw/field/password`
+
+### 2026-04-15 - Cloudflare Access handoff refined for static Pages frontend
+
+- Confirmed `app.venterradev.com` is a static Cloudflare Pages deployment, so Data Pond cannot rely on a Next.js route handler in `apps/web` for Cloudflare bootstrap in production.
+- Replaced the app-host bootstrap concept with an API-host bootstrap flow:
+  - frontend redirects to `https://api.venterradev.com/v1/auth/access-bootstrap`
+  - API Worker mints the normal `pop_session`
+  - browser returns to the Data Pond app shell
+- Cloudflare Access app split now distinguishes:
+  - human/browser bootstrap: `Data Pond - API Auth Bootstrap`
+  - machine-only service routes: `Data Pond - API Platform`, `Data Pond - API VACS`, `Data Pond - API EVS`
+- Origin auth fallback was widened so browser bootstrap can succeed even when Cloudflare forwards `cf-access-authenticated-user-email` without a JWT assertion:
+  - `/Users/mark/Property_Analytics/apps/api/src/lib/service-auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- Added a one-shot `cf_bootstrapped=1` loop guard in the Pages frontend so failed Cloudflare bootstrap attempts now fall back to explicit login error states instead of repeatedly redirecting between `/` and the API bootstrap path.
+
+### 2026-04-15 - Cloudflare browser bootstrap stabilized with controlled retry and explicit signed-out state
+
+- Confirmed the working Cloudflare Access app split for browser vs machine traffic is:
+  - `Data Pond - API Auth Bootstrap` covering only `/v1/auth/access-bootstrap`
+  - machine-only API apps remaining scoped to `/v1/platform/*`, `/v1/vacs/*`, and `/v1/evs/*`
+- Added frontend retry hardening for the Cloudflare-to-Data-Pond handoff:
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/auth-provider.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+- New browser behavior:
+  - one controlled top-level retry through `/v1/auth/access-bootstrap` is allowed before surfacing the `cloudflare_access_api_unreachable` fallback
+  - logout now lands on `/login?logged_out=1` so the signed-out experience stays stable instead of immediately re-triggering Cloudflare bootstrap
+- `/login` now fully suppresses the session/bootstrap probe when `logged_out=1` is present, so logout can no longer immediately bounce the user back into the dashboard through an automatic `/v1/auth/me` check
+  - bootstrap query cleanup now removes both `cf_bootstrapped` and the retry marker after a successful session resolution
+- Verified locally:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+- Redeployed the static Pages frontend through the Keeper/KSM-backed Wrangler path:
+  - latest preview: `https://b801f73e.property-analytics.pages.dev`
+
+### 2026-04-16 - Cloudflare browser bootstrap now preserves the active app hostname
+
+- Updated the API/browser handoff so Data Pond no longer assumes `app.venterradev.com` is the only human frontend origin:
+  - `/Users/mark/Property_Analytics/apps/api/src/index.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- `api.venterradev.com` now allows browser CORS from both `app.venterradev.com` and `app.venterraliving.com`
+- `/v1/auth/access-bootstrap` now redirects back to the requesting frontend origin when the request arrived from a known app host, which keeps `app.venterraliving.com` from falling back to the old app host during Cloudflare Access session bootstrap
+- Added regression coverage for the cross-host bootstrap redirect:
+  - `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- Verified locally:
+  - `npx tsx --test test/auth/cloudflare-bootstrap.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-16 - Zero Trust browser auth can now auto-provision least-privilege app users
+
+- Updated the Data Pond auth bootstrap to let a successful Cloudflare Access browser identity become the app session source of truth instead of requiring a pre-seeded `users` row:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/env.ts`
+  - `/Users/mark/Property_Analytics/apps/api/wrangler.toml`
+- New runtime posture:
+  - `CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED=true` allows Access-approved identities to be created automatically on first entry
+  - default auto-provisioned role is `viewer`
+  - explicit elevation can still be controlled with `CLOUDFLARE_ACCESS_ADMIN_EMAILS` and `CLOUDFLARE_ACCESS_EDITOR_EMAILS`
+  - optional narrowing can be added with `CLOUDFLARE_ACCESS_ALLOWED_EMAILS` and `CLOUDFLARE_ACCESS_ALLOWED_DOMAINS`
+- Tightened trust boundary after review: browser bootstrap now requires a real Cloudflare Access JWT or `CF_Authorization` cookie and no longer trusts a bare `cf-access-authenticated-user-email` header by itself
+- Existing inactive users still fail closed; this did not create a bypass around app-level deactivation or role checks
+- Added regression coverage for viewer/admin auto-provision from Cloudflare Access:
+  - `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts`
+- Verified locally:
+  - `npx tsx --test test/auth/cloudflare-bootstrap.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+- Frontend logout now clears the Data Pond session and then navigates to the Cloudflare Access logout URL, so the sign-out button no longer leaves the Zero Trust browser session alive and immediately re-authenticates the user
+- Login bootstrap now also honors a browser-side Cloudflare signed-out marker, so `/login` stops auto-bootstrapping immediately after logout and instead shows an explicit "Continue with Cloudflare Access" choice before re-entering the Zero Trust flow
+- The signed-out Data Pond login page now presents Cloudflare One as the primary branded Zero Trust entry path inside the existing Data Pond visual language, so the handoff feels like one product instead of a generic fallback screen
+
+### 2026-04-16 - Platform-app core lane closed cleanly around Watchtower and browser auth
+
+- Finished the outstanding `platform-app` core stabilization pass rather than leaving it as a partially organized lane
+- Closed the remaining platform route contract bug in lifecycle noise-budget accounting:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/agent-runtime/repository.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/lifecycle/repository.ts`
+- Noise-budget summary and daily suppression logic now evaluate against the lifecycle observation day (`last_observed_at`, with `created_at` fallback) instead of the row insertion timestamp, which keeps backdated or replayed lifecycle events aligned with the same operational day semantics used by the lifecycle engine
+- Re-verified the platform-app core set cleanly:
+  - `npx tsx --test test/auth/cloudflare-bootstrap.test.ts test/platform/health-status.test.ts test/platform/platform-routes.test.ts test/platform/platform-phase1-client-smoke.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+- Updated the platform-app compartment docs to reflect the new status:
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_PLATFORM_APP_MANIFEST_2026-04-16.md`
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_PLATFORM_APP_FINISH_ORDER_2026-04-16.md`
+- Current posture:
+  - `platform-app` core is coherent across Watchtower, platform routes, and Cloudflare auth/bootstrap
+  - EVS / BrowserStack-adjacent work remains secondary and can be handled as a follow-on sub-lane instead of blocking the core platform-app finish state
+
+### 2026-04-16 - EVS / BrowserStack lane separated cleanly from platform-app core
+
+- Confirmed the remaining EVS-specific auth path is healthy:
+  - `npx tsx --test test/platform/evs-auth.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+- Kept `platform-app` finished by moving EVS / BrowserStack out of the core lane definition and into its own compartment docs:
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_EVS_BROWSERSTACK_MANIFEST_2026-04-16.md`
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_EVS_BROWSERSTACK_FINISH_ORDER_2026-04-16.md`
+- Updated the platform lane docs so EVS is treated as a follow-on stream rather than implied unfinished platform-app work:
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_PLATFORM_APP_MANIFEST_2026-04-16.md`
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_PLATFORM_APP_FINISH_ORDER_2026-04-16.md`
+- Updated the capability register EVS rows to reflect the current posture:
+  - EVS auth and persistence shape are real
+  - workflow dispatch remains a deliberate follow-on decision
+  - BrowserStack operations should be worked in the EVS lane, not mixed into Watchtower/auth commits
+
+### 2026-04-16 - Data alerting now respects canonical Google Ads and latest-run collection posture
+
+- Started the `data-collection-hardening` finish pass by validating the canonical retry/closure runtime directly:
+  - `python3 -m py_compile Data_Collection/db/database_manager.py Data_Collection/utils/daily_collection_closure.py Data_Collection/utils/source_freshness_policy.py Data_Collection/utils/bi_manual_ingest.py Data_Collection/orchestration/retry_incomplete_collections.py Data_Collection/orchestration/daily_master_collection.py Data_Collection/monitoring/alert_sender.py`
+  - `python3 Data_Collection/orchestration/retry_incomplete_collections.py --dry-run --json`
+  - `bash -n /Users/mark/Property_Analytics/run_collection_retry_cycle.sh`
+- Tightened `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py` so the morning alert now matches the collection system’s actual semantics:
+  - Google Ads freshness no longer treats `no_activity` properties as stale just because no campaign rows were written for them
+  - Google Ads freshness now reads from the latest canonical `data_collections` run posture instead of raw per-property row presence
+  - collection job failures now evaluate the latest run per source inside the lookback window instead of replaying older recovered failures
+  - specialty-only failures now downgrade to warning posture in the subject line and console output instead of forcing a critical banner
+- Verified the operator-facing result with:
+  - `python3 Data_Collection/monitoring/alert_sender.py --test`
+- The current test-mode alert is materially cleaner:
+  - false-positive Google Ads freshness noise dropped away
+  - recovered historical Google Ads failures no longer keep the morning alert in a false critical posture
+  - a specialty-only BI report issue now presents as warning instead of critical
+- Added the lane execution doc:
+  - `/Users/mark/Property_Analytics/docs/WORKTREE_DATA_COLLECTION_FINISH_ORDER_2026-04-16.md`
+
+### 2026-04-16 - Specialty BI alert residue cleared from the morning failure surface
+
+- Continued the `data-collection-hardening` pass by tracing the remaining specialty `BI_REPORT` alert back to stale run-state residue instead of live pending work
+- Confirmed:
+  - the latest `bi_report` row in `data_collections` was still `blocked` from an earlier workbook issue
+  - current BI snapshot rows for `2026-04-16` are already present in `bi_raw_snapshot_values`
+  - `get_pending_bi_workbooks()` now returns no pending files from the shared drop
+- Tightened the BI path and alert interpretation:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/bi_manual_ingest.py`
+    - unreadable workbook failures now get a clearer manual-action error message
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+    - BI partial/failed collection rows now preserve workbook-level error detail in `error_message`
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py`
+    - BI retry queue items now retain the real workbook error text and classify it more specifically when present
+  - `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`
+    - stale `bi_report` failures are now suppressed from the morning failure alert when no BI workbooks remain pending in the drop
+- Verified with:
+  - `python3 -m py_compile Data_Collection/monitoring/alert_sender.py Data_Collection/utils/bi_manual_ingest.py Data_Collection/orchestration/daily_master_collection.py Data_Collection/orchestration/retry_incomplete_collections.py`
+  - `python3 Data_Collection/monitoring/alert_sender.py --test`
+- Current operator-facing result:
+  - `No collection job failures detected`
+  - the alert now focuses on the real remaining freshness issues (`GA4` and `GSC`) instead of stale BI / Ads failure residue
+
+### 2026-04-16 - GA4/GSC freshness alerting collapsed to one real GSC lag
+
+- Continued the `data-collection-hardening` pass by tracing the remaining GA4/GSC freshness items in the morning alert
+- Tightened `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py` again:
+  - GA4 freshness now suppresses prelaunch registry properties instead of flagging them as live missing-data debt
+  - GSC freshness now aggregates to the property level using the latest date across known URL aliases instead of flagging stale `venterraliving.com/apartments/...` rows when the canonical `sc-domain:` property is fresher
+- Verified with:
+  - `python3 -m py_compile /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test`
+- Current operator-facing result:
+  - `No collection job failures detected`
+  - morning alert now reports exactly one remaining freshness issue:
+    - `GSC` missing for `San Palmilla` at `2026-04-12`
+- Interpretation:
+  - the earlier GA4 prelaunch issue was false-positive noise
+  - the earlier GSC stale cluster was alias-mapping noise
+  - the remaining `San Palmilla` item looks like real GSC lag and should be treated as actual collection debt unless later evidence shows another alias/registry mismatch
+
+### 2026-04-16 - Remaining GSC issue traced to SQLite lock contention and stale source-state residue
+
+- Continued the `data-collection-hardening` pass by drilling into the final remaining morning alert issue
+- Found that the apparent `San Palmilla` freshness miss was only the tail symptom:
+  - today’s `gsc` collection row is stuck `in_progress` with `0/0/0`
+  - the only open GSC retry item is a synthetic source-level queue row
+  - `Data_Collection/logs/collection_stderr.log` shows the real cause on 2026-04-16:
+    - repeated `sqlite3.OperationalError: database is locked`
+    - failure during `insert_gsc_daily_metrics(...)`
+    - then another lock failure while trying to queue retry state
+- Tightened `/Users/mark/Property_Analytics/Data_Collection/db/database_manager.py`:
+  - SQLite connections now use `timeout=60`
+  - connections now apply `PRAGMA busy_timeout = 60000`
+  - this should turn short write-lock collisions into waits instead of immediate collector failure
+- Also improved the morning alert interpretation in `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`:
+  - unresolved core-source closure state now surfaces as a source-level collection failure instead of a misleading per-property freshness miss
+  - guest-card unresolved closure state is now suppressed when the manual file has actually been ingested and no pending guest-card CSVs remain
+- Verified:
+  - `python3 -m py_compile /Users/mark/Property_Analytics/Data_Collection/db/database_manager.py /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py /Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py /Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py /Users/mark/Property_Analytics/Data_Collection/utils/bi_manual_ingest.py`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py --dry-run --json`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test`
+- Current operator-facing result:
+  - morning alert now reports one real core issue: `GSC` unresolved at the source level
+  - no false-positive freshness issues remain
+  - guest-card residue is no longer shown once the pending CSV has been ingested and the drop is clear
+
+### 2026-04-16 - Canonical retry worker fully closed the day and restored all-clear alert posture
+
+- Ran the live canonical retry worker again after the guest-card completion bookkeeping patch was present:
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py --json`
+- Confirmed the worker behavior:
+  - re-queued `guest_card` as a missing core source because no same-day `data_collections` row existed yet
+  - immediately reconciled that source as `resolved_stale_source_marker`
+  - wrote a real same-day `guest_card` completion row in `data_collections`
+- Verified the current same-day collection posture in the DB:
+  - `gsc` = `completed`
+  - `bi_report` = `completed`
+  - `guest_card` = `completed`
+- Verified closure and alert outcomes:
+  - `evaluate_daily_collection_closure(...)` now returns `state=complete`, `queue_depth=0`, and `summary_reason=all_core_sources_closed`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test` now reports:
+    - `No collection job failures detected`
+    - `All data sources are up-to-date`
+    - subject `✅ Data Collection Status: All Clear`
+- Interpretation:
+  - the remaining `San Palmilla` GSC issue was recovered by the live retry worker
+  - the remaining guest-card issue was purely same-day bookkeeping, not real freshness debt
+  - the canonical data lane is now back to an honest all-clear posture for `2026-04-16`
+
+### 2026-04-16 - Watchtower advisory governance now reflects cadence freshness instead of same-day-only runs
+
+- Continued the `data-collection-hardening` pass by tightening the operator-facing advisory posture in Watchtower
+- Found the contract mismatch:
+  - `apps/api/src/routes/health.ts` was building `advisory_sources` only from same-day `data_collections` rows
+  - `apps/web/src/app/watchtower/page.tsx` therefore rendered advisory lanes as effectively `same-day run` vs `No Run`
+  - this misrepresented cadence-based advisory lanes such as `measurement_dashboard`, `psi`, and `gsc_url_inspection`
+- Tightened the health contract:
+  - advisory sources now include:
+    - `latest_recorded_date`
+    - `expected_latest_date`
+    - `freshness_status`
+  - advisory freshness uses the latest real underlying date where available:
+    - `measurement_dashboard` → `measurement_daily_metrics.snapshot_date`
+    - `psi` → `pagespeed_metrics.metric_date`
+    - `gsc_url_inspection` → `gsc_url_inspection.inspection_date`
+  - health route now safely tolerates missing optional advisory tables instead of failing test/partial environments
+- Tightened the Watchtower UI:
+  - advisory deck now summarizes how many lanes are `fresh` or `near cadence`
+  - badges now show `Fresh`, `Near Cadence`, `Stale`, or `No Record` instead of implying that any lane without a same-day run is operationally absent
+- Verified with:
+  - `cd /Users/mark/Property_Analytics/apps/api && npx tsx --test test/platform/health-status.test.ts`
+  - `cd /Users/mark/Property_Analytics/apps/web && npm run build`
+- Interpretation:
+  - core closure remains authoritative for same-day operations
+  - advisory governance is now visually honest about slower/manual lanes instead of overstating missing-work posture
+
+### 2026-04-16 - Advisory governance now has an explicit cadence policy map
+
+- Continued the `data-collection-hardening` pass by replacing heuristic advisory interpretation with an explicit policy model in `/Users/mark/Property_Analytics/apps/api/src/routes/health.ts`
+- Added a canonical advisory cadence map with source-level policy for:
+  - `bi_manual`, `bi_metrics`, `bi_report` → `Same-day manual`
+  - `measurement_dashboard` → `Weekly manual workbook`
+  - `psi` → `Daily diagnostic`
+  - `gsc_url_inspection`, `browserstack`, `evs`, `sightmap` → `Targeted manual audit`
+  - `semrush`, `gbp_reviews`, `gbp_insights`, `cloudflare_cache_audit` → `Weekly automated`
+- Tightened the Watchtower API contract again:
+  - advisory sources now carry `cadence_key` and `cadence_label` in addition to the earlier freshness metadata
+  - cadence-specific thresholds now drive freshness posture instead of treating every advisory lane as a same-day or next-day feed
+- Tightened the Watchtower UI:
+  - advisory section now renders compact cadence cards rather than flat badges
+  - each card shows both freshness posture and lane cadence, which makes weekly/manual lanes legible without pretending they are broken
+- Updated the health route regression test to lock the richer advisory payload shape
+- Verified with:
+  - `cd /Users/mark/Property_Analytics/apps/api && npx tsx --test test/platform/health-status.test.ts`
+  - `cd /Users/mark/Property_Analytics/apps/web && npm run build`
+- Interpretation:
+  - advisory governance is now policy-driven instead of ad hoc
+  - future advisory lanes can be added by declaring cadence explicitly rather than encoding special-case UI logic
+
+### 2026-04-16 - Python closure and alerting now consume the same advisory cadence policy
+
+- Continued the `data-collection-hardening` pass by moving the canonical advisory cadence model into `/Users/mark/Property_Analytics/Data_Collection/utils/source_freshness_policy.py`
+- Added shared Python-side policy and helper coverage for:
+  - advisory cadence declarations
+  - cadence-aware freshness evaluation
+  - latest-recorded-date lookup from source tables or `data_collections`
+  - canonical advisory source status payloads
+- Tightened `/Users/mark/Property_Analytics/Data_Collection/utils/daily_collection_closure.py`:
+  - Python closure output now uses the shared advisory helper instead of a bare same-day-run check
+  - advisory sources now carry the same richer shape the app side expects:
+    - `latest_recorded_date`
+    - `expected_latest_date`
+    - `freshness_status`
+    - `cadence_key`
+    - `cadence_label`
+- Tightened `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`:
+  - alerting now uses the shared advisory freshness helper for `psi`
+  - alerting now also applies the same canonical policy to `semrush`
+- Verified with:
+  - `python3 -m py_compile /Users/mark/Property_Analytics/Data_Collection/utils/source_freshness_policy.py /Users/mark/Property_Analytics/Data_Collection/utils/daily_collection_closure.py /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test`
+- Current operational result:
+  - no collection job failures
+  - one advisory freshness issue now appears consistently under the unified policy:
+    - `SEMrush` stale
+- Interpretation:
+  - Watchtower, Python closure, and alerting now share the same advisory cadence model
+  - the remaining alert signal is now a policy-truth question, not a drift bug
+
+### 2026-04-16 - SEMRush is now monitored against real source evidence instead of stale orchestration history
+
+- Confirmed the user-facing requirement that `SEMrush` should stay monitored
+- Found the monitoring seam:
+  - unified advisory cadence policy was still falling back to stale `data_collections` history for `semrush`
+  - real SEMRush evidence in `semrush_domain_metrics` was already fresh through `2026-04-15`
+  - this made SEMRush look stale even though the underlying data was current
+- Tightened both shared policy consumers to use the real evidence table:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/source_freshness_policy.py`
+    - `semrush` now resolves latest recorded date from `semrush_domain_metrics.metric_date`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/health.ts`
+    - Watchtower advisory policy now does the same on the app/API side
+- Verified:
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test` now returns all clear again
+  - Python closure now reports `semrush` as:
+    - `freshness_status = fresh`
+    - `latest_recorded_date = 2026-04-15`
+    - `cadence_label = Weekly automated`
+  - `cd /Users/mark/Property_Analytics/apps/api && npx tsx --test test/platform/health-status.test.ts`
+  - `cd /Users/mark/Property_Analytics/apps/web && npm run build`
+- Interpretation:
+  - SEMRush remains actively monitored
+  - monitoring now keys off actual SEMRush data freshness instead of an outdated orchestration row
+
+### 2026-04-16 - GBP weekly advisory lanes now use evidence tables too
+
+- Continued the evidence-table audit for weekly advisory monitoring
+- Found the remaining posture:
+  - `semrush` and `gbp_insights` both have fresh underlying evidence
+  - `gbp_reviews` is genuinely stale on current stored review evidence
+- Tightened policy sources:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/source_freshness_policy.py`
+    - `gbp_reviews` now resolves freshness from `gbp_reviews.review_create_time`
+    - `gbp_insights` now resolves freshness from `gbp_daily_insights.metric_date`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/health.ts`
+    - Watchtower advisory policy now uses the same evidence-table mappings
+- Verified:
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test` still returns all clear on collection failures / freshness
+  - Python closure now reports:
+    - `semrush` → `fresh`, latest `2026-04-15`
+    - `gbp_insights` → `fresh`, latest `2026-04-12`
+    - `gbp_reviews` → `stale`, latest `2026-02-20`
+  - `cd /Users/mark/Property_Analytics/apps/api && npx tsx --test test/platform/health-status.test.ts`
+  - `cd /Users/mark/Property_Analytics/apps/web && npm run build`
+- Interpretation:
+  - advisory weekly lanes are now monitored from real source evidence instead of stale collection rows
+  - `gbp_reviews` is now the meaningful remaining stale lane in this advisory cluster
+
+### 2026-04-16 - GBP reviews runtime repaired and morning alert path aligned
+
+- Investigated the real reason `gbp_reviews` had gone stale despite valid GBP credentials, token refresh, and a populated property/location mapping file
+- Found the orchestration bug in:
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+  - `initialize_collectors()` was attempting to import `gbp_collector` from a nonexistent local `src/collectors` path, which left `self.gbp_collector` unset even though the canonical collector was already imported at module scope
+- Repaired the reviews/insights lane:
+  - GBP collector initialization now uses the canonical imported `GoogleBusinessProfileCollector`
+  - `collect_gbp_reviews()` now records canonical `data_collections` start/complete state, including blocked cases for missing collector or mapping file
+  - `collect_gbp_insights()` now records canonical `data_collections` start/complete state for credential, token, mapping, and success paths as well
+  - review batch inserts now pass `collection_id` through to the DB layer so collection provenance is preserved
+- Ran a live GBP review backfill after the fix:
+  - `93` mapped properties processed
+  - `91` properties collected successfully
+  - `2` properties legitimately returned no reviews
+  - `0` properties failed
+  - `data_collections` now records same-day completed row:
+    - `collection_id=615`
+    - `data_source=gbp_reviews`
+    - `status=completed`
+    - `collection_date=2026-04-16`
+- Verified fresh posture after the live run:
+  - `SELECT MAX(review_create_time) FROM gbp_reviews` now returns `2026-04-16T21:18:15.322304Z`
+  - `evaluate_daily_collection_closure(...)` now reports `gbp_reviews` as:
+    - `status=completed`
+    - `latest_recorded_date=2026-04-16`
+    - `freshness_status=fresh`
+    - `cadence_label=Weekly automated`
+- Also aligned email alerting with the shared advisory policy:
+  - `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`
+    - now evaluates `gbp_reviews` and `gbp_insights` from the same shared freshness model already used by Watchtower and Python closure
+- Verified:
+  - `python3 -m py_compile /Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test`
+  - alert preview now returns `✅ Data Collection Status: All Clear`
+- Interpretation:
+  - GBP reviews are working again in the real collector path, not just in isolated API tests
+  - review freshness, closure posture, and email monitoring are now aligned on the same source truth
+
+### 2026-04-16 - GBP insights ledger reconciled with live collection
+
+- Took the same live-recovery pass on the insights side so the whole GBP lane is coherent instead of only `gbp_reviews`
+- Verified pre-run state:
+  - `gbp_daily_insights` already had fresh enough weekly evidence (`MAX(metric_date)=2026-04-12`)
+  - but `data_collections` bookkeeping for `gbp_insights` was still stale, with the newest run row from `2026-02-20`
+- Ran the canonical collector live via:
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+  - `PortfolioDataCollector.initialize_collectors()`
+  - `PortfolioDataCollector.collect_gbp_insights()`
+- Live result:
+  - `93` mapped properties processed
+  - `91` properties collected successfully
+  - `2` legitimate skips with access-denied posture
+  - `0` failures
+  - same-day `data_collections` row now recorded:
+    - `collection_id=616`
+    - `data_source=gbp_insights`
+    - `status=completed`
+    - `collection_date=2026-04-16`
+- Verified post-run posture:
+  - `evaluate_daily_collection_closure(...)` now reports `gbp_insights` as:
+    - `status=completed`
+    - `run_recorded=True`
+    - `latest_recorded_date=2026-04-14`
+    - `freshness_status=fresh`
+  - `python3 /Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py --test` remains `✅ Data Collection Status: All Clear`
+- Additional note:
+  - the GBP mapping file still contains two `Silverbrooke` entries for the same property id with different location ids:
+    - `378679398 / 17891924351935738693`
+    - `378679398 / 11708397129740175833`
+  - one of those locations remains access-denied while the other succeeds; this is a mapping hygiene follow-up, not a collector runtime failure
+- Interpretation:
+  - the GBP lane is now operationally consistent across reviews, insights, closure, and morning alerting
+  - the next cleanup in this area is mapping hygiene, not collection runtime repair
+
+### 2026-04-16 - GBP mapping loader now honors manual overrides and suppresses duplicate property rows
+
+- Continued the GBP cleanup by tracing why the live insights run was still touching duplicate property names even after the collector runtime was repaired
+- Found the actual shape of the issue in:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/data/all_properties_gbp_matched.json`
+  - the file contains duplicate `matched` rows for at least:
+    - `416886840` / `Avasa Hammock Landing`
+    - `378679398` / `Silverbrooke`
+  - and also carries canonical top-level manual override entries for those property ids plus `Camber Ridge`
+- Repaired the canonical collector path in:
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+  - added a normalized GBP mapping loader that:
+    - reads the `matched` array
+    - reads top-level numeric property-id override entries
+    - dedupes duplicate property ids
+    - prefers mappings with existing stored review/insight evidence
+    - then applies explicit manual overrides last
+  - both `collect_gbp_reviews()` and `collect_gbp_insights()` now use that canonical loader instead of reading the raw `matched` array directly
+- Verified the new loader:
+  - reports `2` duplicate property ids suppressed
+  - reports `3` manual overrides applied
+  - resolves to `91` unique GBP property mappings
+  - selects the intended canonical override rows for:
+    - `Avasa Hammock Landing`
+    - `Silverbrooke`
+    - `Camber Ridge`
+- Re-ran live GBP insights after the loader fix:
+  - `Properties with GBP locations: 91`
+  - no duplicate `Silverbrooke` processing
+  - no second `Avasa Hammock Landing` attempt
+  - result: `90` success, `1` expected access-denied skip, `0` failures
+- Interpretation:
+  - the collector path is now robust against the current mixed-shape GBP mapping file
+  - the remaining cleanup is optional file normalization, not runtime correctness
+
+### 2026-04-16 - GBP mapping file and generator normalized to the canonical 91-property shape
+
+- Finished the GBP mapping hygiene pass by cleaning the source file itself:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/data/all_properties_gbp_matched.json`
+- Before normalization the file had:
+  - `matched_count = 93`
+  - `unmatched_count = -2`
+  - duplicate `matched` rows for `Avasa Hammock Landing` and `Silverbrooke`
+  - a stale unmatched entry for `Camber Ridge` even though a top-level manual override already existed
+- Normalized the live file so it now reflects the same truth the collector is using:
+  - `matched_count = 91`
+  - `unmatched_count = 0`
+  - `91` unique `matched` rows
+  - no duplicate property ids
+  - manual canonical rows retained for:
+    - `Avasa Hammock Landing`
+    - `Silverbrooke`
+    - `Camber Ridge`
+- Also hardened the generator path in:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/match_all_properties_to_gbp.py`
+  - the matcher now:
+    - preserves top-level numeric manual overrides from an existing mapping file
+    - dedupes duplicate property rows before save
+    - filters stale unmatched rows when a manual override already covers the property
+    - writes corrected matched/unmatched counts
+- Verified:
+  - the normalized file now reports `91` matched / `0` unmatched
+  - no duplicate property ids remain in the `matched` array
+  - `python3 -m py_compile /Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py /Users/mark/Property_Analytics/Portfolio_Monitoring/match_all_properties_to_gbp.py`
+- Interpretation:
+  - the GBP lane is now clean both operationally and at the source-file level
+  - future reruns of the matcher are much less likely to reintroduce the same duplicate/manual-override drift
+
+### 2026-04-16 - Legacy Portfolio_Monitoring GBP entry points aligned to the canonical mapping shape
+
+- Continued local cleanup so older GBP entry points do not drift behind the repaired canonical `Data_Collection` flow
+- Updated:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/collect_daily_data.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_gbp_insights.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/fix_review_property_ids.py`
+- These legacy paths now:
+  - normalize mixed mapping-file row shapes
+  - honor top-level numeric manual overrides
+  - suppress duplicate property ids before iterating GBP work
+- Verified:
+  - `backfill_gbp_insights.load_properties()` now resolves `91` properties with `0` duplicate property ids
+  - `python3 -m py_compile` passes for the touched legacy scripts
+- Note:
+  - importing `collect_daily_data.py` directly as a module still exposes old `sys.path` / `src` assumptions in the legacy package layout
+  - that is a legacy import-structure concern, not a GBP mapping correctness issue
+- Interpretation:
+  - the meaningful GBP local entry points are now aligned on the same canonical mapping truth
+  - any remaining legacy cleanup here is package-structure hygiene rather than data-lane correctness
+
+### 2026-04-16 - Legacy Portfolio_Monitoring imports stabilized for package-safe local use
+
+- Finished the next best-practice cleanup step after the GBP mapping work: reducing brittle import behavior in the legacy `Portfolio_Monitoring` package
+- Added package markers:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/__init__.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/src/__init__.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/src/monitoring/__init__.py`
+- Reworked legacy imports so package-relative usage works first, with compatibility fallbacks only where needed:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/src/db/database_manager.py`
+    - now prefers `.db_helper`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/src/monitoring/anomaly_detector.py`
+    - now prefers `..db.database_manager`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/collect_daily_data.py`
+    - now prefers package imports from `Portfolio_Monitoring.src...`
+    - now prefers package import from `Spotlight_Properties_Report.src.collectors.gsc_collector`
+    - removed the old runtime GBP collector import hack that inserted `src/collectors` into `sys.path`
+- Verified:
+  - direct module import now works:
+    - `from Portfolio_Monitoring.collect_daily_data import PortfolioDataCollector`
+  - `_load_gbp_matched_properties()` still resolves `91` canonical GBP mappings from that imported module
+  - `python3 -m py_compile` passes for the touched legacy package files
+- Interpretation:
+  - the remaining local `Portfolio_Monitoring` path is now much safer to inspect, import, and reuse
+  - this was the main remaining local code-structure weakness around the GBP/data lane
+
+### 2026-04-16 - High-value legacy Portfolio_Monitoring runners moved to package-safe imports
+
+- Continued the local import cleanup across the highest-value legacy runners most likely to be used during manual ops and diagnostics
+- Updated:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/collect_daily_reviews.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_all_reviews.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/check_credential_health.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/audit_ga4_properties.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/generate_insights.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/generate_daily_pulse.py`
+- These scripts now prefer package-safe imports like:
+  - `Portfolio_Monitoring.src...`
+  - with legacy fallback only where still needed for older invocation styles
+- Also corrected outdated legacy references that still pointed at nonexistent `src.database...` paths by aligning them to the real `src.db...` module tree
+- Verified:
+  - direct imports now work for representative runners:
+    - `Portfolio_Monitoring.check_credential_health`
+    - `Portfolio_Monitoring.generate_daily_pulse`
+    - `Portfolio_Monitoring.collect_daily_reviews`
+    - `Portfolio_Monitoring.backfill_all_reviews`
+  - `python3 -m py_compile` passes for the touched runner set
+- Interpretation:
+  - the most operationally relevant legacy `Portfolio_Monitoring` scripts are now much less dependent on fragile ad hoc path setup
+  - remaining cleanup in this area is breadth work, not a critical local-quality blocker
+
+### 2026-04-16 - Legacy GSC/backfill scripts cleaned up for safe imports too
+
+- Extended the same local import cleanup into the highest-value legacy GSC/backfill utilities:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_gsc.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_90_days.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_cendana_gsc.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_gsc_queries_cendana.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_south_shore_lakes.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/backfill_traffic_sources.py`
+- Changes:
+  - package-safe imports preferred for `Portfolio_Monitoring.src...` and `Spotlight_Properties_Report.src...`
+  - legacy fallback kept only as a compatibility path
+  - removed import-time execution from:
+    - `backfill_gsc.py`
+    - `backfill_cendana_gsc.py`
+    by moving live work behind `main()` / `__main__`
+- Verified:
+  - direct import now works safely for the whole batch without unexpectedly kicking off live backfills
+  - `python3 -m py_compile` passes for the touched GSC/backfill runner set
+- Interpretation:
+  - the remaining local legacy surface is getting steadily safer to inspect and reuse
+  - this pass removed another meaningful “import can start real work” footgun from the repo
+
+### 2026-04-17 - Review-analysis and GBP test scripts moved onto the package-safe path
+
+- Continued the `Portfolio_Monitoring` breadth cleanup into the review-analysis side:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/analyze_reviews.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/batch_analyze_portfolio_reviews.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/test_gbp_connection.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/src/analyzers/__init__.py`
+- Changes:
+  - review-analysis scripts now prefer package-safe imports from:
+    - `Portfolio_Monitoring.src.analyzers...`
+    - `Portfolio_Monitoring.src.db...`
+  - added the missing analyzers package marker so `src/analyzers` works as a real package
+  - moved the interactive GBP connection test behind `main()` / `__main__` so import no longer triggers prompts or setup flow
+- Verified:
+  - direct import now works for:
+    - `Portfolio_Monitoring.analyze_reviews`
+    - `Portfolio_Monitoring.batch_analyze_portfolio_reviews`
+    - `Portfolio_Monitoring.test_gbp_connection`
+  - `python3 -m py_compile` passes for the touched review-analysis/test set
+- Interpretation:
+  - the main local review-analysis/debugging surface is now aligned with the safer package-first pattern
+  - the remaining long tail is increasingly low-risk cleanup rather than active operational debt
+
+### 2026-04-17 - Email/report/test long tail cleaned up for safer local imports
+
+- Continued the final local breadth pass into the remaining email/report/test scripts that were still using older import patterns:
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/send_data_alerts.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/send_insights_email.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/send_daily_pulse_email.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/test_gsc_queries.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/test_data_quality.py`
+  - `/Users/mark/Property_Analytics/Portfolio_Monitoring/test_correlations.py`
+- Changes:
+  - package-safe imports now preferred for shared modules like:
+    - `Data_Collection.utils.email_sender`
+    - `Portfolio_Dashboard.utils.preflight`
+    - `Portfolio_Monitoring.generate_daily_pulse`
+    - `Portfolio_Monitoring.src.db.database_manager`
+  - legacy fallback remains only as a compatibility path
+  - `test_gsc_queries.py` now runs behind `main()` / `__main__`, so import no longer triggers live GSC API work
+- Verified:
+  - direct imports now work safely for the cleaned email/report/test set
+  - `python3 -m py_compile` passes for the touched files
+- Operational note:
+  - `alert_sender.py --test` now reflects live day state rather than all-clear because the current collection day is still open with a `ga4` retry window; that is expected operational posture, not a regression from this cleanup
+- Interpretation:
+  - the main remaining `Portfolio_Monitoring` long tail is now mostly low-priority legacy/test debris rather than scripts we actively depend on during local work
+
+### 2026-04-17 - Unified system foundation and machine-readable landscape manifest established
+
+- Shifted from narrow lane cleanup into a foundation pass for the whole platform so the repo can describe itself more coherently
+- Added:
+  - `/Users/mark/Property_Analytics/docs/UNIFIED_SYSTEM_FOUNDATION_2026-04-17.md`
+  - `/Users/mark/Property_Analytics/config/system_landscape_manifest.json`
+- The new foundation model defines:
+  - canonical truth, interpretation, structural, and execution layers
+  - explicit capability-awareness expectations for the platform
+  - a shared Zero Trust / Keeper / app-role posture
+  - portability and compatibility standards
+  - nested Git repositories as explicit repo-boundary objects rather than accidental subfolders
+  - the requirement that The Pond become aware of specialized and legacy-but-important systems even before every one of them gets a first-class UI surface
+- Updated supporting docs:
+  - `/Users/mark/Property_Analytics/README.md`
+    - now points at the unified foundation artifacts
+    - now names `Data_Collection/orchestration/daily_master_collection.py` as the canonical scheduled collection entrypoint instead of the outdated legacy `Portfolio_Monitoring/collect_daily_data.py` path
+  - `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+    - now includes the unified foundation / landscape manifest as an active platform-governance capability
+  - `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+    - now references the new foundation bridge between broad audit reality and practical migration/cleanup work
+- Interpretation:
+  - the repo now has a clearer shared foundation for capability discoverability, security posture, portability, and cleanup discipline
+  - this should make future work on Watchtower, Intelligence Office, Site Content, VACS, EVS, and report-family migration more coherent instead of each lane inventing its own local worldview
+
+### 2026-04-17 - The Pond now has a first-class control-plane surface for system awareness
+
+- Turned the new foundation layer into a real product surface instead of leaving it as docs-only architecture
+- Added `/v1/pond/landscape` in:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - the route imports `/Users/mark/Property_Analytics/config/system_landscape_manifest.json` and returns:
+    - canonical foundations
+    - product surfaces
+    - legacy/specialized systems
+    - nested Git repo boundaries
+    - trust zones
+    - shared security posture
+    - immediate priorities
+- Added the web client contract in:
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Added a new canonical Pond surface at:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/system/page.tsx`
+  - this page acts as a control-plane view over the landscape manifest with:
+    - summary counts
+    - shared Zero Trust / Keeper posture
+    - canonical foundations
+    - product surfaces
+    - trust zones
+    - legacy/specialized systems
+    - nested repo boundaries
+- Updated discoverability in:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx`
+    - landing page now shows a Control Plane zone and a landscape-awareness summary card
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx`
+    - sidebar now includes `/system` as `Control Plane`
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+- Interpretation:
+  - The Pond can now expose the broader platform landscape directly instead of relying on operators to reconstruct it from docs and repo memory alone
+  - this is the first concrete product step toward a system that is aware of its own capabilities, trust boundaries, and migration targets
+
+### 2026-04-17 - Watchtower now represents the wider platform landscape too
+
+- Extended `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so Watchtower is no longer only a collection-health surface
+- Watchtower now also loads `/v1/pond/landscape` through the shared client contract in `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Added a new landscape-aware layer inside Watchtower:
+  - `Platform Constellation`
+    - canonical foundations
+    - product surfaces
+    - legacy / specialized systems
+  - `Boundary Radar`
+    - trust zones
+    - shared security posture
+    - migration-debt chips
+  - `Nested Repo Boundaries`
+    - explicit Git ownership lines visible from the tower
+- Interpretation:
+  - Watchtower now represents more of “all the points” in the operating system, not just mirrored collection telemetry
+  - this moves it closer to a true tower/control-room surface for platform awareness, security posture, migration pressure, and repo topology in addition to morning ops
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+
+### 2026-04-17 - Watchtower landscape nodes now carry explicit posture and tower signals
+
+- Upgraded the `/v1/pond/landscape` payload in `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - canonical foundations, product surfaces, and legacy/specialized systems now each emit:
+    - `posture`
+    - `signal`
+- Current posture vocabulary:
+  - `healthy`
+  - `active_build`
+  - `specialized_live`
+  - `migration_debt`
+  - `trust_hardening`
+  - `external_governed`
+  - `reference_only`
+- Updated the shared client types in `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - platform constellation cards now show explicit posture badges
+  - each node now carries a tower signal explaining why the tower is classifying it that way
+  - added a posture rollup strip for:
+    - healthy nodes
+    - active build / hardening nodes
+    - migration debt
+- Interpretation:
+  - Watchtower is now moving from “landscape inventory” toward “landscape state”
+  - this is the first real step toward making the tower communicate what needs attention across the whole system, not just what exists
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+
+### 2026-04-17 - Watchtower landscape layer now overlays live pressure on node posture
+
+- Continued the Watchtower evolution so the system-landscape layer is not just declarative posture
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - landscape nodes now show `Live Pressure` sections with operator-facing notes
+  - live badges now reflect real current state for key nodes:
+    - `Data Pond` reacts to blocked closure/core-failure pressure
+    - `Watchtower` reacts to open retry load / active source lanes
+    - `VACS` / `EVS` stay under visible trust-hardening pressure tied to the current shared migration-debt posture
+    - legacy systems keep explicit migration-debt pressure
+    - PIB remains visibly protected/canonical rather than treated as generic legacy debt
+- This is still only a partial live overlay, but it is now enough for the tower to distinguish:
+  - what a system is supposed to be
+  - what pressure that system is under right now
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower landscape nodes now include proof-backed evidence
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` again so each landscape node now emits:
+  - `evidence.represented_in_pond`
+  - `evidence.pond_surface_href`
+  - `evidence.boundary_class`
+  - `evidence.evidence_points`
+- These evidence points are currently derived from:
+  - actual app-path / route representation
+  - trust-zone classification
+  - known migration targets and repo boundaries from the manifest
+- Updated shared client contracts in `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - platform constellation cards now expose:
+    - in-Pond vs off-Pond evidence
+    - boundary class
+    - concrete evidence statements
+    - route links when a Pond surface exists
+- Interpretation:
+  - Watchtower can now explain why it believes a node is healthy, under build pressure, or migration debt
+  - this is a more inspectable and honest tower model than pure declarative status alone
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower evidence model now includes route and trust-mode checks
+
+- Strengthened `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so landscape evidence now also emits:
+  - `web_surface_live`
+  - `api_surface_live`
+  - `expected_zero_trust_mode`
+- These checks are derived from the current canonical app/API route inventory rather than only narrative notes, so the tower can distinguish:
+  - is there a live Pond page for this capability
+  - is there a live API contract for this capability
+  - should this capability be under human Access, machine Access, mixed Access, local-only handling, or external governed linkage
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - tower cards now display:
+    - Web Surface: `Live` / `None`
+    - API Surface: `Live` / `None`
+    - Trust Mode
+  - this makes the constellation layer more inspectable and closer to a real capability-control surface
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower now surfaces explicit representation and trust gaps
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so the landscape summary now includes:
+  - `represented_in_pond_count`
+  - `off_pond_count`
+  - `machine_api_gap_count`
+  - `human_surface_gap_count`
+  - `trust_review_count`
+- These are derived from the evidence model already attached to landscape nodes, so the tower now has a compact gap-oriented read instead of only per-card inspection.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - added a gap strip inside the platform constellation section for:
+    - In Pond
+    - Off Pond
+    - Machine API Gaps
+    - Trust Review
+- Interpretation:
+  - Watchtower can now call out where platform representation is still incomplete instead of only showing posture and proof
+  - this is a good bridge toward a future tower model where capability gaps can become explicit operational tasks
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower gap signals now carry canonical next moves
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so `/v1/pond/landscape` now returns a `gap_runbook` array in addition to raw gap counts.
+- The runbook currently covers:
+  - Pond representation gaps
+  - machine/API contract gaps
+  - human-surface gaps
+  - trust-hardening review
+  - nested repo boundary pressure
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - added a `Gap Runbook` section inside Platform Constellation
+  - each gap card now shows:
+    - current count
+    - whether the lane is `Clear`, `Watch`, or `Action`
+    - canonical next move text
+    - direct route links back into the governed control-plane/tower surfaces
+- Interpretation:
+  - Watchtower is now beginning to act like a control tower instead of only a descriptive map
+  - representation and trust debt are no longer just visible; they are translated into the next canonical platform move
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower nodes now carry their own exact next move
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so each landscape node's `evidence` now includes a node-specific `next_action` block with:
+  - `state`
+  - `title`
+  - `detail`
+  - `href`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - each Platform Constellation card now renders a `Node Next Move` panel in addition to tower signal, live pressure, and evidence
+  - this lets the tower say what to do with:
+    - Site Content Creator specifically
+    - VACS specifically
+    - EVS specifically
+    - PIB specifically
+    - legacy migration lanes individually
+- Interpretation:
+  - Watchtower is becoming a true control-plane surface because category-level gap guidance now resolves into per-system operating guidance
+  - the action model remains evidence-backed and attached to the same node contract instead of being split into another parallel layer
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower node guidance now reacts to live capability evidence
+
+- Refined `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so node-level `next_action` guidance is no longer just policy-declared.
+- The route now conditionally adjusts next moves based on evidence the tower already has:
+  - whether the node is actually represented in The Pond
+  - whether a governed web surface is live
+  - whether a canonical API contract is live
+  - whether the node is under `active_build`, `trust_hardening`, or `migration_debt`
+- Current node-aware refinements include:
+  - machine or mixed-access nodes without visible API contract are escalated as action items
+  - represented human-facing nodes without web surface are escalated as action items
+  - off-Pond active/governed nodes are explicitly called out as representation gaps
+  - VACS, EVS, Site Content Creator, and PIB keep tailored guidance layered on top of that shared logic
+- Interpretation:
+  - the tower is now starting to behave like a real capability interpreter instead of a static annotated inventory
+  - node guidance is evidence-backed from the same route inventory / trust model the tower already uses
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower now shows observed trust posture, not only expected trust mode
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so each landscape node now also carries:
+  - `observed_zero_trust_posture`
+  - `trust_alignment`
+  - `trust_evidence_points`
+- These are derived from actual route/auth patterns already present in the repo, not just the manifest's intended trust zone.
+- Current examples:
+  - Data Pond foundation reads as mixed session + service and still transitional because shared-token fallback remains in the platform layer
+  - Intelligence Office, Watchtower, and Site Content read as aligned session-guarded human surfaces
+  - VACS reads as service-token capable but transitional because shared-token fallback remains
+  - EVS reads as mixed human + machine and under review because its observed route shape is broader than a pure machine lane
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - constellation cards now show:
+    - expected Trust Mode
+    - observed Trust posture
+    - Trust Alignment
+    - trust evidence statements
+- Interpretation:
+  - the tower can now compare intended Zero Trust posture against observed route/auth reality
+  - this is a stronger control-plane step because trust review is now tied to concrete code-observed auth patterns instead of only architectural intent
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower now rolls trust alignment up to the summary layer
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so landscape summary now includes:
+  - `trust_aligned_count`
+  - `trust_transitional_count`
+  - `trust_review_node_count`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - Platform Constellation now includes a dedicated trust alignment strip:
+    - Trust Aligned
+    - Trust Transitional
+    - Trust Review Nodes
+- Interpretation:
+  - the tower can now answer the high-level trust question at a glance instead of only exposing trust posture one card at a time
+  - this makes expected-vs-observed Zero Trust posture part of the main operator summary rather than buried in node detail
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower now prioritizes trust work, not just counts it
+
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - added a `Trust Priority Board` inside Platform Constellation
+  - the board ranks the highest-pressure non-aligned nodes using current evidence such as:
+    - `review` vs `transitional`
+    - trust-hardening posture
+    - migration-debt posture
+    - missing expected machine API surface
+    - missing expected human surface
+    - debug-bypass review posture
+    - mixed session/service complexity
+- The trust strip now has an operator follow-through layer:
+  - high-level aligned / transitional / review counts
+  - a ranked set of the nodes that should be hardened first
+- Updated:
+  - `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+  - `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+- Interpretation:
+  - Watchtower is now beginning to prioritize trust hardening work the way it already prioritizes collection and retry work
+  - the tower is more actionable because platform trust debt is now ordered, not just visible
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower trust priorities now point to explicit remediation tracks
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so each node now carries a `remediation_track` with:
+  - label
+  - canonical doc path
+  - route href when there is a relevant Pond surface
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - constellation cards now show remediation-track metadata directly
+  - the Trust Priority Board now points each highlighted node at the exact cleanup/hardening track, not just the next action text
+- Current examples:
+  - Site Content trust review -> Zero Trust implementation checklist
+  - VACS service-token hardening -> worker secret cutover track
+  - EVS boundary cleanup -> EVS/BrowserStack finish-order doc
+  - migration-boundary systems -> release split / boundary cleanup doc
+- Interpretation:
+  - the trust priority board is now tied to canonical remediation documents rather than just UI-local heuristics
+  - this makes Watchtower materially closer to a real operator control plane because it can direct the next trust-hardening move into an owned track
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Remediation tracks now carry lifecycle status
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so every node remediation track now includes:
+  - `status`: `open`, `active`, or `closed`
+  - `status_detail`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - constellation cards now show remediation-track lifecycle badges
+  - trust-priority cards now show whether the linked hardening/cleanup track is open, in progress, or effectively closed
+- Current behavior:
+  - aligned lanes like PIB / Intelligence Office show closed tracks
+  - transitional lanes like Data Pond core and VACS show active tracks
+  - review lanes like Site Content, EVS, and repo-boundary migration systems show open tracks
+- Interpretation:
+  - Watchtower can now reflect not just which remediation track applies, but whether that track is still live work
+  - this is the first step toward the tower auto-closing trust tracks from current evidence instead of relying on manual reclassification
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Remediation tracks now include explicit completion criteria
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so remediation tracks now also carry `completion_criteria`.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - constellation cards now show the criteria underneath each remediation track
+  - trust-priority cards also show the same criteria so `open` / `active` / `closed` is visibly backed by concrete conditions
+- Current effect:
+  - `closed` no longer only means “currently aligned”
+  - it now points at a specific set of satisfied conditions the tower expects
+  - `active` and `open` tracks show what still needs to be true before the track can close
+- Interpretation:
+  - Watchtower is becoming materially more rigorous as a control plane because remediation state is now explained by criteria, not just labels
+  - this sets up the next phase where those criteria can become partially machine-evaluated instead of only descriptive
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower remediation criteria are now machine-evaluated
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so remediation-track criteria are now emitted as structured checks with:
+  - `label`
+  - `met`
+  - `detail`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+  - constellation cards now show met/open badges for each remediation criterion
+  - trust-priority cards now show the same machine-evaluated remediation state
+  - both surfaces now show criteria-met counts so track progress is visible at a glance
+- Current effect:
+  - remediation status is no longer only narrative
+  - the tower now shows which conditions are already satisfied versus which ones are still blocking trust or migration closure
+  - trust guidance for Data Pond core, Site Content, VACS, EVS, PIB, and repo-boundary migration lanes is now visibly backed by current tower evidence
+- Interpretation:
+  - Watchtower is becoming a truer control plane because remediation closure can now be inspected condition-by-condition
+  - this creates the foundation for future automatic track closure and stronger governance alerting without relying on manual memory alone
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower remediation lifecycle is now criteria-derived
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so remediation-track lifecycle status is now derived from machine-evaluated completion criteria instead of remaining separately hand-declared.
+- Current behavior:
+  - `closed` when all criteria are met
+  - `active` when some criteria are met
+  - `open` when no criteria are met
+- The route now also expands `status_detail` with the live met-count summary so the control plane explains why a track is open, active, or closed from current evidence.
+- Interpretation:
+  - Watchtower is now materially closer to self-governing remediation logic because lifecycle state and closure criteria come from the same evidence model
+  - this reduces drift between the declared hardening story and the actual platform posture the tower can see
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Trust priority ranking now uses unresolved remediation work
+
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so the Trust Priority Board now ranks nodes using:
+  - unmet remediation-criteria count
+  - whether the remediation track is still fully open with no criteria met
+  - missing expected web/API surfaces
+  - trust-hardening and migration-debt posture
+  - debug-bypass and mixed trust complexity
+- Current effect:
+  - the board is no longer mostly a posture heuristic
+  - it now surfaces the nodes with the most unresolved remediation debt first
+  - trust-priority notes now also state how many criteria remain open for the lane
+- Interpretation:
+  - Watchtower is becoming more operationally honest because ranking pressure now comes from actual unresolved closure work
+  - this makes the tower better suited for hardening order and near-term execution planning
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Watchtower now rolls up shared closure blockers
+
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so Platform Constellation now includes a `Closure Blockers` rollup.
+- Current behavior:
+  - aggregates unmet remediation criteria across all visible landscape nodes
+  - ranks the most common open blocker conditions first
+  - shows which nodes are currently carrying each blocker
+- Current effect:
+  - the tower can now answer not only “which node is most urgent” but also “which exact remediation condition is recurring across the platform”
+  - this makes trust and migration cleanup easier to reason about as a systems problem instead of only a per-node problem
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Closure blockers now point to owning remediation tracks
+
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` so each blocker row now shows:
+  - the primary remediation track most associated with that blocker
+  - the governed route for that track when available
+  - the owning remediation doc filename
+- Current effect:
+  - the tower can now move from shared blocker awareness into the exact cleanup track without extra interpretation
+  - this makes the control-plane section feel more complete and reduces context-switching between blocker patterns and owning work
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Site Content trust lane hardened to governed human access
+
+- Removed the Site Content debug-bypass path from:
+  - `/Users/mark/Property_Analytics/apps/api/src/middleware/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/env.ts`
+  - `/Users/mark/Property_Analytics/apps/api/wrangler.toml`
+- Updated `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so Site Content now reads as:
+  - `observed_zero_trust_posture = session_origin_guard`
+  - `trust_alignment = aligned`
+  - governed human-surface remediation rather than an open trust-review exception
+- Updated Zero Trust docs so they record the bypass as retired instead of still pending review:
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_IMPLEMENTATION_CHECKLIST_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_SECURITY_ARCHITECTURE_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_ACCESS_MATRIX_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_OPERATOR_RUNBOOK_2026-04-13.md`
+- Current effect:
+  - Site Content is no longer a special-case trust-review lane in the live code path
+  - Watchtower can now treat it as a normal authenticated governed human surface
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - VACS now has a governed Pond toolbox bridge
+
+- Added a first-class Pond bridge surface at `/Users/mark/Property_Analytics/apps/web/src/app/vacs/page.tsx`.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/dock/page.tsx` so The Dock now includes a `VACS Bridge` card.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` so VACS is visible in the main Pond navigation.
+- Updated `/Users/mark/Property_Analytics/config/system_landscape_manifest.json` so the landscape now treats the VACS web bridge as the current governed surface, while `/v1/vacs/*` remains the machine contract.
+- Updated `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so the control plane recognizes `/vacs` as a live Pond surface.
+- Current effect:
+  - VACS is now included in the Pond toolbox without pretending it is already a broad human-first application
+  - the Pond has a governed bridge into VACS that makes the machine contract, trust posture, shared foundations, and next moves visible
+  - Dock, sidebar, System, and Watchtower can now tell a more coherent story about where VACS lives
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - VACS machine boundary hardened to Access service-token only
+
+- Removed VACS shared-token fallback from the canonical route path:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/vacs.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/env.ts`
+  - `/Users/mark/Property_Analytics/apps/api/test/helpers/platform-route-env.ts`
+  - `/Users/mark/Property_Analytics/apps/api/test/platform/vacs-auth.test.ts`
+- Updated `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so Watchtower now reads VACS as:
+  - `trust_alignment = aligned`
+  - an aligned machine-access surface rather than a transitional hardening lane
+- Updated Zero Trust docs so VACS is no longer described as still carrying shared-token fallback:
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_ACCESS_MATRIX_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_OPERATOR_RUNBOOK_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_WORKER_SECRET_CUTOVER_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/KSM_CLOUDFLARE_ZERO_TRUST_RECORD_MANIFEST_2026-04-13.md`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_ZERO_TRUST_IMPLEMENTATION_CHECKLIST_2026-04-13.md`
+- Current effect:
+  - VACS now uses Access service-token auth as the canonical machine path
+  - the Pond bridge and Watchtower posture now match the real route behavior
+- Verified:
+  - targeted VACS auth tests
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - EVS finished as a governed Pond bridge
+
+- Finished the EVS Pond inclusion as one coherent slice:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/evs/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/dock/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx`
+- Tightened `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts` so Watchtower/control-plane now treat EVS as a settled governed mixed-access lane instead of an unresolved landing-zone question.
+- Current effect:
+  - EVS is now visible in the Pond toolbox and main navigation as a governed bridge
+  - the platform explicitly treats EVS as an aligned mixed human-and-machine validation lane
+  - Watchtower now pushes EVS toward workflow maturity inside that lane rather than re-deciding whether EVS belongs in the Pond
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - EVS lifecycle now records explicit orchestrator handoff
+
+- Extended the EVS shared contract and route behavior so request lifecycle is more truthful before API-driven dispatch exists:
+  - `/Users/mark/Property_Analytics/packages/shared/src/evs-schemas.ts`
+  - `/Users/mark/Property_Analytics/packages/shared/src/evs-types.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/evs/repository.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/evs.ts`
+  - `/Users/mark/Property_Analytics/apps/api/test/platform/evs-lifecycle.test.ts`
+- Added explicit `POST /v1/evs/requests/:requestId/handoff` support, derived request dispatch-state views, and execution-plan return on request detail.
+- Current effect:
+  - EVS can now distinguish `awaiting_handoff`, external handoff, active execution, and terminal result states
+  - the lane no longer relies on vague queued-only state while orchestration remains external
+- Verified:
+  - `npx tsx --test test/platform/evs-lifecycle.test.ts test/platform/evs-auth.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+
+### 2026-04-17 - EVS bridge is now a real operator workspace
+
+- Extended the Pond EVS surface from posture-only bridge to a usable governed workspace:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/evs/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Current effect:
+  - operators can now load pilot EVS properties and request history from the Pond
+  - the EVS bridge can create governed validation requests directly
+  - the bridge can record explicit external orchestrator handoff per request
+  - execution-plan preview now lives beside the request lifecycle board, so the lane is actionable without pretending dispatch is already internalized
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npx tsx --test test/platform/evs-lifecycle.test.ts test/platform/evs-auth.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+
+### 2026-04-17 - `/system` now shows the enterprise outcome map and consolidation plan
+
+- Added machine-readable enterprise outcome governance at:
+  - `/Users/mark/Property_Analytics/config/platform_outcome_map.json`
+- Added companion strategy docs:
+  - `/Users/mark/Property_Analytics/docs/CANONICAL_OUTCOME_MAP_2026-04-17.md`
+  - `/Users/mark/Property_Analytics/docs/PLATFORM_CONSOLIDATION_PLAN_2026-04-17.md`
+- Extended the control plane contract in:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Upgraded `/Users/mark/Property_Analytics/apps/web/src/app/system/page.tsx` into a browser-visible enterprise architecture surface with:
+  - canonical outcomes
+  - consolidate-now systems
+  - accepted specializations
+  - enterprise operating rules
+- Current effect:
+  - the platform’s anti-duplication model is now inspectable locally in the browser
+  - consolidation planning now lives in the Pond control plane instead of only in docs
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+
+### 2026-04-17 - Watchtower health route now degrades safely across partial ops schemas
+
+- Hardened `/Users/mark/Property_Analytics/apps/api/src/routes/health.ts` so Watchtower no longer fails the entire `/v1/health/status` response when optional operational tables or mirrored source tables are absent in a partially migrated environment.
+- Added a regression in `/Users/mark/Property_Analytics/apps/api/test/platform/health-status.test.ts` covering the partial-schema case.
+- Current effect:
+  - Watchtower can still render with empty/default operational sections instead of showing a blanket load failure when production D1 or a mirror is missing non-core tables
+  - this makes the health surface more portable across staggered schema rollout and preview/partial environments
+- Verified:
+  - `npx tsx --test test/platform/health-status.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `bash /Users/mark/Property_Analytics/scripts/check_context_discipline.sh`
+  - `bash /Users/mark/Property_Analytics/scripts/check_pib_guardrails.sh`
+
+### 2026-04-17 - Specialty PIB-style SEO T30 proof brief added for selected properties
+
+- Added `/Users/mark/Property_Analytics/scripts/send_seo_t30_property_brief.py` as a specialty reporting sender that builds and optionally emails a PIB-style SEO proof brief for a selected property list without modifying the locked PIB renderer/template/sender files.
+- Current proof scope covers requested-property alias normalization to canonical records, daily GSC T30 summaries, previous-T30 comparisons, same-date YoY comparisons when available, and proof-email artifact export to `/Users/mark/Property_Analytics/reports/seo_t30_property_brief/`.
+- Explicit alias handling now maps:
+  - `The Pointe at Bentonville` -> `The Pointe Bentonville`
+  - `Elation` -> `Elation at Grandway West`
+  - `Anatole - Daytona` -> `The Anatole`
+- Current data caveat:
+  - canonical GSC daily history starts on `2025-09-17`, so spring-2025 YoY for the current `2026-03-16` through `2026-04-14` T30 window is correctly rendered as unavailable rather than backfilled or inferred
+- Verified:
+  - `python3 /Users/mark/Property_Analytics/scripts/send_seo_t30_property_brief.py --no-send`
+
+### 2026-04-21 - SEO proof brief now supports explicit custom date windows
+
+- Extended `/Users/mark/Property_Analytics/scripts/send_seo_t30_property_brief.py` so the specialty PIB-style SEO brief can accept `--start-date` and `--end-date` instead of only a rolling latest-30-day window.
+- The sender now:
+
+### 2026-04-22 - Selected-property CWV T30 report added
+
+- Added `/Users/mark/Property_Analytics/scripts/send_selected_cwv_t30_report.py` as a specialty CWV sender for curated property lists without touching locked PIB files.
+- The report uses canonical `pagespeed_metrics` mobile PSI data, computes current versus T30 averages for PSI, LCP, CLS, and TBT, and writes artifacts to `/Users/mark/Property_Analytics/reports/selected_cwv_t30/`.
+- Current report behavior is explicit about two important constraints:
+  - GTMetrix is excluded because canonical GT coverage only exists for the 10-property pilot cohort.
+  - Per-property stale latest-date exceptions are called out when a selected community has no same-day PSI row even though the portfolio has a newer report date.
+- Built-in shorthand normalization currently supports aliases such as:
+  - `Apex` -> `Apex West Midtown`
+  - `Retreat` -> `The Retreat`
+  - `Northbridge` -> `Northbridge at Millenia Lake`
+  - `Spring Branch` -> `Avasa Spring Branch`
+  - `Townhomes` -> `Townhomes at Lake Park`
+  - `Oakleaf` -> `The Villages at Oakleaf`
+  - `Baywood` -> `Preserve at Baywood`
+- Verified:
+  - `python3 -m py_compile /Users/mark/Property_Analytics/scripts/send_selected_cwv_t30_report.py`
+  - `python3 /Users/mark/Property_Analytics/scripts/send_selected_cwv_t30_report.py`
+- The report was then simplified by request and this is now the remembered default layout:
+  - KPI row only shows `Current Avg PSI`, `T30 Avg PSI`, and `Avg Current LCP`
+  - property list keeps only `Current PSI`, `T30 PSI`, `Current vs T30`, `Current LCP`, `T30 LCP`, and `LCP vs T30`
+  - removed extra KPI cards, removed `CLS`, removed `TBT`, removed `Coverage Days`, removed `requested as ...` helper text, and removed the section status chip
+- Reusable operator notes now live in `/Users/mark/Property_Analytics/reports/selected_cwv_t30/README.md`
+
+### 2026-04-22 - PSI collection accounting corrected for mobile CWV truth
+
+- Root cause found for recent selected-property CWV coverage gaps: `/Users/mark/Property_Analytics/Portfolio_Dashboard/scripts/collect_daily_psi.py` was marking a property as a successful PSI collection when either `mobile` or `desktop` wrote, while downstream CWV reporting depends on `mobile` specifically.
+- This produced overstated `data_collections` PSI success counts and allowed desktop-only days to look complete even when the mobile PSI history had holes.
+- Fixed behavior:
+  - collection success now requires `mobile_success`
+  - desktop-only outcomes are recorded as partial failures with explicit notes
+  - collection summaries now expose `desktop-only` and `mobile-only` partial counts
+  - `/Users/mark/Property_Analytics/Data_Collection/monitoring/collection_monitor.py` now supports explicit per-property outcome overrides so partial/failed PSI writes are not silently recorded as success
+- Concrete examples from `2026-04-22` before the fix:
+  - `Cendana District West` had only `desktop`
+  - `Villa Lago` had only `desktop`
+  - `Calais Midtown` had only `desktop`
+- Verified:
+  - `python3 -m py_compile /Users/mark/Property_Analytics/Portfolio_Dashboard/scripts/collect_daily_psi.py /Users/mark/Property_Analytics/Data_Collection/monitoring/collection_monitor.py`
+  - compares the requested window against the immediately preceding matched-length window
+  - caps the effective end date to the latest available canonical GSC date when the user asks for a range through a later calendar date
+  - renders unavailable YoY windows as `N/A` instead of misleading zero-valued baselines
+- Current operational example:
+  - requested window `2026-04-15` through `2026-04-21`
+  - effective canonical GSC window `2026-04-15` through `2026-04-18`
+  - latest canonical GSC date available on this machine: `2026-04-18`
+- Verified:
+  - `python3 /Users/mark/Property_Analytics/scripts/send_seo_t30_property_brief.py --start-date 2026-04-15 --end-date 2026-04-21 --no-send`
+
+### 2026-04-21 - Canonical selected-property GSC historical backfill runner added
+
+- Added `/Users/mark/Property_Analytics/scripts/backfill_selected_gsc_window.py` as a narrow, canonical GSC backfill path for targeted historical recovery without relying on the legacy `Portfolio_Monitoring` backfill scripts.
+- The runner:
+  - loads the canonical five-property SEO proof set by default
+  - resolves requested names to canonical registry records
+  - queries GSC using the registry `gsc_url`
+  - writes through `Data_Collection.db.database_manager.DatabaseManager.insert_gsc_daily_metrics(...)`
+  - supports `--dry-run` before any write
+- Applied historical backfill for `2025-04-15` through `2025-04-21`:
+  - `Townhomes at Lake Park`: 7 returned rows
+  - `The Pointe Bentonville`: 2 returned rows
+  - `Fairways at South Shore`: 0 returned rows
+  - `Elation at Grandway West`: 0 returned rows
+  - `The Anatole`: 0 returned rows
+- Current interpretation:
+  - the YoY gap was partially recoverable from live GSC history for 2 of the 5 requested properties
+  - no alternate historical URL in current accessible GSC properties produced April 2025 rows for the remaining 3 properties during this repair pass
+- Verified:
+  - `python3 /Users/mark/Property_Analytics/scripts/backfill_selected_gsc_window.py --start-date 2025-04-15 --end-date 2025-04-21 --dry-run`
+  - `python3 /Users/mark/Property_Analytics/scripts/backfill_selected_gsc_window.py --start-date 2025-04-15 --end-date 2025-04-21`
+  - `python3 /Users/mark/Property_Analytics/scripts/send_seo_t30_property_brief.py --start-date 2026-04-15 --end-date 2026-04-21`
+
+### 2026-04-21 - Daily PIB-style copy change impact brief added for April 17 intervention tracking
+
+- Added `/Users/mark/Property_Analytics/scripts/send_copy_change_impact_brief.py` as a specialty PIB-style daily quick-read report for the five April 17, 2026 copy-change properties.
+- The brief is intentionally not a YoY report. Instead it tracks:
+  - first full post-change `GSC` window vs matched pre window
+  - first full post-change `GA4 Organic Search` window vs matched pre window
+  - per-property quick-read status (`Early Positive`, `Early Mixed`, `Early Softness`)
+  - concise evidence bullets explaining what moved and how to read it
+- Current comparison design:
+  - excludes `2026-04-17` because the copy changes happened in the afternoon
+  - `GSC` currently compares `2026-04-18` vs `2026-04-16` because canonical GSC freshness is only through `2026-04-18`
+  - `GA4 Organic Search` currently compares `2026-04-18` through `2026-04-20` vs `2026-04-14` through `2026-04-16`
+- Current purpose:
+  - daily stakeholder quick read
+  - understandable directional evidence instead of a data dump
+  - designed to mature as more post-change days accumulate
+- Verified:
+  - `python3 /Users/mark/Property_Analytics/scripts/send_copy_change_impact_brief.py --no-send`
+
+### 2026-04-17 - Control Plane moved into admin toolbox posture and shared surface access map
+
+- Added a shared web permission model at `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts` as the first explicit surface-access layer for Pond offerings.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` so Control Plane is no longer treated as a top-tier everyday navigation surface; it now sits under a `Toolbox` section and remains admin-only.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` so Control Plane is removed from the home-page feature cards and awareness panel, which keeps the landing page focused on broad operator surfaces.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/system/page.tsx` so non-admin users get an explicit access-restricted view instead of the full control-plane payload/UI.
+- Current effect:
+  - Control Plane is now visually downplayed and positioned as an admin/system-owner tool rather than a general audience landing-page feature
+  - the repo now has a real shared place to start growing more granular offering-level permissions instead of relying on scattered per-page choices
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `bash /Users/mark/Property_Analytics/scripts/check_context_discipline.sh`
+  - `bash /Users/mark/Property_Analytics/scripts/check_pib_guardrails.sh`
+
+### 2026-04-17 - App-facing branding now uses MarketingOps instead of WebOps
+
+- Updated the visible app/product chrome so the active org label is now `MarketingOps` rather than `WebOps`:
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/layout.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/login/verify/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin.ts`
+- Removed the redundant `Venterra WebOps` eyebrow above the main `/` Data Pond title so the landing page headline reads more cleanly.
+- Current effect:
+  - The Data Pond UI and auth email chrome now present a cleaner, more current `MarketingOps` identity
+  - redundant brand-over-brand title treatment on the landing hero is removed
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `bash /Users/mark/Property_Analytics/scripts/check_context_discipline.sh`
+  - `bash /Users/mark/Property_Analytics/scripts/check_pib_guardrails.sh`
+
+### 2026-04-17 - Home page and sidebar polished for clearer hierarchy
+
+- Refined `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` into a more intentional front-door experience:
+  - stronger hero hierarchy
+  - explicit `Monitor / Browse / Ask` framing
+  - more premium lane cards for Watchtower, Dock, and Fishing Hole
+  - cleaner briefing shortcut treatment
+- Refined `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` so:
+  - top destinations read as the primary operating lanes
+  - grouped sections below feel quieter and more curated
+  - the navigation taxonomy is easier to scan without looking like one long report list
+- Current effect:
+  - the Pond front door now feels more like an intentional operator product than a page of links
+  - the sidebar better distinguishes primary destinations from secondary/admin/workflow lanes
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Site Content Creator refined into a stronger Content Ops workspace
+
+- Refined `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the Site Content surface feels more like a governed editorial workspace than a raw crawl utility:
+  - added a stronger hero band with Content Ops framing and top-line posture metrics
+  - upgraded crawl controls, tabs, summary cards, and inventory shells with clearer hierarchy and richer card treatment
+  - added page-level mapping status chips so Specs posture is visible before drilling into section rows
+  - promoted the section-mapping workspace, assessment, and rewrite panels into one clearer operating lane under each page
+  - tightened the rewrite surface so governed inputs, draft status, rewrite brief, proposed copy, and save behavior read as one cohesive editorial block
+- Current effect:
+  - Site Content Creator is more visually aligned with the broader MarketingOps product language
+  - the page now communicates the intended workflow more clearly: crawl -> map -> assess -> rewrite
+  - structural and editorial signals are easier to scan without changing the governed logic underneath
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Site Content section rows refined into an editorial review board
+
+- Tightened the section-level experience in `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so each mapping row now reads more like an editorial review board:
+  - added a clearer three-part top band for expected Specs slot, live baseline, and mapping rationale
+  - reframed the assessment block as an editorial diagnosis with stronger verdict language and cleaner score cards
+  - reshaped the rewrite workspace into distinct control, draft, and reference zones so original copy and proposed copy are easier to compare
+- Current effect:
+  - individual section rows are easier to read, diagnose, and act on without feeling like stacked diagnostic widgets
+  - the page now better supports editorial judgment, not just data display
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Site Content page navigation refined into a guided page board
+
+- Refined the page-selection layer in `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` so the inventory no longer behaves like a flat gallery of captured pages:
+  - added page-board posture summaries for rewrite priority, in-review pages, healthy pages, and Specs-gap pages
+  - added page-board filters so editors can narrow the working set by operational need instead of only clicking through every page manually
+  - added page-level posture badges and next-move guidance to each captured-page card
+- Current effect:
+  - page selection is now more editorially directed and easier to triage
+  - the inventory layer better answers which pages need action first before section review begins
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-17 - Site Content interaction polish now keeps page context anchored
+
+- Added another interaction-focused refinement to `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`:
+  - each page now has a sticky context header while you work through mappings and rewrites
+  - the raw extracted baseline sections are now collapsible on demand instead of always consuming vertical space
+  - page-level mapping/rewrite posture stays visible while the editor works deeper in the page
+- Current effect:
+  - the workflow has less scroll fatigue and keeps the current page identity visible during longer editing sessions
+  - raw baseline review is still available, but no longer overwhelms the governed mapping and rewrite lane by default
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Shared offering permissions foundation now drives nav and landing surfaces
+
+- Replaced the early one-off web surface gating with a shared offering-access catalog in `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts`:
+  - canonical offering ids, categories, audiences, visibility roles, and action roles
+  - product-facing role titles (`Observer`, `Curator`, `Steward`) mapped from technical roles (`viewer`, `editor`, `admin`)
+  - helpers for visible offerings, featured offerings, and offering-aware access checks
+- Updated `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` and `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` to consume that shared model instead of carrying separate role rules.
+- Current effect:
+  - sidebar navigation and home-page featured lanes now derive from the same canonical offering matrix
+  - the UI is better prepared for granular offering permissions and role-aware presentation without more duplicated access logic
+  - product-facing role language is now visible in the app shell instead of exposing raw technical role names everywhere
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Offering permissions now distinguish visibility from action rights
+
+- Extended the shared offering model in `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts` so the Pond now has named action-level permissions (`view`, `draft`, `approve`, `administer`, `handoff`) in addition to page visibility.
+- Added a parallel API-side capability-action helper in `/Users/mark/Property_Analytics/apps/api/src/lib/permissions.ts` and wired named enforcement into:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/evs.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/gbp-posts.ts`
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/evs/page.tsx` so the EVS workspace now shows permission-aware action states instead of only relying on eventual 403 responses:
+  - request creation is disabled for users without EVS draft rights
+  - orchestrator handoff is disabled for users without EVS handoff rights
+  - the workspace explains the required product-facing role (`Observer`, `Curator`, `Steward`) when an action is unavailable
+- Added regression coverage in `/Users/mark/Property_Analytics/apps/api/test/platform/evs-lifecycle.test.ts` proving:
+  - viewers cannot create EVS requests
+  - viewers cannot record EVS handoff
+- Current effect:
+  - the Pond now has a real distinction between surface visibility and governed action rights
+  - EVS and GBP Posts are using named capability-action checks instead of generic editor/admin route gates
+  - the foundation is now ready for approval/administer splits on additional surfaces without another permission rewrite
+- Verified:
+  - `npx tsx --test test/platform/evs-lifecycle.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Steward surfaces now use the same offering permissions model end to end
+
+- Carried the named offering-action structure through the steward-owned surfaces instead of leaving them on blanket admin gates.
+- API-side route enforcement now uses `/Users/mark/Property_Analytics/apps/api/src/lib/permissions.ts` for:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-intelligence.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin.ts`
+- Web-side restricted-access UX is now consistent through `/Users/mark/Property_Analytics/apps/web/src/components/shared/restricted-surface-card.tsx`, which is used by:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/system/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/site-content/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/admin/intelligence/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/admin/users/page.tsx`
+- Site Content actions now also reflect named steward permissions inside the workspace itself:
+  - crawl is tied to `siteContent:administer`
+  - rewrite save is tied to `siteContent:draft`
+- Added steward-route regression coverage in `/Users/mark/Property_Analytics/apps/api/test/platform/offering-permissions.test.ts`.
+- Current effect:
+  - the Pond now has one coherent permissions structure from sidebar/home visibility through route authorization and restricted-state UX
+  - steward-only surfaces explain access posture intentionally instead of silently disappearing or failing late
+  - named action rights are now a durable platform capability rather than a one-off EVS refinement
+- Verified:
+  - `npx tsx --test test/platform/offering-permissions.test.ts test/platform/evs-lifecycle.test.ts` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Landing and Dock now present role-specific Pond experiences
+
+- Refined the two primary entry surfaces so the Pond now feels intentionally different for Observers, Curators, and Stewards instead of only enforcing different permissions under the same presentation.
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx`:
+  - role-specific hero eyebrow and summary
+  - role-specific operator-flow panel copy
+  - role-specific quick links in the hero
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/dock/page.tsx`:
+  - cards now filter by the shared offering permissions model instead of showing the same catalog to everyone
+  - Dock now carries role-specific intro framing
+  - report/dashboard cards are separated from workflow/bridge cards to better match each role’s likely use
+- Current effect:
+  - Observers are oriented toward watching, browsing, and asking
+  - Curators are oriented toward operational workflows after governed reporting context
+  - Stewards keep the report lane but are clearly nudged toward stewardship and toolbox use when needed
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Watchtower and curator lanes now reflect role posture more intentionally
+
+- Refined `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` with role-specific Watchtower posture framing so the tower reads differently for Observers, Curators, and Stewards without changing the core operational data.
+- Tightened direct-entry UX for curator-only lanes:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/gbp-posts/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/search-intelligence/page.tsx`
+- Current effect:
+  - Watchtower now explains how each role should use the surface, not just what the surface contains
+  - direct URLs into curator-only workspaces now show governed restricted-state UX for observers instead of falling through to backend failure patterns
+  - GBP Posts and Search Intelligence now show action-level role posture more clearly inside the workspace itself
+- Verified:
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Enterprise readiness program is now a first-class control-plane artifact
+
+- Added the canonical machine-readable enterprise gap register at `/Users/mark/Property_Analytics/config/enterprise_gap_register.json`.
+- Added the durable program docs:
+  - `/Users/mark/Property_Analytics/docs/ENTERPRISE_READINESS_AUDIT_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/ENTERPRISE_GAP_REGISTER_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/NEXT_90_DAY_PLATFORM_PLAN_2026-04-18.md`
+- Extended the Pond control plane:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/system/page.tsx`
+- Current effect:
+  - `/system` now shows enterprise readiness summary, domain-by-domain maturity, priority workstreams, and the next-90-day sequence
+  - the platform can now carry its own enterprise hardening program inside the product instead of leaving it trapped in disconnected planning notes
+- Verified:
+  - `npm run typecheck` in `/Users/mark/Property_Analytics/apps/api`
+  - `npm run build` in `/Users/mark/Property_Analytics/apps/web`
+
+### 2026-04-18 - Portfolio_Monitoring consolidation wave started by removing accidental ownership signals
+
+- Updated `/Users/mark/Property_Analytics/Portfolio_Monitoring/README.md` so the directory now clearly declares itself `Legacy-Reusable` instead of reading like the default operational system.
+- Added the explicit migration map at `/Users/mark/Property_Analytics/docs/PORTFOLIO_MONITORING_CONSOLIDATION_MAP_2026-04-18.md`.
+- Updated `/Users/mark/Property_Analytics/README.md` so common issue/fix guidance points to canonical Data Collection entrypoints first instead of steering operators back to legacy Portfolio_Monitoring scripts.
+- Tightened `/Users/mark/Property_Analytics/config/system_landscape_manifest.json` notes for `portfolio_monitoring` and `portfolio_dashboard` so the control plane now says more plainly that Data Collection, Watchtower, Dock, and app-native surfaces own those default outcomes.
+- Current effect:
+  - the repo and control-plane narrative now reinforce the intended canonical owners
+  - Portfolio_Monitoring remains visible and preserved, but it stops quietly presenting itself as the default collection and ops home
+
+### 2026-04-18 - Portfolio_Dashboard consolidation wave started by removing accidental front-door signals
+
+- Updated `/Users/mark/Property_Analytics/Portfolio_Dashboard/README.md` so the Streamlit dashboard now clearly declares itself `Legacy-Reusable` instead of reading like the default product shell.
+- Added `/Users/mark/Property_Analytics/docs/PORTFOLIO_DASHBOARD_CONSOLIDATION_MAP_2026-04-18.md` to define the migration path into Dock, Analysis, Watchtower, and the main app stack.
+- Current effect:
+  - Portfolio_Dashboard remains preserved as a reference and migration lane
+  - Dock, Analysis, Watchtower, and app-native product surfaces are now reinforced as the canonical UI owners
+
+### 2026-04-18 - Briefing family architecture is now formally defined
+
+- Added `/Users/mark/Property_Analytics/docs/BRIEFING_FAMILY_ARCHITECTURE_2026-04-18.md` to define the governed relationship between PIB, POP Brief, and Spotlight.
+- Added `/Users/mark/Property_Analytics/docs/REPORT_FAMILY_MAP_2026-04-18.md` to give the platform one fast map of major report families and their canonical owners.
+- Updated:
+  - `/Users/mark/Property_Analytics/POP_Brief/README.md`
+  - `/Users/mark/Property_Analytics/Spotlight_Properties_Report/README.md`
+- Current effect:
+  - PIB remains the protected canonical brief engine
+  - POP Brief is now explicitly framed as the structured property-operations performance brief system within the same family
+  - Spotlight is explicitly framed as a specialized rotating executive-attention report, not a competing canonical owner
+
+### 2026-04-18 - Release governance is now a first-class platform standard
+
+- Added the machine-readable release model at `/Users/mark/Property_Analytics/config/release_governance.json`.
+- Extended the control plane:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/system/page.tsx`
+- Added the durable standards:
+  - `/Users/mark/Property_Analytics/docs/RELEASE_GOVERNANCE_STANDARD_2026-04-18.md`
+  - `/Users/mark/Property_Analytics/docs/RELEASE_READINESS_CHECKLIST_2026-04-18.md`
+- Current effect:
+  - `/system` now shows release governance, release gates, workstream lanes, and anti-patterns
+  - the repo now has one explicit enterprise release language instead of a split between older release-shaping notes and current runtime reality
+
+### 2026-04-18 - Service operations are now part of the Watchtower enterprise model
+
+- Added the machine-readable service operations source at `/Users/mark/Property_Analytics/config/service_operations_manifest.json`.
+- Added the durable model doc at `/Users/mark/Property_Analytics/docs/SERVICE_OPERATIONS_MODEL_2026-04-18.md`.
+- Extended the control plane payload in:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+- Extended Watchtower in:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+- Current effect:
+  - Watchtower now shows a `Service Operations Board` with service ownership, runtime, deployment target, release lane, trust boundary, runbook, and live operating pressure
+  - the platform can now reason about enterprise service posture, not only collection/source freshness and trust posture
+
+### 2026-04-18 - Deployment provenance and environment drift are now visible in Watchtower
+
+- Added the machine-readable provenance source at `/Users/mark/Property_Analytics/config/deployment_provenance_manifest.json`.
+- Added the durable model doc at `/Users/mark/Property_Analytics/docs/DEPLOYMENT_PROVENANCE_MODEL_2026-04-18.md`.
+- Extended:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+- Current effect:
+  - Watchtower now shows `Deployment Provenance & Drift`
+  - the tower compares current web host, configured API base, observed API runtime host, and runtime Access policy against the canonical deployment model
+  - real drift is now visible, and the old production-style `NEXT_PUBLIC_SITE_CONTENT_DEBUG=true` posture has been retired from `/Users/mark/Property_Analytics/apps/web/.env.production`
+
+### 2026-04-18 - Release pedigree is now visible in Watchtower
+
+- Added the machine-readable release pedigree source at `/Users/mark/Property_Analytics/config/release_provenance.json`.
+- Added the durable model doc at `/Users/mark/Property_Analytics/docs/RELEASE_PROVENANCE_MODEL_2026-04-18.md`.
+- Extended:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/pond.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx`
+- Current effect:
+  - Watchtower now shows `Release Pedigree`
+  - the tower can now show the currently deployed slice, baseline commit, source branch, source mode, runtime identifiers, and explicit next moves toward clean release provenance
+  - the current live posture is represented honestly as a `dirty_worktree_direct` transitional release, which is exactly the kind of truth the enterprise control plane should surface
+
+### 2026-04-18 - Release provenance is now stampable from real git and deployment inputs
+
+- Added the canonical local bridge script at `/Users/mark/Property_Analytics/scripts/update_release_provenance.py`.
+- Added the operator runbook at `/Users/mark/Property_Analytics/docs/RELEASE_PROVENANCE_STAMPING_RUNBOOK_2026-04-18.md`.
+- Current effect:
+  - `/Users/mark/Property_Analytics/config/release_provenance.json` no longer needs to be hand-edited when the deployed Worker version or Pages runtime changes
+  - the release pedigree now reflects the actual current live runtime identifiers for the API, web surface, and Watchtower control plane
+  - this is still an operator-bridge step, but it is a materially better enterprise posture than stale or purely manual release records
+
+### 2026-04-18 - Release reconcile snapshot is now generated from the actual dirty tree
+
+- Added the canonical generator at `/Users/mark/Property_Analytics/scripts/generate_release_reconcile_snapshot.py`.
+- Added the model doc at `/Users/mark/Property_Analytics/docs/RELEASE_RECONCILE_SNAPSHOT_MODEL_2026-04-18.md`.
+- Generated `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`.
+- Current effect:
+  - Watchtower can now show the current dirty-tree split by workstream lane
+  - the first clean release-shaped slice is now explicit inside the control plane: `platform_app + data_collection_hardening`
+- the platform can quantify how much of the current tree is still non-primary release work instead of only describing the release problem narratively
+
+### 2026-04-20 - Site Content Creator shifted from audit console toward visual editing workbench
+
+- Refactored `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` away from the repeated mapping/assessment/rewrite stack that front-loaded machine-readable diagnostics.
+- The default Site Content flow is now closer to the actual content job:
+  - choose a property
+  - choose a page
+  - view a page-like canvas of recognizable sections
+  - select one section
+  - rewrite that section
+- Added a page canvas that uses live section order plus Specs section identity to render recognizable page mocks:
+  - hero bands
+  - split text/image sections
+  - gallery-style blocks
+  - reviews/testimonial treatments
+  - CTA bands and visible button treatments
+- CTA buttons/links are now surfaced directly in the page mock and current-copy panel instead of being buried in scoring or metadata.
+- Specs inputs now drive the visible editing model more directly through expected section labels, roles, and CTA-oriented section identity, while detailed rationale and assessment stay behind `Show Specs and diagnostics`.
+- The live read model now also carries section-level image URLs for key normalized homepage blocks, so the canvas can render the actual section imagery instead of generic placeholders when the source HTML exposes a definitive image.
+- Multi-state homepage switchers are now being rendered as one parent content section with stacked variant panels instead of separate unrelated blocks, which keeps tabbed/live-variant content editable as one recognizable unit for content authors.
+- This is a deliberate UX correction:
+  - Site Content should read like a content-editing workbench for humans
+  - not like a system audit console that leaks every available machine detail into the primary scene
+
+### 2026-04-20 - Site Content page selection simplified to a single page chooser
+
+- Simplified `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` again after live operator review showed the page-card gallery was still noisy and unclear.
+- Replaced the page-board card wall with a single page dropdown so the editor path is now:
+  - choose property
+  - choose page
+  - recognize the page mock
+  - click a section
+  - edit only that section
+- Removed a layer of page-level posture chrome from the default scene:
+  - no page gallery cards
+  - no page-level rewrite counters or Specs-gap badges in the selection step
+  - quieter selected-page header before the page mock begins
+- Simplified the page mock and selected-section frame so the primary surface now emphasizes:
+  - section position on page
+  - recognizable section treatment
+  - current copy
+  - new copy
+- Site Content is still not at the final desired fidelity, but it is now materially closer to a human page editor and further away from a monitoring dashboard.
+
+### 2026-04-21 - Site Content default scene simplified again toward a human editing surface
+
+- Continued simplifying `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` after live user review made it clear the surface was still too machine-oriented.
+- The primary screen is now intentionally just:
+  - property selector
+  - page selector
+  - refresh snapshot action
+  - a single centered page canvas
+  - one selected-block editor
+- Removed the last major top-level platform chrome from the default scene:
+  - no Inventory / Brief Intelligence tabs
+  - no hero metric cards
+  - no page-card gallery wall
+  - no current-crawl stats in the main editing view
+- Kept governed brief context available, but moved it behind a collapsed `Show governed inputs` panel so content editors can ignore it unless they need it.
+- The page canvas itself is now the primary object:
+  - page reference screenshot shown when a browser-renderable Specs screenshot exists
+  - page sections rendered as stacked, page-like mocks instead of compact diagnostics cards
+  - section selection now answers “where am I on the page” more directly through visual order and simpler location language
+- The section editor remains intentionally sparse:
+  - current copy
+  - new copy
+  - save rewrite
+  - additional status/specs/assessment behind `Show content details`
+
+### 2026-04-21 - Site Content page board removed and section editor flattened further
+
+- Continued the same human-first correction in `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`.
+- Removed the remaining old page-board / page-gallery render path from the Site Content scene so page selection is controlled only by the dropdown selector instead of a large secondary page wall.
+- Flattened the selected-page scene so the content editor no longer leads with workflow or system framing:
+  - removed the old page-summary slab
+  - removed the old editing-flow slab
+  - removed active-block dashboard framing
+  - kept the page mock and selected section as the primary objects
+- Simplified the selected-section editor again so the main scene is:
+  - current copy
+  - new copy
+  - save rewrite
+- Moved the remaining status / rewrite brief / guidance / specs / rationale / assessment material behind `Show content details` so content editors are not forced to read system metadata before editing copy.
+- This is still not the final desired fidelity, but it is a direct correction toward a recognizable content workbench instead of a content-plus-diagnostics console.
+
+### 2026-04-21 - Site Content main scene flattened again after live review
+
+- Continued simplifying `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` after more live user review showed the page mock still carried too much tool framing.
+- Removed the visible page-header slab above the selected page mock so the scene now leads with the page itself instead of app chrome.
+- Removed the visible rewrite-status selector from the primary editor and moved it back into `Show content details`.
+- The main editing scene is now more strictly:
+  - page mock
+  - selected section title
+  - current copy
+  - new copy
+  - save rewrite
+
+### 2026-04-21 - Site Content default scene reduced to selectors plus page
+
+- Simplified the Site Content root scene again in `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`.
+- Removed the large marketing-style hero from the default editing surface.
+- Moved both:
+  - refresh depth
+  - governed inputs / Captain brief context
+  into `Advanced controls` so content editors do not need to scan that information before they can choose a page and start editing.
+- The default scene is now closer to:
+  - property selector
+  - page selector
+  - refresh snapshot
+  - page mock
+  - selected section editor
+
+### 2026-04-21 - Homepage benefits switcher now corrected from live contract
+
+- Tightened homepage Site Content accuracy in:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx`
+- The `Get the Most From Where You Live` switcher is no longer treated as a generic interpreted block group.
+- The API now normalizes the three homepage switcher variants from the live homepage HTML:
+  - `Pet-Friendly Fun`
+  - `High-Tech Living`
+  - `Live Easy Perks`
+- Each variant now carries exact live title/body/bullet/CTA data where applicable, and the web canvas renders them against the screenshot-driven stacked-tab composition instead of a guessed gallery-style abstraction.
+- Placeholder imagery remains in use for the canvas so content editors can recognize the layout without the editor depending on live images.
+- The switcher renderer now also takes its tab identity from the API response instead of guessing from body copy, and the shared switcher chrome has been reduced to one title only; the editor no longer shows a second shared tab row beneath that title, and switcher variants are selected from the full mapping set so stacked states are not dropped just because of mapping visibility.
+- The homepage benefits switcher now also carries nested off-canvas / drawer content in the API response, so Site Content can render each tab as a full editing surface: main panel plus inline detail panels for pet-policy depth, the high-tech day narrative, and the live-easy perks accordion content.
+
+### 2026-04-21 - Copy Change Impact Brief tightened to true PIB quick-read shape
+
+- Refined `/Users/mark/Property_Analytics/scripts/send_copy_change_impact_brief.py` after operator feedback.
+- Removed top-of-email explanatory copy and section-header framing that made the brief feel like a report dump instead of a PIB quick read.
+- The specialty brief now opens with only three neutral outline KPI cards:
+  - `Early Positive`
+  - `Early Mixed`
+  - `Early Softness`
+- Property sections now remain focused on day-prior directional trend rows with arrows, color, and stat, which is the intended lightweight daily read for monitoring April 17 copy-change impact.
+- The same specialty brief now also includes a compact comparison-depth strip inside each property card so operators can see:
+  - current cumulative post-change depth by source
+  - matched pre-window directional change since the copy update
+  - `T7`, `T14`, and `T30` readiness as `Live` or `Pending`
+- This keeps the PIB quick-read format while avoiding false precision before enough post-change history exists.
+
+### 2026-04-22 - PSI collector missing-day and false-success behavior corrected
+
+- Investigated operator report that PSI/PageSpeed was missing full dates while still appearing successful.
+- Root cause was two-part:
+  - `/Users/mark/Property_Analytics/Portfolio_Dashboard/scripts/collect_daily_psi.py` always wrote `data_collections.status='completed'` even when properties were incomplete.
+  - PSI only runs after GA4, GSC, GSC URL inspection, and Google Ads in `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`, so if the master collector dies earlier, PSI never runs and no same-day PSI record exists.
+- Canonical fix now in place:
+  - PSI run status is now derived honestly:
+    - `completed` only when all properties have both mobile and desktop data
+    - `partial` when only part of the portfolio is complete
+    - `blocked` when the run starts but cannot collect any complete property set
+  - the master collector now reads back the actual PSI run row instead of reducing the subprocess to a binary success/fail guess
+  - same-day PSI source retries are now part of `/Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py`
+- Historical reconciliation also applied to live `data_collections`:
+  - prior PSI rows with `status='completed'` and non-zero failures were corrected to `partial`
+  - this keeps past operator reporting from continuing to lie after the code fix
+- Historical PSI backfill policy is now explicit:
+  - missing `pagespeed_metrics.metric_date` rows are real gaps unless dated raw PSI snapshots exist
+  - rerunning `/Users/mark/Property_Analytics/Portfolio_Dashboard/scripts/collect_daily_psi.py --date <old-day>` is not a valid historical backfill because the PSI API returns current results and the script stamps them with the supplied date
+  - enterprise-safe response is to preserve the gap, document it, and prevent recurrence through same-morning retries rather than fabricate historical PSI history
+
+### 2026-04-22 - POP Brief Pond import and backup paths restored to working state
+
+- Repaired the POP Brief weekly-metrics import flow inside The Pond without touching locked PIB generation/rendering files.
+- `/Users/mark/Property_Analytics/apps/api/src/routes/metrics.ts` now supports the documented POP Brief contract again:
+  - `POST /v1/metrics/import/paste` accepts pasted TSV text and resolves `community_external_key` to active communities
+  - `POST /v1/metrics/import/upload` accepts uploaded CSV/TSV files, stores the source artifact in `POP_BRIEF_UPLOADS`, and executes the same replace-import pipeline with `import_runs` tracking
+  - numeric coercion now normalizes percent-style values like `95%` to decimal storage for weekly metrics fields
+- `/Users/mark/Property_Analytics/apps/web/src/app/metrics-import/page.tsx` is no longer the broken scaffold that posted `{ tsv }` into a `{ rows }`-only API shape; it now offers a Pond-native TSV paste and CSV upload workflow against the repaired backend contract.
+- `/Users/mark/Property_Analytics/apps/api/src/routes/exports.ts` now creates real backup artifacts in `POP_BRIEF_UPLOADS` and returns the object key, and `/Users/mark/Property_Analytics/apps/web/src/app/backup/page.tsx` now reports that artifact key after export.
+- Added focused regression coverage in `/Users/mark/Property_Analytics/apps/api/test/platform/metrics-import-and-backup.test.ts` for:
+  - TSV paste import
+  - CSV upload import + R2 artifact write
+  - backup artifact creation
+- Verification completed:
+  - `npm run test:platform` in `apps/api`
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
+
+### 2026-04-22 - POP Brief analysis page realigned to canonical analysis contract
+
+- Corrected the highest-value POP Brief parity drift in The Pond without touching locked PIB generation/rendering files.
+- `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` no longer assembles the visible POP Brief out of `t7_metrics`, `t30_metrics`, and `marketing_data`.
+- The page now fetches `/v1/analysis` through `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`, which anchors the operator-facing brief on the documented canonical POP Brief model:
+  - `weekly_metrics` for T7/T30 community + portfolio metrics
+  - `marketing_weekly` for weekly marketing context
+- The Pond POP Brief surface now renders:
+  - canonical T7 and T30 comparison tables
+  - overview KPI cards based on `weekly_metrics`
+  - `marketing_weekly` leads / CPL / spend / notes / mention inputs
+  - canonical metric notes from the weekly metrics records
+- Added route coverage in `/Users/mark/Property_Analytics/apps/api/test/platform/analysis-route.test.ts` so the API contract now has regression protection for the web surface that depends on it.
+- Verification completed:
+  - `npm run test:platform` in `apps/api`
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
+
+### 2026-04-22 - POP Brief marketing workflow moved onto canonical marketing_weekly model
+
+- Corrected the next major POP Brief parity gap in The Pond by replacing the old `marketing_data` editing surface with a first-class `marketing_weekly` workflow.
+- `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` now operates directly on the canonical POP Brief contract:
+  - loads `GET /v1/marketing`
+  - saves via `PATCH /v1/marketing/:id`
+  - triggers `POST /v1/marketing/scan-mentions`
+- `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts` now exposes typed helpers for:
+  - `getMarketingWeekly`
+  - `upsertMarketingWeekly`
+  - `scanMarketingMentions`
+- The Pond marketing page now supports:
+  - canonical leads / CPL / ad spend editing
+  - canonical `mentions_json` editing from a human-friendly line-based input
+  - canonical `notes_text` editing
+  - mention scan execution and visible processed / sent / duplicate-suppressed results
+- Added regression coverage in `/Users/mark/Property_Analytics/apps/api/test/platform/marketing-route.test.ts` for:
+  - marketing record upsert against `marketing_weekly`
+  - deduped mention-scan notification creation
+- Verification completed:
+  - `npm run test:platform` in `apps/api`
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
+
+### 2026-04-22 - Base44 Spotlight Website & SEO CSV ingest restored in the Pond
+
+- Investigated operator parity question using the real Base44 export `/Users/mark/Downloads/Spotlight_Properties_20260422_113046.csv`.
+- Confirmed the file is not a `weekly_metrics` import; it is the Base44 Spotlight / Website & SEO CSV shape that targets the legacy `marketing_data` Website & SEO fields.
+- The API already retained the legacy compatibility route at `/v1/marketing-data/import/website-seo`, but the Pond UI no longer exposed it after the marketing page was moved onto canonical `marketing_weekly`.
+- Restored the Base44-compatible ingest lane in `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx`:
+  - accepts the exact Base44 Spotlight Website & SEO CSV shape
+  - parses client-side CSV with quoted-cell support
+  - normalizes `MM/DD/YYYY` dates like `04/24/2026` to `2026-04-24`
+  - previews parsed rows before import
+  - posts the parsed payload to the legacy `/v1/marketing-data/import/website-seo` route
+- `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts` now also exposes the full Website & SEO import result shape including row errors.
+- This means the Pond now once again accepts the same Spotlight Website & SEO CSV family the Base44 app is currently processing, while preserving the newer canonical `marketing_weekly` workflow beside it.
+- Verification completed:
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
+
+### 2026-04-22 - Communities management parity restored in the Pond UI
+
+- Closed the communities-management parity gap without touching authentication behavior, which remains intentionally aligned to Cloudflare Zero Trust rather than the original app.
+- `/Users/mark/Property_Analytics/apps/web/src/app/communities/page.tsx` is no longer a read-only list; it now provides:
+  - create community
+  - edit community
+  - soft-delete community
+- The page is wired to the already-existing governed API routes in `/Users/mark/Property_Analytics/apps/api/src/routes/communities.ts`.
+- `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts` now exposes:
+  - `createCommunity`
+  - `patchCommunity`
+  - `deleteCommunity`
+- This removes one of the clearest previously confirmed Base44 parity misses on the writable surfaces side.
+- Verification completed:
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
+
+### 2026-04-22 - Base44 parity ledger established
+
+- Added `/Users/mark/Property_Analytics/docs/POP_BRIEF_BASE44_PARITY_LEDGER_2026-04-22.md` as the working source of truth for Base44 parity status.
+- The ledger now separates:
+  - `matched`
+  - `intentionally_different`
+  - `needs_verification`
+  - `open_gap`
+- Current accepted deviations are explicit:
+  - authentication on Cloudflare Zero Trust
+  - home-grown user provisioning / admin model
+- Current closed business-surface parity fixes are also explicit:
+  - weekly metrics import
+  - backup artifacts
+  - canonical analysis contract
+  - marketing weekly + mention scan UI
+  - Base44 Website & SEO CSV ingest lane
+  - communities management UI
+- Remaining proof work is now narrowed primarily to:
+  - PIB output parity only if operator wants that audited under guardrails
+
+### 2026-04-22 - T7/T30 leasing metrics promoted to matched parity status
+
+- Verified that the T7/T30 leasing metrics lane is not carrying the feared portfolio/community drift.
+- The apparent oddity in the Pond UI and router behavior is actually inherited Base44 behavior:
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0010_create_t7_metrics.sql`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0011_create_t30_metrics.sql`
+  both define `community_id` as required even when `type='portfolio'`
+  - `/Users/mark/Property_Analytics/apps/api/scripts/guest_cards_to_d1.py` explicitly creates one duplicated portfolio row per community for both T7 and T30
+- That means the Pond’s T7/T30 pages are aligned with the imported Base44 storage/query pattern rather than drifting away from it.
+- Updated the parity ledger to promote:
+  - T7 metrics workflow → `matched`
+  - T30 metrics workflow → `matched`
+- Search Intelligence was also reclassified as an intentional Pond adjunct rather than a required Base44 POP Brief parity surface.
+
+### 2026-04-22 - POP Brief landing page now exposes the Base44 navigation set
+
+- Tightened POP Brief operator parity by making the main Pond `/analysis` page expose the same core navigation family visible in the Base44 left rail.
+- `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` now includes a dedicated POP Brief navigation board with direct links for:
+  - Communities
+  - T7 Metrics
+  - T30 Metrics
+  - Marketing Data
+  - Analysis
+  - Backup & Export
+- The same board also keeps the Base44 slots visible for:
+  - Call Notes
+  - Profile
+  while leaving them as explicit placeholders until real routes are mounted.
+- `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` was also renamed back to the Base44-style `Marketing Data` heading so the Website & SEO import lane is easier to find from operator screenshots and muscle memory.
+- Verification completed:
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
+
+### 2026-04-22 - Base44 navigation corrected onto the actual PIB dashboard
+
+- Operator validation showed the previous navigation fix landed on the wrong front door.
+- The real main PIB Brief screen in the Pond is `/Users/mark/Property_Analytics/apps/web/src/app/pib/page.tsx`, not `/analysis`.
+- Corrected that parity miss by adding the Base44-style workflow board directly to `/pib`, with visible entries for:
+  - Communities
+  - T7 Metrics
+  - T30 Metrics
+  - Marketing Data
+  - Analysis
+  - Backup & Export
+  - Call Notes placeholder
+  - Profile placeholder
+- This means the core left-rail workflow from Base44 is now visible from the actual PIB dashboard the operator lands on, not only from the analysis workspace.
+- Verification completed:
+  - `npm run typecheck` in `apps/api`
+  - `npm run build` in `apps/web`
