@@ -4,7 +4,7 @@ import React from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getCommunities, getT7Metrics, getT30Metrics, getMarketingData } from "@/lib/api";
+import { createBackupArtifact, getCommunities, getT7Metrics, getT30Metrics, getMarketingData } from "@/lib/api";
 import { Download, Database, CheckCircle, AlertCircle, FileArchive } from "lucide-react";
 
 function convertToCSV(data: object[], headers: string[]): string {
@@ -45,11 +45,13 @@ export default function BackupPage() {
   const [exporting, setExporting] = React.useState(false);
   const [status, setStatus] = React.useState<{ type: "success" | "error"; message: string } | null>(null);
   const [stats, setStats] = React.useState<Record<string, number> | null>(null);
+  const [artifactKey, setArtifactKey] = React.useState<string | null>(null);
 
   const handleExport = async () => {
     setExporting(true);
     setStatus(null);
     setStats(null);
+    setArtifactKey(null);
     try {
       const ts = format(new Date(), "yyyy-MM-dd_HHmmss");
       const s: Record<string, number> = {};
@@ -73,8 +75,11 @@ export default function BackupPage() {
         downloadCSV(convertToCSV(mktg, mHeaders), `backup_marketing_data_${ts}.csv`);
       }
 
+      const backup = await createBackupArtifact(["communities", "t7_metrics", "t30_metrics", "marketing_data"]);
+      setArtifactKey(backup.key);
+
       setStats(s);
-      setStatus({ type: "success", message: "All data exported successfully! Check your downloads folder." });
+      setStatus({ type: "success", message: "All data exported successfully. CSVs were downloaded and a server backup artifact was created." });
     } catch (err: unknown) {
       setStatus({ type: "error", message: `Export failed: ${(err as Error).message}` });
     } finally {
@@ -133,6 +138,11 @@ export default function BackupPage() {
                       <li>• T30 Metrics: {stats.t30Metrics}</li>
                       <li>• Marketing Data: {stats.marketingData}</li>
                     </ul>
+                  )}
+                  {artifactKey && (
+                    <p className="mt-2 text-sm">
+                      Backup artifact key: <span className="font-mono">{artifactKey}</span>
+                    </p>
                   )}
                 </div>
               </div>

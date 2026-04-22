@@ -1016,6 +1016,14 @@ Additional current-state note:
   - it also keeps `Call Notes` and `Profile` visibly reserved as placeholders so the full rail is represented even before those routes are implemented
 - This closes the “nothing changed” usability miss by putting the parity navigation on the screen the operator actually uses as the main PIB surface.
 
+## Addendum: 2026-04-22 Deploy branch includes the remaining verified POP Brief operator screens
+
+- To avoid a partial release where only the navigation/header fixes shipped, the clean `main`-targeted deploy branch also now includes the previously verified writable POP Brief operator pages for:
+  - Communities
+  - Backup & Export
+  - Weekly Metrics Import
+- This keeps the deploy candidate aligned with the parity bundle already validated in the working tree rather than splitting those supporting operator surfaces into a later release.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

@@ -236,6 +236,7 @@ The next high-value documents to create from this register are:
     - the Pond `/communities` page now exposes create / update / delete operations against the governed communities API instead of remaining read-only
     - the Pond `/analysis` page now also exposes the Base44 left-rail navigation family as an in-page navigation board so operators can reach Communities, T7, T30, Marketing Data, Analysis, and Backup & Export from the main brief surface
     - the Pond `/pib` dashboard now also exposes that same Base44 workflow family so the visible PIB front door matches the operator’s actual landing surface
+    - the `main`-targeted deploy branch now explicitly carries the verified Communities, Backup, and Weekly Metrics Import operator pages alongside the navigation fixes so the shipped POP Brief surface matches the validated parity bundle
   - current posture:
     - visible POP Brief is now anchored on `weekly_metrics` + `marketing_weekly`
     - compatibility with Base44 Website & SEO CSV ingest is restored alongside the canonical workflow

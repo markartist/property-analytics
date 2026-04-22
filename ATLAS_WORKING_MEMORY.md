@@ -4331,3 +4331,11 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run typecheck` in `apps/api`
   - `npm run build` in `apps/web`
+
+### 2026-04-22 - Remaining POP Brief operator screens promoted onto the deploy branch
+
+- The clean `main`-targeted deploy branch now also carries the already-verified writable operator surfaces that support the POP Brief parity lane:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/communities/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/backup/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/metrics-import/page.tsx`
+- This keeps the release candidate aligned with the parity set already validated in the primary worktree instead of only shipping the navigation/header corrections.
