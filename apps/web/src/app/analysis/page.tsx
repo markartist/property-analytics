@@ -447,63 +447,6 @@ export default function AnalysisPage() {
         </div>
         </div>
 
-        <Card className="mb-6 border-slate-200 print:hidden">
-          <CardHeader>
-            <CardTitle className="text-base">POP Brief Navigation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {BRIEF_NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const className = item.active
-                  ? "rounded-md border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-[#15284B]"
-                  : item.href
-                    ? "rounded-md border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]"
-                    : "rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500";
-
-                const body = (
-                  <div className="flex items-start gap-3">
-                    <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <div>
-                      <div className="font-semibold">{item.label}</div>
-                      <p className="mt-1 text-xs text-slate-600">{item.description}</p>
-                    </div>
-                  </div>
-                );
-
-                if (!item.href) {
-                  return <div key={item.label} className={className}>{body}</div>;
-                }
-
-                return (
-                  <Link key={item.label} href={item.href} className={className}>
-                    {body}
-                  </Link>
-                );
-              })}
-
-              <Link href="/analysis/search-intelligence" className="rounded-md border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-[#15284B] hover:border-[#15284B]/40 hover:bg-blue-100">
-                <div className="flex items-start gap-3">
-                  <Search className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <div className="font-semibold">Search Intelligence</div>
-                    <p className="mt-1 text-xs text-slate-600">Governed adjunct workflow for keyword, competitor, and search brief generation.</p>
-                  </div>
-                </div>
-              </Link>
-              <Link href="/metrics-import" className="rounded-md border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 hover:border-[#15284B]/30 hover:text-[#15284B]">
-                <div className="flex items-start gap-3">
-                  <CalendarIcon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <div className="font-semibold">Weekly Metrics Import</div>
-                    <p className="mt-1 text-xs text-slate-600">Dedicated admin import screen for canonical weekly metrics files.</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
         {!communityId ? (
           <Card><CardContent className="p-12 text-center">
             <BarChart2 className="mx-auto mb-4 h-16 w-16 text-slate-400" />

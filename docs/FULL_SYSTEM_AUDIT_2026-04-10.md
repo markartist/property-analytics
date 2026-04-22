@@ -1058,6 +1058,16 @@ Additional current-state note:
   - a single `Navigate` dropdown now exposes the main POP Brief route family and adjacent workflow destinations instead
 - This is a navigation/control-surface cleanup, not a reporting-model change, but it makes the page top feel more like a stable operator console and less like a row of unrelated buttons.
 
+## Addendum: 2026-04-22 POP Brief duplicate navigation board removed
+
+- The sticky header cleanup surfaced a second-order UX issue right away:
+  - the header now owned navigation cleanly
+  - but the page still repeated that same route family in a large `POP Brief Navigation` card immediately below it
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` no longer renders the duplicate navigation board under the sticky header
+  - the `Navigate` dropdown in the sticky header is now the single primary movement control for the POP Brief lane
+- This is still a workflow/UX correction rather than a business-logic change, but it matters because the page now opens directly into the selected property brief instead of spending the first full viewport on repeated navigation furniture.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

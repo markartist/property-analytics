@@ -4397,3 +4397,14 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - POP Brief duplicate navigation board removed after sticky-header rollout
+
+- Operator review confirmed the next UX issue immediately after the sticky header shipped:
+  - the page still repeated navigation a second time through the large `POP Brief Navigation` card below the header
+  - that made the top of the screen feel redundant and delayed the operator from getting straight into the selected property brief
+- `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` now removes that duplicate navigation board entirely.
+- The sticky header `Navigate` dropdown remains the single primary movement control for the POP Brief lane, so the page now opens directly into the selected property content.
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`
