@@ -11,10 +11,13 @@ import { WeekDatePicker } from "@/components/shared/week-date-picker";
 import { TrendIndicator } from "@/components/shared/trend-indicator";
 import {
   getAnalysis,
+  getCommunities,
   type AnalysisMetric,
   type AnalysisResponse,
+  type Community,
   type MarketingWeeklyRecord,
 } from "@/lib/api";
+import { getSpotlightCommunities, getUpcomingFriday } from "@/lib/spotlight-properties";
 import {
   BarChart2, Building, RefreshCw, FileDown, Calendar as CalendarIcon,
   AlertCircle, DollarSign, FileText, TrendingUp, TrendingDown,
@@ -332,8 +335,30 @@ export default function AnalysisPage() {
   const [communityId, setCommunityId] = React.useState("");
   const [weekDate, setWeekDate] = React.useState<Date | null>(null);
   const [analysisData, setAnalysisData] = React.useState<AnalysisResponse | null>(null);
+  const [spotlightCommunities, setSpotlightCommunities] = React.useState<Community[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+
+  React.useEffect(() => {
+    setWeekDate((current) => current ?? getUpcomingFriday());
+  }, []);
+
+  React.useEffect(() => {
+    getCommunities()
+      .then((communities) => {
+        const filtered = getSpotlightCommunities(communities);
+        setSpotlightCommunities(filtered);
+      })
+      .catch((err) => {
+        console.error("Failed to load spotlight communities:", err);
+        setSpotlightCommunities([]);
+      });
+  }, []);
+
+  React.useEffect(() => {
+    if (communityId || spotlightCommunities.length === 0) return;
+    setCommunityId(spotlightCommunities[0].id);
+  }, [communityId, spotlightCommunities]);
 
   const load = React.useCallback(async () => {
     if (!communityId || !weekDate) {
@@ -365,7 +390,12 @@ export default function AnalysisPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3 print:hidden">
             <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-            <CommunitySelector value={communityId} onValueChange={setCommunityId} placeholder="Select community to analyze" />
+            <CommunitySelector
+              value={communityId}
+              onValueChange={setCommunityId}
+              placeholder="Select community to analyze"
+              communities={spotlightCommunities}
+            />
             <Button variant="outline" size="sm" onClick={() => window.print()} disabled={!communityId || !weekDate}>
               <FileDown className="mr-2 h-4 w-4" />Export PDF
             </Button>

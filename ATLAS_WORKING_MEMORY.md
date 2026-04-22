@@ -4367,3 +4367,21 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - POP Brief opens on upcoming Friday with Spotlight-scoped property defaults
+
+- Reduced operator friction on the main POP Brief surface without changing the underlying business workflows.
+- `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` now:
+  - defaults the date picker to the upcoming Friday
+  - restricts the property dropdown to the active April 2026 Spotlight list
+  - auto-selects the first Spotlight property when the page opens
+- The Spotlight property order now comes from:
+  - `/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/monthly_spotlight_properties_2026-04.json`
+- `/Users/mark/Property_Analytics/apps/web/src/components/shared/community-selector.tsx` now also accepts a caller-supplied community list so the POP Brief page can preserve the Spotlight order instead of resorting the full portfolio alphabetically.
+- Added `/Users/mark/Property_Analytics/apps/web/src/lib/spotlight-properties.ts` to centralize:
+  - upcoming-Friday calculation
+  - Spotlight list ordering
+  - Spotlight alias matching for community resolution
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`

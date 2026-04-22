@@ -1037,6 +1037,17 @@ Additional current-state note:
   - `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` now uses section bands, stronger action bars, and clearer step framing so the import flow and save/scan actions stand out immediately
 - This is a UX correction rather than a model or routing change, but it materially improves operator speed and reduces “what is clickable?” ambiguity on one of the highest-touch POP Brief screens.
 
+## Addendum: 2026-04-22 POP Brief defaults aligned to the active Spotlight workflow
+
+- Operator feedback surfaced a workflow mismatch on the main POP Brief landing surface:
+  - the page opened with no date and no property selected
+  - the property selector exposed the entire active community set instead of the current monthly Spotlight list the operator is actually working through
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx` now defaults to the upcoming Friday
+  - the same page now scopes the selector to the active April 2026 Spotlight list and auto-selects the first Spotlight property in that ordered set
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/community-selector.tsx` can now receive a curated property list directly, which lets POP Brief preserve monthly Spotlight ordering instead of forcing a generic alphabetical sort
+- This is still a workflow-default change rather than a functional-model change, but it materially reduces repeated operator setup clicks on the main POP Brief screen.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”
