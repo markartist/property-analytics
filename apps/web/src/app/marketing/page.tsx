@@ -318,12 +318,15 @@ export default function MarketingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 md:p-8">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#eef5f8_100%)] p-6 md:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+        <div className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white/90 p-6 shadow-[0_20px_50px_rgba(21,40,75,0.08)] md:flex-row md:items-center md:justify-between">
+          <div className="space-y-3">
+            <div className="inline-flex items-center rounded-full bg-[#15284B] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+              Marketing Workflow
+            </div>
             <h1 className="text-3xl font-bold text-[#15284B]">Marketing Data</h1>
-            <p className="mt-2 text-slate-600">Base44-style Website & SEO import plus canonical marketing weekly editing and mention scan operations.</p>
+            <p className="max-w-3xl text-slate-600">Base44-style Website & SEO import plus canonical marketing weekly editing and mention scan operations.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <WeekDatePicker value={weekDate} onChange={setWeekDate} />
@@ -349,14 +352,20 @@ export default function MarketingPage() {
           </Card>
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Upload className="h-5 w-5 text-[#15284B]" />Bulk Website & SEO Import
-            </CardTitle>
-            <p className="text-sm text-slate-500">
+        <Card className="overflow-hidden border-0 shadow-[0_18px_40px_rgba(21,40,75,0.08)]">
+          <div className="bg-[linear-gradient(135deg,#15284B_0%,#0D5E6D_100%)] px-6 py-4 text-white">
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-white/75">
+              <Upload className="h-4 w-4" /> Step 1
+            </div>
+            <h2 className="mt-2 text-2xl font-bold">Bulk Website & SEO Import</h2>
+            <p className="mt-1 max-w-3xl text-sm text-white/80">
               Base44-compatible import for Spotlight Website & SEO CSV exports. This writes into the legacy `marketing_data` Website & SEO fields.
             </p>
+          </div>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base uppercase tracking-[0.16em] text-slate-500">
+              Upload And Preview
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <input
@@ -366,30 +375,34 @@ export default function MarketingPage() {
               onChange={handleWebsiteSeoFileChange}
               className="hidden"
             />
-            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6">
+            <div className="rounded-2xl border-2 border-dashed border-[#0D5E6D]/20 bg-[#f4fbfc] p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Upload the exact CSV exported by the Base44 Spotlight / Website & SEO flow.</p>
-                  <p className="mt-1 text-sm text-slate-500">Supported columns include `property_name`, `property_url`, `date`, the T7/T30 deltas, visibility, SERP traffic, `website_notes`, and `seo_notes`.</p>
+                  <div className="mb-2 inline-flex rounded-full bg-[#15284B]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#15284B]">
+                    Source File
+                  </div>
+                  <p className="text-base font-semibold text-slate-900">Upload the exact CSV exported by the Base44 Spotlight / Website & SEO flow.</p>
+                  <p className="mt-1 text-sm text-slate-600">Supported columns include `property_name`, `property_url`, `date`, the T7/T30 deltas, visibility, SERP traffic, `website_notes`, and `seo_notes`.</p>
                 </div>
-                <Button variant="outline" onClick={() => importFileRef.current?.click()} disabled={importing}>
+                <Button className="min-w-[180px]" variant="outline" onClick={() => importFileRef.current?.click()} disabled={importing}>
                   <FileText className="mr-2 h-4 w-4" />Choose CSV
                 </Button>
               </div>
             </div>
 
             {importFileName && (
-              <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-900">
-                <div className="font-medium">{importFileName}</div>
-                <div className="mt-1">Parsed {importPreview.length} row(s) ready for import.</div>
+              <div className="rounded-2xl border border-blue-200 bg-[linear-gradient(135deg,#eef4ff_0%,#f7fbff_100%)] p-4 text-sm text-blue-900 shadow-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Preview Ready</div>
+                <div className="mt-2 font-semibold">{importFileName}</div>
+                <div className="mt-1 text-blue-800">Parsed {importPreview.length} row(s) ready for import.</div>
               </div>
             )}
 
             {importPreview.length > 0 && (
               <>
-                <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
                   <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 text-left text-slate-600">
+                    <thead className="bg-[#15284B] text-left text-white">
                       <tr>
                         <th className="px-4 py-3">Property</th>
                         <th className="px-4 py-3">Week</th>
@@ -413,8 +426,8 @@ export default function MarketingPage() {
                     </tbody>
                   </table>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button onClick={handleWebsiteSeoImport} disabled={importing}>
+                <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <Button className="min-w-[220px]" onClick={handleWebsiteSeoImport} disabled={importing}>
                     {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                     Import Website & SEO
                   </Button>
@@ -429,7 +442,7 @@ export default function MarketingPage() {
                   >
                     Clear
                   </Button>
-                  {importSummary && <span className="text-sm text-slate-600">{importSummary}</span>}
+                  {importSummary && <span className="text-sm font-medium text-slate-700">{importSummary}</span>}
                 </div>
               </>
             )}
@@ -454,10 +467,11 @@ export default function MarketingPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <Card>
+              <Card className="overflow-hidden border-0 shadow-[0_14px_32px_rgba(21,40,75,0.07)]">
+                <div className="h-1.5 bg-[#0D5E6D]" />
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">Leads Count</span>
+                    <span className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Leads Count</span>
                     <Users className="h-4 w-4 text-[#15284B]" />
                   </div>
                   <Input
@@ -469,10 +483,11 @@ export default function MarketingPage() {
                   />
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="overflow-hidden border-0 shadow-[0_14px_32px_rgba(21,40,75,0.07)]">
+                <div className="h-1.5 bg-[#D97706]" />
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">Cost Per Lead</span>
+                    <span className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Cost Per Lead</span>
                     <DollarSign className="h-4 w-4 text-[#15284B]" />
                   </div>
                   <Input
@@ -485,10 +500,11 @@ export default function MarketingPage() {
                   />
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="overflow-hidden border-0 shadow-[0_14px_32px_rgba(21,40,75,0.07)]">
+                <div className="h-1.5 bg-[#15803D]" />
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">Ad Spend</span>
+                    <span className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Ad Spend</span>
                     <DollarSign className="h-4 w-4 text-[#15284B]" />
                   </div>
                   <Input
@@ -504,8 +520,13 @@ export default function MarketingPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden border-0 shadow-[0_16px_36px_rgba(21,40,75,0.08)]">
+                <div className="bg-[linear-gradient(135deg,#eff8fb_0%,#f8fcff_100%)] px-6 py-4">
+                  <div className="inline-flex rounded-full bg-[#0D5E6D]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#0D5E6D]">
+                    Collaboration
+                  </div>
+                </div>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <MessageSquare className="h-5 w-5 text-[#15284B]" />Mention Inputs
                   </CardTitle>
@@ -527,8 +548,13 @@ export default function MarketingPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden border-0 shadow-[0_16px_36px_rgba(21,40,75,0.08)]">
+                <div className="bg-[linear-gradient(135deg,#fff7ea_0%,#fffdf8_100%)] px-6 py-4">
+                  <div className="inline-flex rounded-full bg-[#D97706]/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#b45309]">
+                    Narrative
+                  </div>
+                </div>
+                <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Megaphone className="h-5 w-5 text-[#15284B]" />Weekly Notes
                   </CardTitle>
@@ -551,8 +577,12 @@ export default function MarketingPage() {
               </Card>
             </div>
 
-            <Card>
-              <CardHeader className="flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <Card className="overflow-hidden border-0 shadow-[0_18px_40px_rgba(21,40,75,0.1)]">
+              <div className="bg-[linear-gradient(135deg,#15284B_0%,#1e3a66_100%)] px-6 py-4 text-white">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Step 2</div>
+                <div className="mt-1 text-xl font-bold">Commit Weekly Marketing Actions</div>
+              </div>
+              <CardHeader className="flex-col gap-3 bg-white md:flex-row md:items-center md:justify-between">
                 <div>
                   <CardTitle className="text-lg">Workflow Actions</CardTitle>
                   <p className="mt-1 text-sm text-slate-500">
@@ -560,11 +590,11 @@ export default function MarketingPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button onClick={handleSave} disabled={saving}>
+                  <Button className="min-w-[220px]" onClick={handleSave} disabled={saving}>
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Save Marketing Weekly
                   </Button>
-                  <Button variant="outline" onClick={handleScan} disabled={scanning}>
+                  <Button className="min-w-[220px]" variant="secondary" onClick={handleScan} disabled={scanning}>
                     {scanning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
                     Run Mention Scan
                   </Button>

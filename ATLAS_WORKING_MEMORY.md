@@ -4332,10 +4332,38 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - `npm run typecheck` in `apps/api`
   - `npm run build` in `apps/web`
 
-### 2026-04-22 - Remaining POP Brief operator screens promoted onto the deploy branch
+### 2026-04-22 - Website & SEO importer now resolves Base44 shorthand community names
 
-- The clean `main`-targeted deploy branch now also carries the already-verified writable operator surfaces that support the POP Brief parity lane:
-  - `/Users/mark/Property_Analytics/apps/web/src/app/communities/page.tsx`
-  - `/Users/mark/Property_Analytics/apps/web/src/app/backup/page.tsx`
-  - `/Users/mark/Property_Analytics/apps/web/src/app/metrics-import/page.tsx`
-- This keeps the release candidate aligned with the parity set already validated in the primary worktree instead of only shipping the navigation/header corrections.
+- Operator validation on the live-style Spotlight Website & SEO CSV surfaced one remaining parity gap:
+  - the Pond importer accepted the file shape, but still failed exact-name matching for shorthand Base44 community labels like `1604`, `Oakleaf`, and `Whitney`
+- Corrected `/Users/mark/Property_Analytics/apps/api/src/routes/marketing-data.ts` so the Website & SEO import route now resolves communities by:
+  - canonical `name`
+  - `external_key`
+  - `encasa_short_name`
+  - explicit Base44 shorthand aliases for:
+    - `Avasa at 1604` ↔ `1604`
+    - `The Villages at Oakleaf` ↔ `Oakleaf`
+    - `The Whitney` ↔ `Whitney`
+- Added regression coverage in `/Users/mark/Property_Analytics/apps/api/test/platform/marketing-data-import.test.ts`.
+- Verification completed:
+  - `npm run test:platform -- marketing-data-import.test.ts marketing-route.test.ts` in `apps/api`
+  - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - Marketing operator UI hierarchy strengthened
+
+- Operator feedback surfaced a UX problem on the restored Marketing surface:
+  - actions, buttons, inputs, and informational panels were all reading at the same visual weight
+  - the page felt monochrome and low-signal even though the workflow itself was functioning
+- Corrected the UI hierarchy in:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/ui/button.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/ui/input.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/ui/textarea.tsx`
+- Key visual changes:
+  - stronger primary / secondary / outline button contrast with shadow and hover lift
+  - clearer field affordances for inputs and textareas
+  - section framing for import, collaboration, narrative, and final workflow actions
+  - step-based emphasis so upload/import and save/scan read as distinct operator actions
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`

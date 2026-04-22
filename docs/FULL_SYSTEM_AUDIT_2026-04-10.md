@@ -1016,13 +1016,26 @@ Additional current-state note:
   - it also keeps `Call Notes` and `Profile` visibly reserved as placeholders so the full rail is represented even before those routes are implemented
 - This closes the “nothing changed” usability miss by putting the parity navigation on the screen the operator actually uses as the main PIB surface.
 
-## Addendum: 2026-04-22 Deploy branch includes the remaining verified POP Brief operator screens
+## Addendum: 2026-04-22 Website & SEO importer alias gap corrected
 
-- To avoid a partial release where only the navigation/header fixes shipped, the clean `main`-targeted deploy branch also now includes the previously verified writable POP Brief operator pages for:
-  - Communities
-  - Backup & Export
-  - Weekly Metrics Import
-- This keeps the deploy candidate aligned with the parity bundle already validated in the working tree rather than splitting those supporting operator surfaces into a later release.
+- Live operator testing of the restored Base44 Website & SEO CSV flow revealed one more parity issue:
+  - the Pond importer accepted the correct file format
+  - but it still depended on exact community-name matches, which caused valid Base44 shorthand labels like `1604`, `Oakleaf`, and `Whitney` to fail
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/marketing-data.ts` now resolves the import target using canonical names plus alternate lookup keys already present in the community record shape
+  - it also includes explicit shorthand alias support for the known Base44 labels above
+- Regression protection now exists in:
+  - `/Users/mark/Property_Analytics/apps/api/test/platform/marketing-data-import.test.ts`
+
+## Addendum: 2026-04-22 Marketing surface visual hierarchy corrected
+
+- After the import parity work landed, operator testing revealed a separate usability failure:
+  - the Marketing screen was technically functional
+  - but the neutral, low-contrast UI made primary actions, editable fields, and passive informational panels hard to distinguish quickly
+- Correction now in place:
+  - shared button / input / textarea primitives have stronger visual affordances
+  - `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` now uses section bands, stronger action bars, and clearer step framing so the import flow and save/scan actions stand out immediately
+- This is a UX correction rather than a model or routing change, but it materially improves operator speed and reduces “what is clickable?” ambiguity on one of the highest-touch POP Brief screens.
 
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
