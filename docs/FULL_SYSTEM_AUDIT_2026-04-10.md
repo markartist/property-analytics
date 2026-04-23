@@ -1157,3 +1157,15 @@ Additional current-state note:
   - that shell places the date and property selectors on one line and the `Navigate` control on a second right-aligned line
   - the Marketing section editor remains Base44-shaped, but its section blocks are now true accordions closed by default
 - This matters because the current platform problem is not only feature parity; it is also making sure operators see one coherent shell and identity system instead of alternating between partial frontend states.
+
+## Addendum: 2026-04-23 Site Content and Intelligence Office reconciled into the current app state
+
+- Operator review identified the same release-shape issue for the governed content lane:
+  - the richer Site Content Creator and Intelligence Office work still existed locally
+  - but it had not been promoted as part of the same current frontend/API slice as the recovered Pond and POP Brief shell
+- The reconciled current state now includes:
+  - the governed Site Content Creator page and route
+  - the governed Intelligence Office page and route
+  - the admin API routes that power those surfaces
+  - the direct intelligence helpers for brief completeness, governed memory, specs-page binding, and offering permissions that those routes depend on
+- This matters because Site Content is not an isolated experiment anymore; it is part of the active governed editorial stack, so leaving it behind would recreate the same split-brain release problem that just affected the Pond shell and POP Brief.

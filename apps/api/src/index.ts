@@ -17,6 +17,8 @@ import { health } from "./routes/health";
 import { fish } from "./routes/fish";
 import { gsc } from "./routes/gsc";
 import { platform } from "./routes/platform";
+import { adminIntelligence } from "./routes/admin-intelligence";
+import { adminSiteContent } from "./routes/admin-site-content";
 
 // Phase 2 leasing funnel metric routers
 const t7Metrics = createLeasingMetricsRouter("t7_metrics", "t7_metrics");
@@ -45,6 +47,8 @@ app.get("/health", (c) => c.json({ status: "ok", version: "1.0.0" }));
 // Mount route groups under /v1
 app.route("/v1/auth", auth);
 app.route("/v1/admin", admin);
+app.route("/v1/admin/intelligence", adminIntelligence);
+app.route("/v1/admin/site-content", adminSiteContent);
 app.route("/v1/communities", communities);
 app.route("/v1/metrics", metrics);
 app.route("/v1/marketing", marketing);
