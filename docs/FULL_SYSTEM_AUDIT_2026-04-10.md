@@ -1112,6 +1112,17 @@ Additional current-state note:
   - the Website & SEO CSV importer remains available, but now as a secondary collapsed bridge utility rather than the page’s primary face
 - This is a parity correction, not a new feature: it realigns the visible Marketing screen with the live app’s actual structure while keeping the cleaner page-top workflow defaults.
 
+## Addendum: 2026-04-22 T7/T30 metrics pages brought into the shared POP Brief operator shell
+
+- Operator review identified that the T7 and T30 metrics pages were still lagging behind the rest of the POP Brief lane in daily-use ergonomics:
+  - they still opened as standalone pages without the newer sticky control-bar treatment
+  - they did not default directly into the active Spotlight/upcoming-Friday working context
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/components/metrics/leasing-metrics-page.tsx` now drives both `/t7-metrics` and `/t30-metrics` with the same sticky header treatment already adopted by POP Brief and Marketing
+  - the shared page defaults to the upcoming Friday
+  - the shared community selector is now scoped to the active monthly Spotlight list and auto-selects the first Spotlight property on open
+- This is a workflow-default correction rather than a model change, but it matters because it makes the import/edit screens open in the same ready-to-work context as the other daily POP Brief surfaces.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

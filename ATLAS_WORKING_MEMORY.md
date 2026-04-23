@@ -4471,3 +4471,16 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - T7 and T30 metrics pages aligned to the shared POP Brief header/default pattern
+
+- Continued the operator-flow cleanup by applying the same verified defaults to the shared leasing metrics surface used by both `/t7-metrics` and `/t30-metrics`.
+- `/Users/mark/Property_Analytics/apps/web/src/components/metrics/leasing-metrics-page.tsx` now:
+  - uses the same sticky header/control-bar treatment already adopted by POP Brief and Marketing
+  - defaults the week selector to the upcoming Friday
+  - scopes the community selector to the active monthly Spotlight list
+  - auto-selects the first Spotlight property when the page opens without an active selection
+- This does not change the import/edit capabilities themselves; it removes repeated setup clicks so T7/T30 screens open in the same operator context as the rest of the POP Brief lane.
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`
