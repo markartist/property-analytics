@@ -241,6 +241,7 @@ The next high-value documents to create from this register are:
     - the main POP Brief page now defaults to the upcoming Friday and scopes the property selector to the active monthly Spotlight property list, auto-selecting the first Spotlight property on open
     - the main POP Brief header now uses a sticky control bar with a single navigation dropdown in place of the prior one-off `Export PDF` and `Update` buttons
     - the redundant POP Brief navigation card was then removed from the main `/analysis` page so the sticky header dropdown is the single movement control and the screen opens directly into the brief content
+    - the shared POP Brief date picker now renders on an opaque elevated popover surface and closes immediately after a Friday is selected
   - current posture:
     - visible POP Brief is now anchored on `weekly_metrics` + `marketing_weekly`
     - compatibility with Base44 Website & SEO CSV ingest is restored alongside the canonical workflow

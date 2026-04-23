@@ -13,8 +13,10 @@ interface WeekDatePickerProps {
 }
 
 export function WeekDatePicker({ value, onChange }: WeekDatePickerProps) {
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -24,11 +26,15 @@ export function WeekDatePicker({ value, onChange }: WeekDatePickerProps) {
           {value ? format(value, "MMM d, yyyy") : "Select Date"}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent className="w-auto border-slate-200 bg-white p-0 shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
         <Calendar
           mode="single"
           selected={value ?? undefined}
-          onSelect={(date) => date && onChange(date)}
+          onSelect={(date) => {
+            if (!date) return;
+            onChange(date);
+            setOpen(false);
+          }}
           disabled={(date) => date.getDay() !== 5}
         />
       </PopoverContent>

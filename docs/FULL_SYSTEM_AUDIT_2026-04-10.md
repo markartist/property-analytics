@@ -1068,6 +1068,17 @@ Additional current-state note:
   - the `Navigate` dropdown in the sticky header is now the single primary movement control for the POP Brief lane
 - This is still a workflow/UX correction rather than a business-logic change, but it matters because the page now opens directly into the selected property brief instead of spending the first full viewport on repeated navigation furniture.
 
+## Addendum: 2026-04-22 POP Brief date picker interaction tightened
+
+- After the header cleanup, operator feedback exposed one more control-surface issue:
+  - the calendar popover looked translucent against the content underneath
+  - and it remained open after the Friday selection was already made
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/week-date-picker.tsx` now uses a controlled popover state so the picker closes immediately after selection
+  - `/Users/mark/Property_Analytics/apps/web/src/components/ui/popover.tsx` now supports controlled open state and marks the trigger explicitly for more reliable outside-click behavior
+  - the date-picker popover now renders on an opaque elevated white surface instead of feeling visually merged with the page below
+- This is a small but important operator polish fix because the POP Brief header is now the primary daily control surface, so even minor friction there gets repeated constantly.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

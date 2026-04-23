@@ -4408,3 +4408,19 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - POP Brief date picker popover made opaque and self-closing
+
+- Operator review surfaced two finishing issues on the sticky header controls:
+  - the calendar popover was visually translucent against the brief content below
+  - the picker stayed open after selecting a Friday, which made the interaction feel clunky
+- Corrected the shared UI behavior in:
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/week-date-picker.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/ui/popover.tsx`
+- The date picker now:
+  - renders on an opaque white elevated surface
+  - closes immediately after a valid Friday selection
+  - uses a more reliable trigger marker for outside-click handling
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`
