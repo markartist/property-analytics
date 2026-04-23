@@ -62,7 +62,7 @@ At minimum, the current codebase holds:
 - a full pilot monitoring program with KPI tracker, CWV comparison, exports, and daily roundups
 - an EVS / BrowserStack experiential validation system with a governed Pond bridge and explicit mixed human-and-machine lane posture
 - multiple specialized reporting products: Spotlight, Focus Report, Weekly Progress, Daily Health, Morning Full Report, Paid Media Workbook, Resi diagnostics, site audits, and GSC/PSI snapshots
-- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`, plus Data Pond session bootstrap from Cloudflare Access identity for human browsers, preserved browser handoff across both `app.venterradev.com` and `app.venterraliving.com`, and least-privilege auto-provisioning so Zero Trust can act as the primary browser admission gate
+- a now-explicit Cloudflare Zero Trust security architecture direction that pairs Cloudflare as the outer trust boundary with Keeper as the secret authority and app-level roles as the business authorization layer, with live service-token cutover now verified for `platform`, `vacs`, and `evs`, plus Data Pond session bootstrap from Cloudflare Access identity for human browsers, preserved browser handoff across both `app.venterradev.com` and `app.venterraliving.com`, least-privilege auto-provisioning so Zero Trust can act as the primary browser admission gate, and a hardened browser auth substrate that now emits structured Access verification telemetry, can enforce a specific browser-app AUD, distinguishes revoked/expired/unknown session failures, treats malformed magic-link tokens as invalid requests instead of 500s, and uses shared D1-backed auth rate limiting instead of per-isolate Worker memory
 
 The most important planning truth is this:
 
@@ -1143,3 +1143,17 @@ Additional current-state note:
   - the T7/T30 migrations require `community_id` on every row
   - the guest-card mirror script explicitly computes portfolio averages once and then writes duplicated `portfolio` rows per community
 - That means the Pond’s T7/T30 metrics surfaces should be treated as parity-matched unless operator testing finds a behavioral mismatch not visible in code review.
+
+## Addendum: 2026-04-23 Data Pond branding and POP Brief shell reconciled
+
+- Operator review surfaced a release-shape problem rather than a fresh design problem:
+  - the richer Data Pond landing/sidebar branding existed in the active local frontend files
+  - the newer POP Brief header work had only been promoted partially
+  - the resulting live app could therefore present mixed generations of the product shell at once
+- The current intended frontend slice is now explicit:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` carries the richer Data Pond landing hero and featured-surface treatment
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` carries the larger branded Data Pond sidebar with `By MarketingOps`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/pop-brief-page-header.tsx` is the shared POP Brief shell used by Analysis, Marketing, and the shared T7/T30 page
+  - that shell places the date and property selectors on one line and the `Navigate` control on a second right-aligned line
+  - the Marketing section editor remains Base44-shaped, but its section blocks are now true accordions closed by default
+- This matters because the current platform problem is not only feature parity; it is also making sure operators see one coherent shell and identity system instead of alternating between partial frontend states.

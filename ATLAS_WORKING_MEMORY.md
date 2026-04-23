@@ -4498,3 +4498,17 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - This is a presentation refinement rather than a workflow change, but it matters because the POP Brief page header is now the primary identity anchor for the restored Base44-style lane.
 - Verification completed:
   - `npm run build` in `apps/web`
+
+### 2026-04-23 - Data Pond branding and POP Brief header state reconciled into one current frontend slice
+
+- Operator review surfaced that the live app was showing a mixed frontend state:
+  - the richer Data Pond landing/sidebar branding existed in the local frontend files
+  - only part of the newer POP Brief header work had actually been promoted to `main`
+- Reconciliation work is now complete in the local frontend slice:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` retains the richer Data Pond landing hero and featured-surface treatment
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` retains the larger branded Data Pond sidebar treatment with `By MarketingOps`
+  - `/Users/mark/Property_Analytics/apps/web/src/components/shared/pop-brief-page-header.tsx` is now the shared POP Brief header shell for Analysis, Marketing, and T7/T30
+  - the shared header now places the date and property selectors on one line, with `Navigate` on the next line aligned right
+  - `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` keeps the Base44 sectioned marketing editor, but each section is now a true accordion closed by default
+- Verification completed:
+  - `npm run build` in `apps/web`

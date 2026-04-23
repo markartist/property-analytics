@@ -8,8 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { CommunitySelector } from "@/components/shared/community-selector";
-import { WeekDatePicker } from "@/components/shared/week-date-picker";
+import { PopBriefPageHeader } from "@/components/shared/pop-brief-page-header";
 import {
   getCommunities,
   getMarketingData,
@@ -257,6 +256,7 @@ export default function MarketingPage() {
   const [loading, setLoading] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
+  const [sectionOpenState, setSectionOpenState] = React.useState<Record<string, boolean>>({});
   const [importPreview, setImportPreview] = React.useState<WebsiteSeoImportRow[]>([]);
   const [importFileName, setImportFileName] = React.useState<string | null>(null);
   const [importSummary, setImportSummary] = React.useState<string | null>(null);
@@ -418,26 +418,18 @@ export default function MarketingPage() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#eef5f8_100%)] p-6 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="sticky top-4 z-20 rounded-[28px] border border-slate-200 bg-white/95 p-6 shadow-[0_20px_50px_rgba(21,40,75,0.08)] backdrop-blur">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-3">
-              <div className="inline-flex items-center rounded-full bg-[#15284B] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
-                Marketing Workflow
-              </div>
-              <h1 className="text-3xl font-bold text-[#15284B]">Marketing Data</h1>
-              <p className="max-w-3xl text-slate-600">Track and manage marketing performance data across the seven core Base44 sections, with the newer POP Brief defaults and controls.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-              <CommunitySelector
-                value={communityId}
-                onValueChange={setCommunityId}
-                communities={spotlightCommunities}
-                placeholder="Select a community"
-              />
-            </div>
-          </div>
-        </div>
+        <PopBriefPageHeader
+          title="Marketing Data"
+          titleIcon={Megaphone}
+          subtitle="Track and manage marketing performance data across the seven core Base44 sections."
+          badge="Marketing Workflow"
+          weekDate={weekDate}
+          onWeekDateChange={setWeekDate}
+          communityId={communityId}
+          onCommunityIdChange={setCommunityId}
+          communities={spotlightCommunities}
+          communityPlaceholder="Select a community"
+        />
 
         {error && (
           <Card className="border-red-200 bg-red-50">
@@ -584,7 +576,12 @@ export default function MarketingPage() {
 
                 return (
                   <div key={name} className="border-b border-slate-100 last:border-b-0">
-                    <Collapsible open>
+                    <Collapsible
+                      open={sectionOpenState[name] ?? false}
+                      onOpenChange={(open) =>
+                        setSectionOpenState((previous) => ({ ...previous, [name]: open }))
+                      }
+                    >
                       <CollapsibleTrigger className="w-full px-6 py-5 text-left hover:bg-slate-50">
                         <div className="flex items-center gap-4">
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
@@ -602,7 +599,7 @@ export default function MarketingPage() {
                           {savedAt && <span className="text-xs text-slate-500">{savedAt}</span>}
                         </div>
                       </CollapsibleTrigger>
-                      <CollapsibleContent open className="px-6 pb-6">
+                      <CollapsibleContent className="px-6 pb-6">
                         <div className={fieldGridClass}>
                           {section.fields.map((field) => (
                             <div

@@ -242,12 +242,22 @@ The next high-value documents to create from this register are:
     - the main POP Brief page now defaults to the upcoming Friday and scopes the property selector to the active monthly Spotlight property list, auto-selecting the first Spotlight property on open
     - the main POP Brief header now uses a sticky control bar with a single navigation dropdown in place of the prior one-off `Export PDF` and `Update` buttons
     - the POP Brief title block now carries the icon beside the title, stacks the selectors above `Navigate`, and uses the final operator-facing subtitle `Property Operations Performance Brief` with `by MarketingOps` on a lighter sub-line
+    - the shared POP Brief header shell now also drives the Marketing and T7/T30 pages so the date/property selectors sit on one line and `Navigate` sits on the next line aligned right across the live POP Brief lane
     - the redundant POP Brief navigation card was then removed from the main `/analysis` page so the sticky header dropdown is the single movement control and the screen opens directly into the brief content
     - the shared POP Brief date picker now renders on an opaque elevated popover surface and closes immediately after a Friday is selected
     - the Communities page now leads with the active monthly Spotlight property block and shows the exhaustive community list below it, instead of leading with an add-community form
-    - the Marketing page now shares the same sticky header and Spotlight-scoped upcoming-Friday defaults as POP Brief while restoring the sectioned Base44 `marketing_data` editor as the primary surface; the Website & SEO CSV importer remains available as a collapsed bridge utility
+    - the Marketing page now shares that same header/default treatment while restoring the sectioned Base44 `marketing_data` editor as the primary surface; the Website & SEO CSV importer remains available as a collapsed bridge utility and the seven section blocks are now collapsed by default
     - the shared T7/T30 leasing metrics page now uses that same sticky header treatment, the same upcoming-Friday plus Spotlight-property defaults, and the same `Navigate` header control while removing the leftover top-row `Update` / `Clear Data` buttons
   - current posture:
     - visible POP Brief is now anchored on `weekly_metrics` + `marketing_weekly`
     - compatibility with Base44 Website & SEO CSV ingest is restored alongside the canonical workflow
     - remaining parity work still includes onboarding model alignment
+
+- `Data Pond landing + sidebar branding`
+  - disposition: canonical, active
+  - owner: `apps/web`
+  - latest correction:
+    - `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` and `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx` are being carried forward together as one branded frontend slice instead of being partially separated across local state and `main`
+    - the intended state includes the richer Data Pond landing hero plus the larger branded sidebar treatment with the `By MarketingOps` byline
+  - operator significance:
+    - branding and navigation recognition are part of product continuity for operators and should be promoted together with POP Brief header changes rather than as separate partial deploys

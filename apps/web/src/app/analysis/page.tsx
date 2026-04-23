@@ -1,14 +1,10 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CommunitySelector } from "@/components/shared/community-selector";
-import { WeekDatePicker } from "@/components/shared/week-date-picker";
+import { PopBriefPageHeader } from "@/components/shared/pop-brief-page-header";
 import { TrendIndicator } from "@/components/shared/trend-indicator";
 import {
   getAnalysis,
@@ -20,27 +16,10 @@ import {
 } from "@/lib/api";
 import { getSpotlightCommunities, getUpcomingFriday } from "@/lib/spotlight-properties";
 import {
-  BarChart2, Building, FileDown, Calendar as CalendarIcon,
+  BarChart2, Building, Calendar as CalendarIcon,
   AlertCircle, DollarSign, FileText, TrendingUp, TrendingDown,
-  Search, MessageSquare, Percent, Users, ArrowRightLeft, NotebookText, UserCircle2, ChevronDown,
+  MessageSquare, Percent, Users, ArrowRightLeft,
 } from "lucide-react";
-
-const BRIEF_NAV_ITEMS: Array<{
-  href?: string;
-  label: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  active?: boolean;
-}> = [
-  { href: "/communities", label: "Communities", description: "Manage properties and import-facing names.", icon: Building },
-  { href: "/t7-metrics", label: "T7 Metrics", description: "Weekly leasing funnel updates and imports.", icon: CalendarIcon },
-  { href: "/t30-metrics", label: "T30 Metrics", description: "Monthly leasing funnel updates and imports.", icon: TrendingUp },
-  { href: "/marketing", label: "Marketing Data", description: "Website & SEO CSV import plus weekly marketing workflow.", icon: DollarSign },
-  { href: "/analysis", label: "Analysis", description: "Main POP Brief performance view.", icon: BarChart2, active: true },
-  { label: "Call Notes", description: "Reserved navigation slot from Base44; route not mounted yet.", icon: NotebookText },
-  { href: "/backup", label: "Backup & Export", description: "Download CSV backups and create server artifacts.", icon: FileDown },
-  { label: "Profile", description: "Reserved navigation slot from Base44; route not mounted yet.", icon: UserCircle2 },
-];
 
 interface MetricDef {
   label: string;
@@ -382,78 +361,18 @@ export default function AnalysisPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="sticky top-4 z-20 mb-8 rounded-[24px] border border-slate-200 bg-white/95 px-6 py-5 shadow-[0_16px_36px_rgba(21,40,75,0.08)] backdrop-blur print:static print:border-0 print:bg-transparent print:px-0 print:py-0 print:shadow-none">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#15284B] shadow-[0_10px_24px_rgba(21,40,75,0.16)]">
-                <BarChart2 className="h-6 w-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-[#15284B]">POP Brief</h1>
-            </div>
-            <p className="mt-3 text-lg text-slate-700">Property Operations Performance Brief</p>
-            <p className="mt-1 text-sm font-normal text-slate-400">by MarketingOps</p>
-          </div>
-          <div className="flex flex-col items-stretch gap-3 print:hidden md:min-w-[420px] md:items-end">
-            <div className="flex flex-col gap-3 md:w-full">
-              <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-              <CommunitySelector
-                value={communityId}
-                onValueChange={setCommunityId}
-                placeholder="Select community to analyze"
-                communities={spotlightCommunities}
-              />
-            </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[148px] justify-between self-start md:self-end">
-                  Navigate
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="right-0 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(21,40,75,0.12)]">
-                <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  POP Brief Navigation
-                </div>
-                <div className="space-y-1">
-                  {[...BRIEF_NAV_ITEMS, { href: "/analysis/search-intelligence", label: "Search Intelligence", description: "Keyword, competitor, and search brief workflow.", icon: Search }, { href: "/metrics-import", label: "Weekly Metrics Import", description: "Import canonical weekly metrics files.", icon: CalendarIcon }].map((item) => {
-                    const Icon = item.icon;
-                    if (!item.href) {
-                      return (
-                        <div key={item.label} className="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">
-                          <div className="flex items-start gap-3">
-                            <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                            <div>
-                              <div className="font-semibold">{item.label}</div>
-                              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <Link
-                        key={item.label}
-                        href={item.href}
-                        className="block rounded-xl px-3 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#15284B]"
-                      >
-                        <div className="flex items-start gap-3">
-                          <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                          <div>
-                            <div className="font-semibold">{item.label}</div>
-                            <p className="mt-1 text-xs text-slate-500">{item.description}</p>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        </div>
+        <PopBriefPageHeader
+          title="POP Brief"
+          titleIcon={BarChart2}
+          subtitle="Property Operations Performance Brief"
+          byline="by MarketingOps"
+          weekDate={weekDate}
+          onWeekDateChange={setWeekDate}
+          communityId={communityId}
+          onCommunityIdChange={setCommunityId}
+          communities={spotlightCommunities}
+          communityPlaceholder="Select community to analyze"
+        />
 
         {!communityId ? (
           <Card><CardContent className="p-12 text-center">
