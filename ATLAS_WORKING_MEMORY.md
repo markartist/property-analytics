@@ -4513,21 +4513,19 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
 
-### 2026-04-23 - Site Content and Intelligence Office restored into the current Pond slice
+### 2026-04-23 - Editor role narrowed to The Pond plus the POP Brief lane
 
-- Operator review surfaced that the Site Content work had fallen into the same split-state problem as the Pond branding:
-  - the governed Site Content Creator and Intelligence Office work still existed on the local branch
-  - but that slice had not been promoted into the same current frontend/API state as the recovered Pond and POP Brief surfaces
-- The current recovery now carries the Site Content stack forward as part of the same reconciled slice:
-  - `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` restores the governed Site Content Creator workspace
-  - `/Users/mark/Property_Analytics/apps/web/src/components/intelligence-office-page.tsx` restores the Intelligence Office workspace
-  - `/Users/mark/Property_Analytics/apps/web/src/app/site-content/page.tsx` and `/Users/mark/Property_Analytics/apps/web/src/app/intelligence-office/page.tsx` expose those surfaces in the current app shell
-  - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts` and `/Users/mark/Property_Analytics/apps/api/src/routes/admin-intelligence.ts` are mounted again from `/Users/mark/Property_Analytics/apps/api/src/index.ts`
-- Supporting intelligence helpers required for that restoration are now treated as part of the same slice:
-  - `/Users/mark/Property_Analytics/apps/api/src/platform/intelligence/brief-completeness.ts`
-  - `/Users/mark/Property_Analytics/apps/api/src/platform/memory/governed-memory.ts`
-  - `/Users/mark/Property_Analytics/apps/api/src/platform/shared/specs-property-marketing-v1.ts`
+- Operator direction clarified that the `editor` role should behave as a tightly-scoped POP Brief operator rather than as a broad multi-surface curator.
+- The current boundary is now:
+  - `editor` can access The Pond home page
+  - `editor` can access the POP Brief lane (`/analysis`, `/communities`, `/t7-metrics`, `/t30-metrics`, `/marketing`, `/backup`)
+  - `editor` cannot access the rest of the platform offerings
+- This now exists in both permission layers:
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts`
   - `/Users/mark/Property_Analytics/apps/api/src/lib/permissions.ts`
-- Verification completed on the reconciled slice:
+- The sidebar still renders the full left navigation for orientation, but inaccessible editor destinations now appear as locked/dead links through `/Users/mark/Property_Analytics/apps/web/src/components/shared/sidebar.tsx`.
+- The web shell now enforces the same path-level boundary and shows a governed restricted-state card for out-of-scope routes instead of silently allowing editors into non-POP surfaces:
+  - `/Users/mark/Property_Analytics/apps/web/src/components/app-shell.tsx`
+- Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`

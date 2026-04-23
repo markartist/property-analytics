@@ -1158,14 +1158,12 @@ Additional current-state note:
   - the Marketing section editor remains Base44-shaped, but its section blocks are now true accordions closed by default
 - This matters because the current platform problem is not only feature parity; it is also making sure operators see one coherent shell and identity system instead of alternating between partial frontend states.
 
-## Addendum: 2026-04-23 Site Content and Intelligence Office reconciled into the current app state
+## Addendum: 2026-04-23 Editor role boundary tightened to POP Brief-only operations
 
-- Operator review identified the same release-shape issue for the governed content lane:
-  - the richer Site Content Creator and Intelligence Office work still existed locally
-  - but it had not been promoted as part of the same current frontend/API slice as the recovered Pond and POP Brief shell
-- The reconciled current state now includes:
-  - the governed Site Content Creator page and route
-  - the governed Intelligence Office page and route
-  - the admin API routes that power those surfaces
-  - the direct intelligence helpers for brief completeness, governed memory, specs-page binding, and offering permissions that those routes depend on
-- This matters because Site Content is not an isolated experiment anymore; it is part of the active governed editorial stack, so leaving it behind would recreate the same split-brain release problem that just affected the Pond shell and POP Brief.
+- Operator direction clarified that the product-facing `editor` role should no longer act as a broad curator across the Data Pond.
+- The current intended editor experience is now:
+  - The Pond as the allowed front door
+  - the POP Brief lane as the only active operational workspace
+  - the rest of the platform visible in the sidebar for orientation but not available for actual navigation
+- That boundary is now enforced in both the web and API permission layers rather than only by hiding links.
+- This matters because a role model that only changes the sidebar but still leaves routes and write APIs reachable would not be a real operational permission model.

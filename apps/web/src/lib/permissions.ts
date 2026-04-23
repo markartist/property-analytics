@@ -270,6 +270,22 @@ export const OFFERING_ORDER: SurfaceId[] = [
   "adminUsers",
 ];
 
+const EDITOR_ALLOWED_OFFERINGS = new Set<SurfaceId>([
+  "pond",
+  "popBrief",
+]);
+
+const EDITOR_ALLOWED_PATH_PREFIXES = [
+  "/",
+  "/pond",
+  "/analysis",
+  "/communities",
+  "/t7-metrics",
+  "/t30-metrics",
+  "/marketing",
+  "/backup",
+];
+
 export function hasRole(userRole: AppRole | undefined | null, minRole: AppRole): boolean {
   if (!userRole) return false;
   return ROLE_LEVEL[userRole] >= ROLE_LEVEL[minRole];
@@ -280,6 +296,9 @@ export function canAccessSurface(userRole: AppRole | undefined | null, minRole: 
 }
 
 export function canAccessOffering(userRole: AppRole | undefined | null, surfaceId: SurfaceId): boolean {
+  if (userRole === "editor") {
+    return EDITOR_ALLOWED_OFFERINGS.has(surfaceId);
+  }
   return hasRole(userRole, OFFERING_ACCESS[surfaceId].minRole);
 }
 
@@ -294,7 +313,25 @@ export function canPerformOfferingAction(
   surfaceId: SurfaceId,
   action: SurfaceAction
 ): boolean {
+  if (userRole === "editor" && !EDITOR_ALLOWED_OFFERINGS.has(surfaceId)) {
+    return false;
+  }
   return hasRole(userRole, getOfferingActionRole(surfaceId, action));
+}
+
+export function canAccessPath(userRole: AppRole | undefined | null, pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  if (userRole !== "editor") return true;
+  return EDITOR_ALLOWED_PATH_PREFIXES.some((prefix) =>
+    prefix === "/" ? pathname === "/" || pathname === "/pond" : pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
+export function getSidebarOfferings(userRole: AppRole | undefined | null): SurfaceAccessDefinition[] {
+  if (userRole === "editor") {
+    return OFFERING_ORDER.map((id) => OFFERING_ACCESS[id]);
+  }
+  return getVisibleOfferings(userRole);
 }
 
 export function getVisibleOfferings(userRole: AppRole | undefined | null): SurfaceAccessDefinition[] {

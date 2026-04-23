@@ -262,13 +262,12 @@ The next high-value documents to create from this register are:
   - operator significance:
     - branding and navigation recognition are part of product continuity for operators and should be promoted together with POP Brief header changes rather than as separate partial deploys
 
-- `Site Content Creator + Intelligence Office governed content lane`
-  - disposition: canonical, active restoration
+- `Editor POP Brief-only access boundary`
+  - disposition: canonical, active
   - owner: `apps/web` + `apps/api`
   - latest correction:
-    - the governed Site Content Creator and Intelligence Office slices were reconciled back into the current Pond branch after drifting into a local-only state
-    - `/Users/mark/Property_Analytics/apps/web/src/components/site-content-creator-page.tsx` and `/Users/mark/Property_Analytics/apps/web/src/components/intelligence-office-page.tsx` are now carried forward together with their route entrypoints
-    - `/Users/mark/Property_Analytics/apps/api/src/routes/admin-site-content.ts` and `/Users/mark/Property_Analytics/apps/api/src/routes/admin-intelligence.ts` are mounted again from the current API index
-    - the direct supporting helpers for readiness, governed memory, specs section matching, and offering permissions are part of the same restored slice
+    - the `editor` role is now explicitly narrowed to The Pond plus the POP Brief lane
+    - the web permission layer, API offering-action layer, sidebar rendering, and app-shell route boundary now all follow that same rule
+    - the full left nav can still be shown for orientation, but non-POP editor destinations now render as locked/dead links instead of working routes
   - operator significance:
-    - the Site Content Creator and Intelligence Office are part of the current governed editorial workflow and cannot be left behind when the main Pond shell is promoted
+    - this makes the editor role a true POP Brief operator role rather than a cosmetic subset of the broader platform

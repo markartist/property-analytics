@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
-import { getRoleTitle, getVisibleOfferings, type SurfaceId } from "@/lib/permissions";
+import { getRoleTitle, getSidebarOfferings, canAccessOffering, type SurfaceId } from "@/lib/permissions";
 import {
   BarChart3,
   Search,
@@ -55,10 +55,11 @@ export function Sidebar() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const { user, logout } = useAuth();
   const PRIMARY_DESTINATIONS = 5;
-  const navItems = getVisibleOfferings(user?.role ?? "viewer").map((offering) => ({
+  const navItems = getSidebarOfferings(user?.role ?? "viewer").map((offering) => ({
     ...offering,
     icon: SURFACE_ICONS[offering.id],
     section: offering.category === "Primary" ? undefined : offering.category,
+    accessible: canAccessOffering(user?.role ?? "viewer", offering.id),
   }));
 
   return (
@@ -124,15 +125,24 @@ export function Sidebar() {
                   </p>
                 )}
                 <Link
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
+                  href={item.accessible ? item.href : "#"}
+                  onClick={(event) => {
+                    if (!item.accessible) {
+                      event.preventDefault();
+                      return;
+                    }
+                    setMobileOpen(false);
+                  }}
+                  aria-disabled={!item.accessible}
                   className={cn(
                     idx < PRIMARY_DESTINATIONS
                       ? "mb-1.5 flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-medium transition-colors"
                       : "mb-1 flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-                      : "text-white/70 hover:bg-white/8 hover:text-white"
+                    !item.accessible
+                      ? "cursor-not-allowed text-white/28"
+                      : isActive
+                        ? "bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+                        : "text-white/70 hover:bg-white/8 hover:text-white"
                   )}
                 >
                   <span
@@ -140,12 +150,16 @@ export function Sidebar() {
                       idx < PRIMARY_DESTINATIONS
                         ? "flex h-9 w-9 items-center justify-center rounded-xl bg-white/8"
                         : "flex h-8 w-8 items-center justify-center rounded-lg bg-transparent",
-                      isActive && "bg-white/10"
+                      item.accessible && isActive && "bg-white/10",
+                      !item.accessible && "bg-white/5"
                     )}
                   >
                     <item.icon className={idx < PRIMARY_DESTINATIONS ? "h-4.5 w-4.5" : "h-4 w-4"} />
                   </span>
-                  {item.label}
+                  <span className="flex items-center gap-2">
+                    {item.label}
+                    {!item.accessible && <span className="text-[10px] uppercase tracking-[0.18em] text-white/22">Locked</span>}
+                  </span>
                 </Link>
               </React.Fragment>
             );

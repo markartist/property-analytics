@@ -52,6 +52,11 @@ const OFFERING_ACTION_REQUIREMENTS: Record<OfferingId, Partial<Record<OfferingAc
   adminUsers: { view: "admin", administer: "admin" },
 };
 
+const EDITOR_ALLOWED_OFFERINGS = new Set<OfferingId>([
+  "pond",
+  "popBrief",
+]);
+
 function hasRole(userRole: Role | undefined, minimumRole: Role): boolean {
   return !!userRole && ROLE_LEVEL[userRole] >= ROLE_LEVEL[minimumRole];
 }
@@ -61,6 +66,9 @@ export function getOfferingActionRole(offeringId: OfferingId, action: OfferingAc
 }
 
 export function canPerformOfferingAction(userRole: Role | undefined, offeringId: OfferingId, action: OfferingAction): boolean {
+  if (userRole === "editor" && !EDITOR_ALLOWED_OFFERINGS.has(offeringId)) {
+    return false;
+  }
   return hasRole(userRole, getOfferingActionRole(offeringId, action));
 }
 
