@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-04-20 17:58 UTC  
+**Last Updated:** 2026-04-23 18:54 UTC  
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -92,6 +92,7 @@
 - `apps/web/src/app/login/page.tsx` now uses that same app-host bootstrap bridge before rendering Magic Link/password UI, and the bridge returns more specific fallback states (`cloudflare_access_missing`, `cloudflare_access_api_unreachable`, `cloudflare_access_no_session`, `cloudflare_access_unavailable`) so Cloudflare-vs-app-session failures can be distinguished instead of silently landing on the generic Data Pond login page
 - Browser bootstrap and API CORS now recognize both `app.venterradev.com` and `app.venterraliving.com`, so Cloudflare Access can hand users back to the hostname they actually entered instead of defaulting to the legacy app host or falling through to the native login screen
 - Cloudflare Access browser identities can now be auto-provisioned into Data Pond as least-privilege app users during `/v1/auth/me` and `/v1/auth/access-bootstrap`, which lets Zero Trust act as the gatekeeper of record while preserving app-level role enforcement for `viewer` / `editor` / `admin`
+- Zero Trust browser auth hardening on 2026-04-23 tightened the shared login substrate without widening scope into PIB or unrelated product lanes: browser bootstrap now logs structured Cloudflare Access verification failures, rejects invalid JWTs even when an email header is present, optionally enforces a configured Access AUD via `CLOUDFLARE_ACCESS_AUD`, uses exact frontend-origin parsing for redirect/cookie behavior, returns distinct session failure codes (`NO_SESSION`, `SESSION_UNKNOWN`, `SESSION_REVOKED`, `SESSION_EXPIRED`, `USER_INACTIVE`), treats malformed magic-link tokens as `invalid_token` instead of 500s, and moved `/v1/auth/login` plus `/v1/auth/magic-link` off the per-isolate in-memory limiter onto a D1-backed shared limiter table
 - `apps/api/migrations/0023_seed_phase1_platform_control_plane.sql` is now the canonical idempotent bootstrap for Phase 1 control-plane rows (`mirror_domains`, `cb_phase1_v1`, `exec_policy_property_advocate`, `agent_prop_1`, and related governance seed data) after `0021_create_phase1_platform_tables.sql`
 
 ### Platform Security Boundary (Cloudflare Zero Trust + Keeper) ✅
@@ -4485,3 +4486,15 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-23 - POP Brief title block refined to the final operator-facing copy/layout
+
+- Applied the requested finishing pass to the main POP Brief header in `/Users/mark/Property_Analytics/apps/web/src/app/analysis/page.tsx`.
+- The title block now:
+  - includes the POP Brief icon directly beside the title
+  - stacks the date and property selectors above the `Navigate` control
+  - uses the operator-facing subtitle `Property Operations Performance Brief`
+  - places `by MarketingOps` on its own smaller, lighter line underneath
+- This is a presentation refinement rather than a workflow change, but it matters because the POP Brief page header is now the primary identity anchor for the restored Base44-style lane.
+- Verification completed:
+  - `npm run build` in `apps/web`

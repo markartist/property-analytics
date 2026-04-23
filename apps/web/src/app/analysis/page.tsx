@@ -383,22 +383,30 @@ export default function AnalysisPage() {
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="sticky top-4 z-20 mb-8 rounded-[24px] border border-slate-200 bg-white/95 px-6 py-5 shadow-[0_16px_36px_rgba(21,40,75,0.08)] backdrop-blur print:static print:border-0 print:bg-transparent print:px-0 print:py-0 print:shadow-none">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#15284B]">POP Brief</h1>
-            <p className="mt-2 text-slate-600">Unified property operations performance brief.</p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#15284B] shadow-[0_10px_24px_rgba(21,40,75,0.16)]">
+                <BarChart2 className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-[#15284B]">POP Brief</h1>
+            </div>
+            <p className="mt-3 text-lg text-slate-700">Property Operations Performance Brief</p>
+            <p className="mt-1 text-sm font-normal text-slate-400">by MarketingOps</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 print:hidden">
-            <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-            <CommunitySelector
-              value={communityId}
-              onValueChange={setCommunityId}
-              placeholder="Select community to analyze"
-              communities={spotlightCommunities}
-            />
+          <div className="flex flex-col items-stretch gap-3 print:hidden md:min-w-[420px] md:items-end">
+            <div className="flex flex-col gap-3 md:w-full">
+              <WeekDatePicker value={weekDate} onChange={setWeekDate} />
+              <CommunitySelector
+                value={communityId}
+                onValueChange={setCommunityId}
+                placeholder="Select community to analyze"
+                communities={spotlightCommunities}
+              />
+            </div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[148px] justify-between">
+                <Button variant="outline" size="sm" className="min-w-[148px] justify-between self-start md:self-end">
                   Navigate
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
