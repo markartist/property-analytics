@@ -4480,6 +4480,7 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - defaults the week selector to the upcoming Friday
   - scopes the community selector to the active monthly Spotlight list
   - auto-selects the first Spotlight property when the page opens without an active selection
+  - exposes the same `Navigate` header control used elsewhere in POP Brief and removes the leftover top-row `Update` / `Clear Data` buttons
 - This does not change the import/edit capabilities themselves; it removes repeated setup clicks so T7/T30 screens open in the same operator context as the rest of the POP Brief lane.
 - Verification completed:
   - `npm run build` in `apps/web`

@@ -245,7 +245,7 @@ The next high-value documents to create from this register are:
     - the shared POP Brief date picker now renders on an opaque elevated popover surface and closes immediately after a Friday is selected
     - the Communities page now leads with the active monthly Spotlight property block and shows the exhaustive community list below it, instead of leading with an add-community form
     - the Marketing page now shares the same sticky header and Spotlight-scoped upcoming-Friday defaults as POP Brief while restoring the sectioned Base44 `marketing_data` editor as the primary surface; the Website & SEO CSV importer remains available as a collapsed bridge utility
-    - the shared T7/T30 leasing metrics page now uses that same sticky header treatment and the same upcoming-Friday plus Spotlight-property defaults for its import/edit screens
+    - the shared T7/T30 leasing metrics page now uses that same sticky header treatment, the same upcoming-Friday plus Spotlight-property defaults, and the same `Navigate` header control while removing the leftover top-row `Update` / `Clear Data` buttons
   - current posture:
     - visible POP Brief is now anchored on `weekly_metrics` + `marketing_weekly`
     - compatibility with Base44 Website & SEO CSV ingest is restored alongside the canonical workflow

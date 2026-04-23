@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CommunitySelector } from "@/components/shared/community-selector";
 import { WeekDatePicker } from "@/components/shared/week-date-picker";
@@ -16,7 +17,8 @@ import type { LeasingMetric, Community } from "@/lib/api";
 import { getSpotlightCommunities, getUpcomingFriday } from "@/lib/spotlight-properties";
 import {
   BarChart3, Users, FileText, TrendingUp, Target,
-  Upload, Edit, ClipboardPaste, Calendar as CalendarIcon, RefreshCw,
+  Upload, Edit, ClipboardPaste, Calendar as CalendarIcon, ChevronDown,
+  Building, DollarSign, FileDown, NotebookText, UserCircle2,
 } from "lucide-react";
 
 interface Props {
@@ -31,6 +33,22 @@ interface Props {
   getCommunities: () => Promise<Community[]>;
 }
 
+const METRICS_NAV_ITEMS: Array<{
+  href?: string;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { href: "/communities", label: "Communities", description: "Manage properties and import-facing names.", icon: Building },
+  { href: "/t7-metrics", label: "T7 Metrics", description: "Weekly leasing funnel updates and imports.", icon: CalendarIcon },
+  { href: "/t30-metrics", label: "T30 Metrics", description: "Monthly leasing funnel updates and imports.", icon: TrendingUp },
+  { href: "/marketing", label: "Marketing Data", description: "Website & SEO CSV import plus weekly marketing workflow.", icon: DollarSign },
+  { href: "/analysis", label: "Analysis", description: "Main POP Brief performance view.", icon: BarChart3 },
+  { label: "Call Notes", description: "Reserved navigation slot from Base44; route not mounted yet.", icon: NotebookText },
+  { href: "/backup", label: "Backup & Export", description: "Download CSV backups and create server artifacts.", icon: FileDown },
+  { label: "Profile", description: "Reserved navigation slot from Base44; route not mounted yet.", icon: UserCircle2 },
+];
+
 export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, deleteMetrics, getCommunities }: Props) {
   const [communityId, setCommunityId] = React.useState("");
   const [communityData, setCommunityData] = React.useState<Community | null>(null);
@@ -39,7 +57,6 @@ export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, de
   const [metrics, setMetrics] = React.useState<LeasingMetric | null>(null);
   const [portfolio, setPortfolio] = React.useState<LeasingMetric | null>(null);
   const [processing, setProcessing] = React.useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
 
   React.useEffect(() => {
     setWeekDate((current) => current ?? getUpcomingFriday());
@@ -111,27 +128,6 @@ export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, de
     }
   };
 
-  const handleClear = async () => {
-    if (!communityId || !weekDate) return;
-    if (!confirm(`Clear all ${period} data for this community and date? This cannot be undone.`)) return;
-    setProcessing(true);
-    try {
-      await deleteMetrics(communityId, format(weekDate, "yyyy-MM-dd"));
-      setMetrics(null);
-      setPortfolio(null);
-    } catch (err) {
-      console.error("Error clearing:", err);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">
       <div className="mx-auto max-w-7xl">
@@ -149,15 +145,56 @@ export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, de
                 placeholder={`Select community for ${period} analysis`}
                 communities={spotlightCommunities}
               />
-              <Button onClick={handleRefresh} disabled={refreshing || processing} variant="outline" size="sm">
-                <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-                {refreshing ? "Updating…" : "Update"}
-              </Button>
-              {communityId && weekDate && (
-                <Button onClick={handleClear} disabled={processing} variant="destructive" size="sm">
-                  Clear Data
-                </Button>
-              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex min-w-[148px] items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-[#15284B]"
+                  >
+                    Navigate
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="right-0 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_40px_rgba(21,40,75,0.12)]">
+                  <div className="px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    POP Brief Navigation
+                  </div>
+                  <div className="space-y-1">
+                    {METRICS_NAV_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      if (!item.href) {
+                        return (
+                          <div key={item.label} className="rounded-xl border border-dashed border-slate-200 px-3 py-3 text-sm text-slate-400">
+                            <div className="flex items-start gap-3">
+                              <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                              <div>
+                                <div className="font-semibold">{item.label}</div>
+                                <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          className="block rounded-xl px-3 py-3 text-sm text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#15284B]"
+                        >
+                          <div className="flex items-start gap-3">
+                            <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                            <div>
+                              <div className="font-semibold">{item.label}</div>
+                              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>

@@ -1121,6 +1121,7 @@ Additional current-state note:
   - `/Users/mark/Property_Analytics/apps/web/src/components/metrics/leasing-metrics-page.tsx` now drives both `/t7-metrics` and `/t30-metrics` with the same sticky header treatment already adopted by POP Brief and Marketing
   - the shared page defaults to the upcoming Friday
   - the shared community selector is now scoped to the active monthly Spotlight list and auto-selects the first Spotlight property on open
+  - the header now also uses the same `Navigate` control family and no longer carries the leftover page-specific `Update` / `Clear Data` buttons
 - This is a workflow-default correction rather than a model change, but it matters because it makes the import/edit screens open in the same ready-to-work context as the other daily POP Brief surfaces.
 
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
