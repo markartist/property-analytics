@@ -10,13 +10,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { CommunitySelector } from "@/components/shared/community-selector";
 import { WeekDatePicker } from "@/components/shared/week-date-picker";
 import {
+  getCommunities,
   getMarketingWeekly,
   importWebsiteSeo,
   scanMarketingMentions,
   upsertMarketingWeekly,
+  type Community,
   type MarketingWeeklyRecord,
   type MarketingScanResponse,
 } from "@/lib/api";
+import { getSpotlightCommunities, getUpcomingFriday } from "@/lib/spotlight-properties";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   AlertCircle,
   CheckCircle,
@@ -158,6 +162,8 @@ export default function MarketingPage() {
   const importFileRef = React.useRef<HTMLInputElement>(null);
   const [communityId, setCommunityId] = React.useState("");
   const [weekDate, setWeekDate] = React.useState<Date | null>(null);
+  const [spotlightCommunities, setSpotlightCommunities] = React.useState<Community[]>([]);
+  const [importOpen, setImportOpen] = React.useState(false);
   const [record, setRecord] = React.useState<MarketingWeeklyRecord | null>(null);
   const [recordId, setRecordId] = React.useState("new");
   const [formState, setFormState] = React.useState({
@@ -177,6 +183,27 @@ export default function MarketingPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [scanResult, setScanResult] = React.useState<MarketingScanResponse | null>(null);
+
+  React.useEffect(() => {
+    setWeekDate((current) => current ?? getUpcomingFriday());
+  }, []);
+
+  React.useEffect(() => {
+    getCommunities()
+      .then((communities) => {
+        const filtered = getSpotlightCommunities(communities);
+        setSpotlightCommunities(filtered);
+      })
+      .catch((err) => {
+        console.error("Failed to load spotlight communities:", err);
+        setSpotlightCommunities([]);
+      });
+  }, []);
+
+  React.useEffect(() => {
+    if (communityId || spotlightCommunities.length === 0) return;
+    setCommunityId(spotlightCommunities[0].id);
+  }, [communityId, spotlightCommunities]);
 
   React.useEffect(() => {
     if (!communityId || !weekDate) {
@@ -320,17 +347,24 @@ export default function MarketingPage() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f8fbff_0%,#eef5f8_100%)] p-6 md:p-8">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-white/90 p-6 shadow-[0_20px_50px_rgba(21,40,75,0.08)] md:flex-row md:items-center md:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center rounded-full bg-[#15284B] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
-              Marketing Workflow
+        <div className="sticky top-4 z-20 rounded-[28px] border border-slate-200 bg-white/95 p-6 shadow-[0_20px_50px_rgba(21,40,75,0.08)] backdrop-blur">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-3">
+              <div className="inline-flex items-center rounded-full bg-[#15284B] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+                Marketing Workflow
+              </div>
+              <h1 className="text-3xl font-bold text-[#15284B]">Marketing Data</h1>
+              <p className="max-w-3xl text-slate-600">Canonical weekly marketing editing with the same upcoming-Friday and Spotlight property defaults used across POP Brief.</p>
             </div>
-            <h1 className="text-3xl font-bold text-[#15284B]">Marketing Data</h1>
-            <p className="max-w-3xl text-slate-600">Base44-style Website & SEO import plus canonical marketing weekly editing and mention scan operations.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-            <CommunitySelector value={communityId} onValueChange={setCommunityId} />
+            <div className="flex flex-wrap items-center gap-3">
+              <WeekDatePicker value={weekDate} onChange={setWeekDate} />
+              <CommunitySelector
+                value={communityId}
+                onValueChange={setCommunityId}
+                communities={spotlightCommunities}
+                placeholder="Select a community"
+              />
+            </div>
           </div>
         </div>
 
@@ -351,103 +385,6 @@ export default function MarketingPage() {
             </CardContent>
           </Card>
         )}
-
-        <Card className="overflow-hidden border-0 shadow-[0_18px_40px_rgba(21,40,75,0.08)]">
-          <div className="bg-[linear-gradient(135deg,#15284B_0%,#0D5E6D_100%)] px-6 py-4 text-white">
-            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-white/75">
-              <Upload className="h-4 w-4" /> Step 1
-            </div>
-            <h2 className="mt-2 text-2xl font-bold">Bulk Website & SEO Import</h2>
-            <p className="mt-1 max-w-3xl text-sm text-white/80">
-              Base44-compatible import for Spotlight Website & SEO CSV exports. This writes into the legacy `marketing_data` Website & SEO fields.
-            </p>
-          </div>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base uppercase tracking-[0.16em] text-slate-500">
-              Upload And Preview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <input
-              ref={importFileRef}
-              type="file"
-              accept=".csv,text/csv"
-              onChange={handleWebsiteSeoFileChange}
-              className="hidden"
-            />
-            <div className="rounded-2xl border-2 border-dashed border-[#0D5E6D]/20 bg-[#f4fbfc] p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="mb-2 inline-flex rounded-full bg-[#15284B]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#15284B]">
-                    Source File
-                  </div>
-                  <p className="text-base font-semibold text-slate-900">Upload the exact CSV exported by the Base44 Spotlight / Website & SEO flow.</p>
-                  <p className="mt-1 text-sm text-slate-600">Supported columns include `property_name`, `property_url`, `date`, the T7/T30 deltas, visibility, SERP traffic, `website_notes`, and `seo_notes`.</p>
-                </div>
-                <Button className="min-w-[180px]" variant="outline" onClick={() => importFileRef.current?.click()} disabled={importing}>
-                  <FileText className="mr-2 h-4 w-4" />Choose CSV
-                </Button>
-              </div>
-            </div>
-
-            {importFileName && (
-              <div className="rounded-2xl border border-blue-200 bg-[linear-gradient(135deg,#eef4ff_0%,#f7fbff_100%)] p-4 text-sm text-blue-900 shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Preview Ready</div>
-                <div className="mt-2 font-semibold">{importFileName}</div>
-                <div className="mt-1 text-blue-800">Parsed {importPreview.length} row(s) ready for import.</div>
-              </div>
-            )}
-
-            {importPreview.length > 0 && (
-              <>
-                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-[#15284B] text-left text-white">
-                      <tr>
-                        <th className="px-4 py-3">Property</th>
-                        <th className="px-4 py-3">Week</th>
-                        <th className="px-4 py-3">T7 Engaged</th>
-                        <th className="px-4 py-3">T7 Organic</th>
-                        <th className="px-4 py-3">Visibility</th>
-                        <th className="px-4 py-3">SERP</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {importPreview.slice(0, 5).map((row) => (
-                        <tr key={`${row.property_name}-${row.date}`} className="border-t border-slate-100">
-                          <td className="px-4 py-3 font-medium text-slate-900">{row.property_name}</td>
-                          <td className="px-4 py-3 text-slate-700">{row.date}</td>
-                          <td className="px-4 py-3 text-slate-700">{row.t7_engaged_sessions_delta ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-700">{row.t7_organic_sessions_delta ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-700">{row.t7_organic_visibility ?? "—"}</td>
-                          <td className="px-4 py-3 text-slate-700">{row.t7_serp_traffic ?? "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <Button className="min-w-[220px]" onClick={handleWebsiteSeoImport} disabled={importing}>
-                    {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                    Import Website & SEO
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={importing}
-                    onClick={() => {
-                      setImportPreview([]);
-                      setImportFileName(null);
-                      setImportSummary(null);
-                    }}
-                  >
-                    Clear
-                  </Button>
-                  {importSummary && <span className="text-sm font-medium text-slate-700">{importSummary}</span>}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
 
         {!communityId || !weekDate ? (
           <Card>
@@ -579,7 +516,7 @@ export default function MarketingPage() {
 
             <Card className="overflow-hidden border-0 shadow-[0_18px_40px_rgba(21,40,75,0.1)]">
               <div className="bg-[linear-gradient(135deg,#15284B_0%,#1e3a66_100%)] px-6 py-4 text-white">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Step 2</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">Primary Actions</div>
                 <div className="mt-1 text-xl font-bold">Commit Weekly Marketing Actions</div>
               </div>
               <CardHeader className="flex-col gap-3 bg-white md:flex-row md:items-center md:justify-between">
@@ -619,6 +556,103 @@ export default function MarketingPage() {
                 </CardContent>
               )}
             </Card>
+
+            <Collapsible open={importOpen} onOpenChange={setImportOpen} className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(21,40,75,0.08)]">
+              <CollapsibleTrigger className="px-6 py-5 text-left hover:bg-slate-50">
+                <div className="pr-4">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    <Upload className="h-4 w-4" />
+                    Legacy Import Utility
+                  </div>
+                  <h2 className="mt-2 text-xl font-bold text-[#15284B]">Base44 Website & SEO CSV Import</h2>
+                  <p className="mt-1 max-w-3xl text-sm text-slate-600">
+                    Keep this collapsed unless you need the legacy CSV lane. The long-term path is direct Data Pond ingest.
+                  </p>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="border-t border-slate-200 px-6 py-6">
+                <div className="space-y-4">
+                  <input
+                    ref={importFileRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={handleWebsiteSeoFileChange}
+                    className="hidden"
+                  />
+                  <div className="rounded-2xl border-2 border-dashed border-[#0D5E6D]/20 bg-[#f4fbfc] p-6">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="mb-2 inline-flex rounded-full bg-[#15284B]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#15284B]">
+                          Source File
+                        </div>
+                        <p className="text-base font-semibold text-slate-900">Upload the exact CSV exported by the Base44 Spotlight / Website & SEO flow.</p>
+                        <p className="mt-1 text-sm text-slate-600">Supported columns include `property_name`, `property_url`, `date`, the T7/T30 deltas, visibility, SERP traffic, `website_notes`, and `seo_notes`.</p>
+                      </div>
+                      <Button className="min-w-[180px]" variant="outline" onClick={() => importFileRef.current?.click()} disabled={importing}>
+                        <FileText className="mr-2 h-4 w-4" />Choose CSV
+                      </Button>
+                    </div>
+                  </div>
+
+                  {importFileName && (
+                    <div className="rounded-2xl border border-blue-200 bg-[linear-gradient(135deg,#eef4ff_0%,#f7fbff_100%)] p-4 text-sm text-blue-900 shadow-sm">
+                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Preview Ready</div>
+                      <div className="mt-2 font-semibold">{importFileName}</div>
+                      <div className="mt-1 text-blue-800">Parsed {importPreview.length} row(s) ready for import.</div>
+                    </div>
+                  )}
+
+                  {importPreview.length > 0 && (
+                    <>
+                      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <table className="min-w-full text-sm">
+                          <thead className="bg-[#15284B] text-left text-white">
+                            <tr>
+                              <th className="px-4 py-3">Property</th>
+                              <th className="px-4 py-3">Week</th>
+                              <th className="px-4 py-3">T7 Engaged</th>
+                              <th className="px-4 py-3">T7 Organic</th>
+                              <th className="px-4 py-3">Visibility</th>
+                              <th className="px-4 py-3">SERP</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {importPreview.slice(0, 5).map((row) => (
+                              <tr key={`${row.property_name}-${row.date}`} className="border-t border-slate-100">
+                                <td className="px-4 py-3 font-medium text-slate-900">{row.property_name}</td>
+                                <td className="px-4 py-3 text-slate-700">{row.date}</td>
+                                <td className="px-4 py-3 text-slate-700">{row.t7_engaged_sessions_delta ?? "—"}</td>
+                                <td className="px-4 py-3 text-slate-700">{row.t7_organic_sessions_delta ?? "—"}</td>
+                                <td className="px-4 py-3 text-slate-700">{row.t7_organic_visibility ?? "—"}</td>
+                                <td className="px-4 py-3 text-slate-700">{row.t7_serp_traffic ?? "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <Button className="min-w-[220px]" onClick={handleWebsiteSeoImport} disabled={importing}>
+                          {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                          Import Website & SEO
+                        </Button>
+                        <Button
+                          variant="outline"
+                          disabled={importing}
+                          onClick={() => {
+                            setImportPreview([]);
+                            setImportFileName(null);
+                            setImportSummary(null);
+                          }}
+                        >
+                          Clear
+                        </Button>
+                        {importSummary && <span className="text-sm font-medium text-slate-700">{importSummary}</span>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </>
         )}
       </div>

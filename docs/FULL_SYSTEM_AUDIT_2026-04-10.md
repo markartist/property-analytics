@@ -1088,6 +1088,17 @@ Additional current-state note:
   - the full governed inventory remains immediately below as `All Communities`, with edit/delete maintenance actions still available there
 - This is a workflow and information-hierarchy correction rather than a model change, but it matters because the page now reflects how operators actually use the surface: review the active Spotlight set first, then drop into exhaustive maintenance only when necessary.
 
+## Addendum: 2026-04-22 Marketing page brought into POP Brief header/default pattern
+
+- Operator review identified that the Marketing surface was still lagging behind the main POP Brief lane in two ways:
+  - it did not yet share the same upcoming-Friday and Spotlight-first defaults
+  - the legacy Base44 CSV import still dominated the first screen even though it is becoming a transition-only bridge
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` now defaults to the upcoming Friday and scopes the selector to the active Spotlight set, auto-selecting the first Spotlight property
+  - the page now uses the same sticky header/control treatment as the rest of the POP Brief lane
+  - the Base44 Website & SEO CSV import is now hidden behind a collapsed legacy-import accordion instead of staying open as the primary page surface
+- This keeps the current compatibility import available, but it makes canonical weekly marketing editing the default operator workflow and visually demotes the legacy bridge path ahead of future direct Data Pond ingest.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

@@ -4437,3 +4437,16 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - Marketing page aligned to POP Brief header defaults and legacy import tucked away
+
+- Continued the POP Brief workflow cleanup by bringing the Marketing page into the same header/default pattern as the main brief.
+- `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` now:
+  - defaults to the upcoming Friday
+  - scopes the property selector to the active monthly Spotlight list and auto-selects the first Spotlight property
+  - uses a sticky header/control bar so the key date/property controls stay consistent with POP Brief
+  - moves the Base44 Website & SEO CSV importer behind a collapsed legacy-import accordion instead of letting it dominate the opening screen
+- This preserves the current import capability while making canonical weekly marketing editing the primary workflow and treating CSV import as a secondary bridge until direct Data Pond ingest replaces it.
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`
