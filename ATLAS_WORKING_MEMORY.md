@@ -4424,3 +4424,16 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - Communities page reordered around Spotlight-first review
+
+- Operator workflow feedback clarified that the Communities page should no longer lead with property creation.
+- `/Users/mark/Property_Analytics/apps/web/src/app/communities/page.tsx` now:
+  - removes the `Add Community` section entirely from the page
+  - introduces a `This Month's Spotlight Properties` block first, using the same ordered monthly Spotlight set already used by POP Brief
+  - keeps the exhaustive governed portfolio list below as `All Communities`
+  - preserves edit/delete actions on the exhaustive list so maintenance is still available without making creation the default workflow
+- This keeps the page aligned to actual operator behavior: review the current Spotlight set first, then manage the full list only when needed.
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`

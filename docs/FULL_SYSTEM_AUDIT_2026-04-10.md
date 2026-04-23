@@ -1079,6 +1079,15 @@ Additional current-state note:
   - the date-picker popover now renders on an opaque elevated white surface instead of feeling visually merged with the page below
 - This is a small but important operator polish fix because the POP Brief header is now the primary daily control surface, so even minor friction there gets repeated constantly.
 
+## Addendum: 2026-04-22 Communities page reordered to Spotlight-first
+
+- Operator workflow feedback clarified that community creation is no longer the normal starting task on the Communities surface.
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/communities/page.tsx` no longer leads with an `Add Community` form
+  - the page now opens with a `This Month's Spotlight Properties` section driven by the active monthly Spotlight set
+  - the full governed inventory remains immediately below as `All Communities`, with edit/delete maintenance actions still available there
+- This is a workflow and information-hierarchy correction rather than a model change, but it matters because the page now reflects how operators actually use the surface: review the active Spotlight set first, then drop into exhaustive maintenance only when necessary.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”

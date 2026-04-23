@@ -2,12 +2,12 @@
 
 import React from "react";
 import {
-  createCommunity,
   deleteCommunity,
   getCommunities,
   patchCommunity,
   type Community,
 } from "@/lib/api";
+import { getCurrentSpotlightNames, getSpotlightCommunities } from "@/lib/spotlight-properties";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ import {
   CheckCircle,
   Loader2,
   Pencil,
-  Plus,
   Save,
   Trash2,
   X,
@@ -168,10 +167,11 @@ export default function CommunitiesPage() {
   const [saving, setSaving] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [createForm, setCreateForm] = React.useState<CommunityFormState>(EMPTY_FORM);
   const [editForm, setEditForm] = React.useState<CommunityFormState>(EMPTY_FORM);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const spotlightCommunities = React.useMemo(() => getSpotlightCommunities(communities), [communities]);
+  const spotlightSet = React.useMemo(() => new Set(spotlightCommunities.map((community) => community.id)), [spotlightCommunities]);
 
   const refresh = React.useCallback(async () => {
     setLoading(true);
@@ -188,22 +188,6 @@ export default function CommunitiesPage() {
   React.useEffect(() => {
     refresh();
   }, [refresh]);
-
-  async function handleCreate() {
-    setSaving(true);
-    setError(null);
-    setSuccess(null);
-    try {
-      await createCommunity(buildPayload(createForm));
-      setCreateForm(EMPTY_FORM);
-      setSuccess("Community created.");
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create community");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handleEditSave() {
     if (!editingId) return;
@@ -249,7 +233,7 @@ export default function CommunitiesPage() {
           <Building2 className="h-6 w-6 text-[#15284B]" />
           <div>
             <h1 className="text-3xl font-bold text-[#15284B]">Communities</h1>
-            <p className="mt-2 text-slate-600">Create, edit, and retire communities through the same governed API the Pond already exposes.</p>
+            <p className="mt-2 text-slate-600">Review this month&apos;s Spotlight properties first, then manage the full governed community list below.</p>
           </div>
         </div>
 
@@ -271,15 +255,6 @@ export default function CommunitiesPage() {
           </Card>
         )}
 
-        <CommunityForm
-          title="Add Community"
-          form={createForm}
-          onChange={setCreateForm}
-          onSubmit={handleCreate}
-          busy={saving}
-          submitLabel="Create Community"
-        />
-
         {editingId && (
           <CommunityForm
             title="Edit Community"
@@ -297,7 +272,54 @@ export default function CommunitiesPage() {
 
         <Card>
           <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-lg">Active Communities</CardTitle>
+            <div>
+              <CardTitle className="text-lg">This Month&apos;s Spotlight Properties</CardTitle>
+              <p className="mt-1 text-sm text-slate-500">Ordered from the active monthly Spotlight set used by POP Brief.</p>
+            </div>
+            <Badge className="border-0 bg-amber-100 text-amber-800">{getCurrentSpotlightNames().length} scheduled</Badge>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center gap-2 py-8 text-slate-500">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading communities…
+              </div>
+            ) : spotlightCommunities.length === 0 ? (
+              <p className="py-6 text-sm text-slate-500">No Spotlight communities resolved from the current active monthly set.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {spotlightCommunities.map((community, index) => (
+                  <div key={community.id} className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-700">Spotlight {index + 1}</p>
+                        <h3 className="mt-2 font-semibold text-slate-900">{community.name}</h3>
+                      </div>
+                      <Badge className="border-0 bg-white text-slate-700">{community.status}</Badge>
+                    </div>
+                    <p className="mt-3 text-sm text-slate-600">
+                      {[community.region, community.city, community.state].filter(Boolean).join(" • ") || "Region pending"}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {[
+                        community.external_key ? `Key: ${community.external_key}` : null,
+                        community.manager_name ? `Manager: ${community.manager_name}` : null,
+                        community.unit_count != null ? `${community.unit_count} units` : null,
+                      ].filter(Boolean).join(" • ")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">All Communities</CardTitle>
+              <p className="mt-1 text-sm text-slate-500">Exhaustive governed list, including communities outside the active Spotlight month.</p>
+            </div>
             <Badge className="border-0 bg-slate-100 text-slate-700">{communities.length} active</Badge>
           </CardHeader>
           <CardContent>
@@ -315,6 +337,9 @@ export default function CommunitiesPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-slate-900">{community.name}</p>
+                        {spotlightSet.has(community.id) && (
+                          <Badge className="border-0 bg-amber-100 text-amber-800">Spotlight</Badge>
+                        )}
                         <Badge className="border-0 bg-emerald-100 text-emerald-700">{community.status}</Badge>
                       </div>
                       <div className="text-sm text-slate-600">
