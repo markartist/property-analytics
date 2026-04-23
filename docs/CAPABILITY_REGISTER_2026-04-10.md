@@ -243,7 +243,7 @@ The next high-value documents to create from this register are:
     - the redundant POP Brief navigation card was then removed from the main `/analysis` page so the sticky header dropdown is the single movement control and the screen opens directly into the brief content
     - the shared POP Brief date picker now renders on an opaque elevated popover surface and closes immediately after a Friday is selected
     - the Communities page now leads with the active monthly Spotlight property block and shows the exhaustive community list below it, instead of leading with an add-community form
-    - the Marketing page now shares the same sticky header and Spotlight-scoped upcoming-Friday defaults as POP Brief, and the legacy Base44 CSV importer is collapsed behind a secondary accordion
+    - the Marketing page now shares the same sticky header and Spotlight-scoped upcoming-Friday defaults as POP Brief while restoring the sectioned Base44 `marketing_data` editor as the primary surface; the Website & SEO CSV importer remains available as a collapsed bridge utility
   - current posture:
     - visible POP Brief is now anchored on `weekly_metrics` + `marketing_weekly`
     - compatibility with Base44 Website & SEO CSV ingest is restored alongside the canonical workflow

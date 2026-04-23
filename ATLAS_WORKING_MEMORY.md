@@ -4450,3 +4450,24 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification completed:
   - `npm run build` in `apps/web`
   - `npm run typecheck` in `apps/api`
+
+### 2026-04-22 - Marketing page corrected back to the sectioned Base44 editor under the newer header treatment
+
+- Follow-up operator review clarified that the simplified weekly-marketing page had drifted too far from the actual live Base44 workflow.
+- The live app’s real core marketing surface is the sectioned `marketing_data` editor built around:
+  - Advertising
+  - Property Performance
+  - Guest Cards per Door
+  - Website & SEO
+  - Marketing Projects
+  - Reputation & Social
+  - Pricing Strategy
+- Corrected `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` so it now:
+  - restores that sectioned Base44-style editor shape
+  - keeps the newer sticky header treatment
+  - keeps the upcoming-Friday default and Spotlight-scoped community default
+  - keeps the legacy Website & SEO CSV import available as a collapsed bridge utility
+- This brings the page back toward the live Base44 operator model while preserving the newer workflow defaults and cleaner page-top behavior.
+- Verification completed:
+  - `npm run build` in `apps/web`
+  - `npm run typecheck` in `apps/api`

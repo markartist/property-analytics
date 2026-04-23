@@ -1099,6 +1099,19 @@ Additional current-state note:
   - the Base44 Website & SEO CSV import is now hidden behind a collapsed legacy-import accordion instead of staying open as the primary page surface
 - This keeps the current compatibility import available, but it makes canonical weekly marketing editing the default operator workflow and visually demotes the legacy bridge path ahead of future direct Data Pond ingest.
 
+## Addendum: 2026-04-22 Marketing page restored to the sectioned Base44 editor shape
+
+- A second operator check surfaced an important correction:
+  - the simplified weekly-marketing surface was cleaner
+  - but it was no longer the actual live Base44 page shape for Marketing
+- Repo evidence confirmed that the imported Base44 marketing model is still fundamentally the seven-section `marketing_data` editor, backed by the preserved section schema in:
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0012_create_marketing_data.sql`
+- Correction now in place:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/marketing/page.tsx` has been restored to the sectioned Base44-style editor
+  - the newer sticky header treatment and Spotlight/upcoming-Friday defaults remain in place
+  - the Website & SEO CSV importer remains available, but now as a secondary collapsed bridge utility rather than the page’s primary face
+- This is a parity correction, not a new feature: it realigns the visible Marketing screen with the live app’s actual structure while keeping the cleaner page-top workflow defaults.
+
 ## Addendum: 2026-04-22 Base44 parity governance now explicit
 
 - The remediation pass has now reached the stage where the remaining risk is less “obvious missing surface” and more “unproven equivalence.”
