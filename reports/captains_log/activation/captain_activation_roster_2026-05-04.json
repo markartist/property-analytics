@@ -1,0 +1,217 @@
+{
+  "generated_at": "2026-05-04T00:00:00Z",
+  "sql": "/Users/mark/Property_Analytics/reports/captains_log/activation/captain_activation_roster_2026-05-04.sql",
+  "property_count": 19,
+  "agent_count": 209,
+  "properties": [
+    {
+      "property_code": "AR4PB",
+      "property_name": "The Pointe Bentonville",
+      "community_id": "5d2b4e24-d6cb-42ba-8aa2-adfd7c81d440",
+      "ga4_property_id": "482958962",
+      "captain": "Captain Benton",
+      "scope_type": "spotlight",
+      "designation": "Critical",
+      "market": "Arkansas",
+      "agent_count": 11
+    },
+    {
+      "property_code": "FL4GW",
+      "property_name": "Avasa Grove West",
+      "community_id": "a1e35a67-3040-4335-9cb9-d51219247b2e",
+      "ga4_property_id": "408537081",
+      "captain": "Captain Avasa",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Florida",
+      "agent_count": 11
+    },
+    {
+      "property_code": "FL4HL",
+      "property_name": "Avasa Hammock Landing",
+      "community_id": "3f763b1c-b335-44dd-beda-c9c873455773",
+      "ga4_property_id": "416886840",
+      "captain": "Captain Avasa",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Florida",
+      "agent_count": 11
+    },
+    {
+      "property_code": "FL4SP",
+      "property_name": "Valencia at Westchase",
+      "community_id": "2c97dbcf-edf9-42cf-a424-000a90b1e30b",
+      "ga4_property_id": "378724718",
+      "captain": "Captain Valencia",
+      "scope_type": "spotlight",
+      "designation": "Sale",
+      "market": "Florida",
+      "agent_count": 11
+    },
+    {
+      "property_code": "FL4TA",
+      "property_name": "The Anatole",
+      "community_id": "9c34af7c-1737-4ee5-9473-5a15de00c88b",
+      "ga4_property_id": "378385381",
+      "captain": "Captain Anatole",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Florida",
+      "agent_count": 11
+    },
+    {
+      "property_code": "FL4VC",
+      "property_name": "Villas Continental",
+      "community_id": "afad8fa9-8aa0-410c-ae47-f5d9c658ac27",
+      "ga4_property_id": "378700639",
+      "captain": "Captain Villas",
+      "scope_type": "spotlight",
+      "designation": "Sale",
+      "market": "Florida",
+      "agent_count": 11
+    },
+    {
+      "property_code": "GA4BL",
+      "property_name": "Botanic Luxury",
+      "community_id": "2c2b46f3-f107-4651-9045-ca911586d46f",
+      "ga4_property_id": "453129717",
+      "captain": "Captain Botanic",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Atlanta",
+      "agent_count": 11
+    },
+    {
+      "property_code": "KY4MP",
+      "property_name": "The Metropolitan",
+      "community_id": "11376862-a8e9-4c35-9997-8307130f0a7b",
+      "ga4_property_id": "378702557",
+      "captain": "Captain Metropolitan",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Kentucky",
+      "agent_count": 11
+    },
+    {
+      "property_code": "KY4SC",
+      "property_name": "Steeplechase",
+      "community_id": "2bfc48bb-7a3c-45a0-8344-21ba26c96409",
+      "ga4_property_id": "383899747",
+      "captain": "Captain Steeplechase",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Kentucky",
+      "agent_count": 11
+    },
+    {
+      "property_code": "KY4TG",
+      "property_name": "The Reserves of Thomas Glen",
+      "community_id": "c886943c-c675-4594-82d9-ce7e7017c208",
+      "ga4_property_id": "465807797",
+      "captain": "Captain Reserves",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Kentucky",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX416",
+      "property_name": "Avasa at 1604",
+      "community_id": "e5a393b1-9bc0-4b99-b936-92ce80725dd0",
+      "ga4_property_id": "426692912",
+      "captain": "Captain Avasa",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "San Antonio",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4CO",
+      "property_name": "College View",
+      "community_id": "69f2e4f2-ff03-4dc7-a896-c22047d247ac",
+      "ga4_property_id": "378426727",
+      "captain": "Captain College",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4EG",
+      "property_name": "Elation at Grandway West",
+      "community_id": "c7054051-2919-443f-82a2-cd3b845ce82d",
+      "ga4_property_id": "378381999",
+      "captain": "Captain Elation",
+      "scope_type": "spotlight",
+      "designation": "Critical",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4FA",
+      "property_name": "Fairways at South Shore",
+      "community_id": "9dd947ad-53e1-4f67-959d-c13b0f17eb58",
+      "ga4_property_id": "378444042",
+      "captain": "Captain Fairways",
+      "scope_type": "spotlight",
+      "designation": "Sale",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4FV",
+      "property_name": "Forest View",
+      "community_id": "0f3894d1-7f3e-4d40-8a13-eae4666c3c61",
+      "ga4_property_id": "378700663",
+      "captain": "Captain Forest",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4GH",
+      "property_name": "The Cape at Grand Harbor",
+      "community_id": "e73c76b2-4a4b-44ba-883e-7b270a9be617",
+      "ga4_property_id": "378375463",
+      "captain": "Captain Cape",
+      "scope_type": "spotlight",
+      "designation": "Critical",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4GM",
+      "property_name": "The Retreat",
+      "community_id": "d097c652-b7ff-4508-8816-44c565cabed2",
+      "ga4_property_id": "378675172",
+      "captain": "Captain Retreat",
+      "scope_type": "spotlight",
+      "designation": "Spotlight",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4RB",
+      "property_name": "Riverbend",
+      "community_id": "22ed7e48-9ba1-4ba6-9774-ebb7702da551",
+      "ga4_property_id": "378381569",
+      "captain": "Captain Riverbend",
+      "scope_type": "spotlight",
+      "designation": "Sale",
+      "market": "Houston",
+      "agent_count": 11
+    },
+    {
+      "property_code": "TX4SO",
+      "property_name": "South Shore Lakes",
+      "community_id": "a668f584-c2c2-402f-84c3-7405de40b3a9",
+      "ga4_property_id": "378697354",
+      "captain": "Captain South",
+      "scope_type": "spotlight",
+      "designation": "Sale",
+      "market": "Houston",
+      "agent_count": 11
+    }
+  ]
+}
