@@ -20,6 +20,13 @@ import { gbpPosts } from "./routes/gbp-posts";
 import { vacs } from "./routes/vacs";
 import { evs } from "./routes/evs";
 import { platform } from "./routes/platform";
+import { adminIntelligence } from "./routes/admin-intelligence";
+import { adminSiteContent } from "./routes/admin-site-content";
+import { intelligenceMemory } from "./routes/intelligence-memory";
+import { searchIntelligence } from "./routes/search-intelligence";
+import { captain } from "./routes/captain";
+import { experiments } from "./routes/experiments";
+import { runScheduledCaptains } from "./platform/captain/runtime";
 
 // Phase 2 leasing funnel metric routers
 const t7Metrics = createLeasingMetricsRouter("t7_metrics", "t7_metrics");
@@ -33,6 +40,7 @@ app.use(
   cors({
     origin: [
       "https://app.venterradev.com",
+      "https://app.venterraliving.com",
       "http://localhost:3000",
       "http://localhost:3001",
       "http://127.0.0.1:3000",
@@ -48,6 +56,9 @@ app.get("/health", (c) => c.json({ status: "ok", version: "1.0.0" }));
 // Mount route groups under /v1
 app.route("/v1/auth", auth);
 app.route("/v1/admin", admin);
+app.route("/v1/admin/intelligence", adminIntelligence);
+app.route("/v1/admin/site-content", adminSiteContent);
+app.route("/v1/intelligence-memory", intelligenceMemory);
 app.route("/v1/communities", communities);
 app.route("/v1/metrics", metrics);
 app.route("/v1/marketing", marketing);
@@ -63,10 +74,13 @@ app.route("/v1/pond", pond);
 app.route("/v1/health", health);
 app.route("/v1/fish", fish);
 app.route("/v1/gsc-snapshot", gsc);
+app.route("/v1/search-intelligence", searchIntelligence);
 app.route("/v1/gbp-posts", gbpPosts);
 app.route("/v1/vacs", vacs);
 app.route("/v1/evs", evs);
 app.route("/v1/platform", platform);
+app.route("/v1/captain", captain);
+app.route("/v1/experiments", experiments);
 
 // 404 fallback
 app.notFound((c) =>
@@ -82,4 +96,12 @@ app.onError((err, c) => {
   );
 });
 
-export default app;
+export { app };
+
+export default {
+  fetch: app.fetch.bind(app),
+  request: app.request.bind(app),
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    await runScheduledCaptains(env.POP_BRIEF_DB, new Date(controller.scheduledTime));
+  },
+};
