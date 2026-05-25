@@ -1,6 +1,12 @@
 # Shared credentials and config (sensitive data)
 credentials/
-config/
+config/*
+!config/
+!config/cloudflare_analytics.yaml
+!config/release_reconcile_snapshot.json
+!evs/config/
+!evs/config/portfolio-functionality-qa-contract.json
+!evs/config/portfolio-qa-batches.json
 
 # Ad-hoc reports (may contain sensitive data)
 AdHoc_Reports/
@@ -65,6 +71,9 @@ apps/web/public/pilot-kpi/
 *_desktop_chrome.png
 *_iphone_safari.png
 *_android_chrome.png
+*-desktop_chrome.png
+*-iphone_safari.png
+*.tgz
 pilot-*.png
 evs/*.json
 
