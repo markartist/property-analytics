@@ -27,7 +27,11 @@ if str(ROOT) not in sys.path:
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from Data_Collection.utils.property_identity import PropertyIdentity, resolve_property_identity  # noqa: E402
+from Data_Collection.utils.property_identity import (  # noqa: E402
+    PropertyIdentity,
+    load_property_identities,
+    resolve_property_identity,
+)
 from wrangler_auth import build_runtime_env, npx_wrangler_prefix  # noqa: E402
 
 
@@ -42,6 +46,8 @@ PILOT_PROPERTY_NAMES = [
     "Ventana",
     "Calais Midtown",
 ]
+
+PORTFOLIO_SOURCE_LABEL = "Portfolio"
 
 ROLES = [
     {
@@ -257,8 +263,62 @@ def captain_display_name(identity: PropertyIdentity) -> str:
     return f"Captain {clean or identity.marketing_bi_property_id}"
 
 
-def load_scopes(include_spotlight: bool, include_pilot: bool) -> list[CaptainScope]:
+def merge_scope_type(existing: str, new_value: str) -> str:
+    merged: list[str] = []
+    for value in [*existing.split(","), *new_value.split(",")]:
+        normalized = value.strip()
+        if normalized and normalized not in merged:
+            merged.append(normalized)
+    return ",".join(merged)
+
+
+def merge_source_label(existing: str, new_value: str) -> str:
+    merged: list[str] = []
+    for value in [*existing.split(";"), *new_value.split(";")]:
+        normalized = value.strip()
+        if normalized and normalized not in merged:
+            merged.append(normalized)
+    return "; ".join(merged)
+
+
+def upsert_scope(
+    scopes: dict[str, CaptainScope],
+    identity: PropertyIdentity,
+    *,
+    scope_type: str,
+    source_label: str,
+    designation: str | None = None,
+    market: str | None = None,
+) -> None:
+    prior = scopes.get(identity.marketing_bi_property_id)
+    if not prior:
+        scopes[identity.marketing_bi_property_id] = CaptainScope(
+            identity=identity,
+            scope_type=scope_type,
+            source_label=source_label,
+            designation=designation,
+            market=market,
+        )
+        return
+    scopes[identity.marketing_bi_property_id] = CaptainScope(
+        identity=identity,
+        scope_type=merge_scope_type(prior.scope_type, scope_type),
+        source_label=merge_source_label(prior.source_label, source_label),
+        designation=designation or prior.designation,
+        market=market or prior.market,
+    )
+
+
+def load_scopes(include_spotlight: bool, include_pilot: bool, include_portfolio: bool) -> list[CaptainScope]:
     scopes: dict[str, CaptainScope] = {}
+    if include_portfolio:
+        for identity in load_property_identities():
+            upsert_scope(
+                scopes,
+                identity,
+                scope_type="portfolio",
+                source_label=PORTFOLIO_SOURCE_LABEL,
+            )
     if include_spotlight:
         spotlight_config = resolve_latest_spotlight_config()
         raw = json.loads(spotlight_config.read_text(encoding="utf-8"))
@@ -276,8 +336,9 @@ def load_scopes(include_spotlight: bool, include_pilot: bool) -> list[CaptainSco
                 label_parts.append(designation)
             if market:
                 label_parts.append(market)
-            scopes[identity.marketing_bi_property_id] = CaptainScope(
-                identity=identity,
+            upsert_scope(
+                scopes,
+                identity,
                 scope_type="spotlight",
                 source_label=" | ".join(label_parts),
                 designation=designation,
@@ -288,17 +349,12 @@ def load_scopes(include_spotlight: bool, include_pilot: bool) -> list[CaptainSco
             identity = resolve_property_identity(name)
             if not identity:
                 raise SystemExit(f"Unable to resolve pilot property: {name}")
-            prior = scopes.get(identity.marketing_bi_property_id)
-            if prior:
-                scopes[identity.marketing_bi_property_id] = CaptainScope(
-                    identity=identity,
-                    scope_type="spotlight,pilot",
-                    source_label=f"{prior.source_label}; Pilot",
-                    designation=prior.designation,
-                    market=prior.market,
-                )
-            else:
-                scopes[identity.marketing_bi_property_id] = CaptainScope(identity, "pilot", "Pilot")
+            upsert_scope(
+                scopes,
+                identity,
+                scope_type="pilot",
+                source_label="Pilot",
+            )
     return sorted(scopes.values(), key=lambda scope: scope.identity.marketing_bi_property_id)
 
 
@@ -474,7 +530,8 @@ def spotlight_cleanup_sql(scopes: list[CaptainScope], now: str) -> list[str]:
             "UPDATE captain_support_agents "
             "SET status = 'retired', updated_at = "
             f"{sql_literal(now)} "
-            "WHERE json_extract(source_scope_json, '$.scope_type') LIKE '%spotlight%' "
+            "WHERE (json_extract(source_scope_json, '$.scope_type') LIKE '%spotlight%' "
+            "OR json_extract(source_scope_json, '$.scope_type') LIKE '%portfolio%') "
             f"AND property_id NOT IN ({keep_sql});"
         ),
         (
@@ -482,7 +539,8 @@ def spotlight_cleanup_sql(scopes: list[CaptainScope], now: str) -> list[str]:
             "SET status = 'deprecated', updated_at = "
             f"{sql_literal(now)} "
             "WHERE source_system = 'captain_activation' "
-            "AND json_extract(structured_payload_json, '$.scope_type') LIKE '%spotlight%' "
+            "AND (json_extract(structured_payload_json, '$.scope_type') LIKE '%spotlight%' "
+            "OR json_extract(structured_payload_json, '$.scope_type') LIKE '%portfolio%') "
             f"AND json_extract(structured_payload_json, '$.property_code') NOT IN ({keep_sql});"
         ),
     ]
@@ -578,6 +636,7 @@ def apply_remote_chunks(scopes: list[CaptainScope], chunk_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Stand up Captain memory and support-agent rosters.")
+    parser.add_argument("--portfolio", action="store_true", help="Include the full governed portfolio.")
     parser.add_argument("--spotlight", action="store_true", help="Include active Spotlight properties.")
     parser.add_argument("--pilot", action="store_true", help="Include documented pilot properties.")
     parser.add_argument("--apply-remote", action="store_true", help="Apply the generated SQL to remote D1.")
@@ -586,9 +645,11 @@ def main() -> None:
     global CURRENT_NOW
     CURRENT_NOW = "2026-05-04T00:00:00Z"
 
-    include_spotlight = args.spotlight or not (args.spotlight or args.pilot)
-    include_pilot = args.pilot or not (args.spotlight or args.pilot)
-    scopes = load_scopes(include_spotlight, include_pilot)
+    explicit_scope = args.portfolio or args.spotlight or args.pilot
+    include_portfolio = args.portfolio
+    include_spotlight = args.spotlight or not explicit_scope
+    include_pilot = args.pilot or not explicit_scope
+    scopes = load_scopes(include_spotlight, include_pilot, include_portfolio)
     output_path = args.output or (OUT_DIR / f"captain_activation_roster_{CURRENT_NOW[:10]}.sql")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     sql = build_sql(scopes, CURRENT_NOW)
