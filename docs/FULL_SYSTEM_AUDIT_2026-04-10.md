@@ -79,6 +79,22 @@ Foundation note added on 2026-04-17:
 - `/system` is now intentionally being repositioned as an admin/toolbox lane rather than a featured general-audience landing-page surface, which is also the first concrete step toward offering-level permissions across the Pond
 - the web app now also has a shared offering-permissions foundation in `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts`, which centralizes role-aware surface visibility, featured-lane selection, audience labeling, and future offering/action-level permission expansion instead of scattering those rules across individual pages
 
+Data Warehouse source note added on 2026-05-26:
+
+- corporate SQL Server Data Warehouse access is now verified over AWS VPN using the Keeper/KSM-backed `Data Warehouse` credential and read-only `dw_reader` login
+- the source is now represented in `/Users/mark/Property_Analytics/config/system_landscape_manifest.json` as `data_warehouse_upstream` with trust boundary `corporate_vpn_sql_readonly`
+- the service-operations model now tracks the same upstream source in `/Users/mark/Property_Analytics/config/service_operations_manifest.json`
+- the integration map lives at `/Users/mark/Property_Analytics/docs/DATA_WAREHOUSE_POND_INTEGRATION_MAP_2026-05-26.md`
+- the first-pass workbook artifact lives at `/Users/mark/Property_Analytics/outputs/data_warehouse/Data_Warehouse_Map_2026-05-26.xlsx`
+- planning judgment: treat the warehouse as an external governed upstream source and validate existing guest-card CSV / workbook contracts before promoting direct Data Collection extractors
+- a daily shadow harvest routine now lives at `/Users/mark/Property_Analytics/scripts/run_data_warehouse_daily_harvest.mjs` with runbook `/Users/mark/Property_Analytics/docs/DATA_WAREHOUSE_DAILY_SHADOW_HARVEST_RUNBOOK_2026-05-26.md`; it writes aggregate-only packets under `/Users/mark/Property_Analytics/outputs/data_warehouse/daily_harvest/` and is scheduled by Codex local automation `data-warehouse-daily-shadow-harvest`
+- first clean packet `/Users/mark/Property_Analytics/outputs/data_warehouse/daily_harvest/2026-05-26_20260526_152346` produced 363 guest cards, 185 portal quotes, 89 online apps, 3 pipeline apps, and 103 scheduled tour appointments for completed window `2026-05-25` to `2026-05-26`; it also flagged one source-integrity item for future-dated `dbo.dw_prospect_log_entry.created_dtt`
+- direct no-CSV guest-card supply is now implemented in `/Users/mark/Property_Analytics/scripts/supply_guest_card_metrics_from_data_warehouse.mjs`; default mode writes `guest_card_metrics_dw_direct` with trusted-core/advisory field posture and does not mutate canonical `guest_card_metrics`, while canonical apply requires explicit `--apply-canonical --trusted-core-only`
+- guest-card export reconciliation is now implemented in `/Users/mark/Property_Analytics/scripts/reconcile_data_warehouse_guest_card_exports.mjs`; latest 10-file proof set `/Users/mark/Property_Analytics/outputs/data_warehouse/reconciliation/guest_card_exports/20260526_171126` matched row coverage and metadata but had 36 metric deltas totaling 47 counts, so the lane remains `degraded_advisory` rather than trusted
+- property identity governance now has the documented helper/check path: `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py` and `/Users/mark/Property_Analytics/scripts/check_property_identity_governance.sh`; the latest warehouse harvest resolves all 92 `property_cd` values through `/Users/mark/Property_Analytics/config/property_identity_matrix.json`, with Sundara at Spring Cypress mapped to empirically observed Data Warehouse code `TX4CY` and The Vine Kyle Parkway mapped to `TX4EK`
+- Captain Signal Flow now moves new source evidence into Captain-visible advisory packets without skipping trust posture: `/Users/mark/Property_Analytics/config/captain_signal_flow_manifest.json`, `/Users/mark/Property_Analytics/docs/CAPTAIN_SIGNAL_FLOW_2026-05-26.md`, and `/Users/mark/Property_Analytics/scripts/generate_data_warehouse_captain_advisory.mjs`; the first Data Warehouse Captain packet is `/Users/mark/Property_Analytics/outputs/captain_signal_flow/data_warehouse/2026-05-26_20260526_154651` and binds to Source Readiness, Funnel Watch, Channel Efficiency Watch, and Action And Proof Loop as `degraded_advisory`
+- governed config persistence is now explicit in `/Users/mark/Property_Analytics/docs/GOVERNED_CONFIG_PERSISTENCE_POLICY_2026-05-26.md`; `.gitignore` continues to ignore `config/*` by default but allowlists the non-secret Captain/Data Warehouse governance files needed for cross-branch persistence, while credential and local-token files remain ignored
+
 Operational note added on 2026-04-14:
 
 - the current dirty worktree is best understood as several coherent workstreams stacked together rather than random churn
@@ -152,6 +168,7 @@ Current capabilities present:
 - GBP collection
 - GTMetrix collection
 - guest card collection
+- Data Warehouse upstream source discovery and validation for guest-card / workbook replacement
 - ThirtyLines collection
 - Cloudflare cache audit collection
 - orchestration of daily master collection

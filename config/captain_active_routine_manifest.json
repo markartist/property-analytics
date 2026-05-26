@@ -1,0 +1,201 @@
+{
+  "version": "1.0",
+  "effective_date": "2026-05-09",
+  "owner": "MarketingOps / Data Pond / Captain Runtime",
+  "purpose": "Govern the active routines every property Captain must run or validate so Captains become active property observers, not passive report generators.",
+  "source_rules": [
+    "Data Pond governs internal facts where a governed source exists.",
+    "Property identity must resolve through config/property_identity_matrix.json and Data_Collection/utils/property_identity.py.",
+    "External/vendor/competitor research is advisory until source URL, capture date, confidence, and conflict state are preserved.",
+    "New source lanes enter Captain routines as advisory until validation and promotion gates explicitly mark them trusted.",
+    "Captain memory preserves interpretation, decisions, actions, and lessons. It does not override current source-of-record facts.",
+    "A Captain routine can be current, aging, stale, missing, or blocked. Missing/stale lanes must remain visible."
+  ],
+  "freshness_bands": {
+    "daily": { "current_days": 2, "aging_days": 5 },
+    "weekly": { "current_days": 10, "aging_days": 17 },
+    "monthly": { "current_days": 35, "aging_days": 45 },
+    "manual_on_arrival": { "current_days": 10, "aging_days": 21 }
+  },
+  "routines": [
+    {
+      "routine_key": "source_readiness",
+      "routine_name": "Source Readiness",
+      "captain_role": "Quartermaster / Source Scout",
+      "cadence": "daily",
+      "purpose": "Confirm the property has current, correctly routed evidence before the Captain reads or recommends.",
+      "required_sources": [
+        "guest_cards",
+        "unit_feed",
+        "marketing_ops_summary",
+        "marketing_bi_source_performance",
+        "ga4_daily",
+        "gsc_daily",
+        "pagespeed",
+        "gbp_insights",
+        "reputation_com",
+        "competitor_market_research"
+      ],
+      "optional_sources": [
+        "dw_leasing_funnel_shadow",
+        "dw_resident_voice_candidate",
+        "dw_inventory_pricing_candidate",
+        "dw_service_operations_candidate"
+      ],
+      "outputs": ["source freshness posture", "missing/stale lane watch items", "brief readiness gate", "advisory new-source posture"]
+    },
+    {
+      "routine_key": "property_memory",
+      "routine_name": "Property Memory",
+      "captain_role": "Captain / Logkeeper",
+      "cadence": "weekly",
+      "purpose": "Keep the property reality model alive: floorplans, region, peer family, prior recommendations, open actions, lessons, and repeated failure modes.",
+      "required_sources": [
+        "property_identity_matrix",
+        "captain_memory",
+        "captain_actions",
+        "captain_watch_items"
+      ],
+      "optional_sources": [
+        "captain_agent_runs",
+        "captain_brief_runs"
+      ],
+      "outputs": ["memory freshness posture", "prior-cycle context", "lessons and repeated patterns"]
+    },
+    {
+      "routine_key": "funnel_watch",
+      "routine_name": "Funnel Watch",
+      "captain_role": "Captain / Funnel Watch",
+      "cadence": "daily",
+      "purpose": "Watch whether demand is becoming visits, applications, price quotes, leases, and move-ins at the level needed to reduce exposure.",
+      "required_sources": [
+        "guest_cards",
+        "marketing_bi_source_performance",
+        "marketing_ops_summary",
+        "marketing_cancel_denial",
+        "ga4_traffic_sources"
+      ],
+      "optional_sources": [
+        "dw_leasing_funnel_shadow"
+      ],
+      "outputs": ["T30/T90 direction", "portfolio/regional comparison requirement", "source leakage watch items", "advisory warehouse funnel signals"]
+    },
+    {
+      "routine_key": "inventory_product_watch",
+      "routine_name": "Inventory And Product Watch",
+      "captain_role": "Captain / Inventory Watch",
+      "cadence": "daily",
+      "purpose": "Watch the actual available product, floorplan pressure, make-ready posture, specials, pricing visibility, and demand-to-available-unit mismatch.",
+      "required_sources": [
+        "unit_feed",
+        "available_unit_interest",
+        "marketing_ops_summary"
+      ],
+      "optional_sources": [
+        "portfolio_box_score",
+        "dw_inventory_pricing_candidate"
+      ],
+      "outputs": ["floorplan pressure", "demand vs available unit type", "make-ready/watch readiness posture"]
+    },
+    {
+      "routine_key": "channel_efficiency_watch",
+      "routine_name": "Channel Efficiency Watch",
+      "captain_role": "Signals Officer",
+      "cadence": "daily",
+      "purpose": "Watch spend, source output, cost efficiency, package value, and whether channel spend is helping the specific exposed product.",
+      "required_sources": [
+        "marketing_bi_source_performance",
+        "monthly_ad_spend",
+        "google_ads",
+        "ga4_traffic_sources"
+      ],
+      "optional_sources": [
+        "dw_leasing_funnel_shadow"
+      ],
+      "outputs": ["source output", "budget vs actual posture", "spend protection or tighten guidance", "advisory funnel source-output candidates"]
+    },
+    {
+      "routine_key": "website_content_watch",
+      "routine_name": "Website, SEO, And Content Watch",
+      "captain_role": "Navigator",
+      "cadence": "daily",
+      "purpose": "Research whether the live page, metadata, headings, speed, content structure, GBP, GSC, and DataForSEO evidence help the property lease the exposed product.",
+      "required_sources": [
+        "ga4_traffic_sources",
+        "gsc_daily",
+        "pagespeed",
+        "dataforseo_onpage",
+        "dataforseo_rankings",
+        "dataforseo_business",
+        "gbp_insights"
+      ],
+      "outputs": ["exact copy/content actions", "technical blockers", "local visibility and entity posture"]
+    },
+    {
+      "routine_key": "competitor_watch",
+      "routine_name": "Competitor Watch",
+      "captain_role": "Navigator / Signals Officer",
+      "cadence": "weekly",
+      "purpose": "Keep current evidence on competitor rents, specials, package posture, USPs, reviews, and visible market pressure.",
+      "required_sources": [
+        "competitor_market_research",
+        "dataforseo_business",
+        "reputation_com",
+        "unit_feed"
+      ],
+      "outputs": ["competitor rent/special evidence", "subject-vs-comp value read", "pricing/concession/copy pressure"]
+    },
+    {
+      "routine_key": "reputation_friction_watch",
+      "routine_name": "Reputation And Friction Watch",
+      "captain_role": "Reputation Watch",
+      "cadence": "weekly",
+      "purpose": "Identify what public reputation, review themes, resident complaints, service friction, and response posture may be helping or hurting leasing.",
+      "required_sources": [
+        "gbp_reviews",
+        "gbp_reviews_summary",
+        "gbp_review_sentiment",
+        "reputation_com"
+      ],
+      "optional_sources": [
+        "service_delivery",
+        "dw_resident_voice_candidate",
+        "dw_service_operations_candidate"
+      ],
+      "outputs": ["trust blockers", "review themes", "resident voice action items"]
+    },
+    {
+      "routine_key": "experience_validation_watch",
+      "routine_name": "Experience Validation Watch",
+      "captain_role": "Engineer / Experience Watch",
+      "cadence": "weekly",
+      "purpose": "Confirm mobile/desktop rendering, form paths, CTA paths, specials visibility, speed, and post-change validation are not blocking conversion.",
+      "required_sources": [
+        "pagespeed"
+      ],
+      "optional_sources": [
+        "evs",
+        "browserstack"
+      ],
+      "outputs": ["site experience proof", "blocked validation lanes", "post-change QA needs"]
+    },
+    {
+      "routine_key": "action_proof_loop",
+      "routine_name": "Action And Proof Loop",
+      "captain_role": "Boatswain / Captain",
+      "cadence": "daily",
+      "purpose": "Track every recommendation through owner, due date, proof, expected effect, completion, outcome, and memory.",
+      "required_sources": [
+        "captain_actions",
+        "captain_watch_items",
+        "captain_agent_runs",
+        "captain_brief_runs"
+      ],
+      "optional_sources": [
+        "dw_leasing_funnel_shadow",
+        "dw_service_operations_candidate"
+      ],
+      "outputs": ["open action ledger", "proof requirements", "outcome memory"]
+    }
+  ]
+}

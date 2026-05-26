@@ -3,6 +3,9 @@ credentials/
 config/*
 !config/
 !config/cloudflare_analytics.yaml
+!config/captain_active_routine_manifest.json
+!config/captain_signal_flow_manifest.json
+!config/property_identity_matrix.json
 !config/release_reconcile_snapshot.json
 !evs/config/
 !evs/config/portfolio-functionality-qa-contract.json

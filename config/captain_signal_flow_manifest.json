@@ -1,0 +1,108 @@
+{
+  "version": "2026-05-26.captain-signal-flow.v1",
+  "updated_at": "2026-05-26",
+  "owner": "Data Collection / Data Pond / Captain Runtime",
+  "purpose": "Define how newly harvested source evidence becomes Captain-visible proactive signal packs without bypassing validation, property identity, or trust posture.",
+  "non_negotiables": [
+    "Never fabricate missing data, mappings, rates, or recommendations.",
+    "Property identity must resolve through config/property_identity_matrix.json and Data_Collection/utils/property_identity.py before property-scoped Captain use.",
+    "Advisory source data may be surfaced to Captains only with explicit trust posture, lineage, and validation caveats.",
+    "Captain memory may interpret facts but must not override source-of-record facts.",
+    "Raw prospect, resident, applicant, phone, email, and note-level data stays excluded unless an approved source contract explicitly narrows an exception."
+  ],
+  "flow_steps": [
+    {
+      "step_key": "harvest",
+      "name": "Harvest",
+      "description": "Collect date-windowed source evidence with Keeper-backed credentials and aggregate-only output where possible.",
+      "required_outputs": ["source packet", "run metadata", "source freshness"]
+    },
+    {
+      "step_key": "validate",
+      "name": "Validate",
+      "description": "Check source freshness, row counts, data-quality flags, contract posture, and property identity.",
+      "required_outputs": ["validation posture", "data-quality items", "identity-resolution result"]
+    },
+    {
+      "step_key": "classify_trust",
+      "name": "Classify Trust",
+      "description": "Assign trusted, stale, degraded, unavailable, or advisory posture before any Captain consumption.",
+      "required_outputs": ["domain trust posture", "source caveats", "lineage"]
+    },
+    {
+      "step_key": "build_signal_pack",
+      "name": "Build Captain Signal Pack",
+      "description": "Transform validated source evidence into property-scoped aggregate signals and watch items.",
+      "required_outputs": ["portfolio summary", "property signals", "watch items", "lineage"]
+    },
+    {
+      "step_key": "publish_to_captains",
+      "name": "Publish To Captains",
+      "description": "Surface the packet to Captain routines, Watchtower, and operator briefings with trust posture intact.",
+      "required_outputs": ["Captain advisory", "machine-readable JSON", "routine bindings"]
+    },
+    {
+      "step_key": "memory_and_action_loop",
+      "name": "Memory And Action Loop",
+      "description": "Let Captains interpret safe signals, create actions, and later compare outcomes without mutating canonical facts.",
+      "required_outputs": ["Captain memory entries", "action ledger candidates", "outcome proof references"]
+    }
+  ],
+  "source_lanes": [
+    {
+      "domain_key": "dw_leasing_funnel_shadow",
+      "source": "data_warehouse_upstream",
+      "status": "active_shadow",
+      "cadence": "daily",
+      "captain_routines": ["source_readiness", "funnel_watch", "channel_efficiency_watch", "action_proof_loop"],
+      "current_generator": "/Users/mark/Property_Analytics/scripts/generate_data_warehouse_captain_advisory.mjs",
+      "current_harvest": "/Users/mark/Property_Analytics/scripts/run_data_warehouse_daily_harvest.mjs",
+      "trust_posture": "advisory",
+      "promotion_gate": "Reconcile generated guest-card metrics against historical daily exports before trusted use."
+    },
+    {
+      "domain_key": "dw_resident_voice_candidate",
+      "source": "data_warehouse_upstream",
+      "status": "candidate",
+      "cadence": "weekly",
+      "captain_routines": ["source_readiness", "reputation_friction_watch"],
+      "trust_posture": "validation_pending",
+      "promotion_gate": "Define Kingsley/reputation source contract and sensitive-field handling before Captain signal packs."
+    },
+    {
+      "domain_key": "dw_inventory_pricing_candidate",
+      "source": "data_warehouse_upstream",
+      "status": "candidate",
+      "cadence": "daily",
+      "captain_routines": ["source_readiness", "inventory_product_watch"],
+      "trust_posture": "validation_pending",
+      "promotion_gate": "Metric owner approval required for availability, pricing, lease expiry, and product-pressure definitions."
+    },
+    {
+      "domain_key": "dw_service_operations_candidate",
+      "source": "data_warehouse_upstream",
+      "status": "candidate",
+      "cadence": "weekly",
+      "captain_routines": ["source_readiness", "reputation_friction_watch", "action_proof_loop"],
+      "trust_posture": "validation_pending",
+      "promotion_gate": "Service-operation source contract and sensitive resident/work-order boundary required."
+    }
+  ],
+  "captain_publish_surfaces": [
+    {
+      "surface": "daily_advisory_packet",
+      "path": "/Users/mark/Property_Analytics/outputs/captain_signal_flow",
+      "purpose": "Immediate local packet for Captain/operator review."
+    },
+    {
+      "surface": "watchtower",
+      "path": "/watchtower",
+      "purpose": "Show source freshness, validation, identity resolution, and data-quality warnings."
+    },
+    {
+      "surface": "captain_runtime",
+      "path": "Captain routines",
+      "purpose": "Read current safe signal packs and create property actions only after trust policy allows."
+    }
+  ]
+}

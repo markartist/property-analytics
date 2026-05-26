@@ -1,6 +1,6 @@
 {
-  "version": "2026-04-18.service-ops.v1",
-  "updated_at": "2026-04-18",
+  "version": "2026-05-26.service-ops.v2",
+  "updated_at": "2026-05-26",
   "purpose": "Canonical service-operations model for enterprise service ownership, runtime posture, release lanes, and operational runbooks.",
   "services": [
     {
@@ -25,6 +25,54 @@
         "retry discipline",
         "freshness governance",
         "source recovery"
+      ]
+    },
+    {
+      "id": "data_warehouse_upstream",
+      "name": "Data Warehouse Upstream",
+      "owner": "Data Warehouse / Data Collection",
+      "service_tier": "external_source",
+      "runtime": "Corporate SQL Server over AWS VPN",
+      "deployment_target": "external governed source + local operator access",
+      "release_lane": "data_collection_hardening",
+      "trust_boundary": "corporate_vpn_sql_readonly",
+      "canonical_surface": "/watchtower",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/DATA_WAREHOUSE_POND_INTEGRATION_MAP_2026-05-26.md",
+      "depends_on": [
+        "keeper",
+        "corporate_vpn",
+        "data_collection",
+        "property_identity_matrix"
+      ],
+      "operational_focus": [
+        "source lineage",
+        "guest-card export replacement",
+        "direct collector validation",
+        "source freshness governance"
+      ]
+    },
+    {
+      "id": "captain_signal_flow",
+      "name": "Captain Signal Flow",
+      "owner": "Data Collection / Data Pond / Captain Runtime",
+      "service_tier": "governed_advisory",
+      "runtime": "Local source-packet transformation + Captain routine manifests",
+      "deployment_target": "local operator runtime",
+      "release_lane": "captain_governance_runtime",
+      "trust_boundary": "local_operator_only",
+      "canonical_surface": "/captains and /watchtower",
+      "primary_runbook": "/Users/mark/Property_Analytics/docs/CAPTAIN_SIGNAL_FLOW_2026-05-26.md",
+      "depends_on": [
+        "data_collection",
+        "data_warehouse_upstream",
+        "property_identity_matrix",
+        "watchtower_control_plane"
+      ],
+      "operational_focus": [
+        "new-source visibility",
+        "Captain signal packs",
+        "advisory trust posture",
+        "action and proof loop inputs"
       ]
     },
     {

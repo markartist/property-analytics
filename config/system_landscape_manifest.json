@@ -1,6 +1,6 @@
 {
-  "version": "2026-04-17.foundation.v1",
-  "updated_at": "2026-04-17",
+  "version": "2026-05-26.foundation.v2",
+  "updated_at": "2026-05-26",
   "purpose": "Machine-readable landscape map for canonical systems, trust zones, repo boundaries, and migration priorities.",
   "canonical_foundations": [
     {
@@ -23,6 +23,26 @@
         "run state",
         "shared APIs",
         "operational surfaces"
+      ]
+    },
+    {
+      "id": "data_warehouse_upstream",
+      "name": "Data Warehouse Upstream",
+      "status": "external_governed_source_active",
+      "owner": "Data Warehouse / Data Collection",
+      "paths": [
+        "/Users/mark/Property_Analytics/docs/DATA_WAREHOUSE_POND_INTEGRATION_MAP_2026-05-26.md",
+        "/Users/mark/Property_Analytics/outputs/data_warehouse/Data_Warehouse_Map_2026-05-26.xlsx",
+        "/Users/mark/Property_Analytics/Data_Collection/collectors/guest_card_collector.py"
+      ],
+      "trust_zone": "corporate_vpn_sql_readonly",
+      "responsibilities": [
+        "SQL Server reporting source",
+        "property reference",
+        "leasing funnel source records",
+        "guest-card export lineage",
+        "Kingsley and reputation source candidates",
+        "pricing and availability source candidates"
       ]
     },
     {
@@ -71,6 +91,18 @@
         "data_pond_truth"
       ],
       "trust_zone": "access_protected_human",
+      "visibility_target": "in_pond"
+    },
+    {
+      "id": "captain_signal_flow",
+      "name": "Captain Signal Flow",
+      "status": "active_advisory_flow",
+      "path": "/Users/mark/Property_Analytics/outputs/captain_signal_flow",
+      "depends_on": [
+        "data_pond_truth",
+        "data_warehouse_upstream"
+      ],
+      "trust_zone": "local_operator_only",
       "visibility_target": "in_pond"
     },
     {
@@ -187,6 +219,10 @@
     {
       "id": "external_governed_system",
       "description": "Sibling or external governed system that should integrate without becoming private truth."
+    },
+    {
+      "id": "corporate_vpn_sql_readonly",
+      "description": "Corporate SQL Server source reachable through VPN with read-only SQL credentials resolved from Keeper/KSM."
     }
   ],
   "shared_security_posture": {
@@ -202,6 +238,7 @@
   },
   "immediate_priorities": [
     "Keep capability awareness current in docs and this manifest.",
+    "Validate Data Warehouse source extracts against existing guest-card CSV and workbook contracts before replacing manual drops.",
     "Bring off-Pond specialized systems into governed visibility before replacing them.",
     "Continue Zero Trust cutover for human and machine surfaces where the platform already has canonical routes.",
     "Treat nested Git histories as explicit repo boundaries during cleanup and branch shaping.",

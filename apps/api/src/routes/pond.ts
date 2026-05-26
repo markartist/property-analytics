@@ -700,6 +700,8 @@ function knownApiRouteForNode(id: string): string | null {
   switch (id) {
     case "data_pond_truth":
       return "/v1/pond";
+    case "data_warehouse_upstream":
+      return null;
     case "intelligence_office":
       return "/v1/intelligence-memory";
     case "watchtower":
@@ -739,6 +741,28 @@ function deriveObservedTrustEvidence(id: string): RawObservedTrustEvidence {
             "Core human surfaces remain session-guarded and represented in The Pond.",
             "Machine-facing platform routes no longer depend on shared-token fallback.",
             "Observed trust alignment for the core platform boundary resolves from transitional to aligned.",
+          ],
+        },
+      };
+    case "data_warehouse_upstream":
+      return {
+        observed_zero_trust_posture: "external_governed",
+        trust_alignment: "transitional",
+        trust_evidence_points: [
+          "The source is a corporate SQL Server reporting database reachable only through VPN and read-only SQL credentials.",
+          "The local access path resolves the Data Warehouse credential from Keeper/KSM; raw credential values should not be stored in scripts, manifests, or logs.",
+          "The current productionized path is still source-contract validation and export replacement, not a fully direct canonical collector.",
+        ],
+        remediation_track: {
+          label: "Data Warehouse Source Integration",
+          doc_path: "/Users/mark/Property_Analytics/docs/DATA_WAREHOUSE_POND_INTEGRATION_MAP_2026-05-26.md",
+          route_href: "/watchtower",
+          status: "active",
+          status_detail: "Data Warehouse access is verified and represented, but the lane remains transitional until guest-card and workbook contracts are validated and folded into canonical collection.",
+          completion_criteria: [
+            "The Data Warehouse source is represented in The Pond landscape.",
+            "Credential and network access are governed through Keeper/KSM and corporate VPN rather than local secrets.",
+            "At least one canonical Data_Collection extractor or validated source contract replaces the manual export dependency.",
           ],
         },
       };
@@ -962,6 +986,26 @@ function withMachineEvaluatedRemediation<T extends LandscapeNodeWithEvidence>(it
             `Current tower read is ${evidence.trust_alignment}.`,
           ),
         ];
+      case "data_warehouse_upstream":
+        return [
+          criterion(
+            "The Data Warehouse source is represented in The Pond landscape.",
+            evidence.represented_in_pond && evidence.web_surface_live,
+            evidence.represented_in_pond && evidence.web_surface_live
+              ? "The source is visible through the Watchtower/System control-plane lane."
+              : "The source still needs visible control-plane representation.",
+          ),
+          criterion(
+            "Credential and network access are governed through Keeper/KSM and corporate VPN rather than local secrets.",
+            evidence.observed_zero_trust_posture === "external_governed",
+            "The source is intentionally classified as an external governed corporate SQL boundary.",
+          ),
+          criterion(
+            "At least one canonical Data_Collection extractor or validated source contract replaces the manual export dependency.",
+            evidence.trust_alignment === "aligned",
+            `Current tower read is ${evidence.trust_alignment}; the manual export replacement is not yet fully promoted.`,
+          ),
+        ];
       case "intelligence_office":
         return [
           criterion(
@@ -1147,7 +1191,12 @@ function withMachineEvaluatedRemediation<T extends LandscapeNodeWithEvidence>(it
 function deriveFoundationEvidence(
   item: SystemLandscapeManifest["canonical_foundations"][number],
 ): LandscapeEvidence {
-  const pondHref = item.id === "intelligence_office" ? "/intelligence-office" : null;
+  const pondHref =
+    item.id === "intelligence_office"
+      ? "/intelligence-office"
+      : item.id === "data_warehouse_upstream"
+        ? "/watchtower"
+        : null;
   const apiRoute = knownApiRouteForNode(item.id);
   const observed = deriveObservedTrustEvidence(item.id);
   return {
@@ -1168,6 +1217,12 @@ function deriveFoundationEvidence(
             "Canonical DB, registry, collection system, API, and web platform all live inside the main platform boundary.",
             "Visible in The Pond and Watchtower as the truth/control-plane layer.",
           ]
+        : item.id === "data_warehouse_upstream"
+          ? [
+              "SQL Server access has been verified over corporate VPN with read-only warehouse credentials.",
+              "The source contains current property, prospect, quote, application, tour/log, Kingsley, marketing-source, pricing, and lease-operation objects.",
+              "Current best path is validation-first integration: preserve existing guest-card CSV contracts before introducing direct collectors.",
+            ]
         : item.id === "intelligence_office"
           ? [
               "Governed memory and directives are present in both API and web surfaces.",
@@ -1185,6 +1240,13 @@ function deriveFoundationEvidence(
             detail: "Keep new truth, collection, and operator workflows attached to the shared platform boundary rather than forking parallel systems.",
             href: "/system",
           }
+        : item.id === "data_warehouse_upstream"
+          ? {
+              state: "action",
+              title: "Validate source contracts",
+              detail: "Compare warehouse-generated guest-card exports and workbook candidates against existing approved files before promoting direct Data_Collection extractors.",
+              href: "/watchtower",
+            }
         : item.id === "intelligence_office"
           ? {
               state: "watch",
@@ -1307,6 +1369,9 @@ function deriveLegacyEvidence(
 function deriveFoundationPosture(id: string): { posture: WatchtowerPosture; signal: string } {
   if (id === "data_pond_truth") {
     return { posture: "healthy", signal: "Canonical truth and control plane are now visible in The Pond and Watchtower." };
+  }
+  if (id === "data_warehouse_upstream") {
+    return { posture: "active_build", signal: "Corporate SQL Server source is reachable and mapped; validation-first integration into Data Collection remains active work." };
   }
   if (id === "intelligence_office") {
     return { posture: "active_build", signal: "Governed interpretation layer is live and still being integrated more deeply across surfaces." };
