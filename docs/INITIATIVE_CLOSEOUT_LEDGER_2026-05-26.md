@@ -43,44 +43,89 @@ The rule for every initiative is simple:
 1. Release and stabilization governance
 2. Data collection hardening
 3. Property identity and source contracts
-4. Platform app / Watchtower / control surfaces
-5. Zero Trust / SSO / Keeper auth posture
-6. Captain governance runtime
-7. Site Content / Intelligence Office / VACS
-8. EVS / BrowserStack validation
-9. Pilot CWV / tracker / roundup reporting
-10. PIB / POP Brief reporting lane
-11. Model gateway
-12. Edge messages experimentation
-13. ApartmentIQ market intelligence
-14. Copy-change and content watch
-15. Cloudflare ops
-16. Paid media workbook
-17. Docs and memory governance
-18. Local scratch and generated artifacts
+4. Data Warehouse upstream source integration
+5. Platform app / Watchtower / control surfaces
+6. Zero Trust / SSO / Keeper auth posture
+7. Captain governance runtime
+8. Site Content / Intelligence Office / VACS
+9. EVS / BrowserStack validation
+10. Pilot CWV / tracker / roundup reporting
+11. PIB / POP Brief reporting lane
+12. Model gateway
+13. Edge messages experimentation
+14. ApartmentIQ market intelligence
+15. Copy-change and content watch
+16. Cloudflare ops
+17. Paid media workbook
+18. Docs and memory governance
+19. Local scratch and generated artifacts
 
 ## Initiative Ledger
 
-| Initiative | Evidence / location | Current condition | Disposition | Closeout test | Next action |
-| --- | --- | --- | --- | --- | --- |
-| Release and stabilization governance | `8077288`, `3969bbe`, `scripts/generate_release_reconcile_snapshot.py`, `config/release_reconcile_snapshot.json` | Clean stabilization branch exists and is pushed | Promote | Guardrails pass; branch stays narrow | Use as the review base for closeout work |
-| Data collection hardening | `66890f9`, `Data_Collection/`, collection monitoring/orchestration paths | Valuable but too broad for one promotion; conflicts in daily collection, retry, closure, alerting, and morning report | Split | Property identity governance passes; daily collection/retry paths validate in isolation | Split into source-contract/read-model migrations, then runtime collection changes |
-| Property identity and source contracts | `property_identity_and_source_contracts`, `Data_Collection/utils/property_identity.py`, `config/property_identity_matrix.json` | High-value foundation mixed with many source ingests | Split | `bash scripts/check_property_identity_governance.sh` passes | Promote identity matrix/governance before individual source ingests |
-| Platform app / Watchtower / control surfaces | `a6952e3`, `apps/api/`, `apps/web/`, `packages/shared/` | Large app/control-plane upgrade with many tests and UI surfaces | Split | API tests and web type/build checks pass for a narrowed slice | Start with Watchtower/read-only release visibility, then auth-sensitive surfaces |
-| Zero Trust / SSO / Keeper auth posture | `a326064`, Cloudflare Access docs and app auth paths | Security-critical and useful, but needs credential-aware validation | Split | Keeper-backed auth preflight passes without printing secrets; app fallback states verified | Review service-token/browser identity changes separately from documentation |
-| Captain governance runtime | `ee99975`, captain migrations, scripts, reports | Large governance runtime lane with database and app surface implications | Park then split | Migration order and API routes validate in a branch dedicated to Captain runtime | Close after platform baseline is settled |
-| Site Content / Intelligence Office / VACS | `02aef9a`, `apps/web/src/app/site-content/`, `apps/api/src/routes/admin-site-content.ts`, VACS routes/docs | Active product lane; already partly represented in release-reconcile history | Split | Site Content core workflow passes; VACS contract tests pass separately | Promote only editorial-first Site Content fixes that are already clean; park broader VACS planning |
-| EVS / BrowserStack validation | `42663fc`, `evs/`, `ops/browserstack/`, EVS migrations/routes | Useful QA lane with external service dependency and generated screenshots | Park then promote evidence tooling | BrowserStack credentials resolve through Keeper; local artifacts excluded | Keep code separate from generated screenshot artifacts |
-| Pilot CWV / tracker / roundup reporting | `ff7ec1a`, `pilot_control_cwv/`, `apps/web/src/app/tracker/`, nested `apps/pilot-tracker-standalone/` | Active pilot lane, includes nested repo boundary and generated outputs | Split | Main tracker path validates independently; standalone tracker disposition decided | Close main web tracker first; park standalone tracker until consolidation decision |
-| PIB / POP Brief reporting lane | `ea3c045`, `POP_Brief/`, app PIB pages, `pib_data_to_d1.py` | Adjacent reporting work; canonical PIB files are locked | Split with guardrails | `bash scripts/check_pib_guardrails.sh` passes; no locked PIB files touched | Promote POP Brief/app support only after confirming no canonical PIB mutation |
-| Model gateway | `903fc9c`, `apps/api/src/platform/model-gateway/`, model gateway docs/tests | API/provider abstraction lane; not needed for stabilization | Park | Model gateway test suite passes in dedicated branch | Revisit after platform/auth branch is stable |
-| Edge messages experimentation | `cb85b06`, experiments routes, public preview, docs | Experimental content/pricing lane | Park | Worker dry-run contract and admin UI spec verified | Keep out of production release until experiment owner approves |
-| ApartmentIQ market intelligence | `apartmentiq_market_intelligence`, collector, migrations, scripts, docs | New external data source with schema and collector implications | Split | Source contract reviewed; collector auth uses Keeper path; migrations reconcile | Treat as a source-ingest project after identity governance |
-| Copy-change and content watch | `copy_change_and_content_watch`, Monteverde watch, GBP posts, content office | Mixed monitoring/content operations lane | Split | Watch script source contract and content-office UI validate separately | Review `pre-stabilization dirty changes` before deciding |
-| Cloudflare ops | `cloudflare_ops`, cache audit, cache rollout, analytics collector, Wrangler auth | Operationally important but credential-sensitive | Split | Wrangler auth helper resolves token through Keeper; no direct secret paths added | Promote Wrangler/Keeper helper changes before analytics collector expansion |
-| Paid media workbook | `35286d5`, `paid_media_workbook/` | Small specialized workbook lane | Promote or park | Workbook generation smoke test passes with Keeper-backed Google Ads config | Quick review candidate after data/auth foundations |
-| Docs and memory governance | `8c44a21`, `ATLAS_WORKING_MEMORY.md`, capability/audit docs, guardrail scripts | Valuable but very large documentation/governance sweep | Split | Context discipline and PIB guardrails pass | Promote only docs needed by each initiative closeout |
-| Local scratch and generated artifacts | stashes, root screenshots, `tmp/`, `tools/`, `.env.production`, nested build outputs | Preserved but not production work | Delete/Ignore after review | Parent repo remains clean; no secrets printed or committed | Inspect shelves one by one and delete only confirmed generated/scratch artifacts |
+| Initiative | Status | Evidence / location | Current condition | Disposition | Closeout test | Next action |
+| --- | --- | --- | --- | --- | --- | --- |
+| Release and stabilization governance | Closed-foundation | `8077288`, `3969bbe`, `80024ec`, `scripts/generate_release_reconcile_snapshot.py`, `config/release_reconcile_snapshot.json` | Clean stabilization branch exists and is pushed | Promote | Guardrails pass; branch stays narrow | Use as the review base for closeout work |
+| Data collection hardening | Split needed | `66890f9`, `Data_Collection/`, collection monitoring/orchestration paths | Valuable but too broad for one promotion; conflicts in daily collection, retry, closure, alerting, and morning report | Split | Property identity governance passes; daily collection/retry paths validate in isolation | Split into source-contract/read-model migrations, then runtime collection changes |
+| Property identity and source contracts | Reviewing | `property_identity_and_source_contracts`, `Data_Collection/utils/property_identity.py`, `config/property_identity_matrix.json` | High-value foundation mixed with many source ingests and now active in the dirty tree | Split | `bash scripts/check_property_identity_governance.sh` passes | Promote identity matrix/governance before individual source ingests |
+| Data Warehouse upstream source integration | Reviewing | Current dirty tree, `docs/DATA_WAREHOUSE_*_2026-05-26.md`, `scripts/run_data_warehouse_daily_harvest.mjs`, `scripts/reconcile_data_warehouse_guest_card_exports.mjs` | Active discovery/shadow-harvest lane with Keeper-backed upstream, guest-card reconciliation, and Captain advisory packets | Split | Keeper-backed auth verified without secrets; property identity governance passes; reconciliation status is accepted as advisory/degraded until source-owner review | Keep as validation-first source lane, separate from canonical replacement of OneDrive/manual exports |
+| Platform app / Watchtower / control surfaces | Split needed | `a6952e3`, `apps/api/`, `apps/web/`, `packages/shared/` | Large app/control-plane upgrade with many tests and UI surfaces | Split | API tests and web type/build checks pass for a narrowed slice | Start with Watchtower/read-only release visibility, then auth-sensitive surfaces |
+| Zero Trust / SSO / Keeper auth posture | Split needed | `a326064`, Cloudflare Access docs and app auth paths | Security-critical and useful, but needs credential-aware validation | Split | Keeper-backed auth preflight passes without printing secrets; app fallback states verified | Review service-token/browser identity changes separately from documentation |
+| Captain governance runtime | Parked pending platform | `ee99975`, captain migrations, scripts, reports | Large governance runtime lane with database and app surface implications | Park then split | Migration order and API routes validate in a branch dedicated to Captain runtime | Close after platform baseline is settled |
+| Site Content / Intelligence Office / VACS | Split needed | `02aef9a`, `apps/web/src/app/site-content/`, `apps/api/src/routes/admin-site-content.ts`, VACS routes/docs | Active product lane; already partly represented in release-reconcile history | Split | Site Content core workflow passes; VACS contract tests pass separately | Promote only editorial-first Site Content fixes that are already clean; park broader VACS planning |
+| EVS / BrowserStack validation | Parked | `42663fc`, `evs/`, `ops/browserstack/`, EVS migrations/routes | Useful QA lane with external service dependency and generated screenshots | Park then promote evidence tooling | BrowserStack credentials resolve through Keeper; local artifacts excluded | Keep code separate from generated screenshot artifacts |
+| Pilot CWV / tracker / roundup reporting | Split needed | `ff7ec1a`, `pilot_control_cwv/`, `apps/web/src/app/tracker/`, nested `apps/pilot-tracker-standalone/` | Active pilot lane, includes nested repo boundary and generated outputs | Split | Main tracker path validates independently; standalone tracker disposition decided | Close main web tracker first; park standalone tracker until consolidation decision |
+| PIB / POP Brief reporting lane | Guardrail review | `ea3c045`, `POP_Brief/`, app PIB pages, `pib_data_to_d1.py` | Adjacent reporting work; canonical PIB files are locked | Split with guardrails | `bash scripts/check_pib_guardrails.sh` passes; no locked PIB files touched | Promote POP Brief/app support only after confirming no canonical PIB mutation |
+| Model gateway | Parked | `903fc9c`, `apps/api/src/platform/model-gateway/`, model gateway docs/tests | API/provider abstraction lane; not needed for stabilization | Park | Model gateway test suite passes in dedicated branch | Revisit after platform/auth branch is stable |
+| Edge messages experimentation | Parked | `cb85b06`, experiments routes, public preview, docs | Experimental content/pricing lane | Park | Worker dry-run contract and admin UI spec verified | Keep out of production release until experiment owner approves |
+| ApartmentIQ market intelligence | Split needed | `apartmentiq_market_intelligence`, collector, migrations, scripts, docs | New external data source with schema and collector implications | Split | Source contract reviewed; collector auth uses Keeper path; migrations reconcile | Treat as a source-ingest project after identity governance |
+| Copy-change and content watch | Split needed | `copy_change_and_content_watch`, Monteverde watch, GBP posts, content office | Mixed monitoring/content operations lane | Split | Watch script source contract and content-office UI validate separately | Review `pre-stabilization dirty changes` before deciding |
+| Cloudflare ops | Split needed | `cloudflare_ops`, cache audit, cache rollout, analytics collector, Wrangler auth | Operationally important but credential-sensitive | Split | Wrangler auth helper resolves token through Keeper; no direct secret paths added | Promote Wrangler/Keeper helper changes before analytics collector expansion |
+| Paid media workbook | Quick review | `35286d5`, `paid_media_workbook/` | Small specialized workbook lane | Promote or park | Workbook generation smoke test passes with Keeper-backed Google Ads config | Quick review candidate after data/auth foundations |
+| Docs and memory governance | Ongoing | `8c44a21`, `ATLAS_WORKING_MEMORY.md`, capability/audit docs, guardrail scripts | Valuable but very large documentation/governance sweep | Split | Context discipline and PIB guardrails pass | Promote only docs needed by each initiative closeout |
+| Local scratch and generated artifacts | Quarantined | stashes, root screenshots, `tmp/`, `tools/`, `.env.production`, nested build outputs | Preserved but not production work | Delete/Ignore after review | Parent repo remains clean; no secrets printed or committed | Inspect shelves one by one and delete only confirmed generated/scratch artifacts |
+
+## Branch And Stash Map
+
+| Lane | Source branch / shelf | Target branch | Promotion rule |
+| --- | --- | --- | --- |
+| Stabilization governance | `codex/stabilization-foundation-2026-05-26` | same branch | Keep narrow; only release governance and closeout-control docs |
+| Broad organized stack | `codex/pilot-control-cwv-reporting` | dedicated lane branches | Never merge wholesale; cherry-pick or rebuild one initiative at a time |
+| Data Collection hardening | `66890f9` on `codex/pilot-control-cwv-reporting` | `codex/closeout-data-collection-foundation-*` | Split property identity and non-runtime source contracts before orchestration/runtime paths |
+| Data Warehouse upstream | current dirty tree | `codex/closeout-data-warehouse-shadow-*` | Treat as advisory validation until reconciliation status is reviewed |
+| Platform / Watchtower | `a6952e3` on `codex/pilot-control-cwv-reporting` | `codex/closeout-platform-watchtower-*` | Promote read-only visibility separately from auth-sensitive control flows |
+| Auth / Zero Trust | `a326064` on `codex/pilot-control-cwv-reporting` | `codex/closeout-zero-trust-*` | Keeper-first validation required; do not add local credential paths |
+| PIB / POP Brief | `ea3c045` on `codex/pilot-control-cwv-reporting` | `codex/closeout-pop-brief-*` | No locked PIB file mutations without explicit approval |
+| Stashed dirty changes | named stashes | lane-specific branches only | Inspect by path; do not apply shelves wholesale |
+
+## Validation Playbooks
+
+| Lane | Required validation |
+| --- | --- |
+| Any closeout branch | `git diff --check`; `bash scripts/check_context_discipline.sh`; `bash scripts/check_pib_guardrails.sh` |
+| Property identity | `bash scripts/check_property_identity_governance.sh`; confirm no one-off property maps were added |
+| Data Warehouse upstream | Keeper/KSM source resolution only; no raw secret output; property identity check; reconciliation artifact reviewed before any canonical replacement |
+| Data Collection runtime | Unit/import smoke for touched collectors; daily collection dry-run or bounded source dry-run; retry/closure output inspected |
+| Platform app / Watchtower | API test subset for touched routes; web type/build check; browser verification for touched UI when applicable |
+| Auth / Zero Trust | Sanitized auth preflight; Access fallback states verified; no direct local credential files introduced |
+| EVS / BrowserStack | Keeper-backed BrowserStack credential presence only; generated screenshots excluded unless explicitly needed as evidence |
+| PIB / POP Brief | PIB guardrail check; confirm locked PIB files remain untouched; preserve approved artifact shape |
+
+## Data Collection Closeout Split
+
+| Sub-lane | Scope | Promotion posture |
+| --- | --- | --- |
+| Property identity governance | `property_identity.py`, `property_identity_matrix.json`, identity guardrail script | First candidate; foundational and low-blast-radius if validated |
+| Data Warehouse shadow source | daily harvest, reconciliation, Captain advisory, upstream docs | Advisory only until reconciliation deltas are accepted or resolved |
+| Source contracts and migrations | source contract docs, schema/migration files, non-runtime read models | Promote only after ownership and migration ordering review |
+| Collectors | source-specific collector changes | Promote one source family at a time |
+| Runtime orchestration | daily collection, retry, closure, alerting, morning report | Last; conflicts indicate this needs careful branch-specific resolution |
+
+## Decision Log
+
+| Date | Decision | Rationale | Follow-up |
+| --- | --- | --- | --- |
+| 2026-05-26 | Keep stabilization branch narrow | Broad data/platform cherry-picks conflicted and bundled many initiatives | Use ledger to split lanes before promotion |
+| 2026-05-26 | Add Data Warehouse upstream as its own closeout lane | Fresh dirty-tree work shows a distinct governed source integration with identity, Captain, and Pond implications | Review as validation-first advisory lane before replacing manual exports |
 
 ## Immediate Next Moves
 
