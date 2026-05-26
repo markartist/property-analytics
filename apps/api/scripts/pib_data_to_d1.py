@@ -42,6 +42,8 @@ from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+from wrangler_auth import build_runtime_env, npx_wrangler_prefix
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -62,9 +64,10 @@ def _get_community_map() -> Dict[str, dict]:
     Fetch ga4_property_id → {id, unit_count} from D1.
     Returns: { ga4_property_id: { id, unit_count } }
     """
+    env = build_runtime_env()
     result = subprocess.run(
         [
-            "npx", "wrangler", "d1", "execute", "pop-brief-db", "--remote",
+            *npx_wrangler_prefix(env), "d1", "execute", "pop-brief-db", "--remote",
             "--command", "SELECT id, ga4_property_id, unit_count, name "
                          "FROM communities "
                          "WHERE ga4_property_id IS NOT NULL AND deleted_at IS NULL;",
@@ -72,6 +75,7 @@ def _get_community_map() -> Dict[str, dict]:
             "--json",
         ],
         capture_output=True, text=True, timeout=30,
+        env=env,
     )
     if result.returncode != 0:
         print(f"❌ Wrangler query failed: {result.stderr[:200]}")
@@ -854,16 +858,18 @@ def sync_friday(
 
 def execute_sql(sql_file: Path) -> bool:
     """Execute a SQL file against D1 via wrangler."""
+    env = build_runtime_env()
     for attempt in range(1, 4):
         print(f"🚀 Executing against D1... (attempt {attempt}/3)")
         result = subprocess.run(
             [
-                "npx", "wrangler", "d1", "execute", "pop-brief-db", "--remote",
+                *npx_wrangler_prefix(env), "d1", "execute", "pop-brief-db", "--remote",
                 f"--file={sql_file}",
                 "--config", str(WRANGLER_TOML),
             ],
             capture_output=True, text=True, timeout=300,
             input="y\n",
+            env=env,
         )
 
         if result.returncode == 0:

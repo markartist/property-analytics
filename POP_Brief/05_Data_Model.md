@@ -139,6 +139,90 @@ Fields:
 - `request_id TEXT`
 - `ip_hash TEXT`
 - `created_at TEXT NOT NULL`
+
+### property_brief_source_documents
+Purpose: captured source material for the POP Brief grounding core.
+Fields:
+- `id TEXT PRIMARY KEY`
+- `property_id TEXT NOT NULL`
+- `community_id TEXT`
+- `source_system TEXT NOT NULL`
+- `source_document_type TEXT NOT NULL`
+- `source_filename TEXT`
+- `source_uri TEXT`
+- `source_date TEXT`
+- `data_through_date TEXT`
+- `cadence TEXT`
+- `raw_text_hash TEXT`
+- `storage_ref TEXT`
+- `metadata_json TEXT`
+- `imported_at TEXT NOT NULL`
+- `imported_by TEXT`
+Notes:
+- This table stores source lineage, not final truth.
+- Recurring AptIQ documents, Data Pond extracts, live property-page snapshots, Captain's Log references, and operator notes can all enter here.
+
+### property_brief_claims
+Purpose: normalized, reconcilable property claims extracted from source documents or authoritative fact extracts.
+Fields:
+- `id TEXT PRIMARY KEY`
+- `property_id TEXT NOT NULL`
+- `community_id TEXT`
+- `source_document_id TEXT REFERENCES property_brief_source_documents(id)`
+- `claim_type TEXT NOT NULL`
+- `subject TEXT NOT NULL`
+- `statement TEXT NOT NULL`
+- `metric_code TEXT`
+- `metric_window TEXT`
+- `source_value TEXT`
+- `normalized_value REAL`
+- `unit TEXT`
+- `authority TEXT NOT NULL`
+- `truth_status TEXT NOT NULL`
+- `confidence REAL NOT NULL`
+- `priority TEXT NOT NULL DEFAULT 'medium'`
+- `evidence_json TEXT`
+- `recommended_action TEXT`
+- `owner_role TEXT`
+- `due_date TEXT`
+- `status TEXT NOT NULL DEFAULT 'active'`
+- audit fields
+Notes:
+- `truth_status` is the key publishing gate. Data Pond fact conflicts should be preserved, not hidden.
+- External report claims about internal operational facts should not become brief-ready until reconciled.
+
+### property_brief_reconciliations
+Purpose: source-to-truth comparison records for claims.
+Fields:
+- `id TEXT PRIMARY KEY`
+- `claim_id TEXT NOT NULL REFERENCES property_brief_claims(id)`
+- `truth_source TEXT NOT NULL`
+- `truth_ref TEXT NOT NULL`
+- `truth_value TEXT`
+- `reconciliation_status TEXT NOT NULL`
+- `note TEXT`
+- `reconciled_at TEXT NOT NULL`
+- `reconciled_by TEXT`
+Notes:
+- Use this table to explain why a claim was verified, overridden, accepted as advisory, or blocked.
+
+### property_brief_artifact_blocks
+Purpose: reusable brief-ready sections composed from reconciled claims.
+Fields:
+- `id TEXT PRIMARY KEY`
+- `property_id TEXT NOT NULL`
+- `community_id TEXT`
+- `week_ending TEXT`
+- `block_type TEXT NOT NULL`
+- `title TEXT NOT NULL`
+- `body_json TEXT NOT NULL`
+- `source_claim_ids_json TEXT NOT NULL`
+- `readiness_status TEXT NOT NULL`
+- audit fields
+Notes:
+- Final artifacts should render from blocks rather than rereading raw vendor prose.
+Canonical reference:
+- `/Users/mark/Property_Analytics/docs/POP_BRIEF_GROUNDING_CORE_2026-04-24.md`
 ## Soft-Delete Strategy
 - `communities` and `users` use soft-delete or deactivation semantics by default.
 - Soft-deleted records remain queryable for audit but excluded from default active views.

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import {
   BarChart3, Activity, Gauge, Star, DollarSign, Zap,
   TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp,
   Search, Loader2, AlertCircle, ChevronLeft, ChevronRight,
-  ArrowUpDown,
+  ArrowUpDown, Building, CalendarDays, FileDown, NotebookText, UserCircle2,
 } from "lucide-react";
 
 // ── Summary Card ──
@@ -113,6 +114,23 @@ const COLUMNS: { key: SortKey; label: string; shortLabel?: string; className?: s
   { key: "gbp_action_rate", label: "GBP Act%", className: "text-right" },
   { key: "gsc_avg_position", label: "Avg Pos", className: "text-right" },
   { key: "google_ppc", label: "Ad Spend", className: "text-right" },
+];
+
+const PIB_NAV_ITEMS: Array<{
+  href?: string;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  active?: boolean;
+}> = [
+  { href: "/communities", label: "Communities", description: "Manage properties and import-facing names.", icon: Building },
+  { href: "/t7-metrics", label: "T7 Metrics", description: "Weekly leasing funnel updates and imports.", icon: CalendarDays },
+  { href: "/t30-metrics", label: "T30 Metrics", description: "Monthly leasing funnel updates and imports.", icon: TrendingUp },
+  { href: "/marketing", label: "Marketing Data", description: "Open the Website & SEO CSV import workflow.", icon: DollarSign },
+  { href: "/analysis", label: "Analysis", description: "Open the performance analysis workspace.", icon: BarChart3 },
+  { label: "Call Notes", description: "Reserved Base44 slot; route not mounted yet.", icon: NotebookText },
+  { href: "/backup", label: "Backup & Export", description: "Create and download data backups.", icon: FileDown },
+  { label: "Profile", description: "Reserved Base44 slot; route not mounted yet.", icon: UserCircle2 },
 ];
 
 // ── Main Page ──
@@ -250,6 +268,48 @@ export default function PibDashboard() {
 
         {!loading && !error && summary && (
           <>
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="p-5">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">POP Brief Navigation</h2>
+                    <p className="text-sm text-slate-500">Use the same core workflow links you had in the Base44 left rail.</p>
+                  </div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-slate-400">Main PIB Dashboard</div>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {PIB_NAV_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const content = (
+                      <div className="flex h-full items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[#15284B]/30 hover:bg-slate-50">
+                        <div className="rounded-lg bg-slate-100 p-2">
+                          <Icon className="h-4 w-4 text-[#15284B]" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-900">{item.label}</div>
+                          <div className="mt-1 text-sm text-slate-500">{item.description}</div>
+                        </div>
+                      </div>
+                    );
+
+                    if (!item.href) {
+                      return (
+                        <div key={item.label} className="opacity-75">
+                          {content}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link key={item.href} href={item.href}>
+                        {content}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
               <SummaryCard

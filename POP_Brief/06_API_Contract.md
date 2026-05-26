@@ -218,6 +218,29 @@ Owner / Stewardship:
 ```json
 { "id": "m_1", "leads_count": 25 }
 ```
+
+## Grounding Core
+
+The grounding core is the contract for turning source material into publishable property intelligence.
+
+Canonical reference:
+
+- `/Users/mark/Property_Analytics/docs/POP_BRIEF_GROUNDING_CORE_2026-04-24.md`
+
+Planned route family:
+
+- `POST /v1/property-brief/source-documents`
+- `POST /v1/property-brief/claims`
+- `POST /v1/property-brief/reconciliations`
+- `GET /v1/property-brief/properties/:property_id/grounding`
+- `POST /v1/property-brief/artifact-blocks`
+
+Publishing rules:
+
+- Data Pond remains authoritative for internal operational facts.
+- Vendor report claims about occupancy, leased rate, guest cards, applications, tours, availability, or floorplan inventory must be reconciled before artifact generation.
+- Conflicting claims should be retained with source lineage and explicit `truth_status`; they should not be silently blended into final brief copy.
+- Captain's Log entries should record approved decisions and durable property memory, linked back to source claims or artifact blocks.
 ### Scan Mentions
 - Purpose: detect mention events and send deduped notifications.
 - Method + path: `POST /v1/marketing/scan-mentions`

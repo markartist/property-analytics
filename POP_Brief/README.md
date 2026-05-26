@@ -8,6 +8,21 @@ Owner / Stewardship:
 - Product Owner: TBD
 - Technical Steward: TBD
 - Operations Steward: TBD
+
+## Briefing Family Position
+
+POP Brief is part of the governed briefing family for the platform.
+
+Current family posture:
+
+- PIB is the protected canonical Property Intelligence Brief engine
+- POP Brief is the structured property-operations performance briefing system
+- Spotlight is a specialized imported reporting lane
+
+Canonical family reference:
+
+- `/Users/mark/Property_Analytics/docs/BRIEFING_FAMILY_ARCHITECTURE_2026-04-18.md`
+
 ## What POP Brief Is
 Property Ops Performance Brief System (POP Brief) is a login-required internal application for compiling, validating, and distributing weekly and rolling-window operational performance data across a property portfolio. The system standardizes week-ending Friday reporting and supports both community-level and portfolio-level records so leadership can consume a consistent performance brief.
 POP Brief is designed for a small controlled user base (about 10 users) with admin-managed onboarding and lifecycle controls. The system runs on Cloudflare-hosted components to keep operations lightweight while preserving data integrity, traceability, and predictable delivery.
@@ -26,6 +41,18 @@ POP Brief is designed for a small controlled user base (about 10 users) with adm
 - Import flows for pasted TSV and CSV upload with replace-import transactional behavior.
 - Marketing mention scan flow and deduplicated notification event tracking.
 - CSV export and backup endpoints for operational recovery.
+
+## Grounding Core Direction
+
+The next POP Brief evolution is a property-brief grounding core.
+
+Its role is to capture recurring source material, normalize claims, reconcile vendor intelligence against Data Pond truth, and produce reusable brief-ready blocks before final artifacts are rendered.
+
+Canonical reference:
+
+- `/Users/mark/Property_Analytics/docs/POP_BRIEF_GROUNDING_CORE_2026-04-24.md`
+
+This keeps POP Brief useful as a final property brief / Captain's Log substrate without creating a shadow PIB renderer or changing locked PIB generation behavior.
 ## How To Use This Memory Pack
 Use this pack as the source of truth for planning, implementation, and operations decisions. Start with the charter for intent, then follow the system contract for rules that are non-negotiable.
 Canonical decision ownership:
