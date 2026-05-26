@@ -85,6 +85,12 @@ Operational note added on 2026-04-14:
 - the branch split and release-shaping map now lives in `/Users/mark/Property_Analytics/docs/RELEASE_SPLIT_PLAN_2026-04-14.md`
 - production promotion should come from the clean `codex/release-reconcile` path, while pilot CWV, Intelligence Office / Site Content, Zero Trust / SSO, and EVS work should be separated into follow-up branches
 
+Closeout note added on 2026-05-26:
+
+- the active cross-initiative closeout ledger now lives in `/Users/mark/Property_Analytics/docs/INITIATIVE_CLOSEOUT_LEDGER_2026-05-26.md`
+- the ledger is the current working map for deciding whether each preserved lane should be promoted, split, parked, archived, or deleted/ignored
+- this gives the repository a project-closeout control surface between broad system audit documentation and individual release PRs
+
 ## 4. Canonical Foundations
 
 ### 4.1 Master Database

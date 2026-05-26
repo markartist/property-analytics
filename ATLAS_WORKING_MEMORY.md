@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-05-26 15:25 UTC
+**Last Updated:** 2026-05-26 15:38 UTC
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -3915,6 +3915,15 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - the stabilization branch is intentionally small and release-governance-focused
   - large data, platform, pilot, EVS, content, auth, and model-gateway initiatives remain preserved but are not promoted by default
   - the next release decision can be made from explicit lane inventory instead of a mixed dirty worktree
+
+### 2026-05-26 - Initiative closeout ledger established
+
+- Added `/Users/mark/Property_Analytics/docs/INITIATIVE_CLOSEOUT_LEDGER_2026-05-26.md` as the working closeout control document for the current initiative stack.
+- The ledger ties the preserved `codex/pilot-control-cwv-reporting` work back to the clean stabilization branch and records each initiative's disposition, closeout test, and next action.
+- Current effect:
+  - future closeout work should use the ledger before opening broad branch or stash work
+  - initiatives now have an explicit `Promote`, `Split`, `Park`, `Archive`, or `Delete/Ignore` decision path
+  - stashes and generated artifacts are preserved but no longer treated as implicit active production work
 
 ### 2026-04-19 01:35 UTC - Release branch deployment is now blocked explicitly by Cloudflare auth health
 

@@ -1,15 +1,15 @@
 {
   "version": "2026-05-25.release-reconcile-snapshot.v2",
-  "updated_at": "2026-05-25",
+  "updated_at": "2026-05-26",
   "purpose": "Current dirty-tree release reconciliation snapshot grouped by canonical workstream lane.",
   "operational_artifacts_ignored": [
     "config/release_provenance.json",
     "config/release_reconcile_snapshot.json"
   ],
   "working_tree": {
-    "changed_file_count": 603,
-    "primary_release_slice_count": 208,
-    "non_primary_count": 395
+    "changed_file_count": 0,
+    "primary_release_slice_count": 0,
+    "non_primary_count": 0
   },
   "recommended_release_candidate": {
     "label": "platform_app + data_collection_hardening",
@@ -38,195 +38,6 @@
     ],
     "readiness_note": "The first clean enterprise release slice should converge on platform/app plus data-collection hardening, with the other lanes explicitly separated."
   },
-  "lane_counts": {
-    "apartmentiq_market_intelligence": 9,
-    "captain_governance_runtime": 73,
-    "cloudflare_ops": 14,
-    "content_operations": 14,
-    "copy_change_and_content_watch": 14,
-    "data_collection_hardening": 47,
-    "docs_and_memory": 74,
-    "edge_messages_experimentation": 14,
-    "evs_browserstack": 23,
-    "model_gateway": 19,
-    "paid_media_workbook": 2,
-    "pib_pop_brief_reporting": 17,
-    "pilot_reporting": 87,
-    "platform_app": 87,
-    "property_identity_and_source_contracts": 83,
-    "qa_and_local_scratch": 6,
-    "risky_local": 5,
-    "zero_trust_sso": 15
-  },
-  "lane_examples": {
-    "apartmentiq_market_intelligence": [
-      "Data_Collection/collectors/apartmentiq_collector.py",
-      "apps/api/migrations/0055_create_apartmentiq_tables.sql",
-      "docs/APARTMENTIQ_API_SOURCE_CONTRACT_2026-05-22.md",
-      "infra/migrations/034_create_apartmentiq_tables.sql",
-      "run_apartmentiq_daily_light.sh",
-      "run_apartmentiq_weekly_dive.sh",
-      "scripts/generate_apartmentiq_enrichment_summary.py",
-      "scripts/generate_apartmentiq_full_dive.py"
-    ],
-    "captain_governance_runtime": [
-      "reports/captains_log/activation/captain_activation_roster_2026-05-04.json",
-      "reports/captains_log/activation/captain_activation_roster_2026-05-04.sql",
-      "scripts/standup_captain_roster.py",
-      "apps/api/migrations/0026_create_captain_support_agents.sql",
-      "apps/api/migrations/0027_create_captain_runtime_tables.sql",
-      "apps/api/migrations/0047_create_directive_control_center.sql",
-      "apps/api/migrations/0048_create_captain_runtime_orchestration.sql",
-      "apps/api/migrations/0049_create_expert_reads.sql"
-    ],
-    "cloudflare_ops": [
-      "Data_Collection/collectors/cloudflare_cache_audit.py",
-      "config/cloudflare_cache_audit.yaml",
-      "config/cloudflare_full_page_cache.yaml",
-      "ops/cloudflare/cache_rules_manager.py",
-      "scripts/bootstrap_cloudflare.sh",
-      "Data_Collection/collectors/cloudflare_analytics_collector.py",
-      "apps/api/migrations/0054_create_cloudflare_edge_daily_metrics.sql",
-      "apps/api/scripts/wrangler_auth.py"
-    ],
-    "content_operations": [
-      "apps/api/src/routes/admin-intelligence.ts",
-      "apps/api/src/routes/admin-site-content.ts",
-      "apps/web/src/components/site-content-creator-page.tsx",
-      "apps/api/src/platform/intelligence/",
-      "apps/api/src/platform/shared/specs-property-marketing-v1.ts",
-      "apps/api/src/routes/intelligence-memory.ts",
-      "apps/api/src/routes/search-intelligence.ts",
-      "apps/api/src/routes/vacs.ts"
-    ],
-    "copy_change_and_content_watch": [
-      "docs/CONTENT_OPERATIONS_MODEL.md",
-      "Data_Collection/utils/copy_change_monitoring.py",
-      "Venterra_AI_Content_Suite/",
-      "apps/api/migrations/0019_create_gbp_post_workflow.sql",
-      "apps/api/src/routes/gbp-posts.ts",
-      "apps/web/src/app/content-office/",
-      "apps/web/src/app/gbp-posts/",
-      "docs/COPY_CHANGE_MONITORING_SOURCE_CONTRACT_2026-05-18.md"
-    ],
-    "data_collection_hardening": [
-      "Data_Collection/SYSTEM_BOUNDARY_AND_INTEGRATION_REPORT.md",
-      "Data_Collection/collectors/gbp_collector.py",
-      "Data_Collection/collectors/gsc_collector.py",
-      "Data_Collection/collectors/guest_card_collector.py",
-      "Data_Collection/collectors/thirtylines_collector.py",
-      "Data_Collection/db/database_manager.py",
-      "Data_Collection/monitoring/alert_sender.py",
-      "Data_Collection/monitoring/anomaly_detector.py"
-    ],
-    "docs_and_memory": [
-      "AGENTS.md",
-      "ATLAS_QUICK_START.md",
-      "ATLAS_WORKING_MEMORY.md",
-      "DATA_COLLECTION_README.md",
-      "README.md",
-      "README_old.md",
-      "atlas_session_start.sh",
-      "docs/CAPABILITY_REGISTER_2026-04-10.md"
-    ],
-    "edge_messages_experimentation": [
-      "apps/api/migrations/0039_create_edge_experimentation_tables.sql",
-      "apps/api/src/routes/experiments.ts",
-      "apps/web/public/edge-message-apartments-preview.png",
-      "apps/web/src/app/experiments/",
-      "docs/EDGE_EXPERIMENTATION_SCHEMA_PLAN_2026-05-02.md",
-      "docs/EDGE_EXPERIMENTATION_SOURCE_CONTRACT_2026-05-02.md",
-      "docs/EDGE_EXPERIMENTATION_SYSTEM_PRODUCTION_PLAN_2026-05-02.md",
-      "docs/EDGE_EXPERIMENTATION_WORKER_DRY_RUN_CONTRACT_2026-05-02.md"
-    ],
-    "evs_browserstack": [
-      "evs/README.md",
-      "evs/config/pilot-properties.json",
-      "evs/orchestration/run-pilot-browserstack-smoke.mjs",
-      "evs/package.json",
-      "evs/providers/browserstack/run-experiential-playwright.mjs",
-      "apps/api/migrations/0020_create_evs_tables.sql",
-      "apps/api/migrations/0053_create_evs_batch_result_tables.sql",
-      "apps/api/src/evs/"
-    ],
-    "model_gateway": [
-      "apps/api/migrations/0052_create_model_provider_gateway.sql",
-      "apps/api/scripts/check_cloudflare_shadow_config.ts",
-      "apps/api/scripts/run_model_gateway_shadow_evaluation.ts",
-      "apps/api/scripts/smoke_cloudflare_shadow_model_gateway.ts",
-      "apps/api/src/platform/model-gateway/",
-      "apps/api/test/platform/model-provider-gateway.test.ts",
-      "docs/MODEL_PROVIDER_GATEWAY_ARCHITECTURE_2026-05-10.md",
-      "docs/MODEL_PROVIDER_GATEWAY_AUDIT_HARDENING_2026-05-10.md"
-    ],
-    "paid_media_workbook": [
-      "paid_media_workbook/README.md",
-      "paid_media_workbook/scripts/generate_paid_media_workbook.py"
-    ],
-    "pib_pop_brief_reporting": [
-      "POP_Brief/05_Data_Model.md",
-      "POP_Brief/06_API_Contract.md",
-      "POP_Brief/README.md",
-      "apps/api/scripts/pib_data_to_d1.py",
-      "apps/web/src/app/analysis/pib/page.tsx",
-      "apps/web/src/app/pib/page.tsx",
-      "apps/api/migrations/0024_create_property_brief_grounding_tables.sql",
-      "apps/web/src/lib/pop-brief-nav.ts"
-    ],
-    "pilot_reporting": [
-      "pilot_control_cwv/README.md",
-      "pilot_control_cwv/config/pilot_control_cwv_config.example.json",
-      "pilot_control_cwv/scripts/collect_pilot_control_psi.py",
-      "pilot_control_cwv/scripts/generate_pilot_control_cwv_report.py",
-      "apps/pilot-tracker-standalone/",
-      "apps/web/src/app/tracker/",
-      "apps/web/src/components/tracker/",
-      "apps/web/src/lib/pilot-kpi.ts"
-    ],
-    "platform_app": [
-      ".gitignore",
-      "apps/api/package.json",
-      "apps/api/scripts/platform_phase1_client.py",
-      "apps/api/scripts/verify_phase1_platform_cutover.sh",
-      "apps/api/src/env.ts",
-      "apps/api/src/index.ts",
-      "apps/api/src/lib/crypto.ts",
-      "apps/api/src/platform/agent-runtime/repository.ts"
-    ],
-    "property_identity_and_source_contracts": [
-      "Data_Collection/utils/aptiq_watchlist_summary_ingest.py",
-      "Data_Collection/utils/available_unit_interest_ingest.py",
-      "Data_Collection/utils/bi_manual_ingest.py",
-      "Data_Collection/utils/build_competitor_market_packets.py",
-      "Data_Collection/utils/competitor_market_research_ingest.py",
-      "Data_Collection/utils/dataforseo_serp_ingest.py",
-      "Data_Collection/utils/marketing_bi_conversion_ingest.py",
-      "Data_Collection/utils/marketing_bi_excel_export_ingest.py"
-    ],
-    "qa_and_local_scratch": [
-      ".github/workflows/evs-browserstack-experiential.yml",
-      "SESSION_MEMORY_2026-04-08_PILOT_SITE_EVIDENCE_AND_HARMONIZATION.md",
-      "focus_report/config/",
-      "freedom-in-christ-class/",
-      "tmp/",
-      "tools/"
-    ],
-    "risky_local": [
-      "Project_Memory.md",
-      "apps/web/.env.production",
-      "memory/MEMORY_INDEX.md",
-      "memory/PROJECT_STATE.md",
-      ".nvmrc"
-    ],
-    "zero_trust_sso": [
-      "apps/api/src/middleware/auth.ts",
-      "apps/web/src/app/login/page.tsx",
-      "apps/web/src/app/login/verify/page.tsx",
-      "apps/web/src/components/auth-provider.tsx",
-      "apps/web/src/app/login/login-client.tsx",
-      "docs/CLOUDFLARE_ZERO_TRUST_ACCESS_MATRIX_2026-04-13.md",
-      "docs/CLOUDFLARE_ZERO_TRUST_IMPLEMENTATION_CHECKLIST_2026-04-13.md",
-      "docs/CLOUDFLARE_ZERO_TRUST_OPERATOR_RUNBOOK_2026-04-13.md"
-    ]
-  }
+  "lane_counts": {},
+  "lane_examples": {}
 }
