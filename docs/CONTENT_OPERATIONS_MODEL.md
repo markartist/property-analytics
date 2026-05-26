@@ -1,8 +1,8 @@
 # Content Operations Model
 
-Status: Draft v1  
-Date: 2026-04-09  
-Owner: MarketingOps / Property Analytics  
+Status: Draft v1
+Date: 2026-04-09
+Owner: MarketingOps / Property Analytics
 Scope: Relationship model between VACS and Site Content Creator within the governed platform
 
 ## 1. Purpose
@@ -52,6 +52,28 @@ This keeps the foundation unified while preserving two focused execution experie
 ## 4. Shared Foundation
 
 The following capabilities should be shared by both products.
+
+### 4.0 Property Narrative Canon
+
+Shared role:
+
+- governed core narrative artifact
+
+Shared responsibilities:
+
+- property positioning thesis
+- audience and intent map
+- proof point ledger
+- search/entity/AI visibility map
+- message hierarchy across site, blog, GBP, social, email, FAQ/schema, and future outlets
+- harmonization audit against the live content ecosystem
+- derivative artifact queue with approval and proof requirements
+
+The canon is the source artifact from which VACS long-form work, Site Content Creator section recommendations, and Content Office channel packages should be derived. It does not replace Data Pond facts, Captain memory, Intelligence Office directives, or Specs. It organizes those inputs into one property narrative contract.
+
+Canonical v1 reference:
+
+- `/Users/mark/Property_Analytics/docs/PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md`
 
 ### 4.1 Data Pond
 

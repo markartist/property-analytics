@@ -2,17 +2,18 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
-import { requireAuth, requireAdmin } from "../middleware/auth";
+import { requireAuth } from "../middleware/auth";
 import { queryAll, queryFirst, run } from "../lib/db";
 import { newId } from "../lib/id";
 import { nowISO, errJson, validateSafeText } from "../lib/validate";
 import { writeAuditLog } from "../lib/audit";
+import { requireOfferingAction } from "../lib/permissions";
 import { EVS_PILOT_PROPERTIES } from "../evs/pilot-properties";
 import { getBriefCompletenessMap } from "../platform/intelligence/brief-completeness";
 import type { BriefCompletenessResult as BriefReadinessResult } from "../platform/intelligence/brief-completeness";
 
 const adminIntelligence = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
-adminIntelligence.use("*", requireAuth, requireAdmin);
+adminIntelligence.use("*", requireAuth);
 
 const UpdateOfficeBody = z.object({
   office_name: z.string().min(1),
@@ -241,7 +242,7 @@ async function resolvePilotPropertyByKey(
   );
 }
 
-adminIntelligence.get("/", async (c) => {
+adminIntelligence.get("/", requireOfferingAction("intelligenceOffice", "view"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
 
   const office = await queryFirst<OfficeRow>(
@@ -311,7 +312,7 @@ adminIntelligence.get("/", async (c) => {
   return c.json({ office, directives, sources, properties, advocatePrompts, claims, evidence, claimEvidence, briefReadiness });
 });
 
-adminIntelligence.get("/properties/:propertyId/brief-inputs", async (c) => {
+adminIntelligence.get("/properties/:propertyId/brief-inputs", requireOfferingAction("intelligenceOffice", "view"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   try {
     return c.json(await getPropertyBriefInputs(c.env.POP_BRIEF_DB, c.req.param("propertyId")));
@@ -323,7 +324,7 @@ adminIntelligence.get("/properties/:propertyId/brief-inputs", async (c) => {
   }
 });
 
-adminIntelligence.put("/office", async (c) => {
+adminIntelligence.put("/office", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const parse = UpdateOfficeBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
@@ -367,7 +368,7 @@ adminIntelligence.put("/office", async (c) => {
   return c.json(after);
 });
 
-adminIntelligence.post("/directives", async (c) => {
+adminIntelligence.post("/directives", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const parse = CreateDirectiveBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
@@ -417,7 +418,7 @@ adminIntelligence.post("/directives", async (c) => {
   return c.json(created, 201);
 });
 
-adminIntelligence.patch("/directives/:id", async (c) => {
+adminIntelligence.patch("/directives/:id", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const id = c.req.param("id");
   const parse = UpdateDirectiveBody.safeParse(await c.req.json());
@@ -455,7 +456,7 @@ adminIntelligence.patch("/directives/:id", async (c) => {
   return c.json(after);
 });
 
-adminIntelligence.patch("/properties/:propertyId", async (c) => {
+adminIntelligence.patch("/properties/:propertyId", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const propertyId = c.req.param("propertyId");
   const parse = UpdatePropertyBody.safeParse(await c.req.json());
@@ -495,7 +496,7 @@ adminIntelligence.patch("/properties/:propertyId", async (c) => {
   return c.json(after);
 });
 
-adminIntelligence.post("/advocate-prompts", async (c) => {
+adminIntelligence.post("/advocate-prompts", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const parse = CreateAdvocatePromptBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
@@ -529,7 +530,7 @@ adminIntelligence.post("/advocate-prompts", async (c) => {
   return c.json(created, 201);
 });
 
-adminIntelligence.post("/claims", async (c) => {
+adminIntelligence.post("/claims", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const parse = CreateClaimBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
@@ -599,7 +600,7 @@ adminIntelligence.post("/claims", async (c) => {
   return c.json(created, 201);
 });
 
-adminIntelligence.patch("/claims/:id", async (c) => {
+adminIntelligence.patch("/claims/:id", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const id = c.req.param("id");
   const parse = UpdateClaimBody.safeParse(await c.req.json());
@@ -637,7 +638,7 @@ adminIntelligence.patch("/claims/:id", async (c) => {
   return c.json(after);
 });
 
-adminIntelligence.post("/claims/:id/evidence", async (c) => {
+adminIntelligence.post("/claims/:id/evidence", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const claimId = c.req.param("id");
   const parse = LinkClaimEvidenceBody.safeParse(await c.req.json());
@@ -670,7 +671,7 @@ adminIntelligence.post("/claims/:id/evidence", async (c) => {
   return c.json(created, 201);
 });
 
-adminIntelligence.post("/evidence", async (c) => {
+adminIntelligence.post("/evidence", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const parse = CreateEvidenceBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
@@ -721,7 +722,7 @@ adminIntelligence.post("/evidence", async (c) => {
   return c.json(created, 201);
 });
 
-adminIntelligence.patch("/evidence/:id", async (c) => {
+adminIntelligence.patch("/evidence/:id", requireOfferingAction("intelligenceOffice", "administer"), async (c) => {
   await ensureIntelligenceOffice(c.env.POP_BRIEF_DB);
   const id = c.req.param("id");
   const parse = UpdateEvidenceBody.safeParse(await c.req.json());
