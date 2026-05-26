@@ -833,15 +833,21 @@ class CloudflareCacheAuditCollector:
         }
         artifact_paths = self._write_artifacts(audit_date=audit_date, payload=payload, markdown=markdown)
 
+        advisory_findings = [
+            f"{row['domain']}: {'; '.join(row['observations'][:1])}"
+            for row in domain_results
+            if row["domain_status"] in {"warn", "fail"}
+        ]
+
         self.db.complete_data_collection(
             collection_id=collection_id,
             properties_collected=len(domains) - failures,
             properties_failed=failures,
-            error_message="; ".join(
-                f"{row['domain']}: {'; '.join(row['observations'][:1])}"
-                for row in domain_results
-                if row["domain_status"] == "fail"
-            )[:500] or None,
+            error_message=("; ".join(advisory_findings)[:500] if failures > 0 else None),
+            notes=(
+                f"Cloudflare cache audit completed with {len(advisory_findings)} advisory finding(s). "
+                + "; ".join(advisory_findings[:3])
+            )[:500] if advisory_findings else "Cloudflare cache audit completed without advisory findings.",
         )
 
         return {

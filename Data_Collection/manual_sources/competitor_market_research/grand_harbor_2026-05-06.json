@@ -1,0 +1,202 @@
+{
+  "snapshot_date": "2026-05-06",
+  "captured_at": "2026-05-06T00:00:00-05:00",
+  "property_id": "TX4GH",
+  "property_name": "The Cape at Grand Harbor",
+  "market_name": "Katy, TX",
+  "research_scope": "watchlist_competitor_run",
+  "source_author": "Codex research pass",
+  "notes": "Grand Harbor competitor packet using governed comp-set records plus official public pages. Use confirmed rows as direct report inputs; use directional/source-gap rows only as prompts for market validation or leasing-team follow-up.",
+  "evidence": {
+    "integrity_standard": "No rent, special, USP, or package/media claim should be used unless source_url and captured_date are present.",
+    "comp_set_basis": "Property comp set loaded in Data Pond property_competitors for GA4 property 378375463 / property code TX4GH.",
+    "subject_internal_source": "unit_availability_units snapshot_date 2026-05-06 for current Venterra rent and special."
+  },
+  "observations": [
+    {
+      "competitor_name": "The Cape at Grand Harbor",
+      "competitor_url": "https://venterraliving.com/apartments/the-cape-at-grand-harbor/",
+      "source_name": "Venterra unit availability feed",
+      "source_url": "https://venterraliving.com/apartments/the-cape-at-grand-harbor/",
+      "source_type": "internal_unit_feed",
+      "evidence_category": "subject_position",
+      "captured_date": "2026-05-06",
+      "floorplan_name": "Current visible availability",
+      "bedroom_count": null,
+      "rent_min": 1096,
+      "rent_max": 1956,
+      "availability_status": "57 available units in internal unit feed",
+      "special_text": "Limited time - Up to 1 month free on select apartment homes! Contact us for more details!",
+      "usp_text": "Smart-home technology, fiber-powered connectivity, washer and dryer, up to 3 pets, pool, cabanas, fitness center, coworking space, package lockers, and Katy Mills / I-10 / Grand Parkway positioning.",
+      "raw_claim": "The 2026-05-06 unit feed shows The Cape at Grand Harbor visible rents from $1,096 to $1,956 across current availability and a visible special for up to 1 month free on select apartment homes.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "db_table": "unit_availability_units",
+        "db_snapshot_date": "2026-05-06",
+        "web_line_refs": "official page lines 75-95 and 98-178"
+      }
+    },
+    {
+      "competitor_name": "Camden Grand Harbor",
+      "competitor_url": "https://www.camdenliving.com/apartments/katy-tx/camden-grand-harbor",
+      "source_name": "Camden Grand Harbor official available apartments",
+      "source_url": "https://www.camdenliving.com/apartments/katy-tx/camden-grand-harbor/available-apartments",
+      "source_type": "official_competitor_page",
+      "evidence_category": "rent",
+      "captured_date": "2026-05-06",
+      "floorplan_name": "Visible available apartments",
+      "bedroom_count": null,
+      "sqft_min": 668,
+      "sqft_max": 1380,
+      "rent_min": 1109,
+      "rent_max": 1909,
+      "availability_status": "visible_availability",
+      "raw_claim": "Camden's official available-apartments page shows visible starting prices from $1,109 for a 1BR to $1,909 for a 3BR among currently listed available homes.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "Camden available-apartments lines 87-218"
+      }
+    },
+    {
+      "competitor_name": "The Crossing at Katy Ranch",
+      "competitor_url": "https://www.thecrossingatkatyranch.com/",
+      "source_name": "The Crossing at Katy Ranch official page",
+      "source_url": "https://www.thecrossingatkatyranch.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Discounted pricing is now available for a limited time; call today to schedule your tour.",
+      "raw_claim": "The Crossing's official page advertises limited-time discounted pricing but does not expose the discount amount in the crawled page text.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "The Crossing official page lines 14-21"
+      }
+    },
+    {
+      "competitor_name": "The Crossing at Katy Ranch",
+      "competitor_url": "https://www.thecrossingatkatyranch.com/",
+      "source_name": "The Crossing at Katy Ranch official page",
+      "source_url": "https://www.thecrossingatkatyranch.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Built-in desks, gourmet kitchens, luxury finishes, resort-style pool with cabanas, business center, conference room, 24/7 mailroom, parcel lockers, pet park, reserved parking or attached garages in select units.",
+      "raw_claim": "The Crossing's official page positions the property around upscale finishes, built-in desks, business/workspace amenities, parcel lockers, pet park, and select attached-garage/reserved-parking options.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "The Crossing official page lines 54-70 and 82-85"
+      }
+    },
+    {
+      "competitor_name": "Katy Ranch Apartment Homes",
+      "competitor_url": "https://www.katyranchapartments.com/",
+      "source_name": "Katy Ranch Apartments official page",
+      "source_url": "https://www.katyranchapartments.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "One-, two-, and three-bedroom homes; granite countertops; full-size washers and dryers; private balconies; resort-style pool; 24-hour fitness center; fireside lounge; bark park with doggy fountain; pickleball court; putting green.",
+      "raw_claim": "Katy Ranch's official page emphasizes modern one-, two-, and three-bedroom homes, washer/dryer, private balcony, resort amenities, bark park, pickleball, and putting green.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "Katy Ranch official page lines 32-40 and 124-129"
+      }
+    },
+    {
+      "competitor_name": "Reserve on Kingsland",
+      "competitor_url": "https://reserveonkingsland.com/",
+      "source_name": "Reserve on Kingsland official page",
+      "source_url": "https://reserveonkingsland.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "One-, two-, and three-bedroom apartments in Katy with convenient/carefree positioning, modern conveniences, easy access to shopping, dining, entertainment, and nearby highways.",
+      "raw_claim": "Reserve on Kingsland's official page positions the community around 1, 2, and 3 bedroom homes, modern conveniences, and easy access to shopping, dining, entertainment, highways, and transportation stops.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "Reserve on Kingsland official page lines 73-90 and 158-163"
+      }
+    },
+    {
+      "competitor_name": "Elite 99 West",
+      "competitor_url": "https://elite99west.com/",
+      "source_name": "Elite 99 West official page",
+      "source_url": "https://elite99west.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Pet-friendly one-, two-, and three-bedroom homes; ultramodern fitness center; jogging paths around a nearby scenic lake; high-end/luxe positioning.",
+      "raw_claim": "Elite 99 West's official page positions the property around high-end apartment living, pet-friendly homes, ultramodern fitness, and jogging paths around a nearby scenic lake.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "Elite 99 West official page lines 4-7 and 52-55"
+      }
+    },
+    {
+      "competitor_name": "Falcon at Grand Harbor / The Century Apartments Katy",
+      "competitor_url": "https://www.centuryapartmentskaty.com/floorplans",
+      "source_name": "The Century Apartments Katy official floorplans",
+      "source_url": "https://www.centuryapartmentskaty.com/floorplans",
+      "source_type": "official_competitor_page",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "The current official floorplans page is protected or does not expose crawlable rent/special content in the retrieved source, so rent and special should not be reported as confirmed from this run.",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source",
+      "evidence": {
+        "source_note": "Public HTML retrieval returned an interstitial/limited crawlable page during this run."
+      }
+    },
+    {
+      "competitor_name": "Greenwood at Katy",
+      "competitor_url": "https://greenwoodatkaty.com/floorplans/",
+      "source_name": "Greenwood at Katy official floorplans",
+      "source_url": "https://greenwoodatkaty.com/floorplans/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Furnished apartments available; one-, two-, and three-bedroom apartments; virtual tours; total monthly leasing price framing.",
+      "raw_claim": "Greenwood's official floorplans page advertises furnished apartments, 1/2/3 bedroom floorplans, virtual tours, and a total monthly leasing price framework.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "Greenwood official floorplans lines 18-20 and 43-57"
+      }
+    },
+    {
+      "competitor_name": "Lenox Reserve",
+      "competitor_url": "https://www.lenoxreserveapts.com/",
+      "source_name": "Lenox Reserve official page",
+      "source_url": "https://www.lenoxreserveapts.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "Lenox Reserve now has an official URL in the governed comp set, but the official site returned a Cloudflare block during this run. Web rent/special/USP evidence was not captured as confirmed.",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "The Maddox",
+      "competitor_url": "https://themaddoxkaty.com/floorplans/",
+      "source_name": "The Maddox official floorplans",
+      "source_url": "https://themaddoxkaty.com/floorplans/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Furnished apartments available; one-, two-, and three-bedroom homes; boutique living positioning; virtual tours.",
+      "raw_claim": "The Maddox official floorplans page advertises furnished apartments, virtual tours, and upscale one-, two-, and three-bedroom homes with boutique positioning.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "web_line_refs": "The Maddox official floorplans lines 8-11 and 39-51"
+      }
+    }
+  ]
+}

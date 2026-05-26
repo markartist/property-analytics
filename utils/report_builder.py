@@ -8,15 +8,15 @@ Provides reusable components for building custom reports on-the-fly.
 
 Usage:
     from utils.report_builder import ReportBuilder, KPITile, Section
-    
+
     builder = ReportBuilder(title="Custom Report", subtitle="Property Analysis")
-    
+
     # Add top KPI tiles
     builder.add_kpi_tiles([
         KPITile(label="Total Sessions", value="12,456", trend="+15%", is_primary=True),
         KPITile(label="Conversion Rate", value="3.2%", comparison="vs avg: 2.8%")
     ])
-    
+
     # Add custom section
     builder.add_section(
         Section(
@@ -25,7 +25,7 @@ Usage:
             content="<p>Custom HTML content here</p>"
         )
     )
-    
+
     # Generate HTML
     html = builder.generate()
 
@@ -48,17 +48,17 @@ class StatusTag:
     HEALTHY = "healthy"
     WATCH = "watch"
     ACTION_NEEDED = "action_needed"
-    
+
     @staticmethod
     def get_style(status: str) -> Dict[str, str]:
         """Get CSS styles for status badge"""
         styles = {
-            "healthy": {"background": "#28a745", "color": "#ffffff"},
+            "healthy": {"background": "#7CCAC2", "color": "#15284B"},
             "watch": {"background": "#ffc107", "color": "#1a1a1a"},
             "action_needed": {"background": "#dc3545", "color": "#ffffff"}
         }
         return styles.get(status, styles["healthy"])
-    
+
     @staticmethod
     def get_label(status: str) -> str:
         """Get display label for status"""
@@ -72,7 +72,7 @@ class StatusTag:
 
 class KPITile:
     """Data class for KPI tile component"""
-    
+
     def __init__(
         self,
         label: str,
@@ -84,7 +84,9 @@ class KPITile:
         is_primary: bool = False,
         grade: Optional[str] = None,  # For letter grades like "A+", "F"
         grade_label: Optional[str] = None,  # Like "Excellent", "Poor"
-        trend_inverse: bool = False  # True if lower values are better (e.g. LCP, CLS)
+        trend_inverse: bool = False,  # True if lower values are better (e.g. LCP, CLS)
+        value_color_override: Optional[str] = None,
+        trend_color_override: Optional[str] = None,
     ):
         self.label = label
         self.value = value
@@ -96,12 +98,16 @@ class KPITile:
         self.grade = grade
         self.grade_label = grade_label
         self.trend_inverse = trend_inverse
-        
+        self.value_color_override = value_color_override
+        self.trend_color_override = trend_color_override
+
     def to_html(self) -> str:
         """Generate HTML for KPI tile"""
         # Determine color based on trend/comparison
         value_color = "#1a1a1a"  # Default
-        if self.grade:
+        if self.value_color_override:
+            value_color = self.value_color_override
+        elif self.grade:
             # Color based on grade
             if self.grade.startswith("A"):
                 value_color = "#28a745"
@@ -114,7 +120,7 @@ class KPITile:
                 value_color = "#28a745"
             elif "-" in self.trend:
                 value_color = "#dc3545"
-        
+
         # Determine comparison color
         comparison_color = "#868e96"
         if self.comparison:
@@ -124,12 +130,12 @@ class KPITile:
                     comparison_color = "#dc3545"
                 elif any(word in self.comparison.lower() for word in ["above", "better", "higher"]):
                     comparison_color = "#28a745"
-        
+
         # Border style
         border_style = "2px solid #0066cc" if self.is_primary else "1px solid #e9ecef"
         bg_color = "#f8f9ff" if self.is_primary else "white"
         label_color = "#0066cc" if self.is_primary else "#868e96"
-        
+
         # Build HTML
         html = f'''
             <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; background: {bg_color}; border: {border_style}; border-radius: 6px;">
@@ -137,7 +143,7 @@ class KPITile:
                     <td style="padding: 20px; text-align: center;">
                         <div style="font-size: 11px; color: {label_color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; font-weight: 600;">{self.label}</div>
         '''
-        
+
         if self.grade:
             # Letter grade display
             html += f'''<div style="font-size: 48px; font-weight: 700; color: {value_color}; margin: 8px 0; line-height: 1;">{self.grade}</div>'''
@@ -146,38 +152,49 @@ class KPITile:
         else:
             # Numeric value display
             html += f'''<div style="font-size: 36px; font-weight: 700; color: {value_color}; margin: 8px 0; line-height: 1;">{self.value}</div>'''
-        
+
         if self.trend:
             # Determine trend color
-            if self.trend_inverse:
+            if self.trend_color_override:
+                trend_color = self.trend_color_override
+            elif self.trend_inverse:
                 # For inverse metrics (lower is better): down arrow = green, up = red
                 trend_color = "#28a745" if "↓" in self.trend else "#dc3545"
             else:
                 # For normal metrics (higher is better): up arrow = green, down = red
-                trend_color = "#28a745" if "↑" in self.trend else "#dc3545"
+                if "↑" in self.trend:
+                    trend_color = "#28a745"
+                elif "↓" in self.trend:
+                    trend_color = "#dc3545"
+                elif "+" in self.trend:
+                    trend_color = "#28a745"
+                elif "-" in self.trend:
+                    trend_color = "#dc3545"
+                else:
+                    trend_color = "#1a1a1a"
             html += f'''<div style="font-size: 14px; color: {trend_color}; margin-top: 6px; font-weight: 600;">{self.trend}</div>'''
-        
+
         if self.sublabel:
             html += f'''<div style="font-size: 11px; color: #868e96; margin-top: 8px; font-style: italic;">{self.sublabel}</div>'''
-        
+
         if self.comparison:
             html += f'''<div style="font-size: 13px; margin-top: 10px; font-weight: 600; color: {comparison_color};">{self.comparison}</div>'''
-        
+
         if self.percentile:
             html += f'''<div style="font-size: 11px; color: #868e96; margin-top: 8px; font-style: italic;">{self.percentile}</div>'''
-        
+
         html += '''
                     </td>
                 </tr>
             </table>
         '''
-        
+
         return html
 
 
 class Section:
     """Data class for report section with header and content"""
-    
+
     def __init__(
         self,
         title: str,
@@ -189,12 +206,13 @@ class Section:
         self.content = content
         self.status = status
         self.description = description
-        
+
     def to_html(self) -> str:
         """Generate HTML for section"""
         status_style = StatusTag.get_style(self.status)
         status_label = StatusTag.get_label(self.status)
-        
+        show_status = self.status is not None
+
         html = f'''
         <!-- Section Header -->
         <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 40px 0 0 0;">
@@ -205,15 +223,20 @@ class Section:
                             <td style="vertical-align: middle;">
                                 <h2 style="font-size: 18px; color: #ffffff; margin: 0; font-weight: 600;">{self.title}</h2>
                             </td>
+        '''
+        if show_status:
+            html += f'''
                             <td style="vertical-align: middle; text-align: right; white-space: nowrap;">
                                 <span style="background: {status_style["background"]}; color: {status_style["color"]}; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block;">{status_label}</span>
                             </td>
+            '''
+        html += '''
                         </tr>
                     </table>
                 </td>
             </tr>
         '''
-        
+
         if self.description:
             html += f'''
             <tr>
@@ -222,20 +245,20 @@ class Section:
                 </td>
             </tr>
             '''
-        
+
         html += '''
         </table>
-        
+
         <!-- Section Content -->
         '''
         html += self.content
-        
+
         return html
 
 
 class ReportBuilder:
     """Main report builder class"""
-    
+
     def __init__(
         self,
         title: str,
@@ -249,20 +272,20 @@ class ReportBuilder:
         self.date_range = date_range or datetime.now().strftime("%m/%d/%Y")
         self.sections = []
         self.top_kpi_tiles = []
-        
+
     def add_kpi_tiles(self, tiles: List[KPITile], columns: int = 3) -> 'ReportBuilder':
         """Add row of KPI tiles to top of report"""
         self.top_kpi_tiles.append((tiles, columns))
         return self
-        
+
     def add_section(self, section: Section) -> 'ReportBuilder':
         """Add a section to the report"""
         self.sections.append(section)
         return self
-        
+
     def generate(self) -> str:
         """Generate complete HTML report"""
-        
+
         # Start HTML document
         html = f'''<!DOCTYPE html>
 <html>
@@ -283,35 +306,36 @@ class ReportBuilder:
                 </td>
             </tr>
         </table>
-        
+
                 <!-- Header -->
                 <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e9ecef; padding-bottom: 20px;">
                     <tr>
                         <td>
         '''
-        
+
         html += f'''
                             <div style="font-size: 32px; color: #495057; margin: 10px 0; font-weight: 700;">{self.title}</div>
         '''
-        
+
         if self.subtitle:
             html += f'''<div style="font-size: 16px; color: #0066cc; margin: 10px 0 15px 0; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase;">{self.subtitle}</div>'''
-        
+
         html += f'''
                             <div style="font-size: 11px; color: #adb5bd; margin: 10px 0;">v{self.version}</div>
+                            <div style="font-size: 15px; color: #1a1a1a; margin: 8px 0 0 0; font-weight: 600;">{self.date_range}</div>
                         </td>
                     </tr>
                 </table>
         '''
-        
+
         # Add KPI tiles
         for tiles, columns in self.top_kpi_tiles:
             html += self._generate_kpi_row(tiles, columns)
-        
+
         # Add sections
         for section in self.sections:
             html += section.to_html()
-        
+
         # Close HTML
         html += '''
             </td>
@@ -320,39 +344,39 @@ class ReportBuilder:
 </body>
 </html>
 '''
-        
+
         return html
-    
+
     def _generate_kpi_row(self, tiles: List[KPITile], columns: int) -> str:
         """Generate HTML for a row of KPI tiles"""
         # Calculate column width
         gap_pct = 2
         col_width = (100 - (gap_pct * (columns - 1))) // columns
-        
+
         html = '''
                 <!-- KPI Tiles -->
                 <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 25px 0;">
                     <tr>
         '''
-        
+
         for i, tile in enumerate(tiles):
             html += f'''
                         <td style="width: {col_width}%; vertical-align: top;">
                             {tile.to_html()}
                         </td>
             '''
-            
+
             # Add gap between tiles (but not after last one)
             if i < len(tiles) - 1:
                 html += f'''<td style="width: {gap_pct}%;"></td>'''
-        
+
         html += '''
                     </tr>
                 </table>
         '''
-        
+
         return html
-    
+
     def save(self, filepath: str) -> str:
         """Generate and save HTML report to file"""
         html = self.generate()
@@ -366,7 +390,7 @@ class ReportBuilder:
 def create_side_by_side_layout(left_content: str, right_content: str, gap_pct: int = 4) -> str:
     """Create side-by-side layout (like Mobile/Desktop PageSpeed)"""
     col_width = (100 - gap_pct) // 2
-    
+
     return f'''
     <table cellpadding="0" cellspacing="0" border="0" style="width: 100%; margin: 0 0 25px 0;">
         <tr>
@@ -389,18 +413,18 @@ def create_data_table(headers: List[str], rows: List[List[str]]) -> str:
         <thead>
             <tr>
     '''
-    
+
     for header in headers:
         html += f'''
                 <th style="text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; font-size: 12px; color: #6c757d; font-weight: 600; text-transform: uppercase;">{header}</th>
         '''
-    
+
     html += '''
             </tr>
         </thead>
         <tbody>
     '''
-    
+
     for row in rows:
         html += '<tr>'
         for cell in row:
@@ -408,19 +432,19 @@ def create_data_table(headers: List[str], rows: List[List[str]]) -> str:
                 <td style="padding: 12px; border-bottom: 1px solid #e9ecef; font-size: 13px; color: #495057;">{cell}</td>
             '''
         html += '</tr>'
-    
+
     html += '''
         </tbody>
     </table>
     '''
-    
+
     return html
 
 
 def create_metric_card(label: str, value: str, emoji: str = "", goal: str = "") -> str:
     """Create single metric display card"""
     goal_text = f' <span style="font-size: 11px; color: #868e96;">(Goal: {goal})</span>' if goal else ""
-    
+
     return f'''
     <div style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">
         <div style="font-size: 13px; color: #495057; margin-bottom: 2px;">{emoji} <strong>{label}:</strong> {value}{goal_text}</div>

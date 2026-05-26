@@ -1,0 +1,57 @@
+# Cloudflare Edge Delivery Analytics
+#
+# Source contract:
+# - Uses Cloudflare GraphQL Analytics API (`httpRequestsAdaptiveGroups`).
+# - Stores daily source facts in the canonical Data Pond DB.
+# - Does not replace GA4, Heap, GSC, Portfolio Pulse, or Insights Engine reads.
+
+graphql:
+  enabled: true
+  timeout_seconds: 30
+  max_retries: 2
+  use_previous_day_window: true
+  top_paths_limit: 25
+
+account_id_env: "CLOUDFLARE_ACCOUNT_ID"
+zone_ids_env: "CLOUDFLARE_ZONE_IDS"
+
+zones:
+  - zone_name: "championsgreen-ga.com"
+    zone_id:
+    hostnames:
+      - hostname: "championsgreen-ga.com"
+        property_key: "378404769"
+        property_name: "Champion's Green"
+  - zone_name: "thedistrictuniversal.com"
+    zone_id:
+    hostnames:
+      - hostname: "thedistrictuniversal.com"
+        property_key: "378644585"
+        property_name: "The District Universal Boulevard"
+  - zone_name: "theharrisonsandysprings.com"
+    zone_id:
+    hostnames:
+      - hostname: "theharrisonsandysprings.com"
+        property_key: "378702475"
+        property_name: "The Harrison"
+  - zone_name: "ventanaapts.com"
+    zone_id:
+    hostnames:
+      - hostname: "ventanaapts.com"
+        property_key: "378380644"
+        property_name: "Ventana"
+  - zone_name: "calaismidtownapartments.com"
+    zone_id:
+    hostnames:
+      - hostname: "calaismidtownapartments.com"
+        property_key: "378381499"
+        property_name: "Calais Midtown"
+  - zone_name: "thedeltapearland.com"
+    zone_id:
+    hostnames:
+      - hostname: "thedeltapearland.com"
+        property_key: "441503068"
+        property_name: "The Delta Pearland"
+      - hostname: "www.thedeltapearland.com"
+        property_key: "441503068"
+        property_name: "The Delta Pearland"

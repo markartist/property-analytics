@@ -1,55 +1,56 @@
 #!/bin/bash
 #
-# Daily Portfolio Health Report - Generate and Email
-# ===================================================
+# Morning Full Portfolio Report - Generate and Email
 #
-# Automated wrapper for daily 9 AM execution via launchd.
-# Generates report and sends via email to Mark.
-#
-# Usage: Called automatically by launchd
-#        Can also be run manually for testing
-#
-# Author: Mark Laufhutte / Atlas
-# Date: 2026-01-27
-#
+# Daily launchd wrapper. Generates the upgraded morning full report
+# and sends it to recipients.
 
-set -euo pipefail  # Exit on error, unset vars, and pipeline failures
+set -euo pipefail
 
-# Change to script directory
 cd "$(dirname "$0")"
 
-# Log file
+export HOME="${HOME:-/Users/mark}"
+export USER="${USER:-mark}"
+export LOGNAME="${LOGNAME:-mark}"
+export KSM_PROFILE="${KSM_PROFILE:-marketingops}"
+export KSM_CLOUDFLARE_TOKEN_NOTATION="${KSM_CLOUDFLARE_TOKEN_NOTATION:-keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password}"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Frameworks/Python.framework/Versions/3.12/bin:${PATH:-}"
+
 LOG_DIR="$HOME/Library/Logs/Venterra"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/daily_health_report_$(date +%Y-%m-%d).log"
 
-echo "=====================================================================" | tee -a "$LOG_FILE"
-echo "Daily Portfolio Health Report - $(date)" | tee -a "$LOG_FILE"
-echo "=====================================================================" | tee -a "$LOG_FILE"
-echo "" | tee -a "$LOG_FILE"
+{
+  echo "====================================================================="
+  echo "Morning Full Portfolio Report - $(date)"
+  echo "====================================================================="
+  echo
 
-# Generate report
-echo "🔄 Generating report..." | tee -a "$LOG_FILE"
-if python3 generate_daily_portfolio_health.py 2>&1 | tee -a "$LOG_FILE"; then
-    echo "✅ Report generated successfully" | tee -a "$LOG_FILE"
-else
-    echo "❌ Report generation failed" | tee -a "$LOG_FILE"
-    exit 1
-fi
+  echo "[1/3] Generating morning full report..."
+  python3 generate_morning_full_report.py
+  echo "Generation complete"
+  echo
 
-echo "" | tee -a "$LOG_FILE"
+  echo "[2/3] Sending morning full report..."
+  if [[ "${MORNING_REPORT_DRY_RUN:-0}" == "1" ]]; then
+    python3 send_morning_full_report.py --dry-run
+  else
+    python3 send_morning_full_report.py
+  fi
+  echo "Email send complete"
+  echo
 
-# Send email
-echo "📧 Sending email..." | tee -a "$LOG_FILE"
-if python3 send_daily_health_report.py 2>&1 | tee -a "$LOG_FILE"; then
-    echo "✅ Email sent successfully" | tee -a "$LOG_FILE"
-else
-    echo "❌ Email send failed" | tee -a "$LOG_FILE"
-    exit 1
-fi
+  if [[ "${MORNING_REPORT_DRY_RUN:-0}" == "1" ]]; then
+    echo "[3/3] Skipping acceptance check in dry-run mode"
+  else
+    echo "[3/3] Verifying delivery acceptance gates..."
+    python3 scripts/verify_morning_delivery.py
+    echo "Acceptance checks passed"
+  fi
+  echo
 
-echo "" | tee -a "$LOG_FILE"
-echo "✅ Daily health report completed at $(date)" | tee -a "$LOG_FILE"
-echo "=====================================================================" | tee -a "$LOG_FILE"
+  echo "Morning full report workflow completed at $(date)"
+  echo "====================================================================="
+} 2>&1 | tee -a "$LOG_FILE"
 
-exit 0
+exit ${PIPESTATUS[0]}

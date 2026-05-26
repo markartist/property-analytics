@@ -217,7 +217,7 @@ class CloudflareCacheRulesManager:
 
     def build_phase1_ruleset_payload(self, config: Dict[str, Any], zone: PilotZone, zone_details: Dict[str, Any]) -> Dict[str, Any]:
         expressions = self.build_rule_expressions(config, zone)
-        effective_ttl_seconds, ttl_notes = self.effective_edge_ttl_seconds(config, zone_details)
+        effective_ttl_seconds, _ttl_notes = self.effective_edge_ttl_seconds(config, zone_details)
         managed_marker = config["ruleset"]["managed_marker"]
         rules = [
             {
@@ -252,11 +252,4 @@ class CloudflareCacheRulesManager:
             "kind": "zone",
             "phase": config["ruleset"]["phase"],
             "rules": rules,
-            "metadata": {
-                "managed_marker": managed_marker,
-                "phase": config["phase"],
-                "effective_edge_ttl_seconds": effective_ttl_seconds,
-                "ttl_notes": ttl_notes,
-                "cache_key_strategy": config["cache_key"]["strategy"],
-            },
         }

@@ -1,0 +1,331 @@
+{
+  "snapshot_date": "2026-05-06",
+  "captured_at": "2026-05-06T00:00:00-05:00",
+  "property_id": "KY4MP",
+  "property_name": "The Metropolitan",
+  "market_name": "Louisville, KY",
+  "research_scope": "watchlist_competitor_run",
+  "source_author": "Codex competitor packet builder",
+  "notes": "Official-page competitor evidence packet. Confirmed rows can feed report copy; directional rows should be used as advisory prompts; source-gap rows should remain visible only in data integrity/source panels.",
+  "evidence": {
+    "integrity_standard": "Do not report a rent, special, USP, or package/media claim unless source_url and captured_date are present.",
+    "comp_set_basis": "Governed property_competitors records in the Data Pond.",
+    "builder": "Data_Collection/utils/build_competitor_market_packets.py"
+  },
+  "observations": [
+    {
+      "competitor_name": "The Metropolitan",
+      "competitor_url": "https://venterraliving.com/apartments/the-metropolitan/",
+      "source_name": "Venterra unit availability feed",
+      "source_url": "https://venterraliving.com/apartments/the-metropolitan/",
+      "source_type": "internal_unit_feed",
+      "evidence_category": "subject_position",
+      "captured_date": "2026-05-06",
+      "floorplan_name": "Current visible availability",
+      "rent_min": 955.0,
+      "rent_max": 1081.0,
+      "availability_status": "23 available units in internal unit feed",
+      "special_text": "Up to 1 month's rent free on select units\n.",
+      "raw_claim": "The latest unit feed shows The Metropolitan visible rents from $955 to $1,081 across 23 current available units.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "db_table": "unit_availability_units",
+        "db_snapshot_date": "2026-05-06"
+      }
+    },
+    {
+      "competitor_name": "Breckinridge Square",
+      "competitor_url": "https://www.breckinridgesquare.com/",
+      "source_name": "Breckinridge Square official page",
+      "source_url": "https://www.breckinridgesquare.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "Breckinridge Square's official page could not provide usable crawlable evidence in this run (blocked_or_low_text).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Enclave at Breckenridge",
+      "competitor_url": "https://www.enclaveatbreckenridge.com/",
+      "source_name": "Enclave at Breckenridge official page",
+      "source_url": "https://www.enclaveatbreckenridge.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more.",
+      "raw_claim": "Enclave at Breckenridge's official page includes this visible offer/pricing language: With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Enclave at Breckenridge",
+      "competitor_url": "https://www.enclaveatbreckenridge.com/",
+      "source_name": "Enclave at Breckenridge official page",
+      "source_url": "https://www.enclaveatbreckenridge.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "We offer various amenities so that everyone can lead their best life.",
+      "raw_claim": "Enclave at Breckenridge's official page includes this visible offer/pricing language: We offer various amenities so that everyone can lead their best life.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Enclave at Breckenridge",
+      "competitor_url": "https://www.enclaveatbreckenridge.com/",
+      "source_name": "Enclave at Breckenridge official page",
+      "source_url": "https://www.enclaveatbreckenridge.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more. We offer various amenities so that everyone can lead their best life. Enjoy a refreshing pool, an outdoor grilling space, a clubhouse, a fitness center , and a colorful playground for the little ones. Did you know that we\u2019re also pet-friendly?",
+      "raw_claim": "Enclave at Breckenridge's official page provides competitor positioning evidence around: With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more. We offer various amenities so that everyone can lead their best life. Enjoy a refreshing pool, an outdoor grilling space, a clubhouse, a fitness center , and a colorful playground for the little ones. Did you know that we\u2019re also pet-friendly?",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Louisville, KY Apartments | Enclave at Breckenridge | Home",
+        "meta_description": "Welcome to Enclave at Breckenridge! We offer apartments for rent in Louisville, KY, where we promote comfortable and convenient living every day. Call us for a tour."
+      }
+    },
+    {
+      "competitor_name": "The Marc",
+      "competitor_url": "https://liveharrisonky.com/",
+      "source_name": "The Marc official page",
+      "source_url": "https://liveharrisonky.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "The Marc's official page could not provide usable crawlable evidence in this run (blocked_or_low_text).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Carrington Park At Huffmeister Apartments",
+      "competitor_url": "https://www.irtliving.com/apartments-in/louisville-ky/jamestown-at-st-matthews",
+      "source_name": "Carrington Park At Huffmeister Apartments official page",
+      "source_url": "https://www.irtliving.com/apartments-in/louisville-ky/jamestown-at-st-matthews",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "Carrington Park At Huffmeister Apartments's official page could not provide usable crawlable evidence in this run (404).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Cypress Pointe",
+      "competitor_url": "https://www.liveatcypresspointe.com/",
+      "source_name": "Cypress Pointe official page",
+      "source_url": "https://www.liveatcypresspointe.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Newly Upgraded Louisville, KY Apartments near Oxmoor | Cypress Pointe Menu Home Amenities Gallery Floor Plans Schedule a Tour Neighborhood Residents About CLK \u00c3\u0097 **RENOVATION SPECIAL** Get $500 OFF\u00c2 your rent in April when you move in by 3/31/2026!",
+      "raw_claim": "Cypress Pointe's official page includes this visible offer/pricing language: Newly Upgraded Louisville, KY Apartments near Oxmoor | Cypress Pointe Menu Home Amenities Gallery Floor Plans Schedule a Tour Neighborhood Residents About CLK \u00c3\u0097 **RENOVATION SPECIAL** Get $500 OFF\u00c2 your rent in April when you move in by 3/31/2026!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Cypress Pointe",
+      "competitor_url": "https://www.liveatcypresspointe.com/",
+      "source_name": "Cypress Pointe official page",
+      "source_url": "https://www.liveatcypresspointe.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Our newly renovated\u00c2 1, 2, & 3 bedroom apartments offer a perfect blend of space, comfort, and convenience in the ideal near Oxmoor location.",
+      "raw_claim": "Cypress Pointe's official page includes this visible offer/pricing language: Our newly renovated\u00c2 1, 2, & 3 bedroom apartments offer a perfect blend of space, comfort, and convenience in the ideal near Oxmoor location.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Cypress Pointe",
+      "competitor_url": "https://www.liveatcypresspointe.com/",
+      "source_name": "Cypress Pointe official page",
+      "source_url": "https://www.liveatcypresspointe.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Built with you in mind, our pet-friendly Louisville community features amenities to simplify and elevate your life. Find Your Space Floor Plans Splash Central Enjoy our refreshing community pools. Stay Fit Crush your workout in our fitness center. Pets love our community as much as our residents do!",
+      "raw_claim": "Cypress Pointe's official page provides competitor positioning evidence around: Built with you in mind, our pet-friendly Louisville community features amenities to simplify and elevate your life. Find Your Space Floor Plans Splash Central Enjoy our refreshing community pools. Stay Fit Crush your workout in our fitness center. Pets love our community as much as our residents do!",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Newly Upgraded Louisville, KY Apartments near Oxmoor | Cypress Pointe",
+        "meta_description": "Cypress Pointe offers newly upgraded 1, 2, & 3 bedroom apartments in Louisville, KY! Fantastic amenities + Great location near Oxmoor & near Sullivan University. Click for more info!"
+      }
+    },
+    {
+      "competitor_name": "Enclave At Breckenridge By ARIUM",
+      "competitor_url": "https://www.enclaveatbreckenridge.com/",
+      "source_name": "Enclave At Breckenridge By ARIUM official page",
+      "source_url": "https://www.enclaveatbreckenridge.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more.",
+      "raw_claim": "Enclave At Breckenridge By ARIUM's official page includes this visible offer/pricing language: With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Enclave At Breckenridge By ARIUM",
+      "competitor_url": "https://www.enclaveatbreckenridge.com/",
+      "source_name": "Enclave At Breckenridge By ARIUM official page",
+      "source_url": "https://www.enclaveatbreckenridge.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "We offer various amenities so that everyone can lead their best life.",
+      "raw_claim": "Enclave At Breckenridge By ARIUM's official page includes this visible offer/pricing language: We offer various amenities so that everyone can lead their best life.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Enclave At Breckenridge By ARIUM",
+      "competitor_url": "https://www.enclaveatbreckenridge.com/",
+      "source_name": "Enclave At Breckenridge By ARIUM official page",
+      "source_url": "https://www.enclaveatbreckenridge.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more. We offer various amenities so that everyone can lead their best life. Enjoy a refreshing pool, an outdoor grilling space, a clubhouse, a fitness center , and a colorful playground for the little ones. Did you know that we\u2019re also pet-friendly?",
+      "raw_claim": "Enclave At Breckenridge By ARIUM's official page provides competitor positioning evidence around: With time-saving features, fun leisure spaces, several household comforts, and a convenient location in Hikes Point, our apartments in Louisville, KY, offer everything you could want, and more. We offer various amenities so that everyone can lead their best life. Enjoy a refreshing pool, an outdoor grilling space, a clubhouse, a fitness center , and a colorful playground for the little ones. Did you know that we\u2019re also pet-friendly?",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Louisville, KY Apartments | Enclave at Breckenridge | Home",
+        "meta_description": "Welcome to Enclave at Breckenridge! We offer apartments for rent in Louisville, KY, where we promote comfortable and convenient living every day. Call us for a tour."
+      }
+    },
+    {
+      "competitor_name": "Jamestown At St. Matthews Apartment Homes",
+      "competitor_url": "https://www.irtliving.com/apartments-in/louisville-ky/jamestown-at-st-matthews",
+      "source_name": "Jamestown At St. Matthews Apartment Homes official page",
+      "source_url": "https://www.irtliving.com/apartments-in/louisville-ky/jamestown-at-st-matthews",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "Jamestown At St. Matthews Apartment Homes's official page could not provide usable crawlable evidence in this run (404).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Mallard Crossing At St. Matthews",
+      "competitor_url": "https://www.liveatmallardcrossing.com/",
+      "source_name": "Mallard Crossing At St. Matthews official page",
+      "source_url": "https://liveatmallardcrossing.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "With 600 apartments for rent, including studio, 1-, 2- and 3-bedroom apartments, Mallard Crossing offers ample space and an assortment of amenities.",
+      "raw_claim": "Mallard Crossing At St. Matthews's official page includes this visible offer/pricing language: With 600 apartments for rent, including studio, 1-, 2- and 3-bedroom apartments, Mallard Crossing offers ample space and an assortment of amenities.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Mallard Crossing At St. Matthews",
+      "competitor_url": "https://www.liveatmallardcrossing.com/",
+      "source_name": "Mallard Crossing At St. Matthews official page",
+      "source_url": "https://liveatmallardcrossing.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Mathews Skip to main content \u00d7 Pet Policy We are a pet-friendly community! \u2022 2 pets max with a one-time fee of $350 \u2022 $35 monthly pet rent Restrictions include: Rottweiler, Doberman Pinscher, Pit Bull Terrier, Staffordshire terrier,Chow, Presa Canarias, Akita, Alaskan Malamutes, Wolf-Hybrid and any mix thereof. Mathews Your Home is Waiting Every Detail Matters Simplistic Style Browse the Gallery Spacious Layouts Find Your Floorplan A Sense of Community View Our Amenities It All Begins Here Mallard Crossing is a sprawling community located just east of Downtown Louisville, only a 15-minu Newly renovated apartments feature elevated kitchen and bathroom finishes, durable plank flooring and a variety of storage options.",
+      "raw_claim": "Mallard Crossing At St. Matthews's official page provides competitor positioning evidence around: Mathews Skip to main content \u00d7 Pet Policy We are a pet-friendly community! \u2022 2 pets max with a one-time fee of $350 \u2022 $35 monthly pet rent Restrictions include: Rottweiler, Doberman Pinscher, Pit Bull Terrier, Staffordshire terrier,Chow, Presa Canarias, Akita, Alaskan Malamutes, Wolf-Hybrid and any mix thereof. Mathews Your Home is Waiting Every Detail Matters Simplistic Style Browse the Gallery Spacious Layouts Find Your Floorplan A Sense of Community View Our Amenities It All Begins Here Mallard Crossing is a sprawling community located just east of Downtown Louisville, only a 15-minu Newly renovated apartments feature elevated kitchen and bathroom finishes, durable plank flooring and a variety of storage options.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Louisville apartments for rent | Mallard Crossing at St. Mathews",
+        "meta_description": "Mallard Crossing at St. Mathews in Louisville, KY offers Studio, 1, 2, or 3 bedroom apartments for rent. Browse the gallery, explore the amenities, and get more information on availability today."
+      }
+    },
+    {
+      "competitor_name": "The Belltower",
+      "competitor_url": "https://livethebelltower.com/",
+      "source_name": "The Belltower official page",
+      "source_url": "https://livethebelltower.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "The Belltower Home Lease Now and get 1 Free Month on a 13+ Lease for All 1 Bedroom Floor Plans!",
+      "raw_claim": "The Belltower's official page includes this visible offer/pricing language: The Belltower Home Lease Now and get 1 Free Month on a 13+ Lease for All 1 Bedroom Floor Plans!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Belltower",
+      "competitor_url": "https://livethebelltower.com/",
+      "source_name": "The Belltower official page",
+      "source_url": "https://livethebelltower.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Lease Now and get 1 Free Month on a 13+ Lease for All 1 Bedroom Floor Plans!",
+      "raw_claim": "The Belltower's official page includes this visible offer/pricing language: Lease Now and get 1 Free Month on a 13+ Lease for All 1 Bedroom Floor Plans!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Belltower",
+      "competitor_url": "https://livethebelltower.com/",
+      "source_name": "The Belltower official page",
+      "source_url": "https://livethebelltower.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "SEE OUR COMMUNITY Elevated Floor Plans Discover the Possibilities Choose from our one-, two-, and three-bedroom options, each providing the ultimate in comfort and style. A1 1 Bed / 1 Bath / 802 SQ FT View Floor Plan Check Availability Virtual Tour B1 2 Bed / 2 Bath / 1,080 SQ FT View Floor Plan Check Availability Virtual Tour C1 3 Bed / 2 Bath / 1,312 SQ FT View Floor Plan Check Availability Virtual Tour Amenities Community Apartment Sparkling Sw Name * Email * Phone Message Send My Message Office Hours: Monday \u2013 Friday: 10am \u2013 6pm Saturday: 10am \u2013 5pm Sunday: Closed Copyright \u00a9 \uf3c5 3400 Tevis Drive, Louisville, KY, 40220 \uf879 502-273-1159 \uf0e0 thebelltower-w@m.knck.io \ue09a @livethebelltower \ue093 @livethebelltower Home Floor Plans Amen",
+      "raw_claim": "The Belltower's official page provides competitor positioning evidence around: SEE OUR COMMUNITY Elevated Floor Plans Discover the Possibilities Choose from our one-, two-, and three-bedroom options, each providing the ultimate in comfort and style. A1 1 Bed / 1 Bath / 802 SQ FT View Floor Plan Check Availability Virtual Tour B1 2 Bed / 2 Bath / 1,080 SQ FT View Floor Plan Check Availability Virtual Tour C1 3 Bed / 2 Bath / 1,312 SQ FT View Floor Plan Check Availability Virtual Tour Amenities Community Apartment Sparkling Sw Name * Email * Phone Message Send My Message Office Hours: Monday \u2013 Friday: 10am \u2013 6pm Saturday: 10am \u2013 5pm Sunday: Closed Copyright \u00a9 \uf3c5 3400 Tevis Drive, Louisville, KY, 40220 \uf879 502-273-1159 \uf0e0 thebelltower-w@m.knck.io \ue09a @livethebelltower \ue093 @livethebelltower Home Floor Plans Amen",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "The Belltower Home",
+        "meta_description": "Our apartments for rent in Louisville, KY are move-in ready - and all that's missing is you. See what makes The Belltower so special today."
+      }
+    },
+    {
+      "competitor_name": "Waterford Place",
+      "competitor_url": "https://www.waterfordplacefmg.com/",
+      "source_name": "Waterford Place official page",
+      "source_url": "https://www.waterfordplacefmg.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Swim some laps in our heated indoor pool or cool off at our lake-side outdoor swimming pool.",
+      "raw_claim": "Waterford Place's official page includes this visible offer/pricing language: Swim some laps in our heated indoor pool or cool off at our lake-side outdoor swimming pool.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Waterford Place",
+      "competitor_url": "https://www.waterfordplacefmg.com/",
+      "source_name": "Waterford Place official page",
+      "source_url": "https://www.waterfordplacefmg.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Send My Message Send My Message Address Waterford Place 4105 Waterford Circle Louisville , KY 40207 Opens in a new tab Phone Number +1 502-912-8100 Professionally Managed by: Office Hours Monday: 10:00 AM to - 6:00 PM Tuesday: 10:00 AM to - 6:00 PM Wednesday: 10:00 AM to - 6:00 P",
+      "raw_claim": "Waterford Place's official page includes this visible offer/pricing language: Send My Message Send My Message Address Waterford Place 4105 Waterford Circle Louisville , KY 40207 Opens in a new tab Phone Number +1 502-912-8100 Professionally Managed by: Office Hours Monday: 10:00 AM to - 6:00 PM Tuesday: 10:00 AM to - 6:00 PM Wednesday: 10:00 AM to - 6:00 P",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Waterford Place",
+      "competitor_url": "https://www.waterfordplacefmg.com/",
+      "source_name": "Waterford Place official page",
+      "source_url": "https://www.waterfordplacefmg.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Apartments in St Matthews, KY | Waterford Place Skip to main content Login Resident Login Opens in a new tab Applicant Login Opens in a new tab Phone Number +1 502-912-8100 Home Floor Plans Floor Plans EBrochure Interactive Community Map Tours Tours With an Agent Virtually Amenit Our apartments in Louisville, KY create a high-level living experience for all our residents. Available in one and two-bedroom layouts, our residences are a perfect haven of comfort built to meet your every need. Homes include beautiful solid oak cabinets, cozy wood burning fireplaces, expansive closets, patios or balconies with views of the beautifully landscaped community, a unique open kitchen with a breakfast bar, a washer and dryer, and more!",
+      "raw_claim": "Waterford Place's official page provides competitor positioning evidence around: Apartments in St Matthews, KY | Waterford Place Skip to main content Login Resident Login Opens in a new tab Applicant Login Opens in a new tab Phone Number +1 502-912-8100 Home Floor Plans Floor Plans EBrochure Interactive Community Map Tours Tours With an Agent Virtually Amenit Our apartments in Louisville, KY create a high-level living experience for all our residents. Available in one and two-bedroom layouts, our residences are a perfect haven of comfort built to meet your every need. Homes include beautiful solid oak cabinets, cozy wood burning fireplaces, expansive closets, patios or balconies with views of the beautifully landscaped community, a unique open kitchen with a breakfast bar, a washer and dryer, and more!",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments in St Matthews, KY | Waterford Place",
+        "meta_description": "Waterford Place offers new 1- and 2-bedroom apartments for rent in Saint Matthews, with a variety of amenities and the best living conditions. Contact us!"
+      }
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+-- Migration 0035: Marketing BI native Excel exports
+-- Full-fidelity Power BI export tables for Captain Brief / Captain's Log grounding.
+
+CREATE TABLE IF NOT EXISTS marketing_bi_portfolio_summary (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  encasa_region TEXT,
+  metro_region TEXT,
+  property_name TEXT NOT NULL,
+  property_id TEXT,
+  community_id TEXT,
+  acquired_date TEXT,
+  year_built INTEGER,
+  apartments INTEGER,
+  retail TEXT,
+  head_count_bom INTEGER,
+  residents INTEGER,
+  leaseholders INTEGER,
+  occupants INTEGER,
+  adults INTEGER,
+  minors INTEGER,
+  age_unknown INTEGER,
+  pets INTEGER,
+  source_file TEXT NOT NULL,
+  evidence_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(report_date, property_name, source_file)
+);
+
+CREATE INDEX IF NOT EXISTS idx_marketing_bi_portfolio_summary_property_date
+  ON marketing_bi_portfolio_summary(property_id, report_date DESC);
+
+CREATE TABLE IF NOT EXISTS marketing_bi_ad_spend_property_month (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  calendar_month TEXT NOT NULL,
+  region TEXT,
+  property_name TEXT NOT NULL,
+  property_id TEXT,
+  community_id TEXT,
+  ad_spend_total REAL,
+  ad_spend_delta REAL,
+  source_file TEXT NOT NULL,
+  evidence_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(report_date, calendar_month, property_name, source_file)
+);
+
+CREATE INDEX IF NOT EXISTS idx_marketing_bi_ad_spend_property_month_property_date
+  ON marketing_bi_ad_spend_property_month(property_id, report_date DESC, calendar_month DESC);
+
+CREATE TABLE IF NOT EXISTS marketing_bi_traffic_conversions_full (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  region TEXT,
+  property_name TEXT NOT NULL,
+  property_id TEXT,
+  community_id TEXT,
+  ra_job_function TEXT,
+  responsible_agent TEXT,
+  assigned_pct_t7 REAL,
+  assigned_pct_t30 REAL,
+  guest_cards_t7 INTEGER,
+  guest_cards_t7_py INTEGER,
+  guest_cards_t7_yoy REAL,
+  guest_cards_t30 INTEGER,
+  guest_cards_t30_py INTEGER,
+  guest_cards_t30_yoy REAL,
+  guest_cards_t60 INTEGER,
+  guest_cards_t60_py INTEGER,
+  guest_cards_t60_yoy REAL,
+  guest_cards_t90 INTEGER,
+  guest_cards_t90_py INTEGER,
+  guest_cards_t90_yoy REAL,
+  visits_t7 INTEGER,
+  visits_t7_py INTEGER,
+  visits_t7_yoy REAL,
+  visits_t30 INTEGER,
+  visits_t30_py INTEGER,
+  visits_t30_yoy REAL,
+  visits_t60 INTEGER,
+  visits_t60_py INTEGER,
+  visits_t60_yoy REAL,
+  visits_t90 INTEGER,
+  visits_t90_py INTEGER,
+  visits_t90_yoy REAL,
+  apps_t7 INTEGER,
+  apps_t7_py INTEGER,
+  apps_t7_yoy REAL,
+  apps_t30 INTEGER,
+  apps_t30_py INTEGER,
+  apps_t30_yoy REAL,
+  apps_t60 INTEGER,
+  apps_t60_py INTEGER,
+  apps_t60_yoy REAL,
+  apps_t90 INTEGER,
+  apps_t90_py INTEGER,
+  apps_t90_yoy REAL,
+  rfp_t7 INTEGER,
+  rfp_t7_py INTEGER,
+  rfp_t7_yoy REAL,
+  rfp_t30 INTEGER,
+  rfp_t30_py INTEGER,
+  rfp_t30_yoy REAL,
+  rfp_t60 INTEGER,
+  rfp_t60_py INTEGER,
+  rfp_t60_yoy REAL,
+  rfp_t90 INTEGER,
+  rfp_t90_py INTEGER,
+  rfp_t90_yoy REAL,
+  closing_ratio_t7 REAL,
+  closing_ratio_t7_py REAL,
+  closing_ratio_t7_yoy REAL,
+  closing_ratio_t30 REAL,
+  closing_ratio_t30_py REAL,
+  closing_ratio_t30_yoy REAL,
+  closing_ratio_t45 REAL,
+  closing_ratio_t45_py REAL,
+  closing_ratio_t45_yoy REAL,
+  current_apartment_unit_count INTEGER,
+  atr_avg_t7 REAL,
+  atr_avg_t30 REAL,
+  atr_avg_t60 REAL,
+  atr_avg_t90 REAL,
+  source_file TEXT NOT NULL,
+  evidence_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(report_date, region, property_name, ra_job_function, responsible_agent, source_file)
+);
+
+CREATE INDEX IF NOT EXISTS idx_marketing_bi_traffic_conversions_full_property_date
+  ON marketing_bi_traffic_conversions_full(property_id, report_date DESC);
+
+CREATE TABLE IF NOT EXISTS marketing_bi_excel_export_rows (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  export_name TEXT NOT NULL,
+  source_file TEXT NOT NULL,
+  row_number INTEGER NOT NULL,
+  scope TEXT,
+  region TEXT,
+  property_name TEXT,
+  property_id TEXT,
+  community_id TEXT,
+  row_label TEXT,
+  metrics_json TEXT,
+  evidence_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(report_date, export_name, source_file, row_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_marketing_bi_excel_export_rows_property_date
+  ON marketing_bi_excel_export_rows(property_id, report_date DESC, export_name);

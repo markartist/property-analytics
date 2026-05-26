@@ -26,14 +26,19 @@ logger = logging.getLogger(__name__)
 
 # Database location - supports env var for shared database
 import os
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DB_PATH_ENV = os.getenv('PORTFOLIO_ANALYTICS_DB_PATH')
 if DB_PATH_ENV:
     DB_PATH = Path(DB_PATH_ENV)
 else:
     # Default to canonical shared location
-    DB_PATH = Path(__file__).parent.parent.parent.parent / "data" / "portfolio_analytics.db"
+    DB_PATH = REPO_ROOT / "data" / "portfolio_analytics.db"
 
-SCHEMA_PATH = Path(__file__).parent.parent.parent / "schema" / "portfolio_database_schema.sql"
+SCHEMA_PATH_CANDIDATES = [
+    REPO_ROOT / "schema" / "portfolio_database_schema.sql",
+    REPO_ROOT / "Data_Collection" / "schema" / "portfolio_database_schema.sql",
+    REPO_ROOT / "Portfolio_Monitoring" / "schema" / "portfolio_database_schema.sql",
+]
 
 # Master registry for property URL → GA4 ID mapping
 REGISTRY_PATH = Path('/Users/mark/Property_Analytics/config/venterra_properties_official.json')
@@ -41,33 +46,62 @@ REGISTRY_PATH = Path('/Users/mark/Property_Analytics/config/venterra_properties_
 
 class DatabaseManager:
     """Manages all database operations for the portfolio monitoring system."""
-    
+
     def __init__(self, db_path: Optional[Path] = None):
         """Initialize database manager.
-        
+
         Args:
             db_path: Path to SQLite database file. Uses default if None.
         """
         self.db_path = db_path or DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize database if it doesn't exist
         if not self.db_path.exists():
             logger.info(f"Database does not exist. Creating new database at {self.db_path}")
             self.initialize_database()
-        
+
         # Load GSC URL → GA4 ID mapping for dual-write
         self._gsc_url_to_ga4_map = self._load_gsc_mapping()
 
         # Ensure runtime-added tables exist for existing databases.
         self._ensure_runtime_tables()
-        
+
         logger.info(f"Database manager initialized: {self.db_path}")
 
     def _ensure_runtime_tables(self) -> None:
         """Create runtime tables that may not exist in older databases."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS collection_retry_queue (
+                    queue_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    collection_date DATE NOT NULL,
+                    data_source TEXT NOT NULL,
+                    property_id TEXT,
+                    property_name TEXT,
+                    attempt_count INTEGER NOT NULL DEFAULT 0,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    retry_disposition TEXT NOT NULL DEFAULT 'retryable_now',
+                    last_error_type TEXT,
+                    last_error_message TEXT,
+                    next_attempt_at TIMESTAMP,
+                    retry_window_end TIMESTAMP,
+                    resolved_at TIMESTAMP,
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(collection_date, data_source, property_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_collection_retry_queue_due
+                ON collection_retry_queue(status, next_attempt_at)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_collection_retry_queue_source_date
+                ON collection_retry_queue(collection_date, data_source)
+            """)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS gsc_url_inspection (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -303,6 +337,53 @@ class DatabaseManager:
                 CREATE INDEX IF NOT EXISTS idx_cf_zone_snapshot_domain_date
                 ON cloudflare_zone_config_snapshots(normalized_domain, snapshot_date DESC)
             """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS cloudflare_edge_daily_metrics (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    metric_date DATE NOT NULL,
+                    zone_id TEXT NOT NULL,
+                    zone_name TEXT,
+                    property_id TEXT,
+                    property_name TEXT,
+                    hostname TEXT NOT NULL DEFAULT '__zone__',
+                    path TEXT NOT NULL DEFAULT '__all__',
+                    requests INTEGER,
+                    bytes INTEGER,
+                    cached_requests INTEGER,
+                    cached_bytes INTEGER,
+                    uncached_requests INTEGER,
+                    origin_request_estimate INTEGER,
+                    cache_hit_ratio REAL,
+                    edge_response_status_2xx INTEGER,
+                    edge_response_status_3xx INTEGER,
+                    edge_response_status_4xx INTEGER,
+                    edge_response_status_5xx INTEGER,
+                    edge_response_status_other INTEGER,
+                    edge_response_status_breakdown_json TEXT,
+                    cache_status_breakdown_json TEXT,
+                    bot_security_json TEXT,
+                    dataset_name TEXT,
+                    query_status TEXT,
+                    raw_response_json TEXT,
+                    collection_id INTEGER,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(metric_date, zone_id, hostname, path),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_edge_daily_date
+                ON cloudflare_edge_daily_metrics(metric_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_edge_daily_zone_date
+                ON cloudflare_edge_daily_metrics(zone_id, metric_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_cf_edge_daily_property_date
+                ON cloudflare_edge_daily_metrics(property_id, metric_date DESC)
+            """)
             cf_synth_columns = {
                 row["name"] for row in cursor.execute("PRAGMA table_info(cloudflare_cache_synthetic_checks)").fetchall()
             }
@@ -319,18 +400,33 @@ class DatabaseManager:
                     cursor.execute(
                         f"ALTER TABLE cloudflare_cache_synthetic_checks ADD COLUMN {column_name} {column_type}"
                     )
-    
+            data_collection_columns = {
+                row["name"] for row in cursor.execute("PRAGMA table_info(data_collections)").fetchall()
+            }
+            required_data_collection_columns = {
+                "properties_total": "INTEGER DEFAULT 0",
+                "properties_success": "INTEGER DEFAULT 0",
+                "properties_skipped": "INTEGER DEFAULT 0",
+                "notes": "TEXT",
+            }
+            for column_name, column_type in required_data_collection_columns.items():
+                if column_name not in data_collection_columns:
+                    cursor.execute(
+                        f"ALTER TABLE data_collections ADD COLUMN {column_name} {column_type}"
+                    )
+
     @contextmanager
     def get_connection(self):
         """Context manager for database connections.
-        
+
         Usage:
             with db.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT * FROM properties")
         """
-        conn = sqlite3.connect(str(self.db_path))
+        conn = sqlite3.connect(str(self.db_path), timeout=60)
         conn.row_factory = sqlite3.Row  # Enable column access by name
+        conn.execute("PRAGMA busy_timeout = 60000")
         try:
             yield conn
             conn.commit()
@@ -340,60 +436,62 @@ class DatabaseManager:
             raise
         finally:
             conn.close()
-    
+
     def _load_gsc_mapping(self) -> Dict[str, str]:
         """Load GSC URL → GA4 ID mapping from registry.
-        
+
         Returns:
             Dict mapping GSC URL to GA4 numeric ID
         """
         try:
             with open(REGISTRY_PATH) as f:
                 registry = json.load(f)
-            
+
             url_to_ga4 = {}
             for prop in registry['properties']:
                 gsc_url = prop.get('gsc_url') or prop.get('full_url')
                 ga4_id = prop.get('ga4_property_id')
-                
+
                 if gsc_url and ga4_id:
                     # Normalize URL (ensure trailing slash)
                     if not gsc_url.endswith('/'):
                         gsc_url += '/'
                     url_to_ga4[gsc_url] = ga4_id
-            
+
             logger.info(f"Loaded {len(url_to_ga4)} GSC URL → GA4 ID mappings")
             return url_to_ga4
         except Exception as e:
             logger.error(f"Failed to load GSC mapping: {e}")
             return {}
-    
+
     def initialize_database(self):
         """Initialize database from schema file."""
-        if not SCHEMA_PATH.exists():
-            raise FileNotFoundError(f"Schema file not found: {SCHEMA_PATH}")
-        
+        schema_path = next((path for path in SCHEMA_PATH_CANDIDATES if path.exists()), None)
+        if schema_path is None:
+            candidates = ", ".join(str(path) for path in SCHEMA_PATH_CANDIDATES)
+            raise FileNotFoundError(f"Schema file not found in any expected location: {candidates}")
+
         logger.info("Initializing database schema...")
-        
-        with open(SCHEMA_PATH, 'r') as f:
+
+        with open(schema_path, 'r') as f:
             schema_sql = f.read()
-        
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.executescript(schema_sql)
-        
+
         logger.info("Database schema initialized successfully")
-    
+
     # =========================================================================
     # PROPERTY MANAGEMENT
     # =========================================================================
-    
+
     def upsert_property(self, property_id: str, canonical_name: str,
                        url: Optional[str] = None, location: Optional[str] = None,
                        manager: Optional[str] = None, property_type: Optional[str] = None,
                        active: bool = True) -> None:
         """Insert or update property in database.
-        
+
         Args:
             property_id: GA4 Property ID
             canonical_name: Display name for property
@@ -417,12 +515,12 @@ class DatabaseManager:
                     active = excluded.active,
                     updated_at = CURRENT_TIMESTAMP
             """, (property_id, canonical_name, url, location, manager, property_type, active))
-        
+
         logger.debug(f"Upserted property: {canonical_name} ({property_id})")
-    
+
     def add_property_alias(self, property_id: str, alias: str) -> None:
         """Add an alias for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             alias: Alternative name for the property
@@ -433,13 +531,13 @@ class DatabaseManager:
                 INSERT OR IGNORE INTO property_aliases (property_id, alias)
                 VALUES (?, ?)
             """, (property_id, alias))
-    
+
     def get_property(self, property_id: str) -> Optional[Dict]:
         """Retrieve property details.
-        
+
         Args:
             property_id: GA4 Property ID
-            
+
         Returns:
             Property details as dictionary, or None if not found
         """
@@ -448,10 +546,10 @@ class DatabaseManager:
             cursor.execute("SELECT * FROM properties WHERE property_id = ?", (property_id,))
             row = cursor.fetchone()
             return dict(row) if row else None
-    
+
     def get_all_active_properties(self) -> List[Dict]:
         """Get all active properties.
-        
+
         Returns:
             List of property dictionaries
         """
@@ -459,47 +557,84 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM properties WHERE active = 1 ORDER BY canonical_name")
             return [dict(row) for row in cursor.fetchall()]
-    
+
     # =========================================================================
     # DATA COLLECTION TRACKING
     # =========================================================================
-    
+
+    def _infer_collection_status(
+        self,
+        properties_collected: int,
+        properties_failed: int = 0,
+        properties_total: Optional[int] = None,
+    ) -> str:
+        """Infer a richer collection status from result counts."""
+        total = properties_total
+        if total is None:
+            total = max(properties_collected + properties_failed, 0)
+
+        if properties_failed <= 0:
+            return 'completed'
+        if properties_collected > 0:
+            return 'partial'
+        if total > 0 and properties_failed >= total:
+            return 'blocked'
+        return 'failed'
+
     def start_data_collection(self, collection_date: date, collection_type: str,
                              data_source: str) -> int:
         """Start a new data collection run.
-        
+
         Args:
             collection_date: Date the data represents
             collection_type: daily, weekly, monthly
             data_source: ga4, gtmetrix, psi, semrush, gsc
-            
+
         Returns:
             Collection ID
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO data_collections 
+                INSERT INTO data_collections
                 (collection_date, collection_type, data_source, started_at, status)
                 VALUES (?, ?, ?, ?, 'in_progress')
             """, (collection_date, collection_type, data_source, datetime.now()))
-            
+
             return cursor.lastrowid
-    
-    def complete_data_collection(self, collection_id: int, 
+
+    def complete_data_collection(self, collection_id: int,
                                  properties_collected: int,
                                  properties_failed: int = 0,
-                                 error_message: Optional[str] = None) -> None:
+                                 error_message: Optional[str] = None,
+                                 status: Optional[str] = None,
+                                 properties_total: Optional[int] = None,
+                                 properties_success: Optional[int] = None,
+                                 properties_skipped: int = 0,
+                                 notes: Optional[str] = None) -> None:
         """Mark a data collection run as complete.
-        
+
         Args:
             collection_id: Collection ID from start_data_collection
             properties_collected: Number of properties successfully collected
             properties_failed: Number of properties that failed
             error_message: Error message if collection failed
+            status: Explicit status override (`completed`, `partial`, `blocked`, etc.)
+            properties_total: Expected total properties for the run
+            properties_success: Explicit success count, defaults to properties_collected
+            properties_skipped: Count intentionally skipped
+            notes: Optional operator-facing notes
         """
-        status = 'completed' if properties_failed == 0 else 'failed'
-        
+        resolved_status = status or self._infer_collection_status(
+            properties_collected=properties_collected,
+            properties_failed=properties_failed,
+            properties_total=properties_total,
+        )
+        resolved_total = properties_total
+        if resolved_total is None:
+            resolved_total = max(properties_collected + properties_failed + properties_skipped, 0)
+        resolved_success = properties_success if properties_success is not None else properties_collected
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -508,10 +643,183 @@ class DatabaseManager:
                     status = ?,
                     properties_collected = ?,
                     properties_failed = ?,
-                    error_message = ?
+                    properties_total = ?,
+                    properties_success = ?,
+                    properties_skipped = ?,
+                    error_message = ?,
+                    notes = ?
                 WHERE collection_id = ?
-            """, (datetime.now(), status, properties_collected, properties_failed, 
-                  error_message, collection_id))
+            """, (
+                datetime.now(),
+                resolved_status,
+                properties_collected,
+                properties_failed,
+                resolved_total,
+                resolved_success,
+                properties_skipped,
+                error_message,
+                notes,
+                collection_id,
+            ))
+
+    def upsert_collection_retry_queue(
+        self,
+        collection_date: date,
+        data_source: str,
+        property_id: Optional[str] = None,
+        property_name: Optional[str] = None,
+        status: str = 'pending',
+        retry_disposition: str = 'retryable_now',
+        attempt_count: int = 0,
+        next_attempt_at: Optional[datetime] = None,
+        retry_window_end: Optional[datetime] = None,
+        last_error_type: Optional[str] = None,
+        last_error_message: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> None:
+        """Create or update a retry-queue item for unresolved collection work."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO collection_retry_queue (
+                    collection_date, data_source, property_id, property_name,
+                    attempt_count, status, retry_disposition, next_attempt_at,
+                    retry_window_end, last_error_type, last_error_message, notes,
+                    updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(collection_date, data_source, property_id) DO UPDATE SET
+                    property_name = excluded.property_name,
+                    attempt_count = excluded.attempt_count,
+                    status = excluded.status,
+                    retry_disposition = excluded.retry_disposition,
+                    next_attempt_at = excluded.next_attempt_at,
+                    retry_window_end = excluded.retry_window_end,
+                    last_error_type = excluded.last_error_type,
+                    last_error_message = excluded.last_error_message,
+                    notes = excluded.notes,
+                    updated_at = CURRENT_TIMESTAMP,
+                    resolved_at = CASE
+                        WHEN excluded.status = 'resolved' THEN CURRENT_TIMESTAMP
+                        ELSE collection_retry_queue.resolved_at
+                    END
+            """, (
+                collection_date,
+                data_source,
+                property_id,
+                property_name,
+                attempt_count,
+                status,
+                retry_disposition,
+                next_attempt_at,
+                retry_window_end,
+                last_error_type,
+                last_error_message,
+                notes,
+            ))
+
+    def get_latest_collection_runs(self, collection_date: date) -> List[Dict[str, Any]]:
+        """Return the latest run row per source for a collection date."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            rows = cursor.execute("""
+                SELECT *
+                FROM data_collections
+                WHERE collection_date = ?
+                ORDER BY started_at DESC, collection_id DESC
+            """, (collection_date,)).fetchall()
+
+        latest_by_source: Dict[str, Dict[str, Any]] = {}
+        for row in rows:
+            payload = dict(row)
+            source = str(payload.get("data_source") or "").strip().lower()
+            if source and source not in latest_by_source:
+                latest_by_source[source] = payload
+        return list(latest_by_source.values())
+
+    def get_retry_queue_items(
+        self,
+        collection_date: date,
+        unresolved_only: bool = True,
+        data_source: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return retry queue items for a collection date."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            sql = """
+                SELECT *
+                FROM collection_retry_queue
+                WHERE collection_date = ?
+            """
+            params: List[Any] = [collection_date]
+            if data_source:
+                sql += " AND data_source = ?"
+                params.append(data_source)
+            if unresolved_only:
+                sql += " AND status NOT IN ('resolved', 'exhausted')"
+            sql += " ORDER BY COALESCE(next_attempt_at, created_at) ASC, queue_id ASC"
+            rows = cursor.execute(sql, params).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_data_collection_status(
+        self,
+        collection_id: int,
+        status: str,
+        notes: Optional[str] = None,
+        error_message: Optional[str] = None,
+        increment_retry_attempts: bool = False,
+    ) -> None:
+        """Update operational status metadata for an existing collection run."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE data_collections
+                SET status = ?,
+                    notes = COALESCE(?, notes),
+                    error_message = COALESCE(?, error_message),
+                    retry_attempts = COALESCE(retry_attempts, 0) + CASE WHEN ? THEN 1 ELSE 0 END
+                WHERE collection_id = ?
+            """, (
+                status,
+                notes,
+                error_message,
+                1 if increment_retry_attempts else 0,
+                collection_id,
+            ))
+
+    def resolve_collection_retry_queue(
+        self,
+        collection_date: date,
+        data_source: str,
+        property_id: Optional[str] = None,
+        notes: Optional[str] = None,
+        exhausted: bool = False,
+    ) -> None:
+        """Mark retry queue work as resolved or exhausted."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            sql = """
+                UPDATE collection_retry_queue
+                SET status = ?,
+                    notes = COALESCE(?, notes),
+                    resolved_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE collection_date = ?
+                  AND data_source = ?
+            """
+            params: List[Any] = [
+                'exhausted' if exhausted else 'resolved',
+                notes,
+                collection_date,
+                data_source,
+            ]
+            if property_id is None:
+                sql += " AND property_id = ?"
+                params.append("__source__")
+            else:
+                sql += " AND property_id = ?"
+                params.append(property_id)
+            cursor.execute(sql, params)
 
     # =========================================================================
     # GTMETRIX DATA INSERTION
@@ -571,15 +879,15 @@ class DatabaseManager:
                     data.get("test_browser"),
                 ),
             )
-    
+
     # =========================================================================
     # GA4 DATA INSERTION
     # =========================================================================
-    
+
     def insert_ga4_daily_metrics(self, property_id: str, metric_date: date,
                                  data: Dict, collection_id: Optional[int] = None) -> None:
         """Insert GA4 daily metrics.
-        
+
         Args:
             property_id: GA4 Property ID
             metric_date: Date the metrics represent
@@ -589,7 +897,7 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO ga4_daily_metrics 
+                INSERT INTO ga4_daily_metrics
                 (property_id, metric_date, collection_id,
                  sessions, engaged_sessions, sessions_per_user, avg_session_duration, bounce_rate,
                  total_users, new_users, returning_users,
@@ -637,14 +945,14 @@ class DatabaseManager:
                 data.get('average_revenue_per_user'),
                 data.get('pageviews', 0)
             ))
-        
+
         logger.debug(f"Inserted GA4 metrics for {property_id} on {metric_date}")
-    
+
     def insert_ga4_traffic_source(self, property_id: str, metric_date: date,
                                   channel_group: str, data: Dict,
                                   collection_id: Optional[int] = None) -> None:
         """Insert GA4 traffic source breakdown.
-        
+
         Args:
             property_id: GA4 Property ID
             metric_date: Date the metrics represent
@@ -679,12 +987,12 @@ class DatabaseManager:
                 data.get('new_users', 0),
                 data.get('total_users', 0),
             ))
-    
+
     def insert_ga4_device_metrics(self, property_id: str, metric_date: date,
                                   device_category: str, data: Dict,
                                   collection_id: Optional[int] = None) -> None:
         """Insert GA4 device breakdown metrics.
-        
+
         Args:
             property_id: GA4 Property ID
             metric_date: Date the metrics represent
@@ -713,12 +1021,12 @@ class DatabaseManager:
                 data.get('bounce_rate'),
                 data.get('avg_session_duration')
             ))
-    
+
     def insert_ga4_event_facts(self, event_data: Dict, collection_id: Optional[int] = None) -> None:
         """Insert GA4 event-level facts.
-        
+
         Per GA4_EVENTS_COLLECTOR_SPEC.md v1 - records raw event facts without interpretation.
-        
+
         Args:
             event_data: Dictionary containing all event fields per spec
             collection_id: Optional collection ID
@@ -769,19 +1077,19 @@ class DatabaseManager:
                 event_data.get('event_params_json'),
                 collection_id
             ))
-        
+
         logger.debug(f"Inserted event fact: {event_data['event_name']} for {event_data['property_id']}")
-    
+
     # =========================================================================
     # GSC DATA INSERTION
     # =========================================================================
-    
+
     def insert_gsc_daily_metrics(self, property_id: str, metric_date: date,
                                 data: Dict, collection_id: Optional[int] = None) -> None:
         """Insert Google Search Console daily metrics.
-        
+
         PHASE 3 DUAL-WRITE: Writes property_id (legacy URL), gsc_site_url, and ga4_property_id.
-        
+
         Args:
             property_id: Property identifier (GSC URL - legacy)
             metric_date: Date the metrics represent
@@ -790,14 +1098,14 @@ class DatabaseManager:
         """
         # Normalize URL
         site_url = property_id if property_id.endswith('/') else property_id + '/'
-        
+
         # Map to GA4 ID
         ga4_id = self._gsc_url_to_ga4_map.get(site_url)
-        
+
         if not ga4_id:
             logger.warning(f"UNMAPPED GSC URL: {site_url} - skipping insert")
             return  # Skip row if unmapped
-        
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -823,15 +1131,15 @@ class DatabaseManager:
                 site_url,        # gsc_site_url (dedicated field)
                 ga4_id           # ga4_property_id (canonical)
             ))
-        
+
         logger.debug(f"Inserted GSC metrics for {property_id} on {metric_date} (GA4: {ga4_id})")
-    
+
     def insert_gsc_query(self, property_id: str, metric_date: str, query: str,
                          clicks: int, impressions: int, ctr: float, position: float,
                          gsc_site_url: str, ga4_property_id: str,
                          collection_id: Optional[int] = None) -> None:
         """Insert individual GSC query data.
-        
+
         Args:
             property_id: GA4 Property ID (canonical)
             metric_date: Date the metrics represent (YYYY-MM-DD)
@@ -848,10 +1156,10 @@ class DatabaseManager:
             cursor = conn.cursor()
             # First delete existing record if any
             cursor.execute("""
-                DELETE FROM gsc_queries 
+                DELETE FROM gsc_queries
                 WHERE property_id = ? AND metric_date = ? AND query = ?
             """, (property_id, metric_date, query))
-            
+
             # Then insert new record
             cursor.execute("""
                 INSERT INTO gsc_queries
@@ -864,7 +1172,7 @@ class DatabaseManager:
                 clicks, impressions, ctr, position,
                 gsc_site_url, ga4_property_id
             ))
-        
+
         logger.debug(f"Inserted GSC query '{query}' for {property_id} on {metric_date}")
 
     def insert_gsc_url_inspection(
@@ -1347,15 +1655,97 @@ class DatabaseManager:
                 json.dumps(snapshot, sort_keys=True),
                 collection_id,
             ))
-    
+
+    def upsert_cloudflare_edge_daily_metric(
+        self,
+        *,
+        metric_date: str,
+        zone_id: str,
+        zone_name: Optional[str],
+        property_id: Optional[str],
+        property_name: Optional[str],
+        hostname: Optional[str],
+        path: Optional[str],
+        metric_data: Dict[str, Any],
+        collection_id: Optional[int] = None,
+    ) -> None:
+        """Upsert one Cloudflare edge-delivery daily metric row."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO cloudflare_edge_daily_metrics
+                (
+                    metric_date, zone_id, zone_name, property_id, property_name, hostname, path,
+                    requests, bytes, cached_requests, cached_bytes, uncached_requests,
+                    origin_request_estimate, cache_hit_ratio,
+                    edge_response_status_2xx, edge_response_status_3xx,
+                    edge_response_status_4xx, edge_response_status_5xx,
+                    edge_response_status_other, edge_response_status_breakdown_json,
+                    cache_status_breakdown_json, bot_security_json, dataset_name,
+                    query_status, raw_response_json, collection_id
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(metric_date, zone_id, hostname, path) DO UPDATE SET
+                    zone_name = excluded.zone_name,
+                    property_id = excluded.property_id,
+                    property_name = excluded.property_name,
+                    requests = excluded.requests,
+                    bytes = excluded.bytes,
+                    cached_requests = excluded.cached_requests,
+                    cached_bytes = excluded.cached_bytes,
+                    uncached_requests = excluded.uncached_requests,
+                    origin_request_estimate = excluded.origin_request_estimate,
+                    cache_hit_ratio = excluded.cache_hit_ratio,
+                    edge_response_status_2xx = excluded.edge_response_status_2xx,
+                    edge_response_status_3xx = excluded.edge_response_status_3xx,
+                    edge_response_status_4xx = excluded.edge_response_status_4xx,
+                    edge_response_status_5xx = excluded.edge_response_status_5xx,
+                    edge_response_status_other = excluded.edge_response_status_other,
+                    edge_response_status_breakdown_json = excluded.edge_response_status_breakdown_json,
+                    cache_status_breakdown_json = excluded.cache_status_breakdown_json,
+                    bot_security_json = excluded.bot_security_json,
+                    dataset_name = excluded.dataset_name,
+                    query_status = excluded.query_status,
+                    raw_response_json = excluded.raw_response_json,
+                    collection_id = excluded.collection_id,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (
+                metric_date,
+                zone_id,
+                zone_name,
+                property_id,
+                property_name,
+                hostname or "__zone__",
+                path or "__all__",
+                metric_data.get("requests"),
+                metric_data.get("bytes"),
+                metric_data.get("cached_requests"),
+                metric_data.get("cached_bytes"),
+                metric_data.get("uncached_requests"),
+                metric_data.get("origin_request_estimate"),
+                metric_data.get("cache_hit_ratio"),
+                metric_data.get("edge_response_status_2xx"),
+                metric_data.get("edge_response_status_3xx"),
+                metric_data.get("edge_response_status_4xx"),
+                metric_data.get("edge_response_status_5xx"),
+                metric_data.get("edge_response_status_other"),
+                metric_data.get("edge_response_status_breakdown_json"),
+                metric_data.get("cache_status_breakdown_json"),
+                metric_data.get("bot_security_json"),
+                metric_data.get("dataset_name"),
+                metric_data.get("query_status"),
+                metric_data.get("raw_response_json"),
+                collection_id,
+            ))
+
     # =========================================================================
     # SEMRUSH DATA INSERTION
     # =========================================================================
-    
+
     def insert_semrush_domain_metrics(self, property_id: str, metric_date: date,
                                      data: Dict, collection_id: Optional[int] = None) -> None:
         """Insert SEMRush domain metrics.
-        
+
         Args:
             property_id: GA4 Property ID
             metric_date: Date the metrics represent
@@ -1393,18 +1783,18 @@ class DatabaseManager:
                 data.get('backlinks_count'),
                 data.get('referring_domains')
             ))
-        
+
         logger.debug(f"Inserted SEMRush metrics for {property_id} on {metric_date}")
-    
+
     # =========================================================================
     # GOOGLE BUSINESS PROFILE (GBP) DATA
     # =========================================================================
-    
+
     def insert_gbp_daily_metrics(self, property_id: str, gbp_location_id: str,
                                 metric_date: date, data: Dict,
                                 collection_id: Optional[int] = None) -> None:
         """Insert Google Business Profile daily metrics.
-        
+
         Args:
             property_id: GA4 Property ID
             gbp_location_id: GBP location resource name
@@ -1450,15 +1840,15 @@ class DatabaseManager:
                 data.get('business_food_orders', 0),
                 data.get('business_food_menu_clicks', 0)
             ))
-        
+
         logger.debug(f"Inserted GBP metrics for {property_id} on {metric_date}")
-    
+
     def insert_gbp_search_keyword(self, property_id: str, gbp_location_id: str,
                                  year: int, month: int, keyword: str,
                                  impressions: int,
                                  collection_id: Optional[int] = None) -> None:
         """Insert Google Business Profile search keyword impression data.
-        
+
         Args:
             property_id: GA4 Property ID
             gbp_location_id: GBP location resource name
@@ -1480,15 +1870,15 @@ class DatabaseManager:
             """, (
                 property_id, gbp_location_id, year, month, keyword, impressions, collection_id
             ))
-        
+
         logger.debug(f"Inserted GBP keyword '{keyword}' for {property_id} ({year}-{month:02d})")
-    
+
     def insert_gbp_search_keywords_batch(self, property_id: str, gbp_location_id: str,
                                         year: int, month: int,
                                         keywords: List[Dict],
                                         collection_id: Optional[int] = None) -> None:
         """Batch insert GBP search keywords.
-        
+
         Args:
             property_id: GA4 Property ID
             gbp_location_id: GBP location resource name
@@ -1507,14 +1897,14 @@ class DatabaseManager:
                 impressions=kw['impressions'],
                 collection_id=collection_id
             )
-        
+
         logger.debug(f"Batch inserted {len(keywords)} GBP keywords for {property_id}")
-    
+
     def insert_gbp_reviews_summary(self, property_id: str, gbp_location_id: str,
                                   metric_date: date, data: Dict,
                                   collection_id: Optional[int] = None) -> None:
         """Insert Google Business Profile reviews summary.
-        
+
         Args:
             property_id: GA4 Property ID
             gbp_location_id: GBP location resource name
@@ -1540,16 +1930,16 @@ class DatabaseManager:
                 data.get('average_rating'),
                 data.get('new_reviews_count', 0)
             ))
-        
+
         logger.debug(f"Inserted GBP reviews summary for {property_id} on {metric_date}")
-    
+
     def get_gbp_metrics(self, property_id: str, days: int = 30) -> List[Dict]:
         """Get historical GBP metrics for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             days: Number of days of history to retrieve
-            
+
         Returns:
             List of daily GBP metrics, newest first
         """
@@ -1562,17 +1952,17 @@ class DatabaseManager:
                 ORDER BY metric_date DESC
             """, (property_id, -days))
             return [dict(row) for row in cursor.fetchall()]
-    
+
     def get_gbp_search_keywords(self, property_id: str, year: int, month: int,
                                limit: int = 50) -> List[Dict]:
         """Get top GBP search keywords for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             year: Year
             month: Month (1-12)
             limit: Maximum number of keywords to return
-            
+
         Returns:
             List of keyword dictionaries, sorted by impressions desc
         """
@@ -1587,12 +1977,12 @@ class DatabaseManager:
                 LIMIT ?
             """, (property_id, year, month, limit))
             return [dict(row) for row in cursor.fetchall()]
-    
+
     def insert_gbp_review(self, review_data: Dict, property_id: str,
                          gbp_location_id: str,
                          collection_id: Optional[int] = None) -> None:
         """Insert a Google Business Profile review.
-        
+
         Args:
             review_data: Dictionary with review fields (from GBPCollector.parse_review())
             property_id: GA4 Property ID
@@ -1626,20 +2016,20 @@ class DatabaseManager:
                 review_data.get('review_update_time'),
                 review_data.get('review_name')
             ))
-        
+
         logger.debug(f"Inserted review {review_data.get('review_id')} for {property_id}")
-    
+
     def insert_gbp_reviews_batch(self, reviews: List[Dict], property_id: str,
                                 gbp_location_id: str,
                                 collection_id: Optional[int] = None) -> int:
         """Batch insert GBP reviews.
-        
+
         Args:
             reviews: List of review dictionaries
             property_id: GA4 Property ID
             gbp_location_id: GBP location ID
             collection_id: Optional collection ID
-        
+
         Returns:
             Number of reviews inserted
         """
@@ -1650,47 +2040,47 @@ class DatabaseManager:
                 count += 1
             except Exception as e:
                 logger.error(f"Error inserting review {review.get('review_id')}: {e}")
-        
+
         logger.info(f"Batch inserted {count}/{len(reviews)} reviews for {property_id}")
         return count
-    
+
     def get_gbp_reviews(self, property_id: str, limit: int = 100,
                        min_rating: Optional[int] = None,
                        has_comment: bool = True) -> List[Dict]:
         """Get GBP reviews for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             limit: Maximum number of reviews to return
             min_rating: Optional minimum star rating (1-5)
             has_comment: If True, only return reviews with comments
-        
+
         Returns:
             List of review dictionaries, newest first
         """
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            
+
             query = "SELECT * FROM gbp_reviews WHERE property_id = ?"
             params = [property_id]
-            
+
             if min_rating:
                 query += " AND star_rating_numeric >= ?"
                 params.append(min_rating)
-            
+
             if has_comment:
                 query += " AND comment IS NOT NULL AND comment != ''"
-            
+
             query += " ORDER BY review_create_time DESC LIMIT ?"
             params.append(limit)
-            
+
             cursor.execute(query, params)
             return [dict(row) for row in cursor.fetchall()]
-    
+
     def insert_review_sentiment(self, review_id: str, property_id: str,
                                sentiment_data: Dict) -> None:
         """Insert sentiment analysis for a review.
-        
+
         Args:
             review_id: GBP review ID
             property_id: GA4 Property ID
@@ -1732,16 +2122,16 @@ class DatabaseManager:
                 sentiment_data.get('openai_completion_tokens'),
                 sentiment_data.get('analysis_cost_usd')
             ))
-        
+
         logger.debug(f"Inserted sentiment for review {review_id}")
-    
+
     def get_reviews_with_sentiment(self, property_id: str, days: int = 90) -> List[Dict]:
         """Get reviews with sentiment analysis for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             days: Number of days of history to retrieve
-        
+
         Returns:
             List of reviews with sentiment data joined
         """
@@ -1756,11 +2146,11 @@ class DatabaseManager:
                 ORDER BY r.review_create_time DESC
             """, (property_id, -days))
             return [dict(row) for row in cursor.fetchall()]
-    
+
     # =========================================================================
     # HEALTH SCORING
     # =========================================================================
-    
+
     def insert_property_health(self, property_id: str, metric_date: date,
                               health_score: int, status: str,
                               traffic_score: Optional[int] = None,
@@ -1771,7 +2161,7 @@ class DatabaseManager:
                               traffic_change_7d: Optional[float] = None,
                               traffic_change_30d: Optional[float] = None) -> None:
         """Insert property health score and status.
-        
+
         Args:
             property_id: GA4 Property ID
             metric_date: Date the health was calculated
@@ -1805,13 +2195,13 @@ class DatabaseManager:
                 traffic_score, engagement_score, conversion_score, performance_score, seo_score,
                 traffic_change_7d, traffic_change_30d
             ))
-    
+
     def insert_health_issue(self, property_id: str, metric_date: date,
                            issue_type: str, severity: str, description: str,
                            metric_value: Optional[float] = None,
                            threshold_value: Optional[float] = None) -> None:
         """Record a health issue for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             metric_date: Date the issue was detected
@@ -1832,17 +2222,17 @@ class DatabaseManager:
                 property_id, metric_date, issue_type, severity, description,
                 metric_value, threshold_value
             ))
-    
+
     # =========================================================================
     # QUERIES FOR MONITORING
     # =========================================================================
-    
+
     def get_latest_metrics_for_property(self, property_id: str) -> Optional[Dict]:
         """Get the most recent metrics for a property.
-        
+
         Args:
             property_id: GA4 Property ID
-            
+
         Returns:
             Dictionary with latest metrics, or None if no data
         """
@@ -1854,19 +2244,19 @@ class DatabaseManager:
             """, (property_id,))
             row = cursor.fetchone()
             return dict(row) if row else None
-    
+
     def get_portfolio_health_summary(self, metric_date: Optional[date] = None) -> Dict:
         """Get portfolio-wide health summary.
-        
+
         Args:
             metric_date: Date to get summary for (defaults to today)
-            
+
         Returns:
             Dictionary with portfolio health metrics
         """
         if metric_date is None:
             metric_date = date.today()
-        
+
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -1875,13 +2265,13 @@ class DatabaseManager:
             """, (metric_date,))
             row = cursor.fetchone()
             return dict(row) if row else {}
-    
+
     def get_active_issues(self, limit: int = 50) -> List[Dict]:
         """Get active health issues across portfolio.
-        
+
         Args:
             limit: Maximum number of issues to return
-            
+
         Returns:
             List of issue dictionaries, sorted by severity
         """
@@ -1892,14 +2282,14 @@ class DatabaseManager:
                 LIMIT ?
             """, (limit,))
             return [dict(row) for row in cursor.fetchall()]
-    
+
     def get_historical_metrics(self, property_id: str, days: int = 30) -> List[Dict]:
         """Get historical GA4 metrics for a property.
-        
+
         Args:
             property_id: GA4 Property ID
             days: Number of days of history to retrieve
-            
+
         Returns:
             List of daily metrics, newest first
         """
@@ -1912,43 +2302,43 @@ class DatabaseManager:
                 ORDER BY metric_date DESC
             """, (property_id, -days))
             return [dict(row) for row in cursor.fetchall()]
-    
+
     # =========================================================================
     # MIGRATION & IMPORT
     # =========================================================================
-    
+
     def import_from_json_snapshot(self, json_path: Path) -> Tuple[int, int]:
         """Import data from a portfolio monitor JSON snapshot.
-        
+
         Args:
             json_path: Path to JSON file from portfolio_daily_monitor.py
-            
+
         Returns:
             Tuple of (properties_imported, properties_failed)
         """
         with open(json_path, 'r') as f:
             snapshot = json.load(f)
-        
+
         metric_date = datetime.strptime(snapshot['date'], '%Y-%m-%d').date()
         properties_imported = 0
         properties_failed = 0
-        
+
         # Start collection tracking
         collection_id = self.start_data_collection(
             metric_date, 'daily', 'ga4'
         )
-        
+
         for property_data in snapshot['properties']:
             try:
                 property_id = property_data['property_id']
-                
+
                 # Ensure property exists
                 self.upsert_property(
                     property_id=property_id,
                     canonical_name=property_data['name'],
                     active=True
                 )
-                
+
                 # Insert GA4 metrics
                 if property_data['status'] != 'unknown':
                     ga4_data = {
@@ -1957,7 +2347,7 @@ class DatabaseManager:
                         'engagement_rate': property_data['engagement_rate']
                     }
                     self.insert_ga4_daily_metrics(property_id, metric_date, ga4_data, collection_id)
-                    
+
                     # Insert health score
                     self.insert_property_health(
                         property_id=property_id,
@@ -1966,7 +2356,7 @@ class DatabaseManager:
                         status=property_data['status'],
                         traffic_change_7d=property_data['change_percent']
                     )
-                    
+
                     # Insert issues
                     for issue in property_data.get('issues', []):
                         self.insert_health_issue(
@@ -1976,16 +2366,16 @@ class DatabaseManager:
                             severity='high',
                             description=issue
                         )
-                
+
                 properties_imported += 1
-                
+
             except Exception as e:
                 logger.error(f"Failed to import {property_data.get('name', 'unknown')}: {e}")
                 properties_failed += 1
-        
+
         # Complete collection
         self.complete_data_collection(collection_id, properties_imported, properties_failed)
-        
+
         logger.info(f"Imported {properties_imported} properties from {json_path}")
         return properties_imported, properties_failed
 
@@ -1996,7 +2386,7 @@ class DatabaseManager:
 
 def get_db() -> DatabaseManager:
     """Get database manager instance (singleton pattern).
-    
+
     Returns:
         DatabaseManager instance
     """
@@ -2008,26 +2398,26 @@ def get_db() -> DatabaseManager:
 if __name__ == "__main__":
     # Test database initialization
     db = get_db()
-    
+
     # Show database stats
     with db.get_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Count properties
         cursor.execute("SELECT COUNT(*) FROM properties")
         property_count = cursor.fetchone()[0]
         print(f"Properties in database: {property_count}")
-        
+
         # Count daily metrics
         cursor.execute("SELECT COUNT(*) FROM ga4_daily_metrics")
         metrics_count = cursor.fetchone()[0]
         print(f"GA4 daily metrics records: {metrics_count}")
-        
+
         # Count health records
         cursor.execute("SELECT COUNT(*) FROM property_health")
         health_count = cursor.fetchone()[0]
         print(f"Health records: {health_count}")
-        
+
         # Show tables
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
         tables = [row[0] for row in cursor.fetchall()]

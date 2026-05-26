@@ -1,77 +1,43 @@
 #!/usr/bin/env python3
 """
-Daily Portfolio Health Report Email Sender
-===========================================
+Compatibility shim for the retired standalone daily health summary email.
 
-Sends the most recent Daily Portfolio Health Report via email.
-
-Usage:
-    python3 send_daily_health_report.py [--date YYYY-MM-DD]
-
-Author: Mark Laufhutte / Atlas
-Date: 2026-01-27
+The canonical daily summary email is now the Morning Full Portfolio Report.
+Legacy callers of this entrypoint are transparently routed there so we do not
+reintroduce a second overlapping summary stream.
 """
 
+from __future__ import annotations
+
+import argparse
+import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
 
-# Add utils to path
-sys.path.insert(0, str(Path(__file__).parent / "utils"))
-from email_sender import EmailSender
+
+ROOT = Path("/Users/mark/Property_Analytics")
 
 
-def main():
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Email Daily Portfolio Health Report")
-    parser.add_argument('--date', help='Report date (YYYY-MM-DD), defaults to today')
-    
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Compatibility wrapper for daily summary email delivery")
+    parser.add_argument("--date", help="Report date (YYYY-MM-DD), defaults to today")
+    parser.add_argument("--dry-run", action="store_true", help="Validate routing without sending")
+    parser.add_argument("--force", action="store_true", help="Bypass duplicate-send protection in the canonical sender")
     args = parser.parse_args()
-    
-    # Determine report date
+
+    command = [sys.executable, str(ROOT / "send_morning_full_report.py")]
     if args.date:
-        report_date = datetime.strptime(args.date, "%Y-%m-%d")
-    else:
-        report_date = datetime.now()
-    
-    date_str = report_date.strftime("%Y-%m-%d")
-    
-    # Find report file
-    report_dir = Path(__file__).parent / "reports" / "daily_health"
-    report_file = report_dir / f"Portfolio_Health_Daily_{date_str}.html"
-    
-    if not report_file.exists():
-        print(f"❌ Report not found: {report_file}")
-        print(f"   Generate it first with: python3 generate_daily_portfolio_health.py")
-        return 1
-    
-    # Send email
-    print(f"📧 Sending Daily Portfolio Health Report for {date_str}...")
-    
-    try:
-        # Read HTML content
-        with open(report_file, 'r', encoding='utf-8') as f:
-            html_content = f.read()
-        
-        # Send email
-        sender = EmailSender(verbose=True)
-        sender.send_email(
-            subject=f"Portfolio Health Daily - {date_str}",
-            html_body=html_content,
-            recipients=["mlaufhutte@venterraliving.com"]
-        )
-        
-        print(f"✅ Daily Health Report emailed successfully!")
-        print(f"   Report: {report_file.name}")
-        print(f"   Sent to: mlaufhutte@venterraliving.com")
-        
-        return 0
-        
-    except Exception as e:
-        print(f"❌ Failed to send email: {e}")
-        return 1
+        command.extend(["--date", args.date])
+    if args.dry_run:
+        command.append("--dry-run")
+    if args.force:
+        command.append("--force")
+
+    print("Legacy daily health email path redirected to canonical Morning Full summary sender", flush=True)
+    print(f"Command: {' '.join(command)}", flush=True)
+    result = subprocess.run(command, cwd=ROOT)
+    return result.returncode
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

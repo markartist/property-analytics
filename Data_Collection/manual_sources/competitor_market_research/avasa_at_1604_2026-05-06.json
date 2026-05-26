@@ -1,0 +1,429 @@
+{
+  "snapshot_date": "2026-05-06",
+  "captured_at": "2026-05-06T00:00:00-05:00",
+  "property_id": "TX416",
+  "property_name": "Avasa at 1604",
+  "market_name": "San Antonio, TX",
+  "research_scope": "watchlist_competitor_run",
+  "source_author": "Codex competitor packet builder",
+  "notes": "Official-page competitor evidence packet. Confirmed rows can feed report copy; directional rows should be used as advisory prompts; source-gap rows should remain visible only in data integrity/source panels.",
+  "evidence": {
+    "integrity_standard": "Do not report a rent, special, USP, or package/media claim unless source_url and captured_date are present.",
+    "comp_set_basis": "Governed property_competitors records in the Data Pond.",
+    "builder": "Data_Collection/utils/build_competitor_market_packets.py"
+  },
+  "observations": [
+    {
+      "competitor_name": "Avasa at 1604",
+      "competitor_url": "https://venterraliving.com/apartments/avasa-at-1604/",
+      "source_name": "Venterra unit availability feed",
+      "source_url": "https://venterraliving.com/apartments/avasa-at-1604/",
+      "source_type": "internal_unit_feed",
+      "evidence_category": "subject_position",
+      "captured_date": "2026-05-06",
+      "floorplan_name": "Current visible availability",
+      "rent_min": 1046.0,
+      "rent_max": 2028.0,
+      "availability_status": "63 available units in internal unit feed",
+      "special_text": "Up to 1 month's rent free on select units\n.",
+      "raw_claim": "The latest unit feed shows Avasa at 1604 visible rents from $1,046 to $2,028 across 63 current available units.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "db_table": "unit_availability_units",
+        "db_snapshot_date": "2026-05-06"
+      }
+    },
+    {
+      "competitor_name": "Alta Rolling Oaks",
+      "competitor_url": "https://altarollingoaks.com/",
+      "source_name": "Alta Rolling Oaks official page",
+      "source_url": "https://altarollingoaks.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Whether your dog loves long walks, your cat enjoys lounging in sunny windows, or you simply want a home where your pets are truly welcomed, Alta Rolling Oaks offers the space and convenience to make life easier for both of you.",
+      "raw_claim": "Alta Rolling Oaks's official page includes this visible offer/pricing language: Whether your dog loves long walks, your cat enjoys lounging in sunny windows, or you simply want a home where your pets are truly welcomed, Alta Rolling Oaks offers the space and convenience to make life easier for both of you.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Alta Rolling Oaks",
+      "competitor_url": "https://altarollingoaks.com/",
+      "source_name": "Alta Rolling Oaks official page",
+      "source_url": "https://altarollingoaks.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Located near Loop 1604 and I-35, Alta Rolling Oaks places you close to nearby parks, trails, pet stores, and veterinary offices throughout Northeast San Antonio.",
+      "raw_claim": "Alta Rolling Oaks's official page includes this visible offer/pricing language: Located near Loop 1604 and I-35, Alta Rolling Oaks places you close to nearby parks, trails, pet stores, and veterinary offices throughout Northeast San Antonio.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Alta Rolling Oaks",
+      "competitor_url": "https://altarollingoaks.com/",
+      "source_name": "Alta Rolling Oaks official page",
+      "source_url": "https://altarollingoaks.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Alta Rolling Oaks Apartments in San Antonio, TX Skip to main content \u00d7 Pet Policy At Alta Rolling Oaks, we know pets are family. Whether your dog loves long walks, your cat enjoys lounging in sunny windows, or you simply want a home where your pets are truly welcomed, Alta Rolling Oaks offers the space and convenience to make life easier for both of you. Our spacious one, two, and three bedroom apartment homes give pets room to stretch out, relax, and feel at home. Residents also have access to pet-friendly amenities like an on-site pet park and pet washing station, making everyday routines more convenient.",
+      "raw_claim": "Alta Rolling Oaks's official page provides competitor positioning evidence around: Alta Rolling Oaks Apartments in San Antonio, TX Skip to main content \u00d7 Pet Policy At Alta Rolling Oaks, we know pets are family. Whether your dog loves long walks, your cat enjoys lounging in sunny windows, or you simply want a home where your pets are truly welcomed, Alta Rolling Oaks offers the space and convenience to make life easier for both of you. Our spacious one, two, and three bedroom apartment homes give pets room to stretch out, relax, and feel at home. Residents also have access to pet-friendly amenities like an on-site pet park and pet washing station, making everyday routines more convenient.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Alta Rolling Oaks Apartments in San Antonio, TX",
+        "meta_description": "Alta Rolling Oaks in San Antonio, TX offers 1, 2, or 3 bedroom apartments for rent. Browse the gallery, explore the amenities, and get more information on availability today."
+      }
+    },
+    {
+      "competitor_name": "Brio at Lookout",
+      "competitor_url": "https://brioatlookout.com/",
+      "source_name": "Brio at Lookout official page",
+      "source_url": "https://brioatlookout.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Essential Housing Virtual Tours Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Amenities Floorplans Neighborhood Gallery Residents ",
+      "raw_claim": "Brio at Lookout's official page includes this visible offer/pricing language: Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Essential Housing Virtual Tours Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Amenities Floorplans Neighborhood Gallery Residents ",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Brio at Lookout",
+      "competitor_url": "https://brioatlookout.com/",
+      "source_name": "Brio at Lookout official page",
+      "source_url": "https://brioatlookout.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Brio now offers Essential Housing options on studio, one and two bedrooms.",
+      "raw_claim": "Brio at Lookout's official page includes this visible offer/pricing language: Brio now offers Essential Housing options on studio, one and two bedrooms.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Brio at Lookout",
+      "competitor_url": "https://brioatlookout.com/",
+      "source_name": "Brio at Lookout official page",
+      "source_url": "https://brioatlookout.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Brio At Lookout: Apartments In San Antonio Tx Skip to main content \u00d7 Pet Policy We are a pet-friendly community! Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Essential Housing Virtual Tours Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Amenities Floorplans Neighborhood Gallery Residents  Each residence features modern finishes and functional layouts, complemented by amenities like a gaming lawn, wellness center, bark park, and open green spaces. With a prime location near The Forum and quick access to I-35 and Loop 1604, Brio makes commuting and everyday errands easy.",
+      "raw_claim": "Brio at Lookout's official page provides competitor positioning evidence around: Brio At Lookout: Apartments In San Antonio Tx Skip to main content \u00d7 Pet Policy We are a pet-friendly community! Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Essential Housing Virtual Tours Amenities Floorplans Neighborhood Gallery Residents FAQs Essential Housing Contact Find Your Home Amenities Floorplans Neighborhood Gallery Residents  Each residence features modern finishes and functional layouts, complemented by amenities like a gaming lawn, wellness center, bark park, and open green spaces. With a prime location near The Forum and quick access to I-35 and Loop 1604, Brio makes commuting and everyday errands easy.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Brio At Lookout: Apartments In San Antonio Tx",
+        "meta_description": "Discover luxury apartments in San Antonio, TX at Brio at Lookout. Spacious floor plans, upscale amenities, and a welcoming community. Call us today!"
+      }
+    },
+    {
+      "competitor_name": "Citadel at Lookout",
+      "competitor_url": "https://www.citadelatlookout.com/",
+      "source_name": "Citadel at Lookout official page",
+      "source_url": "https://www.citadelatlookout.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Within the apartments, open layouts command the space, offering delightful features such as wood-style flooring, private balconies, and oversized walk-in closets.",
+      "raw_claim": "Citadel at Lookout's official page includes this visible offer/pricing language: Within the apartments, open layouts command the space, offering delightful features such as wood-style flooring, private balconies, and oversized walk-in closets.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Citadel at Lookout",
+      "competitor_url": "https://www.citadelatlookout.com/",
+      "source_name": "Citadel at Lookout official page",
+      "source_url": "https://www.citadelatlookout.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Close Up to 4 Weeks Free Base Rent!",
+      "raw_claim": "Citadel at Lookout's official page includes this visible offer/pricing language: Close Up to 4 Weeks Free Base Rent!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Citadel at Lookout",
+      "competitor_url": "https://www.citadelatlookout.com/",
+      "source_name": "Citadel at Lookout official page",
+      "source_url": "https://www.citadelatlookout.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Situated in northeast San Antonio, these apartments feature stunning designs, lush landscaping and luxurious amenities that will elevate your lifestyle. From the outdoor firepit that\u2019s perfect for group gatherings, to the swimming pool with a large poolside cabana, luxury abounds around every corner. Resident Portal (210) 942-7132 15453 Lookout Road Selma, TX 78154 Directions Monday: 9:00AM to 6:00PM Tuesday: 9:00AM to 6:00PM Wednesday: 9:00AM to 6:00PM Thursday: 9:00AM to 6:00PM Friday: 9:00AM to 6:00PM Saturday: 10:00AM to 5:00PM Sunday: Closed Home Floor Plans Features Gal",
+      "raw_claim": "Citadel at Lookout's official page provides competitor positioning evidence around: Situated in northeast San Antonio, these apartments feature stunning designs, lush landscaping and luxurious amenities that will elevate your lifestyle. From the outdoor firepit that\u2019s perfect for group gatherings, to the swimming pool with a large poolside cabana, luxury abounds around every corner. Resident Portal (210) 942-7132 15453 Lookout Road Selma, TX 78154 Directions Monday: 9:00AM to 6:00PM Tuesday: 9:00AM to 6:00PM Wednesday: 9:00AM to 6:00PM Thursday: 9:00AM to 6:00PM Friday: 9:00AM to 6:00PM Saturday: 10:00AM to 5:00PM Sunday: Closed Home Floor Plans Features Gal",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments in Selma, TX | Citadel at Lookout | Welcome:",
+        "meta_description": "Enjoy staycation living at Citadel at Lookout Road in Northeast San Antonio where we offer brand-new studios, 1 & 2 bedroom apartments with upscale amenities."
+      }
+    },
+    {
+      "competitor_name": "Alamar",
+      "competitor_url": "https://livealamar.com/",
+      "source_name": "Alamar official page",
+      "source_url": "https://rentalamar.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Alamar is a pet-friendly community in San Antonio, TX Skip to main content \u00d7 Pet Policy Maximum Pets: 2 per household Pet Rent: $15 per month, per pet One-Time Pet Fee: $250(non-refundable) Pet Deposit: $250(refundable) Call us at 855-934-2014 Virtual Tours Book a Tour Find Your ",
+      "raw_claim": "Alamar's official page includes this visible offer/pricing language: Alamar is a pet-friendly community in San Antonio, TX Skip to main content \u00d7 Pet Policy Maximum Pets: 2 per household Pet Rent: $15 per month, per pet One-Time Pet Fee: $250(non-refundable) Pet Deposit: $250(refundable) Call us at 855-934-2014 Virtual Tours Book a Tour Find Your ",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Alamar",
+      "competitor_url": "https://livealamar.com/",
+      "source_name": "Alamar official page",
+      "source_url": "https://rentalamar.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Nestled in the perfect location, just off Bulverde and Gold Canyon Rd, within the NEISD school district, and just minutes from the best shopping and dining in Stone Oak.",
+      "raw_claim": "Alamar's official page includes this visible offer/pricing language: Nestled in the perfect location, just off Bulverde and Gold Canyon Rd, within the NEISD school district, and just minutes from the best shopping and dining in Stone Oak.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Alamar",
+      "competitor_url": "https://livealamar.com/",
+      "source_name": "Alamar official page",
+      "source_url": "https://rentalamar.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Alamar is a pet-friendly community in San Antonio, TX Skip to main content \u00d7 Pet Policy Maximum Pets: 2 per household Pet Rent: $15 per month, per pet One-Time Pet Fee: $250(non-refundable) Pet Deposit: $250(refundable) Call us at 855-934-2014 Virtual Tours Book a Tour Find Your  Community Amenities Our Homes Spacious Layouts Choose Your Floorplan Indulgent Details View the Gallery Elevated Living View the Amenities The Comfort of a Home with the Ease of Renting Learn More Find Your Home 4003 Alamar Ridge San Antonio, TX 78259 Call us at 855-934-2014 Pet ",
+      "raw_claim": "Alamar's official page provides competitor positioning evidence around: Alamar is a pet-friendly community in San Antonio, TX Skip to main content \u00d7 Pet Policy Maximum Pets: 2 per household Pet Rent: $15 per month, per pet One-Time Pet Fee: $250(non-refundable) Pet Deposit: $250(refundable) Call us at 855-934-2014 Virtual Tours Book a Tour Find Your  Community Amenities Our Homes Spacious Layouts Choose Your Floorplan Indulgent Details View the Gallery Elevated Living View the Amenities The Comfort of a Home with the Ease of Renting Learn More Find Your Home 4003 Alamar Ridge San Antonio, TX 78259 Call us at 855-934-2014 Pet ",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Alamar is a pet-friendly community in San Antonio, TX",
+        "meta_description": "Alamar in San Antonio, TX offers 2, 3, or 4 bedroom homes for rent. Browse the gallery, explore the amenities, and get more information on availability today."
+      }
+    },
+    {
+      "competitor_name": "Caliza at the Loop",
+      "competitor_url": "https://www.livecaliza.com/",
+      "source_name": "Caliza at the Loop official page",
+      "source_url": "https://www.livecaliza.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Uptown San Antonio, TX Townhomes for Rent | Caliza at The Loop Menu Apply Home Floor Plans Photos & Tours Amenities Amenities Pet Friendly Neighborhood Neighborhood Map & Directions Contact Us Move-In Special \u00c3\u0097 YOUR HOME.",
+      "raw_claim": "Caliza at the Loop's official page includes this visible offer/pricing language: Uptown San Antonio, TX Townhomes for Rent | Caliza at The Loop Menu Apply Home Floor Plans Photos & Tours Amenities Amenities Pet Friendly Neighborhood Neighborhood Map & Directions Contact Us Move-In Special \u00c3\u0097 YOUR HOME.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Caliza at the Loop",
+      "competitor_url": "https://www.livecaliza.com/",
+      "source_name": "Caliza at the Loop official page",
+      "source_url": "https://www.livecaliza.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Lease & Move In Today To Choose When You Want To Cash In Your Free Month Anytime Between August Through December.\u00c2 Settle In & Enjoy The Flexibility To Use Your Biggest Savings When It Works Best For You, Because The Best Specials Fit Your Schedule.\u00c2 Contact Us for Details Tour N",
+      "raw_claim": "Caliza at the Loop's official page includes this visible offer/pricing language: Lease & Move In Today To Choose When You Want To Cash In Your Free Month Anytime Between August Through December.\u00c2 Settle In & Enjoy The Flexibility To Use Your Biggest Savings When It Works Best For You, Because The Best Specials Fit Your Schedule.\u00c2 Contact Us for Details Tour N",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Caliza at the Loop",
+      "competitor_url": "https://www.livecaliza.com/",
+      "source_name": "Caliza at the Loop official page",
+      "source_url": "https://www.livecaliza.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Uptown San Antonio, TX Townhomes for Rent | Caliza at The Loop Menu Apply Home Floor Plans Photos & Tours Amenities Amenities Pet Friendly Neighborhood Neighborhood Map & Directions Contact Us Move-In Special \u00c3\u0097 YOUR HOME. Easily slip from work-from-home to workout-at-home at the state-of-the-art fitness center. Intelligent Home Design Energy-Efficient Appliances Chef-Inspired Kitchens Stainless-Steel Appliances Washer & Dryer Included Wood-Style Flooring Air Conditioning 2-Car Attached Garage Gig-Speed Internet Available Keyless Door Entry / Smart Locks Fenced-In Backyard for Select Hom Meanwhile, upscale finishes like sleek stainless-steel appliances and wood-style flooring highlight your every task with a touch of sophistication .",
+      "raw_claim": "Caliza at the Loop's official page provides competitor positioning evidence around: Uptown San Antonio, TX Townhomes for Rent | Caliza at The Loop Menu Apply Home Floor Plans Photos & Tours Amenities Amenities Pet Friendly Neighborhood Neighborhood Map & Directions Contact Us Move-In Special \u00c3\u0097 YOUR HOME. Easily slip from work-from-home to workout-at-home at the state-of-the-art fitness center. Intelligent Home Design Energy-Efficient Appliances Chef-Inspired Kitchens Stainless-Steel Appliances Washer & Dryer Included Wood-Style Flooring Air Conditioning 2-Car Attached Garage Gig-Speed Internet Available Keyless Door Entry / Smart Locks Fenced-In Backyard for Select Hom Meanwhile, upscale finishes like sleek stainless-steel appliances and wood-style flooring highlight your every task with a touch of sophistication .",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Uptown San Antonio, TX Townhomes for Rent | Caliza at The Loop",
+        "meta_description": "Caliza at The Loop offers luxury townhomes in Uptown San Antonio, TX with the finest amenities. Visit our website for more information."
+      }
+    },
+    {
+      "competitor_name": "Hartwin Bulverde",
+      "competitor_url": "https://hartwinbulverde.com/",
+      "source_name": "Hartwin Bulverde official page",
+      "source_url": "https://hartwinbulverde.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "\u00d7 Office Hours Monday - Friday 9:00 AM - 6:00 PM Saturday 10:00 AM - 5:00 PM Sunday 1:00 PM- 5:00 PM Call us at (726) 610-6175 Book a Tour Find Your Home Call us at (726) 610-6175 Book a Tour Find Your Home Call us at (726) 610-6175 Book a Tour Find Your Home Amenities Floorplans",
+      "raw_claim": "Hartwin Bulverde's official page includes this visible offer/pricing language: \u00d7 Office Hours Monday - Friday 9:00 AM - 6:00 PM Saturday 10:00 AM - 5:00 PM Sunday 1:00 PM- 5:00 PM Call us at (726) 610-6175 Book a Tour Find Your Home Call us at (726) 610-6175 Book a Tour Find Your Home Call us at (726) 610-6175 Book a Tour Find Your Home Amenities Floorplans",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Hartwin Bulverde",
+      "competitor_url": "https://hartwinbulverde.com/",
+      "source_name": "Hartwin Bulverde official page",
+      "source_url": "https://hartwinbulverde.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Hartwin Bulverde | Apartments in Roseheart San Antonio, TX Skip to main content \u00d7 Pet Policy Hartwin Bulverde is a pet-friendly community! Find Your Fit Book a Tour Vibrant Community Life A Neighborhood Filled with Shopping, Dining & More Explore Neighborhood Quick access to state-of-the-art amenities View Gallery Rooms with Range Premier Features and Finishes The Best of Hill Country Explore Nearby Unbridled Living Now Leasing \u2014 Tour Now View Floorplans Stay Connected With Us @hartwinbulverde 17626 Bulverde Road San Antonio, TX 78259 Call us at (726) 610-6175 View Hours Pet Policy Privacy Policy Site Map FAQs \u00a9 Copyright 2026 Hartwin Bulverde.",
+      "raw_claim": "Hartwin Bulverde's official page provides competitor positioning evidence around: Hartwin Bulverde | Apartments in Roseheart San Antonio, TX Skip to main content \u00d7 Pet Policy Hartwin Bulverde is a pet-friendly community! Find Your Fit Book a Tour Vibrant Community Life A Neighborhood Filled with Shopping, Dining & More Explore Neighborhood Quick access to state-of-the-art amenities View Gallery Rooms with Range Premier Features and Finishes The Best of Hill Country Explore Nearby Unbridled Living Now Leasing \u2014 Tour Now View Floorplans Stay Connected With Us @hartwinbulverde 17626 Bulverde Road San Antonio, TX 78259 Call us at (726) 610-6175 View Hours Pet Policy Privacy Policy Site Map FAQs \u00a9 Copyright 2026 Hartwin Bulverde.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Hartwin Bulverde | Apartments in Roseheart San Antonio, TX",
+        "meta_description": "Hartwin Bulverde in Roseheart near Stone Oak in San Antonio, TX offers spacious studio, 1, 2, or 3 bedroom apartments. Schedule your tour today!"
+      }
+    },
+    {
+      "competitor_name": "Loretto at Creekside",
+      "competitor_url": "https://lorettoatcreekside.com/",
+      "source_name": "Loretto at Creekside official page",
+      "source_url": "https://lorettoatcreekside.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Ideally located near I-35, 1604, and 281, our luxury apartments offer easy access to San Antonio, Austin, and major employers throughout San Antonio.",
+      "raw_claim": "Loretto at Creekside's official page includes this visible offer/pricing language: Ideally located near I-35, 1604, and 281, our luxury apartments offer easy access to San Antonio, Austin, and major employers throughout San Antonio.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Loretto at Creekside",
+      "competitor_url": "https://lorettoatcreekside.com/",
+      "source_name": "Loretto at Creekside official page",
+      "source_url": "https://lorettoatcreekside.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Surrounded by Texas Hill Country beauty and near the Guadalupe River, Schlitterbahn, and local parks, Loretto at Creekside offers the perfect blend of luxury apartments, convenience, and lifestyle in Live Oak, TX.",
+      "raw_claim": "Loretto at Creekside's official page includes this visible offer/pricing language: Surrounded by Texas Hill Country beauty and near the Guadalupe River, Schlitterbahn, and local parks, Loretto at Creekside offers the perfect blend of luxury apartments, convenience, and lifestyle in Live Oak, TX.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Loretto at Creekside",
+      "competitor_url": "https://lorettoatcreekside.com/",
+      "source_name": "Loretto at Creekside official page",
+      "source_url": "https://lorettoatcreekside.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "San Antonio apartments for rent | Loretto at Creekside Skip to main content \u00d7 Pet Policy Loretto at Creekside is a pet-friendly community! Home Amenities Floorplans Gallery Neighborhood Residents FAQs Contact Find Your Home Book a Tour Virtual Tours Home Amenities Floorplans Gallery Neighborhood Residents FAQs Contact Find Your Home 7319 N Loop 1604 E | San Antonio, TX 78233 Call us at (210) 941-3260 Virtual Tours B View Amenities Feel at Home Discover upscale apartment living at Loretto at Creekside in Live Oak, Texas, where modern design meets everyday convenience in one of the fastest-growing neighborhoods along the I-35 corridor. Book a Tour Find Your Home Loretto at Creekside 7319 N Loop 1604 E San Antonio, TX 78233 Call us at (210) 941-3260 Pet Policy Home Amenities Floorplans Gallery Neighborhood Residents FAQs Contact \u00a9 Copyright 2026 Loretto at Creekside.",
+      "raw_claim": "Loretto at Creekside's official page provides competitor positioning evidence around: San Antonio apartments for rent | Loretto at Creekside Skip to main content \u00d7 Pet Policy Loretto at Creekside is a pet-friendly community! Home Amenities Floorplans Gallery Neighborhood Residents FAQs Contact Find Your Home Book a Tour Virtual Tours Home Amenities Floorplans Gallery Neighborhood Residents FAQs Contact Find Your Home 7319 N Loop 1604 E | San Antonio, TX 78233 Call us at (210) 941-3260 Virtual Tours B View Amenities Feel at Home Discover upscale apartment living at Loretto at Creekside in Live Oak, Texas, where modern design meets everyday convenience in one of the fastest-growing neighborhoods along the I-35 corridor. Book a Tour Find Your Home Loretto at Creekside 7319 N Loop 1604 E San Antonio, TX 78233 Call us at (210) 941-3260 Pet Policy Home Amenities Floorplans Gallery Neighborhood Residents FAQs Contact \u00a9 Copyright 2026 Loretto at Creekside.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "San Antonio apartments for rent | Loretto at Creekside",
+        "meta_description": "Loretto at Creekside in San Antonio, TX offers 1, 2, or 3 bedroom apartments for rent. Browse the gallery, explore the amenities, and get more information on availability today."
+      }
+    },
+    {
+      "competitor_name": "The Atlantic Mira Loma",
+      "competitor_url": "https://www.atlanticmiralomaliving.com/",
+      "source_name": "The Atlantic Mira Loma official page",
+      "source_url": "https://www.atlanticmiralomaliving.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Apartments in Live Oak | The Atlantic Mira Loma Skip to main content Move In Now & Get 1 Month Free!",
+      "raw_claim": "The Atlantic Mira Loma's official page includes this visible offer/pricing language: Apartments in Live Oak | The Atlantic Mira Loma Skip to main content Move In Now & Get 1 Month Free!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Atlantic Mira Loma",
+      "competitor_url": "https://www.atlanticmiralomaliving.com/",
+      "source_name": "The Atlantic Mira Loma official page",
+      "source_url": "https://www.atlanticmiralomaliving.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Designed to create the perfect living environment, our community offers an ambiance that you will be happy to return to every day.",
+      "raw_claim": "The Atlantic Mira Loma's official page includes this visible offer/pricing language: Designed to create the perfect living environment, our community offers an ambiance that you will be happy to return to every day.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Atlantic Mira Loma",
+      "competitor_url": "https://www.atlanticmiralomaliving.com/",
+      "source_name": "The Atlantic Mira Loma official page",
+      "source_url": "https://www.atlanticmiralomaliving.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "What\u2019s more, top-of-the-line amenities await to elevate every step of your routine. Each residence has been crafted with style and is fully equipped with stainless steel appliances, quartz countertops, and vinyl wood flooring. Designed to create the perfect living environment, our community offers an ambiance that you will be happy to return to every day. With you in mind, we offer benefits that you will love, including access to a state-of-the-art fitness center, a restored-style swimming pool, and a bark park.",
+      "raw_claim": "The Atlantic Mira Loma's official page provides competitor positioning evidence around: What\u2019s more, top-of-the-line amenities await to elevate every step of your routine. Each residence has been crafted with style and is fully equipped with stainless steel appliances, quartz countertops, and vinyl wood flooring. Designed to create the perfect living environment, our community offers an ambiance that you will be happy to return to every day. With you in mind, we offer benefits that you will love, including access to a state-of-the-art fitness center, a restored-style swimming pool, and a bark park.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments in Live Oak | The Atlantic Mira Loma",
+        "meta_description": "Discover carefree living at The Atlantic Mira Loma. Tour our amenity-rich 1, 2 & 3-bedroom apartments in Live Oak, TX today!"
+      }
+    },
+    {
+      "competitor_name": "Tradehouse at Bulverde Marketplace",
+      "competitor_url": "https://www.tradehouseliving.com/#hero",
+      "source_name": "Tradehouse at Bulverde Marketplace official page",
+      "source_url": "https://www.tradehouseatbulverde.com/#hero",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Floor Plans Tradehouse at Bulverde Amenities Come home to ultimate convenience when you reside at our calming, maintenance-free community.",
+      "raw_claim": "Tradehouse at Bulverde Marketplace's official page includes this visible offer/pricing language: Floor Plans Tradehouse at Bulverde Amenities Come home to ultimate convenience when you reside at our calming, maintenance-free community.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Tradehouse at Bulverde Marketplace",
+      "competitor_url": "https://www.tradehouseliving.com/#hero",
+      "source_name": "Tradehouse at Bulverde Marketplace official page",
+      "source_url": "https://www.tradehouseatbulverde.com/#hero",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "With so much to offer, it's clear to see why Tradehouse at Bulverde is the area's preeminent apartment community!",
+      "raw_claim": "Tradehouse at Bulverde Marketplace's official page includes this visible offer/pricing language: With so much to offer, it's clear to see why Tradehouse at Bulverde is the area's preeminent apartment community!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Tradehouse at Bulverde Marketplace",
+      "competitor_url": "https://www.tradehouseliving.com/#hero",
+      "source_name": "Tradehouse at Bulverde Marketplace official page",
+      "source_url": "https://www.tradehouseatbulverde.com/#hero",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Check Availability Discover Lavish Features Elevate your lifestyle as you enter our community. Become an all-star chef in our epicurean kitchens featuring European-inspired dark wood cabinetry, stainless steel appliances, and white quartz countertops. We've anticipated your every need with convenient in-unit washers & dryers, extra-large walk-in closets, as well as garage and carport parking options. Explore our 360 tours for an even more detailed look at our community, then give us a call to apply!",
+      "raw_claim": "Tradehouse at Bulverde Marketplace's official page provides competitor positioning evidence around: Check Availability Discover Lavish Features Elevate your lifestyle as you enter our community. Become an all-star chef in our epicurean kitchens featuring European-inspired dark wood cabinetry, stainless steel appliances, and white quartz countertops. We've anticipated your every need with convenient in-unit washers & dryers, extra-large walk-in closets, as well as garage and carport parking options. Explore our 360 tours for an even more detailed look at our community, then give us a call to apply!",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Tradehouse Bulverde Marketplace",
+        "meta_description": "Tradehouse Bulverde Marketplace. Apartments in San Antonio, Texas."
+      }
+    },
+    {
+      "competitor_name": "US 1604",
+      "competitor_url": "https://us1604.com/",
+      "source_name": "US 1604 official page",
+      "source_url": "https://us1604.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Luxury Apartments in San Antonio, TX | Us 1604 Skip to main content \u00d7 Pet Policy Us 1604 is a pet-friendly community! Smart-home features and fiber internet allow you to connect with the best in entertainment or remote work, while full-sized washers and dryers in each home add convenience and ease. Just minutes from Stone Oak Medical Center, NEISD schools, and the Shops at La Cantera, Us 1604 puts you close to everything you need. Onsite, you\u2019ll find a resort-style pool with in-water loungers, coworking areas, a pickleball court, and an outdoor game lounge.",
+      "raw_claim": "US 1604's official page provides competitor positioning evidence around: Luxury Apartments in San Antonio, TX | Us 1604 Skip to main content \u00d7 Pet Policy Us 1604 is a pet-friendly community! Smart-home features and fiber internet allow you to connect with the best in entertainment or remote work, while full-sized washers and dryers in each home add convenience and ease. Just minutes from Stone Oak Medical Center, NEISD schools, and the Shops at La Cantera, Us 1604 puts you close to everything you need. Onsite, you\u2019ll find a resort-style pool with in-water loungers, coworking areas, a pickleball court, and an outdoor game lounge.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Luxury Apartments in San Antonio, TX | Us 1604",
+        "meta_description": "Discover the best in Texas living at Us 1604 in Northeast San Antonio. Luxury apartments with balconies, coworking space, and resort amenities near Stone Oak."
+      }
+    }
+  ]
+}

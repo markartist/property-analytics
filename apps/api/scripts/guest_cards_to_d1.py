@@ -35,7 +35,6 @@ Usage:
 
 import argparse
 import json
-import os
 import sqlite3
 import subprocess
 import sys
@@ -44,6 +43,8 @@ import uuid
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+from wrangler_auth import build_runtime_env, npx_wrangler_prefix
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -57,21 +58,24 @@ CANONICAL_DB = REPO_ROOT / "data" / "portfolio_analytics.db"
 
 ACTOR = "guest-card-sync"
 
+
 # ---------------------------------------------------------------------------
 # D1 community mapping
 # ---------------------------------------------------------------------------
 
 def _get_community_map() -> Dict[str, str]:
     """Fetch encasa_property_code → D1 community_id mapping from D1 via wrangler."""
+    env = build_runtime_env()
     result = subprocess.run(
-        [
-            "npx", "wrangler", "d1", "execute", "pop-brief-db", "--remote",
+        npx_wrangler_prefix(env) + [
+            "d1", "execute", "pop-brief-db", "--remote",
             "--command", "SELECT id, encasa_property_code FROM communities "
                          "WHERE encasa_property_code IS NOT NULL AND deleted_at IS NULL;",
             "--config", str(WRANGLER_TOML),
             "--json",
         ],
         capture_output=True, text=True, timeout=30,
+        env=env,
     )
     if result.returncode != 0:
         print(f"❌ Wrangler query failed: {result.stderr[:200]}")
@@ -492,14 +496,16 @@ def sync_friday(
 def execute_sql(sql_file: Path) -> bool:
     """Execute a SQL file against D1 via wrangler."""
     print(f"🚀 Executing against D1...")
+    env = build_runtime_env()
     result = subprocess.run(
-        [
-            "npx", "wrangler", "d1", "execute", "pop-brief-db", "--remote",
+        npx_wrangler_prefix(env) + [
+            "d1", "execute", "pop-brief-db", "--remote",
             f"--file={sql_file}",
             "--config", str(WRANGLER_TOML),
         ],
         capture_output=True, text=True, timeout=120,
         input="y\n",  # Auto-confirm
+        env=env,
     )
 
     if result.returncode == 0:

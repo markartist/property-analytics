@@ -1,0 +1,277 @@
+{
+  "snapshot_date": "2026-05-06",
+  "captured_at": "2026-05-06T00:00:00-05:00",
+  "property_id": "KY4TG",
+  "property_name": "The Reserves of Thomas Glen",
+  "market_name": "Shepherdsville, KY",
+  "research_scope": "watchlist_competitor_run",
+  "source_author": "Codex competitor packet builder",
+  "notes": "Official-page competitor evidence packet. Confirmed rows can feed report copy; directional rows should be used as advisory prompts; source-gap rows should remain visible only in data integrity/source panels.",
+  "evidence": {
+    "integrity_standard": "Do not report a rent, special, USP, or package/media claim unless source_url and captured_date are present.",
+    "comp_set_basis": "Governed property_competitors records in the Data Pond.",
+    "builder": "Data_Collection/utils/build_competitor_market_packets.py"
+  },
+  "observations": [
+    {
+      "competitor_name": "The Reserves of Thomas Glen",
+      "competitor_url": "https://venterraliving.com/apartments/reserves-of-thomas-glen/",
+      "source_name": "Venterra unit availability feed",
+      "source_url": "https://venterraliving.com/apartments/reserves-of-thomas-glen/",
+      "source_type": "internal_unit_feed",
+      "evidence_category": "subject_position",
+      "captured_date": "2026-05-06",
+      "floorplan_name": "Current visible availability",
+      "rent_min": 1034.0,
+      "rent_max": 1395.0,
+      "availability_status": "17 available units in internal unit feed",
+      "special_text": null,
+      "raw_claim": "The latest unit feed shows The Reserves of Thomas Glen visible rents from $1,034 to $1,395 across 17 current available units.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "db_table": "unit_availability_units",
+        "db_snapshot_date": "2026-05-06"
+      }
+    },
+    {
+      "competitor_name": "Brookview at Apex",
+      "competitor_url": "https://www.brookviewatapex.com/",
+      "source_name": "Brookview at Apex official page",
+      "source_url": "https://www.brookviewatapex.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "Brookview at Apex's official page could not provide usable crawlable evidence in this run (blocked_or_low_text).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Southgate Landing",
+      "competitor_url": "https://www.southgatelanding.com/",
+      "source_name": "Southgate Landing official page",
+      "source_url": "https://www.southgatelanding.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Specials \u00c3\u0097 Specials at Southgate Landing Limited Time Spring Special!",
+      "raw_claim": "Southgate Landing's official page includes this visible offer/pricing language: Specials \u00c3\u0097 Specials at Southgate Landing Limited Time Spring Special!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Southgate Landing",
+      "competitor_url": "https://www.southgatelanding.com/",
+      "source_name": "Southgate Landing official page",
+      "source_url": "https://www.southgatelanding.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "One Month FREE Rent on Select Units for the Next 5 Move-Ins With a 12-15-Month Lease!* Must Move In On or Before May 15th!",
+      "raw_claim": "Southgate Landing's official page includes this visible offer/pricing language: One Month FREE Rent on Select Units for the Next 5 Move-Ins With a 12-15-Month Lease!* Must Move In On or Before May 15th!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Southgate Landing",
+      "competitor_url": "https://www.southgatelanding.com/",
+      "source_name": "Southgate Landing official page",
+      "source_url": "https://www.southgatelanding.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "We know they\u00e2\u0080\u0099ll enjoy our pet-friendly community as much as you! Level Up Your Home Exceptional Interiors. Explore Amenities It feels good to have everything. From desired in-home features like a private balcony or patio and full-size washer and dryer included to essential community amenities like resident clubhouse and resort-style pool, home will become a place you look forward to returning to, time and again.",
+      "raw_claim": "Southgate Landing's official page provides competitor positioning evidence around: We know they\u00e2\u0080\u0099ll enjoy our pet-friendly community as much as you! Level Up Your Home Exceptional Interiors. Explore Amenities It feels good to have everything. From desired in-home features like a private balcony or patio and full-size washer and dryer included to essential community amenities like resident clubhouse and resort-style pool, home will become a place you look forward to returning to, time and again.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Southgate Landing: South Louisville, KY Apartments for Rent",
+        "meta_description": "Southgate Landing offers 1 & 2 bedroom apartments in Louisville, KY! Fantastic amenities + Great location near Hillview & Preston Highway. Click for more info!"
+      }
+    },
+    {
+      "competitor_name": "Tanyard Park",
+      "competitor_url": "https://www.tanyardpark.com/",
+      "source_name": "Tanyard Park official page",
+      "source_url": "https://www.tanyardpark.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Offering a selection of one-, two-, and three-bedroom apartments in Louisville, Tanyard Park gives residents an exceptional living experience in the area's most convenient suburban community.",
+      "raw_claim": "Tanyard Park's official page includes this visible offer/pricing language: Offering a selection of one-, two-, and three-bedroom apartments in Louisville, Tanyard Park gives residents an exceptional living experience in the area's most convenient suburban community.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Tanyard Park",
+      "competitor_url": "https://www.tanyardpark.com/",
+      "source_name": "Tanyard Park official page",
+      "source_url": "https://www.tanyardpark.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Tanyard Park is strategically located near Interstate 65 and Gene Snyder Freeway, allowing you to reach the area's best destinations and employment centers within minutes.",
+      "raw_claim": "Tanyard Park's official page includes this visible offer/pricing language: Tanyard Park is strategically located near Interstate 65 and Gene Snyder Freeway, allowing you to reach the area's best destinations and employment centers within minutes.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Tanyard Park",
+      "competitor_url": "https://www.tanyardpark.com/",
+      "source_name": "Tanyard Park official page",
+      "source_url": "https://www.tanyardpark.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Apartments in Louisville, KY | Tanyard Park Skip to main content Login Resident Login Opens in a new tab Applicant Login Opens in a new tab Phone Number +1 502-771-8306 Home Amenities Floor Plans Floor Plans Schedule a Tour Photos Map Map Sister Properties Reviews Contact Us FAQ  Relaxation and recreation are priorities with our pet-friendly dog park and walking trails, state-of-the-art 24-hour fitness center with modern equipment, and a resort-style swimming pool with sun deck and lounge area. Inside your spacious home, easily unwind with contemporary features including walk-in closets, and modern kitchens with stainless-steel appliances and granite countertops. We're pet-friendly, so your four-legged family members can enjoy the neighborhood alongside you.",
+      "raw_claim": "Tanyard Park's official page provides competitor positioning evidence around: Apartments in Louisville, KY | Tanyard Park Skip to main content Login Resident Login Opens in a new tab Applicant Login Opens in a new tab Phone Number +1 502-771-8306 Home Amenities Floor Plans Floor Plans Schedule a Tour Photos Map Map Sister Properties Reviews Contact Us FAQ  Relaxation and recreation are priorities with our pet-friendly dog park and walking trails, state-of-the-art 24-hour fitness center with modern equipment, and a resort-style swimming pool with sun deck and lounge area. Inside your spacious home, easily unwind with contemporary features including walk-in closets, and modern kitchens with stainless-steel appliances and granite countertops. We're pet-friendly, so your four-legged family members can enjoy the neighborhood alongside you.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments in Louisville, KY | Tanyard Park",
+        "meta_description": "Tanyard Park offers 1, 2 & 2-bedroom apartments in Louisville. Explore our floor plans and modern amenities today!"
+      }
+    },
+    {
+      "competitor_name": "11602 Apex View Drive",
+      "competitor_url": "https://www.brookviewatapex.com/",
+      "source_name": "11602 Apex View Drive official page",
+      "source_url": "https://www.brookviewatapex.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-05-06",
+      "raw_claim": "11602 Apex View Drive's official page could not provide usable crawlable evidence in this run (blocked_or_low_text).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Newtown Woods",
+      "competitor_url": "https://newtownwoods.com/",
+      "source_name": "Newtown Woods official page",
+      "source_url": "https://newtownwoods.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Our premier community offers a variety of amenities that encourage ease and relaxation.",
+      "raw_claim": "Newtown Woods's official page includes this visible offer/pricing language: Our premier community offers a variety of amenities that encourage ease and relaxation.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Newtown Woods",
+      "competitor_url": "https://newtownwoods.com/",
+      "source_name": "Newtown Woods official page",
+      "source_url": "https://newtownwoods.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Discover Location Location Contact 10605 Newtown Woods Trail Louisville, KY 40118 (502) 515-0333 info@newtownwoods.com Office Hours M-F: 10AM-6PM Sat: 10AM-5PM Sun: Closed --> --> --> --> Privacy Policy Cookie Policy DESIGN BY AGENCYFIFTY3 Disclosures & Licenses Privacy Policy Th",
+      "raw_claim": "Newtown Woods's official page includes this visible offer/pricing language: Discover Location Location Contact 10605 Newtown Woods Trail Louisville, KY 40118 (502) 515-0333 info@newtownwoods.com Office Hours M-F: 10AM-6PM Sat: 10AM-5PM Sun: Closed --> --> --> --> Privacy Policy Cookie Policy DESIGN BY AGENCYFIFTY3 Disclosures & Licenses Privacy Policy Th",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Newtown Woods",
+      "competitor_url": "https://newtownwoods.com/",
+      "source_name": "Newtown Woods official page",
+      "source_url": "https://newtownwoods.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Enjoy sunny Kentucky afternoons with a dip in our swimming pool, or get active in our fitness center. Apartment Features Stainless Steel appliances Granite Countertops Brand New Apartments LVT Wood-Style Flooring Natural Light Open Concept Frameless Shower Doors* Tiles Shower Surrounds* Custom Tiled Backsplash Walk-In Closets Ceramic Tile Bathroom Floors In-Unit Washer/Dryer Conn We infuse ultimate comfort with modern style and the small-town charms of Fairdale to create a home that feels fresh every time you come home. Google will use this information for the purpose of evaluating your use of the website, compiling reports on website activity for website operators and providing other services relating to website activity and internet usage.",
+      "raw_claim": "Newtown Woods's official page provides competitor positioning evidence around: Enjoy sunny Kentucky afternoons with a dip in our swimming pool, or get active in our fitness center. Apartment Features Stainless Steel appliances Granite Countertops Brand New Apartments LVT Wood-Style Flooring Natural Light Open Concept Frameless Shower Doors* Tiles Shower Surrounds* Custom Tiled Backsplash Walk-In Closets Ceramic Tile Bathroom Floors In-Unit Washer/Dryer Conn We infuse ultimate comfort with modern style and the small-town charms of Fairdale to create a home that feels fresh every time you come home. Google will use this information for the purpose of evaluating your use of the website, compiling reports on website activity for website operators and providing other services relating to website activity and internet usage.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Newtown Woods | Apartments in Fairdale, KY",
+        "meta_description": "Located in the heart of Fairdale, KY, Newtown Woods affords a lifestyle of comfort and style. Come explore all Newtown Woods has to offer."
+      }
+    },
+    {
+      "competitor_name": "Smyrna Village Apartments of Louisville",
+      "competitor_url": "https://smyrnavillageapts.com/",
+      "source_name": "Smyrna Village Apartments of Louisville official page",
+      "source_url": "https://smyrnavillageapts.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Open since August 2024 , our community offers spacious one-, two-, and three-bedroom apartment homes with high-end finishes , open-concept layouts , and energy-efficient features .",
+      "raw_claim": "Smyrna Village Apartments of Louisville's official page includes this visible offer/pricing language: Open since August 2024 , our community offers spacious one-, two-, and three-bedroom apartment homes with high-end finishes , open-concept layouts , and energy-efficient features .",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Smyrna Village Apartments of Louisville",
+      "competitor_url": "https://smyrnavillageapts.com/",
+      "source_name": "Smyrna Village Apartments of Louisville official page",
+      "source_url": "https://smyrnavillageapts.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Conveniently situated in Louisville, Kentucky , our location offers quick access to shopping, dining, parks, and major employers .",
+      "raw_claim": "Smyrna Village Apartments of Louisville's official page includes this visible offer/pricing language: Conveniently situated in Louisville, Kentucky , our location offers quick access to shopping, dining, parks, and major employers .",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Smyrna Village Apartments of Louisville",
+      "competitor_url": "https://smyrnavillageapts.com/",
+      "source_name": "Smyrna Village Apartments of Louisville official page",
+      "source_url": "https://smyrnavillageapts.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "At Smyrna Village, you\u2019ll enjoy community amenities like our fitness center , landscaped outdoor spaces, a clubhouse, on-site management , and 24-hour maintenance . About Smyrna Village Apartments At Smyrna Village Apartments, we believe in providing more than just a residence. Whether you\u2019re staying fit in the clubhouse and fitness center, exploring our walking trail, relaxing in our serene outdoor spaces, or socializing at the bark park, there\u2019s something for everyone at Smyrna Village. The in-unit washer & dryer, serenity fountain park & sun deck, and package acceptance services add another layer of convenience for our residents, making everyday living a breeze.",
+      "raw_claim": "Smyrna Village Apartments of Louisville's official page provides competitor positioning evidence around: At Smyrna Village, you\u2019ll enjoy community amenities like our fitness center , landscaped outdoor spaces, a clubhouse, on-site management , and 24-hour maintenance . About Smyrna Village Apartments At Smyrna Village Apartments, we believe in providing more than just a residence. Whether you\u2019re staying fit in the clubhouse and fitness center, exploring our walking trail, relaxing in our serene outdoor spaces, or socializing at the bark park, there\u2019s something for everyone at Smyrna Village. The in-unit washer & dryer, serenity fountain park & sun deck, and package acceptance services add another layer of convenience for our residents, making everyday living a breeze.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "New Luxury 1, 2 & 3 Bedroom Apartment Homes For Rent With Rental Clubhouse Louisville KY - Smyrna Village Apartments",
+        "meta_description": "Discover luxury 1, 2 & 3 bedroom apartments for rent in Louisville, KY. Smyrna Village Apartments offers modern homes with a clubhouse and prime amenities"
+      }
+    },
+    {
+      "competitor_name": "The Willard at Preston Crossing",
+      "competitor_url": "https://www.thewillardatpreston.com/",
+      "source_name": "The Willard at Preston Crossing official page",
+      "source_url": "https://www.thewillardatpreston.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "That means more freedom, more flexibility, and a welcoming home for every furry family member.",
+      "raw_claim": "The Willard at Preston Crossing's official page includes this visible offer/pricing language: That means more freedom, more flexibility, and a welcoming home for every furry family member.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Willard at Preston Crossing",
+      "competitor_url": "https://www.thewillardatpreston.com/",
+      "source_name": "The Willard at Preston Crossing official page",
+      "source_url": "https://www.thewillardatpreston.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-05-06",
+      "special_text": "Garages Private garage rental options available 24-Hour Fitness Center Smoke Free Community Dog Park Pet-friendly community with a bark park and ample outdoor space.",
+      "raw_claim": "The Willard at Preston Crossing's official page includes this visible offer/pricing language: Garages Private garage rental options available 24-Hour Fitness Center Smoke Free Community Dog Park Pet-friendly community with a bark park and ample outdoor space.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Willard at Preston Crossing",
+      "competitor_url": "https://www.thewillardatpreston.com/",
+      "source_name": "The Willard at Preston Crossing official page",
+      "source_url": "https://www.thewillardatpreston.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-05-06",
+      "usp_text": "Our pet-friendly apartment community is proud to say that we now have NO breed restrictions . That means more freedom, more flexibility, and a welcoming home for every furry family member. Login Resident Login Opens in a new tab Applicant Login Opens in a new tab Phone Number +1 502-251-9151 Home Amenities Floor Plans Floor Plans View By Location Virtual Tour Gallery Neighborhood Contact Us Contact Us Write a Review Resident Selection Guidelines Schedule a Tour Pho Our meticulously crafted one, two, and three-bedroom apartment homes redefine modern living, boasting expansive floor plans designed to cater to your every need.",
+      "raw_claim": "The Willard at Preston Crossing's official page provides competitor positioning evidence around: Our pet-friendly apartment community is proud to say that we now have NO breed restrictions . That means more freedom, more flexibility, and a welcoming home for every furry family member. Login Resident Login Opens in a new tab Applicant Login Opens in a new tab Phone Number +1 502-251-9151 Home Amenities Floor Plans Floor Plans View By Location Virtual Tour Gallery Neighborhood Contact Us Contact Us Write a Review Resident Selection Guidelines Schedule a Tour Pho Our meticulously crafted one, two, and three-bedroom apartment homes redefine modern living, boasting expansive floor plans designed to cater to your every need.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "The Willard at Preston Crossing | Apartments in Louisville, KY",
+        "meta_description": "Check for available units at The Willard at Preston Crossing in Louisville, KY. View floor plans, photos, and community amenities. Make The Willard at Preston Crossing your new home."
+      }
+    }
+  ]
+}

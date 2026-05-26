@@ -17,15 +17,23 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import sqlite3
 import subprocess
 import sys
-import glob
 import tempfile
+import time
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from utils.ksm import KsmResolutionError, resolve_secret
+from wrangler_auth import build_runtime_env, npx_wrangler_prefix
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -45,6 +53,17 @@ class StepResult:
     details: str
 
 
+CORE_MIRROR_SYNC_SCRIPTS = {
+    "guest_cards_to_d1.py",
+    "pib_data_to_d1.py",
+    "marketing_data_to_d1.py",
+}
+
+ADVISORY_MIRROR_SYNC_SCRIPTS = {
+    "captain_sources_to_d1.py",
+}
+
+
 def _fnv1a32(value: str) -> str:
     hash_value = 0x811C9DC5
     for char in value:
@@ -58,45 +77,34 @@ def _stable_hash(parts: List[object]) -> str:
 
 
 def _run_cmd(cmd: List[str], cwd: Optional[Path] = None, timeout: int = 900) -> Tuple[int, str, str]:
-    env = _build_runtime_env()
-    proc = subprocess.run(
+    env = build_runtime_env()
+    proc = subprocess.Popen(
         cmd,
         cwd=str(cwd) if cwd else None,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
-        timeout=timeout,
         env=env,
+        start_new_session=True,
     )
-    return proc.returncode, proc.stdout, proc.stderr
-
-
-def _build_runtime_env() -> Dict[str, str]:
-    """Build a launchd-safe PATH so npx/wrangler can be discovered."""
-    env = os.environ.copy()
-    existing = env.get("PATH", "")
-    path_segments: List[str] = []
-
-    for p in ["/opt/homebrew/bin", "/usr/local/bin"]:
-        if Path(p).exists():
-            path_segments.append(p)
-
-    nvm_bins = sorted(glob.glob(str(Path.home() / ".nvm" / "versions" / "node" / "*" / "bin")))
-    if nvm_bins:
-        path_segments.append(nvm_bins[-1])
-
-    if existing:
-        path_segments.extend(existing.split(":"))
-
-    deduped: List[str] = []
-    seen = set()
-    for seg in path_segments:
-        seg = seg.strip()
-        if seg and seg not in seen:
-            seen.add(seg)
-            deduped.append(seg)
-
-    env["PATH"] = ":".join(deduped)
-    return env
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+        return proc.returncode, stdout, stderr
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            stdout, stderr = proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stdout, stderr = proc.communicate()
+        timeout_note = f"Command timed out after {timeout}s: {' '.join(cmd)}\n"
+        return 124, (stdout or ""), timeout_note + (stderr or "")
 
 
 def _is_friday(s: str) -> bool:
@@ -133,6 +141,42 @@ def _property_advocate_enabled() -> bool:
 
 def _phase1_local_simulation_only() -> bool:
     return os.environ.get("PHASE1_LOCAL_SIMULATION_ONLY", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _resolve_platform_access_client_id() -> str:
+    try:
+        return resolve_secret(
+            description="Platform Access client id",
+            notation_env_var="KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_ID_NOTATION",
+            direct_env_var="PLATFORM_ACCESS_CLIENT_ID",
+            default_profile="marketingops",
+        )
+    except KsmResolutionError:
+        return ""
+
+
+def _resolve_platform_access_client_secret() -> str:
+    try:
+        return resolve_secret(
+            description="Platform Access client secret",
+            notation_env_var="KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_SECRET_NOTATION",
+            direct_env_var="PLATFORM_ACCESS_CLIENT_SECRET",
+            default_profile="marketingops",
+        )
+    except KsmResolutionError:
+        return ""
+
+
+def _resolve_platform_shared_token() -> str:
+    try:
+        return resolve_secret(
+            description="Platform shared token",
+            notation_env_var="KSM_PLATFORM_SHARED_TOKEN_NOTATION",
+            direct_env_var="PLATFORM_SHARED_TOKEN",
+            default_profile="marketingops",
+        )
+    except KsmResolutionError:
+        return ""
 
 
 def _build_phase1_ga4_payload(conn: sqlite3.Connection, contract_bundle_id: str) -> Dict[str, object]:
@@ -377,12 +421,17 @@ def run_phase1_platform_sync() -> Tuple[StepResult, Dict[str, object]]:
         }
 
     base_url = os.environ.get("PLATFORM_BASE_URL")
-    shared_token = os.environ.get("PLATFORM_SHARED_TOKEN")
-    if not base_url or not shared_token:
+    shared_token = _resolve_platform_shared_token()
+    access_client_id = _resolve_platform_access_client_id()
+    access_client_secret = _resolve_platform_access_client_secret()
+    has_shared_auth = bool(shared_token)
+    has_access_auth = bool(access_client_id and access_client_secret)
+    if not base_url or not (has_shared_auth or has_access_auth):
         return StepResult(
             "phase1_platform_sync",
             False,
-            "PLATFORM_BASE_URL and PLATFORM_SHARED_TOKEN are required when ENABLE_PHASE1_PLATFORM_SYNC is enabled",
+            "PLATFORM_BASE_URL and either PLATFORM_SHARED_TOKEN or PLATFORM_ACCESS_CLIENT_ID plus "
+            "PLATFORM_ACCESS_CLIENT_SECRET are required when ENABLE_PHASE1_PLATFORM_SYNC is enabled",
         ), {"enabled": True, "skipped": False}
 
     conn = sqlite3.connect(str(CANONICAL_DB))
@@ -392,6 +441,7 @@ def run_phase1_platform_sync() -> Tuple[StepResult, Dict[str, object]]:
     activity: Dict[str, object] = {
         "enabled": True,
         "base_url": base_url,
+        "auth_mode": "access_service_token" if has_access_auth else "shared_token",
         "actor": os.environ.get("PLATFORM_ROUTE_ACTOR", "d1_mirror_sync"),
         "source": os.environ.get("PLATFORM_ROUTE_SOURCE", "d1_mirror_sync"),
         "runs": {},
@@ -401,13 +451,27 @@ def run_phase1_platform_sync() -> Tuple[StepResult, Dict[str, object]]:
         shared_args = [
             "--base-url",
             base_url,
-            "--shared-token",
-            shared_token,
             "--actor",
             os.environ.get("PLATFORM_ROUTE_ACTOR", "d1_mirror_sync"),
             "--source",
             os.environ.get("PLATFORM_ROUTE_SOURCE", "d1_mirror_sync"),
         ]
+        if has_access_auth:
+            shared_args.extend(
+                [
+                    "--access-client-id",
+                    access_client_id or "",
+                    "--access-client-secret",
+                    access_client_secret or "",
+                ]
+            )
+        else:
+            shared_args.extend(
+                [
+                    "--shared-token",
+                    shared_token or "",
+                ]
+            )
 
         for domain_key, builder in (("ga4", _build_phase1_ga4_payload), ("psi", _build_phase1_psi_payload)):
             payload = builder(conn, contract_bundle_id)
@@ -566,17 +630,38 @@ def run_sync_script(
     if dry_run:
         cmd.append("--dry-run")
 
-    rc, out, err = _run_cmd(cmd, cwd=API_DIR, timeout=1800)
-    if rc != 0:
+    attempts = 3 if script_name == "captain_sources_to_d1.py" else 1
+    for attempt in range(1, attempts + 1):
+        rc, out, err = _run_cmd(cmd, cwd=API_DIR, timeout=1800)
+        if rc == 0:
+            if attempt == 1:
+                return StepResult(script_name, True, "sync completed")
+            return StepResult(script_name, True, f"sync completed after retry {attempt}/{attempts}")
+
         tail = (err or out)[-600:]
-        return StepResult(script_name, False, f"exit={rc} | {tail}")
-    return StepResult(script_name, True, "sync completed")
+        lowered_tail = tail.lower()
+        transient = any(
+            marker in lowered_tail
+            for marker in (
+                "fetch failed",
+                "connectivity issue",
+                "remote end closed connection",
+                "connection reset",
+                "timed out",
+            )
+        )
+        if attempt < attempts and transient:
+            time.sleep(2 * attempt)
+            continue
+        return StepResult(script_name, False, f"exit={rc} | attempt {attempt}/{attempts} | {tail}")
+
+    return StepResult(script_name, False, f"exit=1 | exhausted retries for {script_name}")
 
 
 def _d1_query(sql: str) -> Tuple[bool, List[Dict], str]:
+    env = build_runtime_env()
     cmd = [
-        "npx",
-        "wrangler",
+        *npx_wrangler_prefix(env),
         "d1",
         "execute",
         "pop-brief-db",
@@ -600,7 +685,8 @@ def _d1_query(sql: str) -> Tuple[bool, List[Dict], str]:
 
 def verify_wrangler_access() -> StepResult:
     """Fail fast if wrangler binary/auth is unavailable."""
-    rc, out, err = _run_cmd(["npx", "wrangler", "--version"], cwd=API_DIR, timeout=30)
+    env = build_runtime_env()
+    rc, out, err = _run_cmd([*npx_wrangler_prefix(env), "--version"], cwd=API_DIR, timeout=30)
     if rc != 0:
         tail = (err or out)[-300:]
         return StepResult("wrangler_access", False, f"Wrangler unavailable: {tail}")
@@ -770,6 +856,30 @@ def write_report(report: Dict[str, object]) -> Path:
     return path
 
 
+def _step_tier(step_name: str) -> str:
+    if step_name in CORE_MIRROR_SYNC_SCRIPTS:
+        return "core_sync"
+    if step_name in ADVISORY_MIRROR_SYNC_SCRIPTS:
+        return "advisory_sync"
+    if step_name in {"verify_d1", "verify_d1_expected_max", "wrangler_access", "local_db_validate", "local_db_maintenance", "local_source_freshness", "resolve_target_friday"}:
+        return "core"
+    return "core"
+
+
+def _report_success_fields(steps: List[StepResult]) -> Dict[str, object]:
+    core_failures = [asdict(step) for step in steps if (not step.ok and _step_tier(step.name) in {"core", "core_sync"})]
+    advisory_failures = [asdict(step) for step in steps if (not step.ok and _step_tier(step.name) == "advisory_sync")]
+    core_success = not core_failures
+    overall_success = core_success and not advisory_failures
+    return {
+        "core_success": core_success,
+        "success": overall_success,
+        "mirror_status": "success" if overall_success else ("degraded" if core_success else "failed"),
+        "core_failures": core_failures,
+        "advisory_failures": advisory_failures,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Daily D1 mirror sync")
     parser.add_argument("--date", help="Target Friday (YYYY-MM-DD). Defaults to computed safe Friday.")
@@ -897,11 +1007,12 @@ def main() -> None:
 
     # Deterministic sync order.
     sync_scripts = [
-        "guest_cards_to_d1.py",
-        "pib_data_to_d1.py",
-        "marketing_data_to_d1.py",
+        ("guest_cards_to_d1.py", True),
+        ("pib_data_to_d1.py", True),
+        ("marketing_data_to_d1.py", True),
+        ("captain_sources_to_d1.py", False),
     ]
-    for script in sync_scripts:
+    for script, required in sync_scripts:
         step = run_sync_script(
             script,
             target_friday=target_friday,
@@ -911,9 +1022,10 @@ def main() -> None:
         )
         steps.append(step)
         print(f"[{script}] {'OK' if step.ok else 'FAIL'} - {step.details}")
-        if not step.ok:
+        if not step.ok and required:
             report["steps"] = [asdict(s) for s in steps]
-            report["success"] = False
+            report.update(_report_success_fields(steps))
+            report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             path = write_report(report)
             print(f"Report: {path}")
             sys.exit(1)
@@ -928,12 +1040,12 @@ def main() -> None:
     print(f"[{expected_step.name}] {'OK' if expected_step.ok else 'FAIL'} - {expected_step.details}")
 
     report["steps"] = [asdict(s) for s in steps]
-    report["success"] = verify_step.ok and expected_step.ok
+    report.update(_report_success_fields(steps))
     report["finished_at_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     path = write_report(report)
     print(f"Report: {path}")
 
-    if not report["success"]:
+    if not bool(report["core_success"]):
         sys.exit(1)
 
     print("Mirror complete.")

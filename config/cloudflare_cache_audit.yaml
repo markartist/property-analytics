@@ -78,3 +78,10 @@ domains:
     zone_name: "calaismidtownapartments.com"
     zone_tag:
     paths: []
+  - property_id: "441503068"
+    property_name: "The Delta Pearland"
+    domain: "thedeltapearland.com"
+    zone_name: "thedeltapearland.com"
+    zone_tag:
+    paths:
+      - "/floor-plans/"

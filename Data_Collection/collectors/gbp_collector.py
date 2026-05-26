@@ -19,17 +19,22 @@ https://www.googleapis.com/auth/business.manage
 """
 
 import json
+import os
 import pickle
 import logging
 import requests
+import sys
+import types
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from utils.keeper_file_materializer import upload_keeper_file
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -41,79 +46,176 @@ SCOPES = ['https://www.googleapis.com/auth/business.manage']
 
 class GoogleBusinessProfileCollector:
     """Collects performance data from Google Business Profile API."""
-    
-    def __init__(self, credentials_path: Path, token_path: Path):
+
+    def __init__(self, credentials_path: Path, token_path: Path, allow_interactive_auth: bool = False):
         """Initialize GBP collector.
-        
+
         Args:
             credentials_path: Path to OAuth2 client secrets JSON
             token_path: Path to save/load OAuth2 token pickle
+            allow_interactive_auth: Whether the collector may launch a browser-based OAuth flow
         """
         self.credentials_path = credentials_path
         self.token_path = token_path
+        self.allow_interactive_auth = allow_interactive_auth
         self.service = None
         self.creds = None  # Store credentials for direct API calls
         self._initialize_service()
-    
+
+    @staticmethod
+    def _json_token_path(token_path: Path) -> Path:
+        """Prefer JSON token storage to avoid pickle/runtime fragility."""
+        return token_path if token_path.suffix.lower() == '.json' else token_path.with_suffix('.json')
+
+    @staticmethod
+    def _canonical_local_token_path() -> Path:
+        """
+        Persist a stable local JSON token copy even when the live source is Keeper.
+        """
+        return Path('/Users/mark/Property_Analytics/Portfolio_Monitoring/credentials/gbp_token.json')
+
+    @staticmethod
+    def _install_pickle_compat_shim() -> None:
+        """
+        Install a lightweight shim for legacy google-auth internal classes.
+
+        Old GBP token pickles can reference private google-auth classes that no
+        longer ship in the scheduled runtime. We only use the shim to deserialize
+        and migrate those legacy tokens into stable JSON authorized-user tokens.
+        """
+        module_name = 'google.auth._regional_access_boundary_utils'
+        if module_name in sys.modules:
+            return
+
+        class _CompatShim(types.ModuleType):
+            def __getattr__(self, name):
+                class _Dummy:
+                    def __init__(self, *args, **kwargs):
+                        pass
+                return _Dummy
+
+        sys.modules[module_name] = _CompatShim(module_name)
+
+    @classmethod
+    def load_credentials(cls, token_path: Path, credentials_path: Path, allow_interactive_auth: bool = False):
+        """Load GBP OAuth credentials from stable JSON or legacy pickle."""
+        creds = None
+        json_token_path = cls._json_token_path(token_path)
+
+        if json_token_path.exists():
+            try:
+                creds = Credentials.from_authorized_user_file(str(json_token_path), SCOPES)
+                logger.info("Loaded GBP OAuth token from JSON")
+                return creds
+            except Exception as e:
+                logger.warning(f"Error loading GBP JSON token: {e}")
+
+        if token_path.exists():
+            try:
+                cls._install_pickle_compat_shim()
+                with open(token_path, 'rb') as token:
+                    creds = pickle.load(token)
+                logger.info("Loaded legacy GBP OAuth token from pickle")
+                return creds
+            except Exception as e:
+                logger.warning(f"Error loading saved GBP pickle token: {e}")
+
+        if not allow_interactive_auth:
+            return None
+
+        if not credentials_path.exists():
+            raise FileNotFoundError(f"Credentials not found: {credentials_path}")
+
+        logger.info("Starting GBP OAuth2 flow...")
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(credentials_path),
+            SCOPES
+        )
+        creds = flow.run_local_server(port=0)
+        logger.info("GBP OAuth2 authentication completed")
+        return creds
+
+    @classmethod
+    def save_credentials(cls, token_path: Path, creds) -> Path:
+        """Persist GBP OAuth credentials in JSON authorized-user format."""
+        json_token_path = cls._json_token_path(token_path)
+        json_token_path.parent.mkdir(parents=True, exist_ok=True)
+        json_token_path.write_text(creds.to_json())
+        logger.info(f"Saved GBP OAuth token to {json_token_path}")
+
+        canonical_local = cls._canonical_local_token_path()
+        canonical_local.parent.mkdir(parents=True, exist_ok=True)
+        if canonical_local != json_token_path:
+            canonical_local.write_text(creds.to_json())
+            logger.info(f"Saved GBP OAuth token cache to {canonical_local}")
+
+        try:
+            upload_keeper_file(
+                uid_env_var='KSM_GBP_TOKEN_UID',
+                source_path=canonical_local,
+            )
+            if os.getenv('KSM_GBP_TOKEN_UID'):
+                logger.info("Uploaded refreshed GBP OAuth token to Keeper")
+        except Exception as e:
+            logger.warning(f"Error uploading GBP token to Keeper: {e}")
+
+        return json_token_path
+
     def _initialize_service(self) -> None:
         """Initialize GBP API service with OAuth2 authentication."""
         try:
-            creds = None
-            
-            # Load saved token if exists
-            if self.token_path.exists():
-                try:
-                    with open(self.token_path, 'rb') as token:
-                        creds = pickle.load(token)
-                    logger.info("Loaded saved OAuth2 token")
-                except Exception as e:
-                    logger.warning(f"Error loading saved token: {e}")
-            
-            # Refresh or get new credentials
+            creds = self.load_credentials(
+                self.token_path,
+                self.credentials_path,
+                allow_interactive_auth=self.allow_interactive_auth,
+            )
+
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
                     try:
                         creds.refresh(Request())
-                        logger.info("Refreshed OAuth2 token")
+                        logger.info("Refreshed GBP OAuth2 token")
                     except Exception as e:
-                        logger.warning(f"Error refreshing token: {e}")
+                        logger.warning(f"Error refreshing GBP token: {e}")
                         creds = None
-                
+
                 if not creds:
-                    if not self.credentials_path.exists():
-                        raise FileNotFoundError(f"Credentials not found: {self.credentials_path}")
-                    
-                    logger.info("Starting OAuth2 flow...")
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        str(self.credentials_path),
-                        SCOPES
+                    if not self.allow_interactive_auth:
+                        raise RuntimeError(
+                            "GBP token unavailable or unreadable in headless mode; "
+                            "interactive OAuth is disabled for unattended collection runs."
+                        )
+                    creds = self.load_credentials(
+                        self.token_path,
+                        self.credentials_path,
+                        allow_interactive_auth=True,
                     )
-                    creds = flow.run_local_server(port=0)
-                    logger.info("OAuth2 authentication completed")
-                
-                # Save credentials
+
                 try:
-                    with open(self.token_path, 'wb') as token:
-                        pickle.dump(creds, token)
-                    logger.info("OAuth2 token saved")
+                    self.token_path = self.save_credentials(self.token_path, creds)
                 except Exception as e:
-                    logger.warning(f"Error saving token: {e}")
-            
+                    logger.warning(f"Error saving GBP token: {e}")
+            else:
+                try:
+                    self.token_path = self.save_credentials(self.token_path, creds)
+                except Exception as e:
+                    logger.warning(f"Error normalizing GBP token to JSON: {e}")
+
             # Store credentials for direct API calls (reviews use v4 API)
             self.creds = creds
-            
+
             # Build service
             # Note: Using mybusiness v4 for now, will migrate to businessprofileperformance v1
             self.service = build('businessprofileperformance', 'v1', credentials=creds)
             logger.info("GBP API service initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize GBP service: {e}")
             raise
-    
+
     def list_accounts(self) -> List[Dict]:
         """List all accessible GBP accounts.
-        
+
         Returns:
             List of account dictionaries with name and account info
         """
@@ -125,7 +227,7 @@ class GoogleBusinessProfileCollector:
         except HttpError as e:
             logger.error(f"Error listing accounts: {e}")
             return []
-    
+
     def fetch_daily_metrics(
         self,
         location_name: str,
@@ -134,13 +236,13 @@ class GoogleBusinessProfileCollector:
         metrics: Optional[List[str]] = None
     ) -> Dict:
         """Fetch daily metrics for a location.
-        
+
         Args:
             location_name: GBP location resource name (e.g., "locations/12345")
             start_date: Start date for metrics
             end_date: End date for metrics
             metrics: List of metric names to fetch. If None, fetches all common metrics
-        
+
         Returns:
             Dictionary with metric data by date
         """
@@ -156,14 +258,14 @@ class GoogleBusinessProfileCollector:
                 'CALL_CLICKS',
                 'WEBSITE_CLICKS',
             ]
-        
+
         try:
             # Format dates
             start_date_str = start_date.strftime('%Y-%m-%d')
             end_date_str = end_date.strftime('%Y-%m-%d')
-            
+
             logger.info(f"Fetching metrics for {location_name} ({start_date_str} to {end_date_str})")
-            
+
             # Call fetchMultiDailyMetricsTimeSeries
             request = self.service.locations().fetchMultiDailyMetricsTimeSeries(
                 location=location_name,
@@ -183,60 +285,60 @@ class GoogleBusinessProfileCollector:
                     }
                 }
             )
-            
+
             response = request.execute()
-            
+
             # Parse response
             metrics_data = self._parse_daily_metrics_response(response)
             logger.info(f"Successfully fetched {len(metrics_data)} days of data")
-            
+
             return metrics_data
-            
+
         except HttpError as e:
             logger.error(f"HTTP error fetching daily metrics: {e}")
             return {}
         except Exception as e:
             logger.error(f"Error fetching daily metrics: {e}")
             return {}
-    
+
     def _parse_daily_metrics_response(self, response: Dict) -> Dict:
         """Parse fetchMultiDailyMetricsTimeSeries response.
-        
+
         Args:
             response: API response dictionary
-        
+
         Returns:
             Dictionary mapping date strings to metric values
         """
         result = {}
-        
+
         # Response structure: { "multiDailyMetricTimeSeries": [...] }
         time_series_list = response.get('multiDailyMetricTimeSeries', [])
-        
+
         for time_series in time_series_list:
             metric_name = time_series.get('dailyMetric', 'UNKNOWN')
-            
+
             # Get data points
             data_points = time_series.get('timeSeries', {}).get('datedValues', [])
-            
+
             for point in data_points:
                 # Extract date
                 date_obj = point.get('date', {})
                 date_str = f"{date_obj.get('year')}-{date_obj.get('month'):02d}-{date_obj.get('day'):02d}"
-                
+
                 # Extract value
                 value = point.get('value', 0)
-                
+
                 # Initialize date entry if needed
                 if date_str not in result:
                     result[date_str] = {}
-                
+
                 # Store metric value (convert metric name to lowercase with underscores)
                 metric_key = metric_name.lower()
                 result[date_str][metric_key] = value
-        
+
         return result
-    
+
     def fetch_monthly_search_keywords(
         self,
         location_name: str,
@@ -244,18 +346,18 @@ class GoogleBusinessProfileCollector:
         month: int
     ) -> List[Dict]:
         """Fetch monthly search keyword impressions.
-        
+
         Args:
             location_name: GBP location resource name
             year: Year (e.g., 2024)
             month: Month (1-12)
-        
+
         Returns:
             List of dictionaries with keyword and impressions
         """
         try:
             logger.info(f"Fetching search keywords for {location_name} ({year}-{month:02d})")
-            
+
             # Call listSearchKeywordImpressionsMonthly
             request = self.service.locations().searchkeywords().impressions().monthly().list(
                 parent=location_name,
@@ -265,43 +367,43 @@ class GoogleBusinessProfileCollector:
                 monthlyRange_endMonth_month=month,
                 pageSize=100  # Max results per page
             )
-            
+
             keywords = []
-            
+
             while request is not None:
                 response = request.execute()
-                
+
                 # Parse search keyword data
                 for item in response.get('searchKeywordsCounts', []):
                     keyword = item.get('searchKeyword', '')
                     impressions = item.get('insightsValue', {}).get('value', 0)
-                    
+
                     keywords.append({
                         'keyword': keyword,
                         'impressions': impressions
                     })
-                
+
                 # Get next page
                 request = self.service.locations().searchkeywords().impressions().monthly().list_next(
                     request, response
                 )
-            
+
             logger.info(f"Fetched {len(keywords)} search keywords")
             return keywords
-            
+
         except HttpError as e:
             logger.error(f"HTTP error fetching search keywords: {e}")
             return []
         except Exception as e:
             logger.error(f"Error fetching search keywords: {e}")
             return []
-    
+
     def get_location_info(self, location_name: str) -> Optional[Dict]:
         """Get basic information about a location.
-        
+
         Args:
             location_name: GBP location resource name
-        
+
         Returns:
             Dictionary with location information, or None if error
         """
@@ -312,7 +414,7 @@ class GoogleBusinessProfileCollector:
         except Exception as e:
             logger.error(f"Error getting location info: {e}")
             return None
-    
+
     def fetch_reviews(
         self,
         account_id: str,
@@ -321,72 +423,72 @@ class GoogleBusinessProfileCollector:
         order_by: str = "updateTime desc"
     ) -> List[Dict]:
         """Fetch reviews for a location using v4 API.
-        
+
         Args:
             account_id: GBP account ID (numeric)
             location_id: GBP location ID (numeric)
             page_size: Number of reviews per page (max 50)
             order_by: Sort order - "updateTime desc", "rating desc", "rating"
-        
+
         Returns:
             List of review dictionaries with full details
         """
         try:
             # Reviews are on the v4 API endpoint
             url = f"https://mybusiness.googleapis.com/v4/accounts/{account_id}/locations/{location_id}/reviews"
-            
+
             params = {
                 'pageSize': min(page_size, 50),  # API max is 50
                 'orderBy': order_by
             }
-            
+
             headers = {
                 'Authorization': f'Bearer {self.creds.token}',
                 'Content-Type': 'application/json'
             }
-            
+
             all_reviews = []
             page_token = None
-            
+
             logger.info(f"Fetching reviews for account {account_id}, location {location_id}")
-            
+
             while True:
                 if page_token:
                     params['pageToken'] = page_token
-                
+
                 response = requests.get(url, headers=headers, params=params)
-                
+
                 if response.status_code != 200:
                     logger.error(f"Error fetching reviews: {response.status_code} - {response.text}")
                     break
-                
+
                 data = response.json()
-                
+
                 # Get reviews from response
                 reviews = data.get('reviews', [])
                 all_reviews.extend(reviews)
-                
+
                 logger.info(f"Fetched {len(reviews)} reviews (total: {len(all_reviews)})")
-                
+
                 # Check for next page
                 page_token = data.get('nextPageToken')
                 if not page_token:
                     break
-            
+
             logger.info(f"Successfully fetched {len(all_reviews)} total reviews")
             return all_reviews
-            
+
         except Exception as e:
             logger.error(f"Error fetching reviews: {e}")
             return []
-    
+
     @staticmethod
     def parse_review(review: Dict) -> Dict:
         """Parse a review from the API response into a clean dictionary.
-        
+
         Args:
             review: Raw review dictionary from API
-        
+
         Returns:
             Cleaned review dictionary with normalized fields
         """
@@ -398,17 +500,17 @@ class GoogleBusinessProfileCollector:
             'TWO': 2,
             'ONE': 1
         }
-        
+
         star_rating = review.get('starRating', 'ONE')
         star_rating_numeric = star_rating_map.get(star_rating, 1)
-        
+
         # Extract reviewer info
         reviewer = review.get('reviewer', {})
-        
+
         # Extract reply info
         review_reply = review.get('reviewReply', {})
         has_reply = bool(review_reply.get('comment'))
-        
+
         return {
             'review_id': review.get('reviewId'),
             'review_name': review.get('name'),
@@ -424,7 +526,7 @@ class GoogleBusinessProfileCollector:
             'review_create_time': review.get('createTime'),
             'review_update_time': review.get('updateTime')
         }
-    
+
     def collect_property_metrics(
         self,
         property_id: str,
@@ -432,25 +534,25 @@ class GoogleBusinessProfileCollector:
         days_back: int = 30
     ) -> Tuple[Dict, List[Dict]]:
         """Collect all metrics for a property.
-        
+
         Args:
             property_id: Internal property ID (GA4 ID)
             gbp_location_id: GBP location resource name
             days_back: Number of days to collect (default 30)
-        
+
         Returns:
             Tuple of (daily_metrics_dict, search_keywords_list)
         """
         end_date = datetime.now() - timedelta(days=1)  # Yesterday
         start_date = end_date - timedelta(days=days_back - 1)
-        
+
         # Fetch daily metrics
         daily_metrics = self.fetch_daily_metrics(
             location_name=gbp_location_id,
             start_date=start_date,
             end_date=end_date
         )
-        
+
         # Fetch search keywords for current month
         now = datetime.now()
         search_keywords = self.fetch_monthly_search_keywords(
@@ -458,21 +560,22 @@ class GoogleBusinessProfileCollector:
             year=now.year,
             month=now.month
         )
-        
+
         return daily_metrics, search_keywords
 
 
 # Example usage and testing
 if __name__ == "__main__":
+    from utils.config_manager import Config
+
     print("=" * 80)
     print("GOOGLE BUSINESS PROFILE COLLECTOR - TEST MODE")
     print("=" * 80)
     print()
-    
-    # Example paths (update with actual paths)
-    creds_path = Path("credentials/client_secret_gbp.json")
-    token_path = Path("credentials/gbp_token.pickle")
-    
+
+    creds_path = Config.get_gbp_credentials_path()
+    token_path = Config.get_gbp_token_path()
+
     if not creds_path.exists():
         print(f"❌ Credentials not found at {creds_path}")
         print()
@@ -482,30 +585,30 @@ if __name__ == "__main__":
         print("3. Create OAuth 2.0 credentials")
         print("4. Download as JSON and save to credentials/client_secret_gbp.json")
         exit(1)
-    
+
     try:
         collector = GoogleBusinessProfileCollector(creds_path, token_path)
         print("✅ Collector initialized successfully")
         print()
-        
+
         # Test with a location (you need to provide an actual location ID)
         test_location = "locations/YOUR_LOCATION_ID"
         print(f"📍 Testing with location: {test_location}")
         print()
-        
+
         # Fetch last 7 days
         end_date = datetime.now() - timedelta(days=1)
         start_date = end_date - timedelta(days=6)
-        
+
         metrics = collector.fetch_daily_metrics(test_location, start_date, end_date)
-        
+
         if metrics:
             print(f"✅ Fetched {len(metrics)} days of metrics")
             for date_str, values in sorted(metrics.items()):
                 print(f"  {date_str}: {values}")
         else:
             print("⚠️  No metrics returned")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback

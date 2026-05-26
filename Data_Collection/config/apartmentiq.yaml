@@ -1,0 +1,19 @@
+enabled: true
+api_base_url: https://data.apartmentiq.io/apartmentiq/api/v1
+
+auth:
+  keeper_profile: marketingops
+  api_key_notation_env: KSM_APARTMENTIQ_API_KEY_NOTATION
+  default_api_key_notation: keeper://aRP2hTUWhLTCAn-ye7GJ_w/field/password
+
+collection:
+  account_ids: []
+  comp_set_ids: []
+  include_market_survey: true
+  include_units: false
+  include_floorplans: false
+  max_comp_sets_per_run: -1
+  request_timeout_seconds: 45
+  max_retries: 4
+  rate_limit_sleep_seconds: 8.0
+  use_cached_comp_sets_on_list_error: true

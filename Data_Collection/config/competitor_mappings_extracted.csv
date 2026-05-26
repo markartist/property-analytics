@@ -1,0 +1,604 @@
+venterra_property,competitor_name,competitor_rank,sheet_name
+Anatole at Norman,35 West,1,Anatole_at_Norman_Market
+Anatole at Norman,Mission Point,2,Anatole_at_Norman_Market
+Anatole at Norman,Icon at Norman,3,Anatole_at_Norman_Market
+Anatole at Norman,Artisan Crossing,4,Anatole_at_Norman_Market
+Anatole at Norman,Terra at University North Park,5,Anatole_at_Norman_Market
+Apex West Midtown,Avana Westside,1,Apex_West_Midtown_Market
+Apex West Midtown,The Mill at Westside,2,Apex_West_Midtown_Market
+Apex West Midtown,Walton Westside,3,Apex_West_Midtown_Market
+Apex West Midtown,Cottonwood Westside,4,Apex_West_Midtown_Market
+Apex West Midtown,Berkeley Heights,5,Apex_West_Midtown_Market
+Apex West Midtown,935M by ARIUM,6,Apex_West_Midtown_Market
+Avasa at 1604,Alta Rolling Oaks,1,Avasa_at_1604_Market
+Avasa at 1604,Brio at Lookout,2,Avasa_at_1604_Market
+Avasa at 1604,Loretto at Creekside,3,Avasa_at_1604_Market
+Avasa at 1604,Citadel at Lookout,4,Avasa_at_1604_Market
+Avasa at 1604,The Atlantic Mira Loma,5,Avasa_at_1604_Market
+Avasa at 1604,US 1604,6,Avasa_at_1604_Market
+Avasa at 1604,Caliza at the Loop,7,Avasa_at_1604_Market
+Avasa at 1604,Hartwin Bulverde,8,Avasa_at_1604_Market
+Avasa at 1604,Alamar,9,Avasa_at_1604_Market
+Avasa at 1604,Tradehouse at Bulverde Marketplace,10,Avasa_at_1604_Market
+Avasa Grove West,Crestview Townhomes,1,Avasa_Grove_West_Market
+Avasa Grove West,Parc at Wesley Chapel,2,Avasa_Grove_West_Market
+Avasa Grove West,The Harlow,3,Avasa_Grove_West_Market
+Avasa Grove West,Alexan Grove,4,Avasa_Grove_West_Market
+Avasa Grove West,Sentosa Lexington Oaks,5,Avasa_Grove_West_Market
+Avasa Grove West,Cobalt,6,Avasa_Grove_West_Market
+Avasa Grove West,Story Wesley Chapel,7,Avasa_Grove_West_Market
+Avasa Grove West,Silversaw,8,Avasa_Grove_West_Market
+Avasa Grove West,Aventon Meadows,9,Avasa_Grove_West_Market
+Avasa Grove West,Maeva Modern Apartments,10,Avasa_Grove_West_Market
+Avasa Grove West,Tapestry Cypress Creek,11,Avasa_Grove_West_Market
+Avasa Grove West,Madison at Watergrass,12,Avasa_Grove_West_Market
+Avasa Grove West,Ascend Mirada,13,Avasa_Grove_West_Market
+Avasa Hammock Landing,Eden Heritage Lakes,1,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,Integra Heritage Apartments,2,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,Azalea at West Melbourne,3,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,Aventine West,4,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,Integra Station 2114,5,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,The Carlton of West Melbourne,6,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,The Dahlia,7,Avasa_Hammock_Landing_Market
+Avasa Hammock Landing,The Luminary At 95,8,Avasa_Hammock_Landing_Market
+Avasa Spring Branch,Arlo Memorial,1,Avasa_Spring_Branch_Market
+Avasa Spring Branch,District At Memorial,2,Avasa_Spring_Branch_Market
+Avasa Spring Branch,Define Living at Brittmoore,3,Avasa_Spring_Branch_Market
+Avasa Spring Branch,Broadstone Amarra,4,Avasa_Spring_Branch_Market
+Avasa Spring Branch,Rowan on the Trails,5,Avasa_Spring_Branch_Market
+Avasa Spring Branch,Remy On The Trails,6,Avasa_Spring_Branch_Market
+Avasa Spring Branch,Allora Bear Creek,7,Avasa_Spring_Branch_Market
+Avasa Spring Branch,Broadstone Amelia,8,Avasa_Spring_Branch_Market
+Avasa Spring Branch,The Westover at West Branch,9,Avasa_Spring_Branch_Market
+Axial Buckhead,Aven Chastain,1,Axial_Buckhead_Market
+Axial Buckhead,Camden Phipps,2,Axial_Buckhead_Market
+Axial Buckhead,Cortland Uptown Buckhead,3,Axial_Buckhead_Market
+Axial Buckhead,Camden Paces,4,Axial_Buckhead_Market
+Axial Buckhead,MAA Stratford,5,Axial_Buckhead_Market
+Axial Buckhead,Gramercy At Buckhead,6,Axial_Buckhead_Market
+Balmoral Village,Cresswind Peachtree City,1,Balmoral_Village_Market
+Balmoral Village,Retreat at Peachtree City,2,Balmoral_Village_Market
+Balmoral Village,The Retreat at Kedron Village Apartment Homes,3,Balmoral_Village_Market
+Balmoral Village,Camden Peachtree City,4,Balmoral_Village_Market
+Balmoral Village,The Greens at Peachtree City,5,Balmoral_Village_Market
+Balmoral Village,The Greens at Braelinn,6,Balmoral_Village_Market
+Bella Ruscello,Candlelight Park,1,Bella_Ruscello_Market
+Bella Ruscello,1303 Main,2,Bella_Ruscello_Market
+Bella Ruscello,Courtyards At Kirnwood,3,Bella_Ruscello_Market
+Bella Ruscello,Luna,4,Bella_Ruscello_Market
+Bella Ruscello,Center Ridge Apartments,5,Bella_Ruscello_Market
+Bella Ruscello,Westwood Townhomes,6,Bella_Ruscello_Market
+Belterra,Lake Pointe,1,Belterra_Market
+Belterra,Cortland Fossil Creek,2,Belterra_Market
+Belterra,Skyview West Apartments,3,Belterra_Market
+Belterra,The Atlantic Station,4,Belterra_Market
+Belterra,Aspire Fossil Creek,5,Belterra_Market
+Belterra,Carmel Creekside,6,Belterra_Market
+Belterra,Kessler Apartments,7,Belterra_Market
+Botanic Luxury Apartments,Benton Grove,1,Botanic_Luxury_Apartments_Marke
+Botanic Luxury Apartments,Monarch at Godley Station,2,Botanic_Luxury_Apartments_Marke
+Botanic Luxury Apartments,Capital Crest at Godley Station,3,Botanic_Luxury_Apartments_Marke
+Botanic Luxury Apartments,Marion Lake,4,Botanic_Luxury_Apartments_Marke
+Botanic Luxury Apartments,Populus Pooler,5,Botanic_Luxury_Apartments_Marke
+Boulevard at Lakeside,Tinker on Forty8,1,Boulevard_at_Lakeside_Market
+Boulevard at Lakeside,The Landing Okc,2,Boulevard_at_Lakeside_Market
+Boulevard at Lakeside,Liberty Pointe,3,Boulevard_at_Lakeside_Market
+Boulevard at Lakeside,Lodge @ 777,4,Boulevard_at_Lakeside_Market
+Bradford Mills Lofts,Germantown Mill Lofts,1,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,Century Baxter Avenue,2,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,Avenue in the Highlands,3,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,Lofts of Broadway,4,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,310 At Nulu Apartments,5,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,Martin on Main,6,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,The Gentry At Hurstbourne,7,Bradford_Mills_Lofts_Market
+Bradford Mills Lofts,Flats at Springhurst,8,Bradford_Mills_Lofts_Market
+Calais Midtown,MAAC Midtown Square,1,Calais_Midtown_Market
+Calais Midtown,Metro Midtown,2,Calais_Midtown_Market
+Calais Midtown,Midtown Arbor Place Apartments,3,Calais_Midtown_Market
+Calais Midtown,Camden Midtown,4,Calais_Midtown_Market
+Calais Midtown,4001 Midtown,5,Calais_Midtown_Market
+Calais Midtown,Camden Travis Street,6,Calais_Midtown_Market
+Calais Midtown,3800 Main,7,Calais_Midtown_Market
+Calais Midtown,Pearl Midtown,8,Calais_Midtown_Market
+Calais Midtown,Mid Main Lofts,9,Calais_Midtown_Market
+Cane Island,Astoria At Celebration,1,Cane_Island_Market
+Cane Island,Tapestry Headwaters,2,Cane_Island_Market
+Cane Island,Oasis Shingle Creek,3,Cane_Island_Market
+Cane Island,Bainbridge World Center,4,Cane_Island_Market
+Cane Island,Camden Town Square,5,Cane_Island_Market
+Cane Island,Dream Kissimmee,6,Cane_Island_Market
+Cane Island,Integra Sunrise Parc,7,Cane_Island_Market
+Cane Island,Aventon Opal,8,Cane_Island_Market
+Cane Island,Prime,9,Cane_Island_Market
+Cane Island,The Lucent at Sunrise,10,Cane_Island_Market
+Canton Mill Lofts,Linz Holly Springs,1,Canton_Mill_Lofts_Market
+Canton Mill Lofts,The Atlantic BridgeMill,2,Canton_Mill_Lofts_Market
+Canton Mill Lofts,The Indigo Apartments,3,Canton_Mill_Lofts_Market
+Canton Mill Lofts,The Crest At Laurel Canyon,4,Canton_Mill_Lofts_Market
+Canton Mill Lofts,Legends At Laurel Canyon,5,Canton_Mill_Lofts_Market
+Canton Mill Lofts,Walden Crossing,6,Canton_Mill_Lofts_Market
+Canton Mill Lofts,Grand Reserve At Canton,7,Canton_Mill_Lofts_Market
+Carlyle Place Apartments,Whispering Creek Villas,1,Carlyle_Place_Apartments_Market
+Carlyle Place Apartments,Villas At Medical Center,2,Carlyle_Place_Apartments_Market
+Carlyle Place Apartments,Preston Peak,3,Carlyle_Place_Apartments_Market
+Carlyle Place Apartments,Mission Oaks,4,Carlyle_Place_Apartments_Market
+Cendana District West Apartments,Mio District West,1,Cendana_District_West_Apartment
+Cendana District West Apartments,Prose District West,2,Cendana_District_West_Apartment
+Cendana District West Apartments,Allora District West,3,Cendana_District_West_Apartment
+Cendana District West Apartments,Cyan Cinco Ranch,4,Cendana_District_West_Apartment
+Cendana District West Apartments,Allora Cinco Ranch,5,Cendana_District_West_Apartment
+Cendana District West Apartments,West End,6,Cendana_District_West_Apartment
+Cendana District West Apartments,The Vic on Park Row,7,Cendana_District_West_Apartment
+Champions Green,Avana Woods,1,Champions_Green_Market
+Champions Green,Cortland Park 83,2,Champions_Green_Market
+Champions Green,Cortland Holcomb Bridge,3,Champions_Green_Market
+Champions Green,Station Heights,4,Champions_Green_Market
+Champions Green,The Averly East Village,5,Champions_Green_Market
+Champions Green,The Atlantic Newtown,6,Champions_Green_Market
+Clearwater Farm,Tanglewood Apartments,1,Clearwater_Farm_Market
+Clearwater Farm,Highview Pointe,2,Clearwater_Farm_Market
+Clearwater Farm,Whitley,3,Clearwater_Farm_Market
+Clearwater Farm,Tymberwood Trace,4,Clearwater_Farm_Market
+Clearwater Farm,Covington by the Lake,5,Clearwater_Farm_Market
+Clearwater Farm,Mount Vernon,6,Clearwater_Farm_Market
+Cobblestone at Eagle Harbor,The Villages at Oakleaf,1,Cobblestone_at_Eagle_Harbor_Mar
+Cobblestone at Eagle Harbor,Ascend Clay Town Center,2,Cobblestone_at_Eagle_Harbor_Mar
+Cobblestone at Eagle Harbor,Lighthouse At Fleming Island,3,Cobblestone_at_Eagle_Harbor_Mar
+Cobblestone at Eagle Harbor,Station at Fleming Island,4,Cobblestone_at_Eagle_Harbor_Mar
+CoHo Apartments,Monroe Atlanta,1,CoHo_Apartments_Market
+CoHo Apartments,Marquis At Buckhead,2,CoHo_Apartments_Market
+CoHo Apartments,Wesley Townsend,3,CoHo_Apartments_Market
+CoHo Apartments,Venue Brookwood,4,CoHo_Apartments_Market
+CoHo Apartments,MAA Brookwood,5,CoHo_Apartments_Market
+CoHo Apartments,The Atlantic Brookwood,6,CoHo_Apartments_Market
+CoHo Apartments,Castlegate Collier Hills,7,CoHo_Apartments_Market
+CoHo Apartments,The Park at Peachtree Hills,8,CoHo_Apartments_Market
+Coles Crossing,Cantera at Towne Lake,1,Coles_Crossing_Market
+Coles Crossing,Grand Cypress,2,Coles_Crossing_Market
+Coles Crossing,Carrington Park At Huffmeister Apartments,3,Coles_Crossing_Market
+Coles Crossing,Waterford Place At Riata Ranch Apartment,4,Coles_Crossing_Market
+Coles Crossing,Winward At Telge Crossing,5,Coles_Crossing_Market
+Coles Crossing,Highline Urban Lofts,6,Coles_Crossing_Market
+College View Apartments,Park at Fairmont,1,College_View_Apartments_Market
+College View Apartments,Avery at Deer Park,2,College_View_Apartments_Market
+College View Apartments,Harbour Bay,3,College_View_Apartments_Market
+College View Apartments,Boulevard at Deer Park,4,College_View_Apartments_Market
+College View Apartments,The Plaza At San Jacinto,5,College_View_Apartments_Market
+Creekside Apartments,Trails at Aspen Creek,1,Creekside_Apartments_Market
+Creekside Apartments,Scissortail Crossing,2,Creekside_Apartments_Market
+Creekside Apartments,Redbud Ranch,3,Creekside_Apartments_Market
+Creekside Apartments,Park At Mission Hills,4,Creekside_Apartments_Market
+Creekside Apartments,Villas at Aspen Park,5,Creekside_Apartments_Market
+Creekside Apartments,Crown Village at Elm Ridge,6,Creekside_Apartments_Market
+Creekside Apartments,The Parc at East Fifty-First,7,Creekside_Apartments_Market
+Creekside Apartments,Crown at Seven Oaks Apartment Homes,8,Creekside_Apartments_Market
+Elation at Grandway West,The Grand Parkway,1,Elation_at_Grandway_West_Market
+Elation at Grandway West,Alta Grandway,2,Elation_at_Grandway_West_Market
+Elation at Grandway West,San Paseo,3,Elation_at_Grandway_West_Market
+Elation at Grandway West,San Remo,4,Elation_at_Grandway_West_Market
+Elation at Grandway West,Crawford at Grand Morton,5,Elation_at_Grandway_West_Market
+Elation at Grandway West,Luxe at Katy,6,Elation_at_Grandway_West_Market
+Elation at Grandway West,Prose KTX,7,Elation_at_Grandway_West_Market
+Elation at Grandway West,Prose Franz,8,Elation_at_Grandway_West_Market
+Elation at Grandway West,Bellrock Market Station,9,Elation_at_Grandway_West_Market
+Estancia at Morningstar,Halcyon Castle Hills,1,Estancia_at_Morningstar_Market
+Estancia at Morningstar,Platinum Castle Hills,2,Estancia_at_Morningstar_Market
+Estancia at Morningstar,Cortland One Twenty One,3,Estancia_at_Morningstar_Market
+Estancia at Morningstar,Bell Stonebriar,4,Estancia_at_Morningstar_Market
+Estancia at Morningstar,Stonebriar of Frisco,5,Estancia_at_Morningstar_Market
+Estancia at Morningstar,The Atlantic Stonebriar,6,Estancia_at_Morningstar_Market
+Fairways at South Shore,Summerbrooke,1,Fairways_at_South_Shore_Market
+Fairways at South Shore,South Shore Lakes,2,Fairways_at_South_Shore_Market
+Fairways at South Shore,Park At Waterford Harbor,3,Fairways_at_South_Shore_Market
+Fairways at South Shore,Signature Point Apartment Homes,4,Fairways_at_South_Shore_Market
+Fairways at South Shore,Anchor at South Shore,5,Fairways_at_South_Shore_Market
+Fairways at South Shore,The Moorings,6,Fairways_at_South_Shore_Market
+Forest View,Green Tree Place,1,Forest_View_Market
+Forest View,Timber Mill,2,Forest_View_Market
+Forest View,Lexington,3,Forest_View_Market
+Forest View,The Biltmore,4,Forest_View_Market
+Forest View,Alden Landing,5,Forest_View_Market
+Forest View,Trailpoint at the Woodlands,6,Forest_View_Market
+French Place Apartments,The Can Plant Residences At Pearl,1,French_Place_Apartments_Report
+French Place Apartments,The Atlee,2,French_Place_Apartments_Report
+French Place Apartments,Cadillac Lofts,3,French_Place_Apartments_Report
+French Place Apartments,The Beverly,4,French_Place_Apartments_Report
+French Place Apartments,Contour Place,5,French_Place_Apartments_Report
+Gateway North,The Sands At Clearwater,1,Gateway_North_Market
+Gateway North,The Amalfi Clearwater,2,Gateway_North_Market
+Gateway North,Solaris Key,3,Gateway_North_Market
+Gateway North,Cortland Bayside,4,Gateway_North_Market
+Gateway North,Arabelle Clearwater,5,Gateway_North_Market
+Gateway North,Vue at Belleair,6,Gateway_North_Market
+Gateway North,Charleston on 66th,7,Gateway_North_Market
+Gateway North,Revel,8,Gateway_North_Market
+Highpark,Wingspan at Bridgeland,1,Highpark_Market
+Highpark,Yardly Cypress,2,Highpark_Market
+Highpark,Fidelis Cypress Creek,3,Highpark_Market
+Highpark,Starling at Bridgeland,4,Highpark_Market
+Highpark,Cue Luxury Apartments,5,Highpark_Market
+Highpark,Lakeside Row,6,Highpark_Market
+Highpark,ParkLane Cypress Apartments,7,Highpark_Market
+Highpark,Allora Parkland,8,Highpark_Market
+Highpark,Alexan Cypress Creek,9,Highpark_Market
+Highpark,Alys Crossing,10,Highpark_Market
+Keystone,The Remington Apartments,1,Keystone_Market
+Keystone,Twin Creek,2,Keystone_Market
+Keystone,Stone Creek Apartments,3,Keystone_Market
+Keystone,Hunters Glen,4,Keystone_Market
+Keystone,Brookside in Killeen,5,Keystone_Market
+Keystone,Bridgemoor at Killeen,6,Keystone_Market
+Keystone,Arbors of Killeen,7,Keystone_Market
+Keystone,Copper Mountain,8,Keystone_Market
+Links at Windsor Parke,Registry at Windsor Parke,1,Links_at_Windsor_Parke_Market
+Links at Windsor Parke,Cape House,2,Links_at_Windsor_Parke_Market
+Links at Windsor Parke,Country Club Lakes,3,Links_at_Windsor_Parke_Market
+Links at Windsor Parke,Club at Danforth,4,Links_at_Windsor_Parke_Market
+Links at Windsor Parke,The Ridley,5,Links_at_Windsor_Parke_Market
+Luma Headwaters,Bainbridge The Grand,1,Luma_Headwaters_Market
+Luma Headwaters,Livano Grand National,2,Luma_Headwaters_Market
+Luma Headwaters,Town Vineland,3,Luma_Headwaters_Market
+Luma Headwaters,Altis Grand Lake Willis,4,Luma_Headwaters_Market
+Luma Headwaters,Triton Cay,5,Luma_Headwaters_Market
+Luma Headwaters,Essex Luxe Apartments,6,Luma_Headwaters_Market
+Luma Headwaters,The Courtney at Universal,7,Luma_Headwaters_Market
+Luma Headwaters,Addison at Universal Boulevard,8,Luma_Headwaters_Market
+Luma Headwaters,Alta Deco,9,Luma_Headwaters_Market
+Luma Headwaters,10X Murano,10,Luma_Headwaters_Market
+Luma Headwaters,Lantower Grande Flats,11,Luma_Headwaters_Market
+Mission Mayfield Downs,Sheffield Square,1,Mission_Mayfield_Downs_Market
+Mission Mayfield Downs,Winding Creek at The Preserve Apartments,2,Mission_Mayfield_Downs_Market
+Mission Mayfield Downs,Autumnwood Apartment Homes,3,Mission_Mayfield_Downs_Market
+Mission Mayfield Downs,Parkways On Prairie Creek,4,Mission_Mayfield_Downs_Market
+Mission Mayfield Downs,Forum At Grand Prairie,5,Mission_Mayfield_Downs_Market
+Northbridge at Millenia Lake,Aria At Millenia,1,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Century Millenia,2,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,The Place On Millenia Apartments,3,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Altaire at Millenia,4,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Aqua at Millenia Apartments,5,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,M2 at Millenia,6,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Millenia 700 Apartment Homes,7,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Deseo Grande,8,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Heritage on Millenia Apartments,9,Northbridge_at_Millenia_Lake_Ma
+Northbridge at Millenia Lake,Halston Park Central,10,Northbridge_at_Millenia_Lake_Ma
+Park on Wurzbach,Prose Vista West,1,Park_on_Wurzbach_Market
+Park on Wurzbach,Legacy Creekside Apartments,2,Park_on_Wurzbach_Market
+Park on Wurzbach,The Barcelona Lofts,3,Park_on_Wurzbach_Market
+Park on Wurzbach,Timberhill Commons,4,Park_on_Wurzbach_Market
+Park on Wurzbach,Aspire Roxbury,5,Park_on_Wurzbach_Market
+Preserve at Baywood,Dakota At Deer Park,1,Preserve_at_Baywood_Market
+Preserve at Baywood,Broadwater,2,Preserve_at_Baywood_Market
+Preserve at Baywood,Hawthorne At Crenshaw,3,Preserve_at_Baywood_Market
+Preserve at Baywood,Crenshaw Grand,4,Preserve_at_Baywood_Market
+Preserve at Baywood,The Park at Armand Bayou,5,Preserve_at_Baywood_Market
+Preserve at Baywood,Park at Fairmont,6,Preserve_at_Baywood_Market
+Preserve at Baywood,Clearpoint Crossing,7,Preserve_at_Baywood_Market
+Preserve at Baywood,Hawthorne at Fairmont,8,Preserve_at_Baywood_Market
+Preserve at Colony Lakes,Lenox at The Grid,1,Preserve_at_Colony_Lakes_Market
+Preserve at Colony Lakes,Stafford Run,2,Preserve_at_Colony_Lakes_Market
+Preserve at Colony Lakes,Avaya Stafford,3,Preserve_at_Colony_Lakes_Market
+Preserve at Colony Lakes,Vinings,4,Preserve_at_Colony_Lakes_Market
+Preserve at Colony Lakes,Shadowbrooke,5,Preserve_at_Colony_Lakes_Market
+Preserve at Colony Lakes,Lakeland Estates Apartments,6,Preserve_at_Colony_Lakes_Market
+Preserve at Colony Lakes,Silverbrooke,7,Preserve_at_Colony_Lakes_Market
+Republic Park Vista,City Parc At Keller Apartments,1,Republic_Park_Vista_Market
+Republic Park Vista,Northpoint Villas,2,Republic_Park_Vista_Market
+Republic Park Vista,Grand Estates at Keller,3,Republic_Park_Vista_Market
+Republic Park Vista,Watervue,4,Republic_Park_Vista_Market
+Republic Park Vista,The Sovereign,5,Republic_Park_Vista_Market
+Riverbend,Park At Waterford Harbor,1,Riverbend_Market
+Riverbend,Century South Shore,2,Riverbend_Market
+Riverbend,The Moorings,3,Riverbend_Market
+Riverbend,Signature Point Apartment Homes,4,Riverbend_Market
+Riverbend,Cortland League City,5,Riverbend_Market
+San Palmilla,Towers of Seabrook,1,San_Palmilla_Market
+San Palmilla,Highbridge at Egret Bay,2,San_Palmilla_Market
+San Palmilla,Aura Beacon Island,3,San_Palmilla_Market
+San Palmilla,The Atwater Clear Lake,4,San_Palmilla_Market
+San Palmilla,The Caroline,5,San_Palmilla_Market
+San Palmilla,Reserve at Baybrook,6,San_Palmilla_Market
+San Palmilla,Broadstone Baybrook,7,San_Palmilla_Market
+San Palmilla,Lenox Bayside,8,San_Palmilla_Market
+Shadowbrooke,MAA Kirkwood,1,Shadowbrooke_Market
+Shadowbrooke,Stafford Run,2,Shadowbrooke_Market
+Shadowbrooke,Vinings,3,Shadowbrooke_Market
+Shadowbrooke,Lakeland Estates Apartments,4,Shadowbrooke_Market
+Shadowbrooke,Preserve at Colony Lakes,5,Shadowbrooke_Market
+Shadowbrooke,Silverbrooke,6,Shadowbrooke_Market
+Silverbrooke,MAA Kirkwood,1,Silverbrooke_Market
+Silverbrooke,Stafford Run,2,Silverbrooke_Market
+Silverbrooke,Vinings,3,Silverbrooke_Market
+Silverbrooke,Lakeland Estates Apartments,4,Silverbrooke_Market
+Silverbrooke,Shadowbrooke,5,Silverbrooke_Market
+Silverbrooke,Preserve at Colony Lakes,6,Silverbrooke_Market
+South Shore Lakes,Teakwood at Seabrook,1,South_Shore_Lakes_Market
+South Shore Lakes,Huntcliff,2,South_Shore_Lakes_Market
+South Shore Lakes,Signature Point Apartment Homes,3,South_Shore_Lakes_Market
+South Shore Lakes,Fairways at South Shore,4,South_Shore_Lakes_Market
+South Shore Lakes,Century South Shore,5,South_Shore_Lakes_Market
+South Shore Lakes,Park At Waterford Harbor,6,South_Shore_Lakes_Market
+South Shore Lakes,Summerbrooke,7,South_Shore_Lakes_Market
+Steeplechase,Colts Run,1,Steeplechase_Market
+Steeplechase,Raintree,2,Steeplechase_Market
+Steeplechase,Stoney Brooke,3,Steeplechase_Market
+Steeplechase,The Village,4,Steeplechase_Market
+Steeplechase,The Champion at Bluegrass,5,Steeplechase_Market
+Steeplechase,Lakepointe,6,Steeplechase_Market
+Stonecreek Ranch,Reveal at Onion Creek,1,Stonecreek_Ranch_Market
+Stonecreek Ranch,Bell Southpark,2,Stonecreek_Ranch_Market
+Stonecreek Ranch,Nexus at Goodnight Ranch,3,Stonecreek_Ranch_Market
+Stonecreek Ranch,Moonlight Apartments,4,Stonecreek_Ranch_Market
+Stonecreek Ranch,Bexley 3five,5,Stonecreek_Ranch_Market
+Stonecreek Ranch,Southpark Crossing,6,Stonecreek_Ranch_Market
+Stonecreek Ranch,Still Waters,7,Stonecreek_Ranch_Market
+Stoneridge on the 8,The Henry at Liberty Hills Apartments,1,Stoneridge_on_the_8_Market
+Stoneridge on the 8,Forest Creek Apartments,2,Stoneridge_on_the_8_Market
+Stoneridge on the 8,Allora New Forest,3,Stoneridge_on_the_8_Market
+Stoneridge on the 8,Advenir at Wynstone,4,Stoneridge_on_the_8_Market
+Stoneridge on the 8,NOVU New Forest Apartments,5,Stoneridge_on_the_8_Market
+St. Andrews,COBBLESTONE PARK,1,St_Andrews_Market
+St. Andrews,The Villas At Shadow Creek Apartments,2,St_Andrews_Market
+St. Andrews,Retreat at Shadow Creek Ranch,3,St_Andrews_Market
+St. Andrews,Summerwind,4,St_Andrews_Market
+St. Andrews,Southwind at Silverlake,5,St_Andrews_Market
+Anatole Apartments,Lake Forest,1,The_Anatole_Daytona_Apartments_
+Anatole Apartments,Pointe Grand Daytona,2,The_Anatole_Daytona_Apartments_
+Anatole Apartments,Coastline Cove,3,The_Anatole_Daytona_Apartments_
+Anatole Apartments,Indigo Plantation Apartments,4,The_Anatole_Daytona_Apartments_
+Anatole Apartments,The Bradley Daytona,5,The_Anatole_Daytona_Apartments_
+Anatole Apartments,Epic Apartments,6,The_Anatole_Daytona_Apartments_
+Anatole Apartments,Atlantica at Daytona,7,The_Anatole_Daytona_Apartments_
+The Cape at Grand Harbor Apartments,Lenox Reserve,1,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,Elite 99 West,2,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,Greenwood at Katy,3,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,The Maddox,4,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,Falcon at Grand Harbor,5,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,Katy Ranch Apartment Homes,6,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,Camden Grand Harbor,7,The_Cape_at_Grand_Harbor_Apartm
+The Cape at Grand Harbor Apartments,Crossing at Katy Ranch,8,The_Cape_at_Grand_Harbor_Apartm
+The Delta Pearland,Kingsley Shadow Creek Ranch,1,The_Delta_Pearland_Market
+The Delta Pearland,Ivy Lofts,2,The_Delta_Pearland_Market
+The Delta Pearland,Beckett Cottingham,3,The_Delta_Pearland_Market
+The Delta Pearland,Southfork Lake,4,The_Delta_Pearland_Market
+The Delta Pearland,The Townhomes at Lake Park,5,The_Delta_Pearland_Market
+The District Universal Boulevard,Town Vineland,1,The_District_Universal_Boulevar
+The District Universal Boulevard,Integra Cove Apartments,2,The_District_Universal_Boulevar
+The District Universal Boulevard,Legacy Universal,3,The_District_Universal_Boulevar
+The District Universal Boulevard,Luma Headwaters,4,The_District_Universal_Boulevar
+The District Universal Boulevard,Triton Cay,5,The_District_Universal_Boulevar
+The District Universal Boulevard,Essex Luxe Apartments,6,The_District_Universal_Boulevar
+The District Universal Boulevard,Addison at Universal Boulevard,7,The_District_Universal_Boulevar
+The District Universal Boulevard,The Courtney at Universal,8,The_District_Universal_Boulevar
+The Grove at Clermont,Integra Heights,1,The_Grove_at_Clermont_Market
+The Grove at Clermont,Mason's Ridge,2,The_Grove_at_Clermont_Market
+The Grove at Clermont,Minneola Hills,3,The_Grove_at_Clermont_Market
+The Grove at Clermont,Cottonwood Clermont,4,The_Grove_at_Clermont_Market
+The Grove at Clermont,The Avenue on Oakland,5,The_Grove_at_Clermont_Market
+The Grove at Clermont,Broadstone Overlands,6,The_Grove_at_Clermont_Market
+The Grove at Clermont,Advenir at Castle Hill,7,The_Grove_at_Clermont_Market
+The Grove at Clermont,Skyline at Westfall Station,8,The_Grove_at_Clermont_Market
+Harrison,Celebration At Sandy Springs,1,The_Harrison_Market
+Harrison,Park At Abernathy Square,2,The_Harrison_Market
+Harrison,Sirona Apartments,3,The_Harrison_Market
+Harrison,Perimeter 5550,4,The_Harrison_Market
+Harrison,The Stratford,5,The_Harrison_Market
+Harrison,Perimeter Circle,6,The_Harrison_Market
+Harrison,Calibre Springs,7,The_Harrison_Market
+Harrison,The Whitney,8,The_Harrison_Market
+The Luminary At 95,Avasa Hammock Landing,1,The_Luminary_At_95_Market
+The Luminary At 95,The Dahlia,2,The_Luminary_At_95_Market
+The Luminary At 95,The Carlton of West Melbourne,3,The_Luminary_At_95_Market
+The Luminary At 95,The Haven At West Melbourne,4,The_Luminary_At_95_Market
+The Luminary At 95,Integra Station 2114,5,The_Luminary_At_95_Market
+The Luminary At 95,Aventine West,6,The_Luminary_At_95_Market
+The Luminary At 95,Azalea at West Melbourne,7,The_Luminary_At_95_Market
+The Luminary At 95,Westshore Palm Bay,8,The_Luminary_At_95_Market
+The Luminary At 95,Integra Heritage Apartments,9,The_Luminary_At_95_Market
+The Luminary At 95,Aqua Palm Bay,10,The_Luminary_At_95_Market
+The Luminary At 95,Eden Heritage Lakes,11,The_Luminary_At_95_Market
+The Maddox,Parc 85,1,The_Maddox_Market
+The Maddox,The Darnell,2,The_Maddox_Market
+The Maddox,The Rey on Reynolds,3,The_Maddox_Market
+The Maddox,Paramont,4,The_Maddox_Market
+The Maddox,Summit Station at Duluth,5,The_Maddox_Market
+The Maddox,The Columns at Club Drive,6,The_Maddox_Market
+The Maddox,Bridgewater,7,The_Maddox_Market
+The Maddox,Avonlea Pointe,8,The_Maddox_Market
+The Maddox,Avana Portico,9,The_Maddox_Market
+The Metropolitan,Cypress Pointe,1,The_Metropolitan_Market
+The Metropolitan,Waterford Place,2,The_Metropolitan_Market
+The Metropolitan,The Marc,3,The_Metropolitan_Market
+The Metropolitan,Jamestown At St. Matthews Apartment Homes,4,The_Metropolitan_Market
+The Metropolitan,Mallard Crossing At St. Matthews,5,The_Metropolitan_Market
+The Metropolitan,Breckinridge Square,6,The_Metropolitan_Market
+The Metropolitan,Enclave At Breckenridge By ARIUM,7,The_Metropolitan_Market
+The Metropolitan,The Belltower,8,The_Metropolitan_Market
+Parker,Villas at Stonebridge,1,The_Parker_Market
+Parker,Fountain Lake,2,The_Parker_Market
+Parker,Spring Creek Of Edmond Apartments,3,The_Parker_Market
+The Phoenix,The Henderson,1,The_Phoenix_Market
+The Phoenix,Skyview at Crawford,2,The_Phoenix_Market
+The Phoenix,The Drake on Summit,3,The_Phoenix_Market
+The Phoenix,Bottle House on Main,4,The_Phoenix_Market
+The Phoenix,Montage Southside,5,The_Phoenix_Market
+The Phoenix,The Cooper Apartments,6,The_Phoenix_Market
+The Phoenix,Willow & Wise,7,The_Phoenix_Market
+The Phoenix,South 400,8,The_Phoenix_Market
+The Phoenix,Broadway Chapter,9,The_Phoenix_Market
+The Pointe Bentonville,Trulo Homes Tara Ridge,1,The_Pointe_Bentonville_Market
+The Pointe Bentonville,Sullivan Square Apartments,2,The_Pointe_Bentonville_Market
+The Pointe Bentonville,49 West,3,The_Pointe_Bentonville_Market
+The Pointe Bentonville,Parc at Rogers,4,The_Pointe_Bentonville_Market
+The Pointe Bentonville,Dodson Pointe Apartment Homes,5,The_Pointe_Bentonville_Market
+The Pointe Bentonville,Stone Manor Apartments,6,The_Pointe_Bentonville_Market
+The Pointe Bentonville,Crystal Flats,7,The_Pointe_Bentonville_Market
+The Reserves Of Thomas Glen,Tanyard Park,1,The_Reserves_Of_Thomas_Glen_Mar
+The Reserves Of Thomas Glen,Southgate Landing,2,The_Reserves_Of_Thomas_Glen_Mar
+The Reserves Of Thomas Glen,11602 Apex View Drive,3,The_Reserves_Of_Thomas_Glen_Mar
+The Reserves Of Thomas Glen,The Willard at Preston Crossing,4,The_Reserves_Of_Thomas_Glen_Mar
+The Reserves Of Thomas Glen,Newtown Woods,5,The_Reserves_Of_Thomas_Glen_Mar
+The Reserves Of Thomas Glen,Smyrna Village Apartments of Louisville,6,The_Reserves_Of_Thomas_Glen_Mar
+The Retreat at Kedron Village Apartment Homes,Balmoral Village,1,The_Retreat_at_Kedron_Village_A
+The Retreat at Kedron Village Apartment Homes,The Greens at Braelinn,2,The_Retreat_at_Kedron_Village_A
+The Retreat at Kedron Village Apartment Homes,The Greens at Peachtree City,3,The_Retreat_at_Kedron_Village_A
+The Retreat at Kedron Village Apartment Homes,Camden Peachtree City,4,The_Retreat_at_Kedron_Village_A
+The Retreat at Kedron Village Apartment Homes,Retreat at Peachtree City,5,The_Retreat_at_Kedron_Village_A
+The Retreat at Lakeland,Gibson Oaks,1,The_Retreat_at_Lakeland_Market
+The Retreat at Lakeland,Audubon Oaks,2,The_Retreat_at_Lakeland_Market
+The Retreat at Lakeland,The Park at Palazzo,3,The_Retreat_at_Lakeland_Market
+The Retreat at Lakeland,Loop @ Wedgewood,4,The_Retreat_at_Lakeland_Market
+The Retreat at Lakeland,The Preserve At Lakeland Hills Apartments,5,The_Retreat_at_Lakeland_Market
+The Retreat at Lakeland,Story Lake Gibson,6,The_Retreat_at_Lakeland_Market
+The Retreat at Grand Mission,Cortland Lakemont,1,The_Retreat_GrandMission_Market
+The Retreat at Grand Mission,Lakeview At Westpark,2,The_Retreat_GrandMission_Market
+The Retreat at Grand Mission,Alleia Long Meadow Farms,3,The_Retreat_GrandMission_Market
+The Retreat at Grand Mission,Deseo at Grand Mission,4,The_Retreat_GrandMission_Market
+The Retreat at Grand Mission,Haven at Bellaire,5,The_Retreat_GrandMission_Market
+The Retreat at Grand Mission,The Waterview,6,The_Retreat_GrandMission_Market
+The Retreat at Grand Mission,Echelon On 99,7,The_Retreat_GrandMission_Market
+The Townhomes at Lake Park,Kingsley Shadow Creek Ranch,1,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,Cortland Luxe Shadow Creek,2,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,Cortland Avion Shadow Creek,3,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,Sladestone Shadow Creek,4,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,The Columns At Shadow Creek Ranch,5,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,Radius At Shadow Creek Ranch,6,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,Ivy Lofts,7,The_Townhomes_at_Lake_Park_Mark
+The Townhomes at Lake Park,Beckett Cottingham,8,The_Townhomes_at_Lake_Park_Mark
+The Villages at Oakleaf,The Kensley,1,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Addison Landing,2,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Ascend Clay Town Center,3,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Pointe Grand at Oakleaf,4,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Integra Park at Oakleaf Apartment Homes,5,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Discovery Trails,6,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,The Vantage,7,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Argyle Lake at Oakleaf Town Center,8,The_Villages_at_Oakleaf_Market
+The Villages at Oakleaf,Oakleaf Plantation Apartments,9,The_Villages_at_Oakleaf_Market
+The Whitney,Harrison,1,The_Whitney_Market
+The Whitney,Calibre Springs,2,The_Whitney_Market
+The Whitney,Perimeter Circle,3,The_Whitney_Market
+The Whitney,The Stratford,4,The_Whitney_Market
+The Whitney,Perimeter 5550,5,The_Whitney_Market
+The Whitney,Sirona Apartments,6,The_Whitney_Market
+The Whitney,Park At Abernathy Square,7,The_Whitney_Market
+The Whitney,Celebration At Sandy Springs,8,The_Whitney_Market
+Timberlane Village,Urbane,1,Timberlane_Village_Market
+Timberlane Village,Clearview,2,Timberlane_Village_Market
+Timberlane Village,Arbors Of Grandview,3,Timberlane_Village_Market
+Timberlane Village,Willow Creek Apartments,4,Timberlane_Village_Market
+Timberlane Village,The Falls Apartments,5,Timberlane_Village_Market
+Timberlane Village,The Falls,6,Timberlane_Village_Market
+Timberlane Village,The Reserve At 77,7,Timberlane_Village_Market
+Timber Mill,Forest View,1,Timber_Mill_Market
+Timber Mill,Modera Six Pines,2,Timber_Mill_Market
+Timber Mill,Rayfords Edge Apartments,3,Timber_Mill_Market
+Timber Mill,Woodwind Village Apartments,4,Timber_Mill_Market
+Timber Mill,Green Tree Place,5,Timber_Mill_Market
+Timber Mill,Lexington,6,Timber_Mill_Market
+Timber Mill,Alexander,7,Timber_Mill_Market
+Tomoka Pointe,Madison Pointe,1,Tomoka_Pointe_Market
+Tomoka Pointe,The Edison,2,Tomoka_Pointe_Market
+Tomoka Pointe,Sands Parc,3,Tomoka_Pointe_Market
+Tomoka Pointe,Atlantica at Daytona,4,Tomoka_Pointe_Market
+Tomoka Pointe,500 East,5,Tomoka_Pointe_Market
+Tomoka Pointe,The Bradley Daytona,6,Tomoka_Pointe_Market
+Tomoka Pointe,Sanctuary at Daytona,7,Tomoka_Pointe_Market
+Tomoka Pointe,Integra Village at Tymber Creek,8,Tomoka_Pointe_Market
+Tomoka Pointe,Icon One Daytona,9,Tomoka_Pointe_Market
+Tomoka Pointe,The Napier,10,Tomoka_Pointe_Market
+Tomoka Pointe,Drift Luxury Apartment Homes,11,Tomoka_Pointe_Market
+Tomoka Pointe,Drift Luxury Apartment Homes.1,12,Tomoka_Pointe_Market
+Town Station,Preston Ridge,1,Town_Station_Market
+Town Station,Bainbridge Cary,2,Town_Station_Market
+Town Station,Bell Preston,3,Town_Station_Market
+Town Station,Cary Greens at Preston,4,Town_Station_Market
+Town Station,MAA 900 Waterford,5,Town_Station_Market
+Town Station,Town Station Lofts,6,Town_Station_Market
+Tree Park,53 West,1,Tree_Park_Market
+Tree Park,Walden At Oakwood,2,Tree_Park_Market
+Tree Park,Advenir at Flowery Branch,3,Tree_Park_Market
+Tree Park,The Laurel at Flowery Branch,4,Tree_Park_Market
+Tree Park,Folksong Apartments,5,Tree_Park_Market
+Tree Park,Gibson Flowery Branch,6,Tree_Park_Market
+Trevesta Place Apartments,The Stafford at Artisan Lakes,1,Trevesta_Place_Market
+Trevesta Place Apartments,Aria Bradenton,2,Trevesta_Place_Market
+Trevesta Place Apartments,Preserve at Riverwalk,3,Trevesta_Place_Market
+Trevesta Place Apartments,ShoreView,4,Trevesta_Place_Market
+Trevesta Place Apartments,Blue Heron Living,5,Trevesta_Place_Market
+Trevesta Place Apartments,Blue Heron Creek,6,Trevesta_Place_Market
+Trevesta Place Apartments,Cantabria,7,Trevesta_Place_Market
+Trevesta Place Apartments,Palm Grove Luxury Apartments,8,Trevesta_Place_Market
+Trevesta Place Apartments,Yardly Artisan Lakes,9,Trevesta_Place_Market
+Trevesta Place Apartments,Gateway Commons Apartments,10,Trevesta_Place_Market
+Tuscany at Lindbergh,Avana on Main,1,Tuscany_at_Lindbergh_Market
+Tuscany at Lindbergh,ibex at Uptown,2,Tuscany_at_Lindbergh_Market
+Tuscany at Lindbergh,Sorelle,3,Tuscany_at_Lindbergh_Market
+Tuscany at Lindbergh,AMLI Lindbergh,4,Tuscany_at_Lindbergh_Market
+Tuscany at Lindbergh,Willowest in Lindbergh,5,Tuscany_at_Lindbergh_Market
+Tuscany at Lindbergh,AMLI Piedmont Heights,6,Tuscany_at_Lindbergh_Market
+Ventana,Boardwalk Research,1,Ventana_Market
+Ventana,Cortland at Fredericksburg,2,Ventana_Market
+Ventana,The Jax Apartments,3,Ventana_Market
+Ventana,Reserve at Canyon Creek,4,Ventana_Market
+Ventana,The Village of Hampton Cove,5,Ventana_Market
+Ventana,Vance at Huebner Oaks,6,Ventana_Market
+Ventana,The Mark Huebner Oaks,7,Ventana_Market
+Venue at Hometown,Cavalli At Iron Horse Station,1,Venue_at_Hometown_Market
+Venue at Hometown,The Delano At North Richland Hills Apartments,2,Venue_at_Hometown_Market
+Venue at Hometown,26 At City Point,3,Venue_at_Hometown_Market
+Venue at Hometown,Enclave At Hometown,4,Venue_at_Hometown_Market
+Venue at Hometown,Encore at Home Town,5,Venue_at_Hometown_Market
+Venue at Hometown,Sovereign Hometown,6,Venue_at_Hometown_Market
+Villas at Newnan Crossing,Creekside at White Oak,1,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Promenade At Newnan Crossing,2,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Alta Ashley Park,3,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Willows at Ashley Park,4,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,The Willows Ashley Park,5,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Jefferson Point,6,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Lullwater At Calumet,7,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Stillwood Farms,8,Villas_at_Newnan_Crossing_Repor
+Villas at Newnan Crossing,Camden Peachtree City,9,Villas_at_Newnan_Crossing_Repor
+Villas Continental,Park Village Apartments,1,Villas_Continental_Report
+Villas Continental,Kingsley Woods,2,Villas_Continental_Report
+Villas Continental,Retreat at Orange Park,3,Villas_Continental_Report
+Villas Continental,Reserve at Orange Park,4,Villas_Continental_Report
+Villas Continental,Exchange at Orange Park,5,Villas_Continental_Report
+Villas Continental,Collins Preserve,6,Villas_Continental_Report
+Villas Continental,Cobblestone at Eagle Harbor,7,Villas_Continental_Report
+Villas Continental,Windsor Arms Apartments,8,Villas_Continental_Report
+Villas Continental,Prospect Heights,9,Villas_Continental_Report
+Villa Lago,Neuhaus Lake Worth,1,Villa_Lago_Market
+Villa Lago,Longhorn Crossing,2,Villa_Lago_Market
+Villa Lago,Grand at Saginaw,3,Villa_Lago_Market
+Villa Lago,The Legends At Eagle Mountain Lake,4,Villa_Lago_Market
+Villa Lago,Avilla Boat Club,5,Villa_Lago_Market
+Villa Lago,Eagle's Point Apartments,6,Villa_Lago_Market
+Vinings,Stafford Run,1,Vinings_Market
+Vinings,MAA Kirkwood,2,Vinings_Market
+Vinings,Lakeland Estates Apartments,3,Vinings_Market
+Vinings,Preserve at Colony Lakes,4,Vinings_Market
+Vinings,Silverbrooke,5,Vinings_Market
+Vinings,Shadowbrooke,6,Vinings_Market
+Westover Oaks,Legacy Creekside Apartments,1,Westover_Oaks_Market
+Westover Oaks,Oxford at Estonia,2,Westover_Oaks_Market
+Westover Oaks,Prose Westover Hills,3,Westover_Oaks_Market
+Westover Oaks,Pecos Flats Apartments,4,Westover_Oaks_Market
+Westover Oaks,Dalian Monterrey Village,5,Westover_Oaks_Market
+Westover Oaks,Slate Creek At Westover Hills,6,Westover_Oaks_Market
+West 46th Apartments,Sterling Nashville West,1,West_46th_Apartments_Market
+West 46th Apartments,Camden West Nashville,2,West_46th_Apartments_Market
+West 46th Apartments,MAA Acklen,3,West_46th_Apartments_Market
+West 46th Apartments,2700 Charlotte Ave Apartments,4,West_46th_Apartments_Market
+West 46th Apartments,The Union,5,West_46th_Apartments_Market
+West 46th Apartments,Bexley Silo Bend,6,West_46th_Apartments_Market
+West 46th Apartments,Cortland at the Nations,7,West_46th_Apartments_Market
+West 46th Apartments,Rye Charlotte Ave,8,West_46th_Apartments_Market
+West 46th Apartments,Station 40,9,West_46th_Apartments_Market
+West 46th Apartments,The Reeve,10,West_46th_Apartments_Market
+Zang Triangle,Urban House,1,Zang_Triangle_Market
+Zang Triangle,The Bohéme,2,Zang_Triangle_Market
+Zang Triangle,Oaks Trinity,3,Zang_Triangle_Market
+Zang Triangle,Archive,4,Zang_Triangle_Market
+Zang Triangle,The Beckley on Trinity,5,Zang_Triangle_Market
+Zang Triangle,Oakhouse,6,Zang_Triangle_Market
+Zang Triangle,Banyan Flats,7,Zang_Triangle_Market
+Zang Triangle,Vance at Bishop Union,8,Zang_Triangle_Market

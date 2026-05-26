@@ -1,10 +1,10 @@
 # System Boundary & Integration Report
 ## Data Collection & Integrity System
 
-**Version**: 1.0  
-**Date**: January 27, 2026  
-**Scope**: Architectural Review Document  
-**System**: Unified Data Collection System  
+**Version**: 1.0
+**Date**: January 27, 2026
+**Scope**: Architectural Review Document
+**System**: Unified Data Collection System
 **Location**: `/Users/mark/Property_Analytics/Data_Collection/`
 
 ---
@@ -128,7 +128,7 @@ The Data Collection & Integrity System is **EXPLICITLY NOT** responsible for:
 
 #### Email Alerts (Post-Collection)
 
-**Recipients**: `mlaufhutte@venterraliving.com`  
+**Recipients**: `mlaufhutte@venterraliving.com`
 **Frequency**: After every collection run (daily at ~5:15 AM)
 
 **Signal Types**:
@@ -426,6 +426,12 @@ ORDER BY started_at DESC LIMIT 1;
 
 ### 5.4 Configuration Files
 
+Current operating model:
+
+- Keeper Secrets Manager is the preferred credential source
+- local credential files below may still be materialized temporarily for library compatibility
+- see `/Users/mark/Property_Analytics/docs/KSM_MARKETINGOPS_RECORD_MANIFEST.md` for the active Keeper mapping
+
 | File | Purpose | Format |
 |------|---------|--------|
 | `/Users/mark/Property_Analytics/config/venterra_properties_official.json` | Property registry (91 properties) | JSON |
@@ -553,8 +559,8 @@ python3 Data_Collection/monitoring/alert_sender.py --test
 **Test 3: Database Status**
 ```bash
 sqlite3 /Users/mark/Property_Analytics/data/portfolio_analytics.db \
-  "SELECT data_source, status, properties_successful, properties_total, completed_at 
-   FROM data_collections 
+  "SELECT data_source, status, properties_successful, properties_total, completed_at
+   FROM data_collections
    ORDER BY started_at DESC LIMIT 5;"
 # Expected: Recent jobs with status='completed'
 ```
@@ -637,8 +643,8 @@ Collect raw metrics from 8 data sources for 91 properties, validate data integri
 
 ---
 
-**Document Version**: 1.0  
-**Last Review**: January 27, 2026  
-**Next Review**: March 1, 2026  
-**Owner**: Mark Laufhutte (mlaufhutte@venterraliving.com)  
+**Document Version**: 1.0
+**Last Review**: January 27, 2026
+**Next Review**: March 1, 2026
+**Owner**: Mark Laufhutte (mlaufhutte@venterraliving.com)
 **Status**: APPROVED - System Deployed

@@ -20,6 +20,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from Data_Collection.db.database_manager import DatabaseManager
+from utils.ksm import resolve_secret_from_multiple_notations
 
 
 DB_PATH = Path("/Users/mark/Property_Analytics/data/portfolio_analytics.db")
@@ -31,6 +32,19 @@ CRUX_HISTORY_URL = "https://chromeuxreport.googleapis.com/v1/records:queryHistor
 def _load_registry() -> Dict[str, Any]:
     with open(REGISTRY_PATH, "r") as f:
         return json.load(f)
+
+
+def _load_psi_api_key() -> str:
+    return resolve_secret_from_multiple_notations(
+        description="PageSpeed API key",
+        notation_env_vars=[
+            "KSM_PAGESPEED_API_KEY_NOTATION",
+            "KSM_PAGESPEED_API_KEY_FILE_NOTATION",
+        ],
+        direct_env_var="PAGESPEED_API_KEY",
+        file_path=PSI_API_KEY_FILE,
+        default_profile="marketingops",
+    )
 
 
 def _resolve_property(prop_input: str) -> Dict[str, Any]:
@@ -126,9 +140,7 @@ def export_honest_cwv_history(
 
 
 def _load_api_key() -> str:
-    if not PSI_API_KEY_FILE.exists():
-        raise FileNotFoundError(f"Missing API key file: {PSI_API_KEY_FILE}")
-    return PSI_API_KEY_FILE.read_text().strip()
+    return _load_psi_api_key()
 
 
 def _extract_period_dates(period: Dict[str, Any]) -> Tuple[str, str]:
