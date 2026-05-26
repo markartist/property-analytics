@@ -1,19 +1,31 @@
 # Property Analytics Documentation
 
-**System Owner:** Mark Laufhutte  
-**Portfolio:** Venterra Living (91 properties)  
-**Database:** SQLite (`data/portfolio_analytics.db`)  
-**Last Updated:** 2026-01-27
+**System Owner:** Mark Laufhutte
+**Portfolio:** Venterra Living (91 properties)
+**Database:** SQLite (`data/portfolio_analytics.db`)
+**Last Updated:** 2026-04-09
 
 ---
 
 ## Quick Start
+
+> Keeper Secrets Manager is now the preferred credential source for active
+> automation in this repo. For the canonical mapping, use
+> `/Users/mark/Property_Analytics/docs/KSM_MARKETINGOPS_RECORD_MANIFEST.md`.
+> Treat local files under `credentials/` and similar folders as fallback-only
+> unless a workflow has not yet been migrated.
 
 ### Essential References
 1. **[DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md)** - Database schema, table structures, join patterns, common pitfalls
 2. **[RESI_COMPARISON_ANALYSIS.md](RESI_COMPARISON_ANALYSIS.md)** - Resi vs Portfolio comparative analysis project documentation
 3. **[CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md](CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md)** - Pilot Cloudflare HTML cache rollout plan and operational checklist
 4. **[CLOUDFLARE_CACHE_WORKDAY_2026-04-08.md](CLOUDFLARE_CACHE_WORKDAY_2026-04-08.md)** - Day-of memory for the initial baseline and rollout implementation
+5. **[PLATFORM_SYSTEM_CATALOG.md](PLATFORM_SYSTEM_CATALOG.md)** - Canonical catalog of major systems, their roles, source-of-truth ownership, and integration priorities
+6. **[PROPERTY_OPERATIONS_PLATFORM_ARCHITECTURE.md](PROPERTY_OPERATIONS_PLATFORM_ARCHITECTURE.md)** - Unified architecture narrative across Data Pond, Intelligence Office, Specs, VACS, and pilot operations surfaces
+7. **[INTELLIGENCE_OFFICE_MODEL.md](INTELLIGENCE_OFFICE_MODEL.md)** - Governance model for directives, source documents, approved claims, and operator instructions
+8. **[CONTENT_OPERATIONS_MODEL.md](CONTENT_OPERATIONS_MODEL.md)** - Shared-foundation / separate-workspace model for VACS and Site Content Creator
+9. **[SITE_CONTENT_CREATOR_MODEL.md](SITE_CONTENT_CREATOR_MODEL.md)** - Specs-aware evaluation, harmonization, and rewrite model for property website copy
+10. **[PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md](PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md)** - Governing content strategy artifact for property narrative, site harmonization, VACS drafts, channel derivatives, and AI-readable content trails
 
 ### Critical Knowledge
 Before working with this system, **READ THESE FIRST:**
@@ -31,8 +43,8 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 ## System Architecture
 
 ### Data Collection
-**Master Script:** `Data_Collection/orchestration/daily_master_collection.py`  
-**Schedule:** Daily at 5:00 AM via launchd  
+**Master Script:** `Data_Collection/orchestration/daily_master_collection.py`
+**Schedule:** Daily at 5:00 AM via launchd
 **Configuration:** `~/Library/LaunchAgents/com.venterra.portfolio.collection.plist`
 
 **Collection Phases:**
@@ -47,8 +59,8 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 9. Cloudflare cache audit for the Resi pilot domains
 
 ### Database
-**Location:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
-**Type:** SQLite 3  
+**Location:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+**Type:** SQLite 3
 **Schema:** See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md)
 
 **Core Tables:**
@@ -60,7 +72,7 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 - `property_metadata` - Property information
 
 ### Property Registry
-**File:** `config/venterra_properties_official.json`  
+**File:** `config/venterra_properties_official.json`
 **Contains:** 91-property portfolio with GA4 IDs, domains, unit counts, metros
 
 ---
@@ -68,15 +80,15 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 ## Reporting Systems
 
 ### 1. Property Intelligence Brief (PIB)
-**Purpose:** Daily operational dashboard for individual properties  
-**Script:** `Property_Intelligence_Brief/send_property_intelligence_brief_email.py`  
-**Frequency:** Daily automated delivery  
+**Purpose:** Daily operational dashboard for individual properties
+**Script:** `Property_Intelligence_Brief/send_property_intelligence_brief_email.py`
+**Frequency:** Daily automated delivery
 **Content:** GA4, GSC, PSI, GBP metrics with 7/30-day trends
 
 ### 2. Resi vs Portfolio Comparative Analysis
-**Purpose:** Ad hoc matched-pairs performance comparison  
-**Script:** `resi_phase2_CORRECTED.py`  
-**Documentation:** [RESI_COMPARISON_ANALYSIS.md](RESI_COMPARISON_ANALYSIS.md)  
+**Purpose:** Ad hoc matched-pairs performance comparison
+**Script:** `resi_phase2_CORRECTED.py`
+**Documentation:** [RESI_COMPARISON_ANALYSIS.md](RESI_COMPARISON_ANALYSIS.md)
 **Key Features:**
 - Matches 3 operational Resi properties to Portfolio peers
 - 5 category evaluation (Demand, Engagement, Conversion, Performance, Trust)
@@ -84,20 +96,20 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 - **CRITICAL:** Uses proper event mappings for Resi vs Portfolio CIR calculations
 
 ### 3. Weekly Progress Reports
-**Purpose:** Portfolio-wide performance tracking  
-**Script:** `generate_weekly_progress_report.py`  
+**Purpose:** Portfolio-wide performance tracking
+**Script:** `generate_weekly_progress_report.py`
 **Frequency:** Weekly
 
 ### 4. Data Collection Health Reports
-**Purpose:** Monitor collection system status  
-**Script:** `Data_Collection/orchestration/daily_master_collection.py`  
-**Frequency:** Daily (sent with collection completion)  
+**Purpose:** Monitor collection system status
+**Script:** `Data_Collection/orchestration/daily_master_collection.py`
+**Frequency:** Daily (sent with collection completion)
 **Content:** Success/failure status for all 91 properties across 5 data sources
 
 ### 5. Cloudflare Cache Audit
-**Purpose:** Measure whether Cloudflare is serving warm full-page HTML cache for the Resi pilot domains  
-**Script:** `Data_Collection/collectors/cloudflare_cache_audit.py`  
-**Frequency:** Daily via `daily_master_collection.py`  
+**Purpose:** Measure whether Cloudflare is serving warm full-page HTML cache for the Resi pilot domains
+**Script:** `Data_Collection/collectors/cloudflare_cache_audit.py`
+**Frequency:** Daily via `daily_master_collection.py`
 **Artifacts:** JSON + CSV + Markdown + PIB-style HTML in `reports/cloudflare_cache_audit/`
 
 ---
@@ -105,9 +117,9 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 ## Critical Configuration
 
 ### Email System
-**Utility:** `utils/email_sender.py`  
-**Config:** `credentials/email_config.json`  
-**Provider:** Gmail SMTP (smtp.gmail.com:587)  
+**Utility:** `utils/email_sender.py`
+**Config:** `credentials/email_config.json`
+**Provider:** Gmail SMTP (smtp.gmail.com:587)
 **Default Recipient:** mlaufhutte@venterraliving.com
 
 **Usage:**

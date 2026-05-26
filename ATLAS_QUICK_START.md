@@ -1,6 +1,6 @@
 # Atlas Memory System - Quick Start Guide
 
-**For:** Mark (human) and Atlas (AI)  
+**For:** Mark (human) and Atlas (AI)
 **Purpose:** How to use the Atlas memory system effectively
 
 ---
@@ -17,6 +17,8 @@ cd /Users/mark/Property_Analytics
 
 This shows:
 - Memory file location
+- Capability register location
+- Full system audit location
 - Quick database health check
 - Latest data date
 - Critical issue alert
@@ -55,9 +57,11 @@ Update **Current System State** section when:
 ### Session Start (MANDATORY)
 
 1. **Read** `/Users/mark/Property_Analytics/ATLAS_WORKING_MEMORY.md`
-2. **Check** "Current System State" section
-3. **Review** "Session Log" for recent changes
-4. **Note** any critical issues
+2. **Review** `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+3. **Review** `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+4. **Check** "Current System State" section
+5. **Review** "Session Log" for recent changes
+6. **Note** any critical issues
 
 **Do this EVERY time, no exceptions.**
 
@@ -65,7 +69,15 @@ Update **Current System State** section when:
 
 ### After Every Significant Action (MANDATORY)
 
-Update the **Session Log** in `ATLAS_WORKING_MEMORY.md`:
+Update the **Session Log** in `ATLAS_WORKING_MEMORY.md`.
+
+If the work changed the system shape, capability inventory, ownership, or canonical path:
+
+- update `docs/CAPABILITY_REGISTER_2026-04-10.md`
+- update `docs/FULL_SYSTEM_AUDIT_2026-04-10.md` when the narrative platform picture changed materially
+- run `bash /Users/mark/Property_Analytics/scripts/check_context_discipline.sh`
+
+Session log format:
 
 ```markdown
 ### YYYY-MM-DD HH:MM - Brief Title
@@ -115,10 +127,12 @@ Property_Analytics/
 ### Atlas: Starting Fresh After Being Away
 ```bash
 1. Read ATLAS_WORKING_MEMORY.md completely
-2. Check Current System State section
-3. Review last 2-3 Session Log entries
-4. Run verification commands to confirm state
-5. Note any critical issues before starting
+2. Read docs/CAPABILITY_REGISTER_2026-04-10.md
+3. Read docs/FULL_SYSTEM_AUDIT_2026-04-10.md
+4. Check Current System State section
+5. Review last 2-3 Session Log entries
+6. Run verification commands to confirm state
+7. Note any critical issues before starting
 ```
 
 ### Mark: Getting Quick Status
@@ -138,7 +152,9 @@ Shows:
 3. Make the change
 4. Verify it worked (database/logs)
 5. Update Session Log immediately
-6. Update System State if needed
+6. Update capability register/audit docs if the system inventory changed
+7. Run scripts/check_context_discipline.sh
+8. Update System State if needed
 ```
 
 ---
@@ -147,11 +163,15 @@ Shows:
 
 ### For Atlas
 - ✅ **ALWAYS read memory at session start**
+- ✅ **ALWAYS read the capability register before building**
+- ✅ **ALWAYS read the full system audit before inventing a new system**
 - ✅ **ALWAYS update session log after actions**
+- ✅ **ALWAYS update the capability register when capability shape changes**
 - ✅ **ALWAYS verify with database, not assumptions**
 - ✅ **ALWAYS check logs when something fails**
 - ❌ **NEVER assume something works without checking**
 - ❌ **NEVER skip reading the memory file**
+- ❌ **NEVER create a new parallel system before checking the register**
 - ❌ **NEVER forget to update after making changes**
 
 ### For Mark
@@ -186,7 +206,7 @@ launchctl list | grep venterra
 
 ## 📞 Contact
 
-**System Owner:** Mark Laufhutte  
+**System Owner:** Mark Laufhutte
 **Email:** mlaufhutte@venterraliving.com
 
 ---

@@ -49,12 +49,24 @@ python3 /Users/mark/Property_Analytics/apps/api/scripts/d1_mirror_sync.py --vacu
 ## Phase 1 enablement flags
 ```bash
 export PLATFORM_BASE_URL="https://app.venterradev.com"
-export PLATFORM_SHARED_TOKEN="..."
+export PLATFORM_ACCESS_CLIENT_ID="..."
+export PLATFORM_ACCESS_CLIENT_SECRET="..."
 export ENABLE_PHASE1_PLATFORM_SYNC=true
 
 # optional governed advocate path
 export ENABLE_PHASE1_PROPERTY_ADVOCATE_RUN=true
 ```
+
+Transitional fallback only while cutover is incomplete:
+
+```bash
+export PLATFORM_SHARED_TOKEN="..."
+```
+
+Preferred auth mode is Cloudflare Access service-token headers via
+`PLATFORM_ACCESS_CLIENT_ID` and `PLATFORM_ACCESS_CLIENT_SECRET`. The local sync
+scripts still support `PLATFORM_SHARED_TOKEN` temporarily so existing jobs can
+be cut over safely.
 
 ## Phase 1 cutover verification
 ```bash

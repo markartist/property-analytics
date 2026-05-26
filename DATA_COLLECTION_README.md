@@ -3,8 +3,8 @@
 ## Overview
 Automated daily data collection system for 91 Venterra properties across multiple analytics platforms.
 
-**Database**: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
-**Schedule**: Daily at 5:00 AM via launchd  
+**Database**: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+**Schedule**: Daily at 5:00 AM via launchd
 **Monitoring**: Email alerts sent after each collection run
 
 ---
@@ -20,9 +20,9 @@ Automated daily data collection system for 91 Venterra properties across multipl
 | **SEMRush** | 90 | Today (T-0) | Domain metrics + rankings |
 | **GTMetrix** | Disabled | N/A | Skipped with --no-gtmetrix flag |
 
-**Total Records in DB**: 
+**Total Records in DB**:
 - GA4: 11,257 records
-- GSC: 11,261 records  
+- GSC: 11,261 records
 - Google Ads: 508 records
 - PSI: 1,646 records
 - SEMRush: Active
@@ -88,7 +88,7 @@ System sends email after each collection run:
 - PSI: Stale if > 7 days old
 - SEMRush: (basic monitoring)
 
-**Email Recipient**: mlaufhutte@venterraliving.com  
+**Email Recipient**: mlaufhutte@venterraliving.com
 **SMTP**: Gmail (credentials in `/Users/mark/Property_Analytics/credentials/email_config.json`)
 
 ---
@@ -179,12 +179,21 @@ google_ads_ad_groups, google_ads_ads, google_ads_keywords
 
 ### Credentials
 ```
-Google Ads API: Portfolio_Monitoring/google-ads.yaml
-Gmail SMTP: credentials/email_config.json
-GA4: Spotlight_Properties_Report/config/venterra-property-analytics-*.json
-PSI API: Spotlight_Properties_Report/config/pagespeed_api_key.txt
-SEMRush API: Spotlight_Properties_Report/config/semrush_api_key.txt
+Default: Keeper Secrets Manager via KSM_PROFILE=marketingops
+Google Ads API: Keeper-backed temp yaml via utils/google_ads_ksm.py
+GA4: Keeper-backed temp json via utils/config_manager.py
+GSC client/token: Keeper-backed temp files via utils/keeper_file_materializer.py
+PSI API: KSM_PAGESPEED_API_KEY_NOTATION
+SEMRush API: KSM_SEMRUSH_API_KEY_NOTATION
+GTmetrix API: KSM_GTMETRIX_API_KEY_NOTATION
+Cloudflare: KSM_CLOUDFLARE_TOKEN_NOTATION
+BrowserStack: KSM_BROWSERSTACK_USERNAME_NOTATION + KSM_BROWSERSTACK_ACCESS_KEY_NOTATION
 ```
+
+Reference:
+- `/Users/mark/Property_Analytics/docs/KSM_MARKETINGOPS_RECORD_MANIFEST.md`
+
+Legacy local files may still be present for fallback compatibility, but they are no longer the preferred setup path.
 
 ---
 
@@ -228,7 +237,8 @@ launchctl list | grep venterra.portfolio.collection
 
 **2. Google Ads not collecting**
 - Verify campaign mapping file exists: `config/google_ads_campaign_analysis.json`
-- Check credentials: `Portfolio_Monitoring/google-ads.yaml`
+- Preferred: verify `KSM_GOOGLE_ADS_CONFIG_UID` is set and Keeper profile `marketingops` is active
+- Fallback: check `Portfolio_Monitoring/google-ads.yaml`
 - Regenerate mapping: `python3 Portfolio_Dashboard/scripts/analyze_google_ads_campaigns.py`
 
 **3. PSI collection slow/timing out**
@@ -322,7 +332,7 @@ python3 collect_daily_data.py --no-gtmetrix
 
 ## Contact & Support
 
-**System Owner**: Mark Laufhutte (mlaufhutte@venterraliving.com)  
-**Database**: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
-**Last Updated**: 2026-01-23  
+**System Owner**: Mark Laufhutte (mlaufhutte@venterraliving.com)
+**Database**: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+**Last Updated**: 2026-01-23
 **Version**: 2.0 (with Google Ads integration)

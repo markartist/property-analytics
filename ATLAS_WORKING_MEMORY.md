@@ -1,8 +1,1210 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-05-02 17:59 UTC  
+**Last Updated:** 2026-05-24 01:55 CDT
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
+
+### 2026-05-23 - Keeper / KSM Credential Law
+- `/Users/mark/Property_Analytics/AGENTS.md` now makes Keeper Secrets Manager the mandatory source of truth for credentials, API tokens, OAuth artifacts, service tokens, and deployment auth.
+- Required posture: resolve credentials through existing KSM helpers, notation env vars, or Keeper-backed file materialization before trying direct env vars, local credential files, browser login, or manual token paths.
+- Cloudflare/Wrangler work must use the governed Keeper-backed runtime path, especially `/Users/mark/Property_Analytics/apps/api/scripts/wrangler_auth.py`, so `CLOUDFLARE_API_TOKEN` is injected from Keeper rather than relying on Wrangler browser auth.
+- Raw secrets must never be printed, logged, persisted, or summarized; verification should report only source class, presence, success/failure, and sanitized errors.
+- If a needed credential is not represented in Keeper/KSM, stop and ask for it to be added to Keeper and documented in the appropriate manifest instead of inventing a local workaround.
+
+### 2026-05-25 - ApartmentIQ Regular Harvest Efficiency / Reliability
+- Tightened the ApartmentIQ collection path so regular harvesting rotates across stale comp sets instead of repeatedly re-reading the same leading slice.
+- `/Users/mark/Property_Analytics/Data_Collection/collectors/apartmentiq_collector.py` now prioritizes never-harvested or oldest-harvested comp sets first, using per-table latest `collection_date` state for market survey, units, and floorplans.
+- The collector also now supports `--subject-comp-sets-only`, resolving daily touchups against governed subject-linked comp sets from `apartmentiq_property_identity_links`.
+- `/Users/mark/Property_Analytics/run_apartmentiq_daily_light.sh` now uses a true light-touch posture: subject-linked comp sets only, default `APARTMENTIQ_DAILY_MAX_COMP_SETS=5`.
+- `/Users/mark/Property_Analytics/run_apartmentiq_weekly_dive.sh` now uses a staggered weekly posture with default `APARTMENTIQ_WEEKLY_MAX_COMP_SETS=60` instead of forcing a full `--max-comp-sets -1` sweep.
+- Both ApartmentIQ wrappers now resolve log/lock directories with fallback order `~/Library/Logs/Venterra` -> repo `logs/automation` -> `/tmp/property_analytics_logs`, so the automation is less brittle outside the primary launchd environment.
+- Targeted smoke result on 2026-05-25: local wrapper startup/logging succeeded, but the live ApartmentIQ API still returned a `429` on `GET /accounts/9900124/comp_sets`, confirming the remaining throughput constraint is vendor throttling rather than local wrapper failure.
+
+### 2026-05-24 - Edge Messages Font-Size / Live Publish Alignment
+- Root cause of the admin/live mismatch: Edge Messages admin Save previously persisted only to browser `localStorage`; the live site still read hard-coded Cloudflare Worker config.
+- Fixed publish path: the Edge Messages admin now uses `Save & Publish` and posts the exact draft to `POST /v1/experiments/edge-messages/:messageId/live-config`. The API validates the draft, upserts the message as an `edge_experiments` record, retires prior active rows in `edge_experiment_config_versions`, and writes the new Worker-ready config as the active D1 version.
+- Fixed live read path: Worker `edge-transparent-pricing-intro-beta` now has a `POP_BRIEF_DB` D1 binding and reads active config from `edge_experiment_config_versions` for `edge_transparent_pricing_intro_homepage_v1` and `edge_message_all_in_pricing_coachmark_v1`, falling back to the hard-coded config only when D1 is unavailable or no active row exists.
+- Deployed through the Keeper/KSM-backed Wrangler helper only. Current deployed versions: API Worker `pop-brief-api` version `8f0af5e6-86ce-463e-9b27-aec8618ba4e7`, Edge Worker `edge-transparent-pricing-intro-beta` version `3a19688f-51eb-445b-aae5-8e25969bd935`, and Pages admin `9aaf825f.property-analytics.pages.dev` / `https://9aaf825f.property-analytics.pages.dev`.
+- Verification: `apps/api` typecheck passed, `apps/web` build passed, `node --check` passed for the Edge Worker, curl smoke confirmed the Pages bundle contains `Save & Publish`, `Publishing live`, `Published live`, and the live-config endpoint, and unauthenticated API publish returned `401` as expected.
+- Current live `/apartments/` fallback still matches the corrected compact coach-mark values until the next authenticated admin publish seeds D1: brand `#3D66B9`, accent `#7DCAC2`, icon text `#294782`, surface text `#FFFFFF`, title `14px`, body `13px`, max width `460px`, rounded `24px`.
+- Follow-on productionization gap: launch/pause/rollback, approval workflow, EVS preflight, and benchmark gates remain intentionally disabled; the config publish/read path itself is now wired for this beta admin surface.
+
+### 2026-05-23 - Venterra Brand Color Standard
+- Official color source added from `/Users/mark/Downloads/New Branding Colors_Named 2.pdf`:
+  - `/Users/mark/Property_Analytics/docs/VENTERRA_BRAND_COLOR_STANDARD_2026-05-23.md`
+- System-wide rule added to `/Users/mark/Property_Analytics/AGENTS.md`: new or materially updated user-facing UI, reports, decks, documents, charts, generated assets, color controls, and swatches should use only the official Venterra palette unless the user explicitly specifies otherwise in the current task.
+- Official active palette: Venterra Navy `#15284B`, San Marino `#3D66B9`, Bay `#294782`, Indigo `#5A81CF`, Monte Carlo `#7DCAC2`, Pink `#E02472`, White Smoke `#F6F6F5`, Terra Cotta `#BD4830`, Quill Gray `#D6D6D2`, Blue Chill `#3B9189`, Delta `#9B9B96`, Black `#000000`, White `#FFFFFF`. Galliano `#EAAB00` is discontinued and must not appear in active swatch palettes or configurable color defaults.
+- Edge Messages admin swatches now use only that active palette. Adjustable defaults were normalized away from discontinued Galliano: brand `#15284B`, accent `#7DCAC2`, title `#000000`, body `#294782`, fine print `#9B9B96`, on-color text `#FFFFFF`.
+- Prior note superseded: live Worker accent had previously been normalized from legacy gold to Galliano in version `75477e9d-963e-400a-a3b5-73a610aa417b`, but Galliano is now discontinued and active palettes/defaults should use current palette colors instead.
+- Latest Edge Messages admin Pages deployment is `9aaf825f.property-analytics.pages.dev` / `https://9aaf825f.property-analytics.pages.dev`. It was published through the Keeper/KSM-backed Wrangler path after direct Wrangler auth failed in non-interactive mode. Curl smoke confirmed `/experiments/edge-messages` returns `200` and the live bundle contains the Type size controls, `propertyNameFontSize`, `titleFontSize`, `bodyFontSize`, `disclaimerFontSize`, `countdownFontSize`, increase/decrease font-size steppers, and the `Save & Publish` live-config call; the coach-mark default now carries `#3D66B9`, `#7DCAC2`, 14px title/13px body sizing, and a local saved-draft clamp that prevents oversized coach-mark title/body values from rehydrating indefinitely.
+- Cloudflare Pages publish note: Wrangler asset upload repeatedly failed with `UND_ERR_SOCKET` / `write EPIPE` while using default 40 MB buckets and concurrency 3. The successful 2026-05-24 deploy used `npx wrangler@4.94.0` through `/Users/mark/Property_Analytics/apps/api/scripts/wrangler_auth.py` with the local npx cache throttled to 4 MB buckets, 250 files per bucket, and upload concurrency 1.
+- Coach-mark frequency-cap bypass fix deployed as Worker version `aac2168c-6f12-4a4c-937e-fbad8086b7c6`: the coach-mark browser payload now includes `ignoreFrequencyCap`, so testing-always-show mode works even when localStorage already contains `v_edge_msg_seen_edge_message_all_in_pricing_coachmark_v1`. Curl smoke confirmed `"ignoreFrequencyCap":true`; Playwright smoke with the localStorage marker pre-set still rendered `1` visible coach mark, `141` all-in buttons, and `0` browser errors.
+
+### 2026-05-23 - Edge Transparent Pricing Intro Beta Homepage Test
+- Stood up, rolled back, hardened, and re-enabled the beta edge-injected transparent-pricing intro modal on `pilot.venterradev.com` through a dedicated Cloudflare Worker:
+  - `/Users/mark/Property_Analytics/ops/cloudflare/edge-transparent-pricing-intro/worker.js`
+  - `/Users/mark/Property_Analytics/ops/cloudflare/edge-transparent-pricing-intro/wrangler.toml`
+  - `/Users/mark/Property_Analytics/ops/cloudflare/edge-transparent-pricing-intro/README.md`
+  - `/Users/mark/Property_Analytics/docs/EDGE_MESSAGE_TOOLKIT_2026-05-23.md`
+- Worker name/versions:
+  - `edge-transparent-pricing-intro-beta`
+  - last enabled version `9d08ec2c-18fa-43e4-b99d-7986eb32e0f6`
+  - disabled version `3a04aee5-ea68-4c5f-9cd3-30eb7cf24a97`
+  - non-blocking live version `fae973c7-fd71-4fbf-8d0f-aa90d835001d`
+  - clean-test-url live version `dac90122-4bc7-4493-a1f9-573f2833a907`
+  - disabled-after-hero-review version `6181471a-a26c-4402-88c9-ef0ac927b269`
+  - homepage benchmark version `89b7ce6f-86fb-44a7-98f7-2b8bac2da5f4`
+  - clean-homepage live version `b8807956-1921-4d0b-826e-2276ed2262aa`
+  - current title-line-break version `c73d901f-bb92-4a86-a102-2d5579b61251`
+  - current coach-mark version `89cd14da-619d-48e9-8679-d97fdc37e81a`
+  - current testing always-show version `5f743543-aa56-4a10-972f-f43565b03c91`
+  - current modal layout version `db8b4940-020e-4179-aa9a-aa4cab7f36a5`
+  - current official-color version `75477e9d-963e-400a-a3b5-73a610aa417b`
+- Current Cloudflare route is `pilot.venterradev.com/*`; Worker injection is exact-path `/` for the homepage modal and exact-path `/apartments/` for the anchored all-in pricing coach mark.
+- Apex property identity is carried in the payload as governed identity `GA4AX` / `eed3da54-7b7a-4dae-984b-a203113fc2f3`; no local property map was introduced.
+- Rollback reason: the first enabled pass appeared to arrest or delay the apartment units experience for a visitor. The `2026-05-23-beta-2-nonblocking` version was live with `enabled: true` after hardening, then a visible-units failure was traced to the test query parameter itself.
+- Last enabled UX: Venterra-branded centered modal, `#15284B`, Apex West Midtown property name shown once at the top, large two-line headline `Say hello to clearer` / `monthly pricing`, centered body copy, required-fees disclaimer, corner X, 7-second countdown/progress, authentic Venterra Velo/wordmark at the bottom, fade in/out, Escape close, reduced-motion handling, dataLayer events where available, 24-hour cookie cap, localStorage fallback, `edge_popup_force=1`, and `edge_popup_reset=1`.
+- Current source hardening: non-blocking notice posture, no `aria-modal`, no focus trap/autofocus, overlay `pointer-events:none`, unit/listing DOM readiness check before display, X/Escape/auto close only.
+- Beta-3 query handling: `edge_popup_force=1` and `edge_popup_reset=1` now 302 to a clean URL and use short-lived Worker-only cookies, because leaving those params in `location.search` causes the Resi unit UI to hide visible unit rows even when the Worker route is removed.
+- Live smoke verification on 2026-05-23: forced apartment URL redirects to clean `/apartments/`, popup injects, homepage does not inject, Resi app JS does not inject, browser-level check rendered the popup with `role="region"`, no `aria-modal`, overlay `pointer-events:none`, card `pointer-events:auto`, auto-close removal, `47` visible availability nodes / `47` visible unit rows during and after the popup, no page errors, and only an existing SightMap warning.
+- Hero/title review: after beta-3, the Worker was disabled and route bindings removed again. Fresh-browser clean `https://pilot.venterradev.com/apartments/` still loads directly into filters/unit rows with no visible large hero/title and `0` popup markers, while production `https://venterraliving.com/apartments/apex-west-midtown/` has the production Apex hero/title and `https://pilot.venterradev.com/apartments/apex-west-midtown/` returns `404`. Do not re-enable until the intended pilot route/template is confirmed.
+- Homepage test: beta-4 moved the experiment to `https://pilot.venterradev.com/`, disabled unit-selector waiting for the homepage, and benchmarked before/after under `/Users/mark/Property_Analytics/reports/edge_popup_beta/2026-05-23/homepage/`. Homepage hero/title remained visible behind the popup; browser runs had `0` console/page errors and popup visible in `5/5` post-deploy runs.
+- Clean homepage live behavior: beta-5 bumped the experience id to `edge_transparent_pricing_intro_homepage_v1` so prior test cookies/localStorage do not suppress clean URL display. `https://pilot.venterradev.com/` now shows the popup without query parameters; `/apartments/` still has `0` popup markers.
+- Title polish: popup title now renders as `Say hello to clearer` line break `monthly pricing` using `white-space: pre-line`; browser check confirmed the newline text and visible popup.
+- Capability memorialized as the `Edge Message Toolkit`; recommended admin nav name is `Edge Messages`, with future experience ids following `edge_message_<initiative>_<surface>_vN`.
+- Coach-mark proof: added `edge_message_all_in_pricing_coachmark_v1` on exact path `/apartments/`, anchored to the first visible `All-In Price & Details` button. It uses a Venterra-blue bubble, amber `!` badge with pulse animation, pointer arrow, X close, auto-close, and separate coach-mark frequency cap. Browser proof showed coach mark visible, homepage modal absent on `/apartments/`, and `47` visible availability nodes / `47` visible unit rows retained.
+- Testing always-show mode: both homepage modal and apartment coach mark have `ignoreFrequencyCap: true`, so they reappear on every reload during review. Browser reload proof showed modal visible on two consecutive homepage loads and coach mark visible on two consecutive `/apartments/` loads, with `47` visible unit rows retained.
+- Modal layout polish: Worker version `db8b4940-020e-4179-aa9a-aa4cab7f36a5` changed the homepage popup to the supplied format: property name top-center, no top logo, larger centered two-line title/body/disclaimer, `Closing in 7 seconds`, progress bar, and bottom Venterra/Velo mark. Current live Worker version `3a19688f-51eb-445b-aae5-8e25969bd935` preserves that layout, reads active D1 config when published from the admin, and falls back to active palette colors plus compact 14px title/13px body sizing for the coach mark. Smoke confirmed property `Apex West Midtown`, title newline, countdown `Closing in 7 seconds`, no top-logo-before-title, bottom brand below progress, and `0` browser errors. Apartment smoke still showed All-In button availability retained and `1` coach mark.
+- Admin surface slice: added `/Users/mark/Property_Analytics/apps/web/src/app/experiments/edge-messages/page.tsx` and linked it from `/Users/mark/Property_Analytics/apps/web/src/app/experiments/page.tsx`. The Pond surface is `Experiment Lab -> Edge Messages`, inventories the two live beta proofs, exposes editable content/style/placement/delivery/timing/decoration/frequency controls with modal and coach-mark preview, and now publishes active Worker config through D1. Launch/pause/rollback remain disabled until the approval workflow, EVS preflight, and benchmark gates are wired.
+- Live admin deploy: built `apps/web` successfully and deployed the static export to Cloudflare Pages project `property-analytics`. Latest production deployment is `9aaf825f.property-analytics.pages.dev` / `https://9aaf825f.property-analytics.pages.dev`. Operator URL is `https://app.venterradev.com/experiments/edge-messages` behind Cloudflare Access. Browser smoke on the prior deployment URL, with auth mocked, rendered `Edge Messages`, text color controls, official brand color swatches, both live proof cards, the updated 7-second modal preview, and no relevant page errors. The modal preview is scaled inside the preview frame so the bottom Venterra/Velo mark fits; bounds smoke showed the card fully within the preview viewport with a positive bottom gap. The admin surface now has `Save & Publish`: it persists the draft locally, calls the API live-config endpoint, and writes an active D1 config version read by the Worker. Preview scenes are separated: modal/banner/toast/inline use the homepage hero context without the all-in price button, and the coach-mark preview uses `/edge-message-apartments-preview.png`, a separate apartments-list screenshot asset, with the bubble lowered so the pointer lands on the first visible `All-In Price & Details` button. Save/reload smoke persisted `#E02472` for Accent Color and then reset the draft. The final font-size-increment slice adds Type size steppers for property, title, body, fine print, and countdown text; build succeeded under Node 22, Pages deploy succeeded through Keeper/KSM-backed Wrangler, and curl smoke confirmed the new bundle contains the font-size controls and live publish UI. The compact coach-mark pass clamps saved coach-mark title/body drafts to 26px max and aligns live/default sizing to title 14px and body 13px.
+- Benchmark/verification artifacts:
+  - `/Users/mark/Property_Analytics/reports/edge_popup_beta/2026-05-22/EDGE_TRANSPARENT_PRICING_INTRO_BETA_REPORT.md`
+  - `/Users/mark/Property_Analytics/reports/edge_popup_beta/2026-05-22/benchmark-summary-v2.json`
+  - desktop/mobile final screenshots under `/Users/mark/Property_Analytics/reports/edge_popup_beta/2026-05-22/after/`
+- Final measured payload impact:
+  - injected script raw size `11,710` bytes
+  - injected script gzip size `4,391` bytes
+  - forced-vs-capped HTML raw delta `11,726` bytes
+  - forced-vs-capped HTML local gzip delta `4,198` bytes
+  - live compressed-transfer HTML delta `4,224` bytes
+  - no external popup asset/library requests
+- Homepage beta-4 measured impact:
+  - raw HTML delta `+11,589` bytes
+  - gzip HTML delta `+5,223` bytes
+  - browser document transfer delta `+4,208` bytes
+  - median browser load-event delta `-315ms` in the measured sample, interpreted as run-to-run variance rather than a speed improvement
+  - no external popup asset/library requests
+- Boundary preserved: no WordPress, YOOtheme, RentPress, or locked PIB files were changed; apps/api changes are limited to the Edge Messages live-config endpoint and apps/web changes are limited to the Edge Messages admin surface.
+
+### 2026-05-22 - PIB Section Catalog / Future Builder Standard
+- Memorialized PIB as a sectioned report family with stable section ids for future self-serve report generation:
+  - `/Users/mark/Property_Analytics/docs/PIB_SECTION_CATALOG_AND_BUILDER_STANDARD_2026-05-22.md`
+  - `/Users/mark/Property_Analytics/config/pib_section_catalog.json`
+- `ApartmentIQ Market Enrichment` is now cataloged as section id `apartmentiq_market_enrichment`, with approved sub-sections: advisory banner, market-visible KPI tiles, Offer Pressure, Unit-Type Offer Pressure table, Fees / Deposits, Amenity Differentiators, and nearest complete ApartmentIQ peers.
+- `Search Market Visibility` is now cataloged as section id `dataforseo_search_visibility`, with approved sub-sections: advisory banner, search-market KPI tiles, Keyword Demand + Rank Check, Live SERP Visibility, SERP Pressure, DataForSEO Labs Ranked Keywords, OnPage Readiness, Local Entity Read, and AI Answer Visibility.
+- Future PIB Builder direction: let users choose stable section ids or presets such as `Full PIB`, `Website / Funnel Review`, `Leasing / Inventory Review`, `Market Context`, and `Reputation / Local Presence`.
+- Boundary preserved: section selection is a render-time contract over the canonical PIB family, not a new app-side PIB renderer/template/sender; locked PIB versions still require explicit current-task approval before mutation.
+
+### 2026-05-22 - PIB v2.3.1 Locked Standard
+- Promoted the approved v2.3.0 working path into locked PIB v2.3.1:
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/generate_property_intelligence_brief_v2_3_1.py`
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/templates/executive_email_template_v2_3_1.py`
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/send_property_intelligence_brief_email_v2_3_1.py`
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/docs/PIB_V2_3_1_LOCKED_STANDARD.md`
+- v2.3.1 locks the approved `ApartmentIQ Market Enrichment` section and the new `Search Market Visibility` / DataForSEO section.
+- DataForSEO presentation is locked as full-width readable blocks, including `OnPage Summary`, `OnPage Watch Items`, `Local Entity / Peer Suggestions`, and `AI Answer Visibility`.
+- Boundary preserved: DataForSEO remains advisory outside-in search-market evidence and does not replace GSC, GA4, Google Ads, or operating source-of-truth data.
+
+### 2026-05-22 - PIB v2.3.0 Search Market Visibility / DataForSEO Section
+- Added a standalone `Search Market Visibility` section to PIB v2.3.0, sourced from local Pond DataForSEO rows.
+- The section is advisory outside-in search evidence and renders only when DataForSEO rows exist for the governed property identity.
+- Northbridge at Millenia Lake / `FL4NB` was refreshed with new DataForSEO data on 2026-05-22:
+  - SERP pull: `8` keyword requests, `3` target-found rows, `$0.04` cost
+  - deep enrichment: `12` keyword-demand rows, `20` Labs ranked-keyword rows, `1` OnPage snapshot, `1` Business Profile row, `1` AI visibility probe, `$0.126436` cost
+- Proof artifact regenerated:
+  - `/Users/mark/Property_Analytics/reports/pib_v2_3_verification/northbridge-at-millenia-lake/2026/2026-05-22__Property-Intelligence-Brief__northbridge-at-millenia-lake__2026-04-22_to_2026-05-21.html`
+- Boundary preserved: DataForSEO does not replace GSC owned-search metrics, GA4 on-site behavior, Google Ads paid facts, or operating outcomes.
+
+### 2026-05-22 - PIB v2.3.0 ApartmentIQ Advisory Enrichment
+- Added the next canonical PIB version as v2.3.0, preserving the v2.2.0 path and adding ApartmentIQ only in the versioned PIB family.
+- New files:
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/generate_property_intelligence_brief_v2_3_0.py`
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/templates/executive_email_template_v2_3_0.py`
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/send_property_intelligence_brief_email_v2_3_0.py`
+- The `ApartmentIQ Market Enrichment` section is advisory only and renders competitive asking rent, rent per square foot, exposure, market-visible leased estimate, review rating, listed offers, nearest complete peers, offer pressure, Unit-Type Offer Pressure, fee/deposit examples, and amenity differentiators from local Pond tables.
+- Subject-property ApartmentIQ inventory/pricing rows and floorplan pulse are intentionally excluded from PIB because internal empirical Pond sources are authoritative for those facts.
+- The generator resolves PIB properties through the governed property identity matrix before reading ApartmentIQ rows; Northbridge at Millenia Lake / `FL4NB` / ApartmentIQ source id `99066651` rendered successfully.
+- Verification artifact:
+  - `/Users/mark/Property_Analytics/reports/pib_v2_3_verification/northbridge-at-millenia-lake/2026/2026-05-22__Property-Intelligence-Brief__northbridge-at-millenia-lake__2026-04-22_to_2026-05-21.html`
+- Boundary preserved:
+  - no app-side alternate PIB renderer was created
+  - v2.2.0 remains available unchanged
+  - ApartmentIQ does not override Pond/internal source-of-truth operating, availability, guest-card, BI, or GA4 facts
+
+### 2026-05-22 - ApartmentIQ Full-Dive Export
+- Added `/Users/mark/Property_Analytics/scripts/generate_apartmentiq_full_dive.py` to export detailed ApartmentIQ current-snapshot artifacts from local Pond rows.
+- Current artifact package:
+  - `/Users/mark/Property_Analytics/reports/apartmentiq/2026-05-22/full_dive/apartmentiq_full_dive_2026-05-22.md`
+  - companion CSVs for market survey rows, listed offers, fees/deposits, amenities, and unit-type metrics
+- Current local snapshot coverage is `28` market survey rows across `3` comp sets, with `20` complete peer rows, `15` listed-offer rows, `240` fee rows, `2,660` amenity rows, and `111` unit-type rows.
+- Boundary preserved:
+  - full-dive data is advisory vendor market intelligence
+  - the export is separate from PIB and does not alter official operating/source-of-truth claims
+
+### 2026-05-22 - ApartmentIQ API Connector Activated ✅
+- Added a live ApartmentIQ API source route as an extension of the existing AptIQ / ApartmentIQ advisory market-intelligence lane, without changing PIB renderers/templates/senders.
+- Keeper auth:
+  - record: `ApartmentIQ API`
+  - default notation: `keeper://aRP2hTUWhLTCAn-ye7GJ_w/field/password`
+  - override env: `KSM_APARTMENTIQ_API_KEY_NOTATION`
+- Implemented:
+  - connector: `/Users/mark/Property_Analytics/Data_Collection/collectors/apartmentiq_collector.py`
+  - config: `/Users/mark/Property_Analytics/Data_Collection/config/apartmentiq.yaml`
+  - auth helper: `/Users/mark/Property_Analytics/utils/apartmentiq_auth.py`
+  - local/D1-ready schema: `/Users/mark/Property_Analytics/apps/api/migrations/0055_create_apartmentiq_tables.sql` and `/Users/mark/Property_Analytics/infra/migrations/034_create_apartmentiq_tables.sql`
+  - source contract: `/Users/mark/Property_Analytics/docs/APARTMENTIQ_API_SOURCE_CONTRACT_2026-05-22.md`
+  - daily collection hook in `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+- Pond tables:
+  - `apartmentiq_accounts`
+  - `apartmentiq_comp_sets`
+  - `apartmentiq_market_survey_items`
+  - `apartmentiq_units`
+  - `apartmentiq_floorplans`
+  - `apartmentiq_property_identity_links`
+- Live exploration succeeded against `https://data.apartmentiq.io/apartmentiq/api/v1`:
+  - `1` account discovered: account id `9900124`
+  - `285` competitive sets discovered/upserted
+  - exploratory 3-comp-set sample wrote `28` market survey rows, `1,480` unit rows, and `278` floorplan rows
+  - Northbridge at Millenia Lake resolved through the governed property identity matrix as `FL4NB`; ApartmentIQ property id `99066651` is now captured in the matrix as a prefixed source id (`apartmentiq:99066651`)
+- Guardrails:
+  - ApartmentIQ remains advisory market/comps evidence only; Data Pond source-of-record facts govern Venterra operating, leasing, availability, guest-card, and BI claims.
+  - Default scheduled posture collects account/comp-set/market-survey facts with `max_comp_sets_per_run: 20`; unit and floorplan collection are implemented but disabled by default until volume/cadence are confirmed.
+- Follow-up operating cadence:
+  - daily light runner: `/Users/mark/Property_Analytics/run_apartmentiq_daily_light.sh`
+  - weekly dive runner: `/Users/mark/Property_Analytics/run_apartmentiq_weekly_dive.sh`
+  - recurring Codex automations created: `apartmentiq-daily-light-refresh` (daily 06:35 local) and `apartmentiq-weekly-portfolio-dive` (Monday 07:15 local)
+  - temporary same-day retry automation created for the initial full baseline after ApartmentIQ returned extended 429s during immediate full-run attempts: `apartmentiq-full-baseline-retry-today` (Friday 12:30 local); delete/pause after successful baseline because the ongoing Monday weekly dive is active
+  - Captain alert note: `/Users/mark/Property_Analytics/reports/captains_log/source_alerts/apartmentiq_api_source_activation_2026-05-22.md`
+  - enrichment summary generator: `/Users/mark/Property_Analytics/scripts/generate_apartmentiq_enrichment_summary.py`, writing artifacts under `/Users/mark/Property_Analytics/reports/apartmentiq/`
+  - rate-limit posture tightened to `8.0` seconds between requests plus `330` second 429 sleeps for the heavy units/floorplans pass
+
+---
+
+### 2026-05-21 - The Reserves of Thomas Glen Copy Change Activated ✅
+- The Reserves of Thomas Glen / `KY4TG` has been added to active Copy Change Monitoring after the Shepherdsville KY / I-65 copy, title, meta, and OG package was published.
+- Monitoring setup:
+  - wave: `copy_wave_2026_05_21_thomas_glen`
+  - page: `https://venterraliving.com/apartments/reserves-of-thomas-glen/`
+  - publish timestamp: `2026-05-21T13:48:26-05:00`
+  - first full post-change day: `2026-05-22`
+  - tracked fields: `title`, `meta`, `upper_copy`, `neighborhood`, `open_graph`
+  - target queries include apartments in Shepherdsville KY, Shepherdsville KY apartments, Shepherdsville apartments, apartments for rent in Shepherdsville KY, apartments near I-65 Shepherdsville KY, apartments near Louisville KY, apartments with pool in Shepherdsville KY, apartments with garage in Shepherdsville KY, pet-friendly apartments Shepherdsville, and The Reserves of Thomas Glen.
+- Current-copy archive and replacement package:
+  - `/Users/mark/Property_Analytics/reports/site_content/reserves_of_thomas_glen/2026-05-21/reserves_of_thomas_glen_structured_copy_2026-05-21.json`
+  - `/Users/mark/Property_Analytics/reports/site_content/reserves_of_thomas_glen/2026-05-21/reserves_of_thomas_glen_replacement_copy_proposal_2026-05-21.json`
+  - confound/verification note: `/Users/mark/Property_Analytics/reports/site_content/reserves_of_thomas_glen/2026-05-21/reserves_of_thomas_glen_post_publish_confounds_2026-05-21.json`
+- Captain handoff:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/ky4tg_site_change_captain_consultation_2026-05-21.md`
+- Live title/meta/newer OG/Twitter tags and both replacement copy sections verified. Follow-up technical watch: older first Open Graph title/description tags still appear ahead of corrected OG/Twitter tags. Offer watch: OG image alt references `All-In-Price: No Gimmicks - Just Great Pricing`; validate positioning/offer status before reading social-preview performance. Paid-media watch: detailed Google Ads rows show Shepherdsville and near-me apartment traffic, so separate paid keyword fit from organic copy impact.
+
+---
+
+### 2026-05-21 - Steeplechase Copy Change Activated ✅
+- Steeplechase / `KY4SC` has been added to active Copy Change Monitoring after the Lexington KY / Hamburg / I-75 copy, title, meta, and OG package was published.
+- Monitoring setup:
+  - wave: `copy_wave_2026_05_21_steeplechase`
+  - page: `https://venterraliving.com/apartments/steeplechase/`
+  - publish timestamp: `2026-05-21T13:04:36-05:00`
+  - first full post-change day: `2026-05-22`
+  - tracked fields: `title`, `meta`, `upper_copy`, `neighborhood`, `open_graph`
+  - target queries include Lexington KY apartments, apartments in Lexington KY, Lexington apartments, apartments for rent in Lexington KY, apartments near Hamburg Lexington KY, Hamburg Pavilion apartments Lexington KY, apartments close to I-75 Lexington KY, pet-friendly apartments Lexington KY, and branded Steeplechase terms.
+- Current-copy archive and replacement package:
+  - `/Users/mark/Property_Analytics/reports/site_content/steeplechase/2026-05-21/steeplechase_structured_copy_2026-05-21.json`
+  - `/Users/mark/Property_Analytics/reports/site_content/steeplechase/2026-05-21/steeplechase_replacement_copy_proposal_2026-05-21.json`
+  - confound/verification note: `/Users/mark/Property_Analytics/reports/site_content/steeplechase/2026-05-21/steeplechase_post_publish_confounds_2026-05-21.json`
+- Captain handoff:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/ky4sc_site_change_captain_consultation_2026-05-21.md`
+- Live title/meta/newer OG/Twitter tags and both replacement copy sections verified. Follow-up technical watch: older first Open Graph title/description tags still appear ahead of corrected OG/Twitter tags. Offer watch: OG image alt references `up to $250 off select Steeplechase homes`; validate offer status before reading social-preview performance. Paid-media watch: detailed Google Ads rows show pet-friendly and broad apartment traffic, so separate paid keyword fit from organic copy impact.
+
+---
+
+### 2026-05-21 - Avasa at 1604 Copy Change Activated ✅
+- Avasa at 1604 / `TX416` has been added to active Copy Change Monitoring after the San Antonio / Loop 1604 copy, title, meta, and OG package was published.
+- Monitoring setup:
+  - wave: `copy_wave_2026_05_21_avasa_1604`
+  - page: `https://venterraliving.com/apartments/avasa-at-1604/`
+  - publish timestamp: `2026-05-21T12:28:05-05:00`
+  - first full post-change day: `2026-05-22`
+  - tracked fields: `title`, `meta`, `upper_copy`, `neighborhood`, `open_graph`
+  - target queries include San Antonio apartments near Loop 1604, apartments near Loop 1604 San Antonio, apartments near Rolling Oaks Mall, apartments near Randolph AFB, pet-friendly apartments San Antonio TX, smart-home apartments San Antonio TX, and branded Avasa at 1604 terms.
+- Current-copy archive and replacement package:
+  - `/Users/mark/Property_Analytics/reports/site_content/avasa_at_1604/2026-05-21/avasa_at_1604_structured_copy_2026-05-21.json`
+  - `/Users/mark/Property_Analytics/reports/site_content/avasa_at_1604/2026-05-21/avasa_at_1604_replacement_copy_proposal_2026-05-21.json`
+  - confound/verification note: `/Users/mark/Property_Analytics/reports/site_content/avasa_at_1604/2026-05-21/avasa_at_1604_post_publish_confounds_2026-05-21.json`
+- Captain handoff:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/tx416_site_change_captain_consultation_2026-05-21.md`
+- Live title/meta/newer OG/Twitter tags and both replacement copy sections verified. Follow-up technical watch: older first Open Graph title/description tags still appear ahead of corrected OG/Twitter tags. Offer watch: OG image alt references `Up to One Month Free`; validate offer status before reading social-preview performance. Paid-media watch: detailed Google Ads rows show recent clicks with 0 recorded conversions and `townhomes for rent` click volume, so separate paid traffic fit from organic copy impact.
+
+---
+
+### 2026-05-21 - The Retreat Copy Change Activated ✅
+- The Retreat / `TX4GM` has been added to active Copy Change Monitoring after the Richmond TX / Grand Mission copy, title, meta, and OG package was published.
+- Monitoring setup:
+  - wave: `copy_wave_2026_05_21_retreat`
+  - page: `https://venterraliving.com/apartments/the-retreat/`
+  - publish timestamp: `2026-05-21T11:00:51-05:00`
+  - first full post-change day: `2026-05-22`
+  - tracked fields: `title`, `meta`, `upper_copy`, `neighborhood`, `open_graph`
+  - target queries include apartments in Richmond TX, Richmond TX apartments, apartments for rent in Richmond TX, pet-friendly apartments Richmond TX, Grand Parkway, Grand Mission, Sugar Land, and branded The Retreat Richmond TX terms.
+- Current-copy archive and replacement package:
+  - `/Users/mark/Property_Analytics/reports/site_content/the_retreat/2026-05-21/the_retreat_structured_copy_2026-05-21.json`
+  - `/Users/mark/Property_Analytics/reports/site_content/the_retreat/2026-05-21/the_retreat_replacement_copy_proposal_2026-05-21.json`
+  - confound/verification note: `/Users/mark/Property_Analytics/reports/site_content/the_retreat/2026-05-21/the_retreat_post_publish_confounds_2026-05-21.json`
+- Captain handoff:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/tx4gm_site_change_captain_consultation_2026-05-21.md`
+- Live title/meta/newer OG/Twitter tags verified. Follow-up technical watch: older first Open Graph title/description tags still appear ahead of corrected OG/Twitter tags. Offer watch: OG image alt references `Now offering up to one month free`; validate offer status before reading social-preview performance.
+
+---
+
+### 2026-05-21 - Avasa Hammock Landing Copy Change Activated ✅
+- Avasa Hammock Landing / `FL4HL` has been added to active Copy Change Monitoring after the West Melbourne / Hammock Landing copy, title, meta, and OG package was published.
+- Monitoring setup:
+  - wave: `copy_wave_2026_05_21_hammock_landing`
+  - page: `https://venterraliving.com/apartments/avasa-hammock-landing/`
+  - publish timestamp: `2026-05-21T10:30:02-05:00`
+  - first full post-change day: `2026-05-22`
+  - tracked fields: `title`, `meta`, `upper_copy`, `neighborhood`, `open_graph`
+  - target queries include West Melbourne apartments, apartments in West Melbourne FL, apartments near Hammock Landing, apartments near Melbourne FL, Palm Bay, Florida Tech, pet-friendly, and branded Avasa Hammock Landing terms.
+- Current-copy archive and replacement package:
+  - `/Users/mark/Property_Analytics/reports/site_content/avasa_hammock_landing/2026-05-21/avasa_hammock_landing_structured_copy_2026-05-21.json`
+  - `/Users/mark/Property_Analytics/reports/site_content/avasa_hammock_landing/2026-05-21/avasa_hammock_landing_replacement_copy_proposal_2026-05-21.json`
+  - confound/verification note: `/Users/mark/Property_Analytics/reports/site_content/avasa_hammock_landing/2026-05-21/avasa_hammock_landing_post_publish_confounds_2026-05-21.json`
+- Captain handoff:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/fl4hl_site_change_captain_consultation_2026-05-21.md`
+- Live title/meta/newer OG/Twitter tags verified. Current 8-week special validates the OG image alt. Follow-up technical watch: older first Open Graph title/description tags still appear ahead of corrected OG/Twitter tags.
+
+---
+
+### 2026-05-20 - EVS Round 2 Batch Prepared ✅
+- Ingested `/Users/mark/Downloads/Round 2 Portfolio Rollout.docx` into the existing EVS portfolio QA lane.
+- Generated Round 2 target config:
+  - `/Users/mark/Property_Analytics/evs/config/round-2-qa-targets.json`
+  - import report: `/Users/mark/Property_Analytics/evs/reports/round-2-qa-batch-import.json`
+  - `21` Staging/Kinsta targets imported; all `21` resolved through the governed property identity matrix.
+  - Pastel links in the doc are intentionally excluded from EVS testing.
+  - Monteverde is listed in the doc but has no Staging URL there (`Please see Julie's email!`), so it remains pending until a target URL is supplied.
+- Added `round_2_property_websites` to `/Users/mark/Property_Analytics/evs/config/portfolio-qa-batches.json`.
+- Added governed source alias `Creekside Apartment Homes` for `Creekside` via `/Users/mark/Property_Analytics/scripts/build_property_identity_matrix.py` and rebuilt `/Users/mark/Property_Analytics/config/property_identity_matrix.json`.
+- Preflight proof:
+  - plan/dry-run report: `/Users/mark/Property_Analytics/evs/reports/round2-preflight-dry-run-20260520-v1/summary.json`
+  - URL reachability report: `/Users/mark/Property_Analytics/evs/reports/round-2-url-reachability-preflight.json`
+  - dry-run produced `84` runner slots (`21` targets x `2` effective profiles x `2` devices), and all `21` Staging URLs returned reachable HTTP responses.
+- This extends the same EVS / BrowserStack portfolio functionality QA system used for Round 1; no parallel QA system was created.
+
+---
+
+### 2026-05-20 - Avasa Spring Branch Copy Change Activated ✅
+- Avasa Spring Branch / `TX4BM` has been added to active Copy Change Monitoring after the Spring Branch Houston copy/title/meta package was published.
+- Monitoring setup:
+  - wave: `copy_wave_2026_05_20_spring_branch`
+  - page: `https://venterraliving.com/apartments/avasa-spring-branch/`
+  - publish timestamp: `2026-05-20T20:36:02-05:00`
+  - first full post-change day: `2026-05-21`
+  - tracked fields: `title`, `meta`, `upper_copy`, `neighborhood`
+  - target queries include Spring Branch Houston, CityCentre, Memorial City, pet-friendly, I-10, Beltway 8, and branded Avasa Spring Branch terms.
+- Current-copy archive and replacement package:
+  - `/Users/mark/Property_Analytics/reports/site_content/avasa_spring_branch/2026-05-20/avasa_spring_branch_structured_copy_2026-05-20.json`
+  - `/Users/mark/Property_Analytics/reports/site_content/avasa_spring_branch/2026-05-20/avasa_spring_branch_replacement_copy_proposal_2026-05-20.json`
+  - confound/verification note: `/Users/mark/Property_Analytics/reports/site_content/avasa_spring_branch/2026-05-20/avasa_spring_branch_post_publish_confounds_2026-05-20.json`
+- Captain handoff:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/tx4bm_site_change_captain_consultation_2026-05-20.md`
+- Live title/meta verified. Follow-up technical watch: older first Open Graph title/description tags still appear ahead of corrected OG/Twitter tags.
+
+---
+
+### 2026-05-20 - EVS Round 1 Tightened Delivery Package ✅
+- Rebuilt the official Round 1 workbook as a fill-only turn-in artifact:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v25_tightened_fill_only.xlsx`
+  - mirror: `/Users/mark/Property_Analytics/outputs/round1_qa_sheet_update_20260520/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v25_tightened_fill_only.xlsx`
+  - fill-only validation: `/Users/mark/Property_Analytics/evs/reports/round1-v25-fill-only-validation-20260520.json`
+  - validation passed with `0` violations; only existing `F:G` status/note cells changed.
+- Tightened workbook status normalization and wording:
+  - rows `79` and `80` now fail when rendered unit layout/pricing includes displayed units not source-backed by Pond or mismatched layout/rent evidence.
+  - row `85` now fails when floor-filter controls exist but changing floors does not alter the observed unit set.
+  - row `102` remains fail where Apply Now opens a Prospect Portal path without observable expected unit context after the no-submit portal proof.
+  - row notes now use cleaner `EVS PASS` / `EVS FAIL` / `EVS REVIEW` / `EVS N/A` / `EVS SKIPPED` language.
+- Tightened BrowserStack runner proof paths:
+  - floor-filter checks attempt both Playwright select and DOM-dispatch evidence and report decisive pass/fail.
+  - mobile floor-filter checks now use bounded interaction evidence rather than passive HTML only.
+  - Pipeline application handoff proof can advance through the read-only DayPicker move-in date step and one no-submit lease-criteria step before deciding whether unit context is observable.
+  - targeted OK4AN desktop/mobile proof is stored under `/Users/mark/Property_Analytics/evs/reports/round1-tightening-OK4AN-20260520-v1/` and `/Users/mark/Property_Analytics/evs/reports/round1-tightening-OK4AN-mobile-20260520-v3/`.
+- Rebuilt local companion evidence package:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520-v25/summary.json`
+  - includes `delivery-summary.csv`, `root-cause-summary.csv`, `evidence-completeness.csv`, `dni-review.csv`, and `dni-screenshot-contact-sheet.html`.
+  - DNI screenshot package uses the full Round 1 no-submit probe: `22` fail scenarios, `44` screenshots.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane and keeps the official workbook fill-only.
+
+---
+
+### 2026-05-20 - Site Change Captain Consultation SOP Added ✅
+- Clarified the site-change / Copy Change Monitoring SOP so Captain consultation is required before meaningful site changes are approved, because the property Captain should know the property best.
+- Captain handoff is also required when a property is added to an active copy-change wave or tracked fields materially change.
+- Updated:
+  - `/Users/mark/Property_Analytics/docs/SITE_CHANGE_CAPTAIN_HANDOFF_STANDARD_2026-05-20.md`
+  - `/Users/mark/Property_Analytics/docs/COPY_CHANGE_MONITORING_SOURCE_CONTRACT_2026-05-18.md`
+  - `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+- SOP behavior:
+  - Captain should be consulted before meaningful copy, metadata, CTA, routing, offer, reputation, floorplan, neighborhood, or conversion-path changes are finalized.
+  - Captain/Navigator/Logkeeper must then be told which property/page changed, publish timestamp, first full post-change day, changed fields, target queries, hypothesis, memory note, and proof sources.
+  - If Captain runtime/watch tables are available, create/update the watch/action item there.
+  - If they are not available locally, write a handoff note under `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/`.
+- Grand Harbor / `TX4GH` handoff created:
+  - `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/tx4gh_copy_change_captain_handoff_2026-05-20.md`
+
+---
+
+### 2026-05-20 - PIB Site Evaluation Standard Memorialized ✅
+- Memorialized the approved `PIB Site Evaluation` style/content standard:
+  - `/Users/mark/Property_Analytics/docs/PIB_SITE_EVALUATION_STANDARD_2026-05-20.md`
+  - report-family map reference: `/Users/mark/Property_Analytics/docs/REPORT_FAMILY_MAP_2026-04-18.md`
+- Embedded the approved `PIB Site Evaluation` as the intro to the canonical v2.2.0 PIB report when supporting evaluation evidence is available:
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/generate_property_intelligence_brief_v2_2_0.py`
+  - `/Users/mark/Property_Analytics/Property_Intelligence_Brief/templates/executive_email_template_v2_2_0.py`
+  - generated Grand Harbor proof artifact: `/Users/mark/Property_Analytics/Property_Intelligence_Brief/reports/the-cape-at-grand-harbor/2026/2026-05-20__Property-Intelligence-Brief__the-cape-at-grand-harbor__2026-04-20_to_2026-05-19.html`
+- Standard purpose:
+  - executive synthesis at the top of the canonical PIB for an underperforming site/property
+  - uses canonical PIB payload/HTML plus Data Pond, DataForSEO, BI spend/conversion, source performance, box score, unit availability, GSC query mix, reviews/reputation, and existing Captain/Watchlist context
+  - explains low performance through evidence-led reasons and action-ready recommendations
+- Approved output shape:
+  - Bottom Line
+  - Main Reasons
+  - Actionable Moves
+  - source distinctions for known vs unknown evidence
+- Grand Harbor / `TX4GH` is the seed precedent:
+  - demand was not the core issue; conversion yield, exposed inventory, nonbrand visibility, mobile path, and message-fit were the action lanes
+  - Google Ads had BI spend/cost evidence but lacked current Google Ads API keyword/click/device detail in the PIB window
+- This standard does not create a new PIB renderer/template/sender and does not replace the locked canonical PIB artifact. With explicit approval, it is now the canonical PIB intro when the evidence context exists, so detailed PIB sections serve as supporting data below the diagnosis.
+
+---
+
+### 2026-05-20 - EVS Round 1 Audit Support Reports ✅
+- Added local Round 1 audit-support generator:
+  - `/Users/mark/Property_Analytics/evs/orchestration/build-round1-audit-support.mjs`
+  - npm alias: `npm --prefix evs run qa:audit-support`
+- Generated local support package:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520/summary.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520/root-cause-summary.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520/root-cause-summary.csv`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520/evidence-completeness.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520/evidence-completeness.csv`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-audit-support-20260520/dni-screenshot-contact-sheet.html`
+- Root-cause grouping now summarizes:
+  - DNI / Attribution Failure: `176` fail cells across rows `8`, `61`, `161`, `164`, and `175-178`
+  - Unit Sort Order: `40` fail cells across rows `83-84`
+  - Availability Mismatch: `17` fail cells on row `81`
+  - SightMap Unit Zoom: `7` fail cells on row `90`
+  - Specials Toggle: `1` fail cell on row `4`
+  - Inspected Review Required: `55` review cells
+- Added focused npm presets:
+  - `qa:dni-phone-probe`
+  - `qa:forms-validation`
+  - `qa:sort-order`
+  - `qa:sightmap`
+  - `qa:availability`
+- Updated local evidence package:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-initial-fill-only-evidence-20260520-v5/evidence-manifest.json`
+  - indexes `77` files including the support reports and `44` screenshot artifacts
+- This remains local EVS evidence/report support only; the supplied workbook remains fill-only.
+
+---
+
+### 2026-05-20 - EVS DNI Probe + Fill-Only Validator ✅
+- Added a no-submit DNI/source-phone probe:
+  - `/Users/mark/Property_Analytics/evs/orchestration/run-dni-phone-probe.mjs`
+  - npm alias: `npm --prefix evs run qa:dni-phone-probe`
+  - exports feed-backed `trackingCodes`, generates `?id=<trackingId>` home/contact URLs, captures expected phone, visible phones, `tel:` links, runtime selected source, loaded URLs, and optional screenshots
+  - strict verdict: visible text or `tel:` must show the expected source phone; runtime-selected source phone alone is evidence but not a pass
+- Smoke proof:
+  - `/Users/mark/Property_Analytics/evs/reports/dni-phone-probe-smoke-OK4AN-20260520-v2/summary.json`
+  - `OK4AN` / `APL` failed correctly: runtime selected `(844) 993-2751`, but visible/tel phone stayed `(405) 321-5800`
+- Round 1 no-submit one-source proof:
+  - `/Users/mark/Property_Analytics/evs/reports/dni-phone-probe-round1-one-source-screenshots-20260520/summary.json`
+  - `22` scenarios failed / `0` passed; this supports the initial-round workbook-wide DNI failure decision without submitting forms
+  - screenshots captured: `44` local PNGs, two per property/source scenario
+- Added workbook fill-only validator:
+  - `/Users/mark/Property_Analytics/evs/orchestration/validate-workbook-fill-only.mjs`
+  - npm alias: `npm --prefix evs run qa:validate-fill-only`
+  - compares the supplied workbook to the filled workbook and fails on changed sheet structure or non-allowed cell changes
+- The validator caught an existing violation in v22: an extra `EVS Findings Summary` tab.
+- Rebuilt the workbook from the original supplied sheet and copied only the filled `F:G` cells:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v23_fill_only.xlsx`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-v23-fill-only-validation-20260520.json`
+  - validation passed with `0` violations.
+- Updated the local evidence package:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-initial-fill-only-evidence-20260520-v4/evidence-manifest.json`
+  - indexes `71` files including `44` screenshot artifacts
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-20 - EVS Fill-Only Workbook + Local Evidence Package ✅
+- Locked the Round 1 workbook handling rule: supplied QA workbooks are fill-only, with no added tabs, columns, rows, screenshots, raw JSON, HTML snapshots, or non-native evidence objects.
+- Added local evidence packaging utility:
+  - `/Users/mark/Property_Analytics/evs/orchestration/create-local-evidence-package.mjs`
+  - indexes local evidence files with role, path, size, modified time, and SHA-256 hash
+  - can optionally copy files into the package with `EVS_EVIDENCE_COPY_FILES=1`
+- Updated batch runner:
+  - `/Users/mark/Property_Analytics/evs/orchestration/run-portfolio-qa-batch.mjs`
+  - writes `local-evidence-package/evidence-manifest.json` for each batch run unless `EVS_DISABLE_EVIDENCE_MANIFEST=1`
+- Current Round 1 v22 local proof package:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-initial-fill-only-evidence-20260520/evidence-manifest.json`
+  - indexes the v22 workbook mirror, DNI phone failure audit, line coverage audit, no-submit form-validation proof, Carlyle late-addition evidence, sort-order proof, unit Apply proof, and review-sort proof
+- Updated `/Users/mark/Property_Analytics/docs/PORTFOLIO_FUNCTIONALITY_QA_SYSTEM_2026-05-12.md` with the fill-only/local-evidence operating rule.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-20 - EVS DNI Phone Failure Marked For Initial Round ✅
+- Updated the Round 1 workbook after user direction that initial-round form/attribution checks should fail where DNI phone-number replacement is not working and form attribution is not trusted.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v22.xlsx`
+  - rows `8`, `61`, and `161` now fail across all `22` property tabs with DNI/source phone replacement notes
+  - row `164` remains failed across all `22` tabs for form submission attribution
+  - rows `175-178` remain failed across all `22` tabs for AH/EAI guest-card proof
+  - row `165` remains `Pass` because required-field validation is a no-submit browser-validity check
+- Audit artifact:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-dni-phone-fail-audit-20260520.json`
+- This is an initial-round launch QA decision over the workbook evidence: base phone display may still render structurally, but source-specific DNI phone replacement is not accepted as passing.
+
+---
+
+### 2026-05-20 - EVS Line Requirement Totality Audit ✅
+- Audited every Round 1 workbook row tagged `Functionality` or `Data Integrity` against the EVS contract, current workbook state, and latest BrowserStack/local evidence.
+- Closed the main totality gap: `Carlyle Place Apartments` had been added after earlier batch evidence and still had blank EVS-owned rows.
+- New Carlyle evidence:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-carlyle-totality-20260520/portfolio-desktop.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-carlyle-totality-20260520/portfolio-iphone.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-carlyle-totality-20260520/apartments-desktop.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-carlyle-totality-20260520/apartments-iphone.json`
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v20.xlsx`
+  - no blank EVS-owned Functionality/Data Integrity statuses remain across the `22` Round 1 tabs
+  - row `4` now distinguishes `N/A` no-special properties from the one specials-applicable finding (`Avasa Grove West`)
+  - rows `175-178` are explicitly governed AH/EAI proof pending, not generic skipped rows
+- Coverage audit:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-line-requirement-coverage-audit-20260520-v2.json`
+  - `/Users/mark/Property_Analytics/evs/reports/round1-line-requirement-coverage-audit-20260520-v2.md`
+  - `45` EVS-owned rows audited: `27` fully inspected/applicability-resolved, `5` inspected with failures, `8` inspected review-required, `5` governed downstream-proof pending.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-20 - EVS Sort Order Retest Correction ✅
+- Corrected the prior over-broad manual QA override for Round 1 rows `83` and `84`.
+- The correct acceptance rule is the spreadsheet assertion itself: rendered unit rows must follow size, then move-in date, then price order. Operable sort UI alone is not enough to pass these rows.
+- The BrowserStack runner now hard-fails rows `83` and `84` when rendered unit rows do not follow the required combined ordering.
+- Targeted current-state retest:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-sort-order-local-20260520T1258/summary.json`
+  - rows `83`/`84` current result: `20` Fail / `2` Pass
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v19.xlsx`
+  - rows `83` and `84` now reflect the current sort-order evidence.
+  - row `85` floor-filter behavior remains separate and is not changed by this sort-order correction.
+
+---
+
+### 2026-05-20 - EVS Contact Form Validation Checked ✅
+- Corrected stale Round 1 workbook skips for Contact form rows after confirming the agreed split:
+  - row `165` Required Field Validation is a safe no-submit validation check and should be tested
+  - row `164` Contact Form Submit remains a governed synthetic-submit lane because it sends real downstream leads
+- Targeted local no-submit proof checked desktop and iPhone-shaped contact pages for all Round 1 properties:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-contact-validation-local-20260520T1245/summary.json`
+  - row `165` passed `22/22`
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v18.xlsx`
+  - row `165` now shows `Pass` on all `22` property tabs
+  - row `164` is now `Review` with a governed-submit pending note instead of a generic skip
+- Actual row `164` submit testing requires an intentional run with `EVS_ENABLE_SYNTHETIC_FORM_SUBMIT=1`, `EVS_SYNTHETIC_EMAIL_DOMAIN`, and `EVS_SYNTHETIC_RUN_LABEL`, followed by AH/EAI reconciliation.
+
+---
+
+### 2026-05-20 - EVS Unit-Specific Apply Retest Completed ✅
+- Completed the Round 1 row `102` Unit Detail Page Apply Now retest after the prior workbook held a stale `Retest required` placeholder.
+- Targeted local EVS proof checked desktop and iPhone-shaped pages for each Round 1 property:
+  - navigate Apartments & Pricing
+  - open an observed unit detail page
+  - inspect Apply Now destination
+  - pass when the destination carried unit-specific context such as Resi `unit_id`, or equivalent landed-page unit evidence
+- Result:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-row102-unit-apply-local-20260520T1135/summary.json`
+  - row `102` passed `22/22` Round 1 properties
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v17.xlsx`
+  - row `102` now shows `Pass` on all `22` property tabs with unit-specific Apply Now evidence.
+
+---
+
+### 2026-05-20 - EVS Reviews Masonry Sort Note Clarification ✅
+- Clarified Round 1 row `155` Reviews sort evidence so masonry layout warnings do not imply the underlying review feed/source order is broken.
+- Desktop review sort evidence now distinguishes:
+  - source/DOM order newest-first
+  - visual masonry card reading order not strictly newest-first
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v15.xlsx`
+  - Existing row `155` review notes for `5` property tabs now state that source/DOM order is newest-first, but masonry visual card placement is not strictly newest-first in direct reading order.
+- This remains `Review`, not `Fail`, unless source/DOM order itself is not newest-first.
+
+---
+
+### 2026-05-20 - EVS Availability Source-Backed Failure Classification ✅
+- Tightened Round 1 row `81` Availability classification now that Pond/feed availability is present for the batch.
+- BrowserStack row `81` now returns `Fail` when source-backed availability comparison finds unit-set, rendered/structured count, or available-date mismatches.
+- Missing/unloadable Pond evidence still remains `Skipped`/`Review`; the hard-fail path is only for cases where source truth exists and rendered availability does not match it.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v14.xlsx`
+  - Existing row `81` Pond-backed availability findings are now `17` Fail / `4` Pass for the prior 21-property evidence set.
+  - Carlyle Place remains blank for this row until included in the next BrowserStack run.
+- This keeps rows `79` and `80` scoped to displayed layout/pricing correctness while row `81` owns availability completeness and date fidelity.
+
+---
+
+### 2026-05-20 - EVS Sort / Floor Manual QA Override ✅
+- Corrected the Round 1 rows `83`, `84`, and `85` workbook state after user manual QA confirmed the List View sort, Grid View sort, and floor-change behavior work and are observable.
+- The prior EVS hard failures were based on insufficient automation:
+  - sort rows checked passive/default rendered order rather than actively exercising the UI sort workflow
+  - floor row used a narrow automation path rather than the manually confirmed UI workflow
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v12.xlsx`
+  - Existing rows `83`, `84`, and `85` are now `Pass` with `Manual QA PASS` notes for the 21 properties in the prior evidence set.
+  - Carlyle Place remains blank for those rows until included in the next BrowserStack/manual QA pass.
+- Runner classification was softened back to warning for passive sort/floor evidence so EVS does not emit hard failures until it actively exercises the same UI workflow.
+
+---
+
+### 2026-05-20 - EVS Form Checks Split: Validation vs Governed Submit ✅
+- Clarified the Round 1 form-testing boundary while broad multi-source form attribution remains paused for vendor-side confirmation.
+- Row `165` Required Field Validation is now a no-submit check:
+  - owner `forms_qa`
+  - runner profile `contact_form_checks`
+  - side-effect policy `no_submit_validation_only`
+  - automation status `ready_for_runner_mapping`
+- Row `164` Contact Form Submit remains a governed synthetic-submit check:
+  - owner `forms_qa`
+  - runner profile `contact_form_checks`
+  - side-effect policy `form_submission_required`
+  - requires explicit submit flags, synthetic identity, and downstream AH/EAI reconciliation for final routing proof.
+- The existing `lead_attribution_e2e` lane can still run a narrow one-source action smoke: generated `?id=<trackingId>` URL, expected source phone visibility, recipient evidence where exposed, synthetic form draft/submit, acknowledgement capture, and downstream confirmation fields.
+- This preserves the pause on broad source sweeps while allowing controlled action confirmation for one source/property.
+
+---
+
+### 2026-05-20 - EVS Unit-Specific Apply Landing-Page Verification Fix ✅
+- Corrected the row `102` Unit Detail Page Apply Now logic after review showed the prior failure classification was based only on the outbound Pipeline URL.
+- The BrowserStack runner now opens the Pipeline/Prospect Portal destination and checks the landed page for the expected unit number/source unit identifier before deciding pass/fail.
+- The older v10 workbook evidence is now considered insufficient for row `102` because it did not inspect the landed Portal page.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260520_v11.xlsx`
+  - Existing row `102` hard fails were moved back to `Review` with a retest-required note until the improved runner collects landed-page proof.
+  - Carlyle Place remains blank for this row until it is included in the next BrowserStack run.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - EVS Unit-Specific Apply Failure Classification ✅
+- Tightened Round 1 EVS Apartments & Pricing row `102` so a Unit Detail Page Apply Now handoff must carry unit context when the checklist asks for a unit-specific app.
+- Desktop and mobile runner paths now return `Fail` when the Apply Now destination is only property-level, such as `/createPipelineApplication/<propertyCode>`, or when no application handoff is found.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260519_v10.xlsx`
+  - Existing Round 1 evidence now marks row `102` as `Fail` for all `21` properties that were in the prior BrowserStack run.
+  - Carlyle Place is blank for this row until it is included in the next BrowserStack run because it was added after the existing evidence set.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - Round 1 Carlyle Place Target Confirmed ✅
+- Confirmed Carlyle Place Apartments as part of the Round 1 Kinsta QA target set.
+- Added governed extra target config:
+  - `/Users/mark/Property_Analytics/evs/config/round-1-qa-confirmed-extra-targets.json`
+- Updated `/Users/mark/Property_Analytics/scripts/import_round1_qa_batch.py` so confirmed workbook-but-not-docx targets are merged durably during future imports.
+- Regenerated `/Users/mark/Property_Analytics/evs/config/round-1-qa-targets.json` and `/Users/mark/Property_Analytics/evs/reports/round-1-qa-batch-import.json`.
+- Carlyle target:
+  - property code `TX4CP`
+  - workbook tab `Carlyle Place Apartments`
+  - Kinsta target URL `https://carlyleplaceapartments.kinsta.cloud/`
+  - canonical website URL `https://venterraliving.com/apartments/carlyle-place-apartments/`
+- Round 1 now has `22` targets and no workbook/doc reconciliation warnings.
+
+---
+
+### 2026-05-19 - EVS Sort / Floor Functional Fail Classification ✅
+- Tightened Round 1 EVS Apartments & Pricing functional classification so deterministic broken behavior is marked as `Fail`, not `Review`.
+- Rows `83` and `84` now fail when rendered unit rows do not follow the required combined sort order: size, then move-in date, then price.
+- Row `85` now fails when the floor filter exists but changing it does not update the observed available-unit set, cannot be exercised, or lacks usable floor metadata.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260519_v9.xlsx`
+  - Round 1 rows `83` and `84` are now `19` Fail / `2` Pass.
+  - Round 1 row `85` is now `21` Fail.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - EVS Data Integrity Verdict Scoping ✅
+- Tightened Round 1 EVS Apartments & Pricing verdict scoping so unit-set completeness does not incorrectly contaminate pricing/layout rows when all displayed units are source-backed and the field-specific mismatches are zero.
+- Rows `79` and `80` now judge displayed unit layouts/pricing against Pond records; Pond-only units missing from the rendered site remain tracked under row `81` Availability.
+- Displayed units missing from Pond still keep rows `79`/`80` in review because those rendered values cannot be source-validated.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260519_v8.xlsx`
+  - Round 1 row `79` is now `13` Pass / `8` Review.
+  - Round 1 row `80` is now `4` Pass / `17` Review.
+  - Round 1 row `81` remains the availability completeness gate at `4` Pass / `17` Review.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - EVS Specials Toggle N/A Classification ✅
+- Tightened Round 1 EVS specials-bar functionality classification so a missing Specials toggle is not reported as a generic skip when the latest ThirtyLines feed has no `propertyBannerSpecial` for the property.
+- The property contact/source-truth exporter now carries feed `propertyBannerSpecial` alongside contact, vendor URL, and geo truth.
+- BrowserStack row `4` now returns `not_applicable` when no feed special exists and no specials toggle candidate is visible; if the feed has a special but no toggle is found, the row remains a testable skipped/warning candidate for review.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260519_v7.xlsx`
+  - `20` Round 1 property tabs with blank feed specials were updated to `N/A` for the Specials Bar toggle row.
+  - `Avasa Grove West` was intentionally left testable because its feed `propertyBannerSpecial` is populated.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - EVS Round 1 Map Pin Feed Geo Fix ✅
+- Fixed Round 1 EVS map-pin validation so the Location / Map row uses latitude/longitude from the latest ThirtyLines feed instead of requiring a separate property geo config file.
+- The property contact/source-truth exporter now carries feed `latitude` and `longitude` alongside phone/vendor URL truth.
+- The generic batch runner now supplies that feed-backed source truth to `portfolio_functionality_regression`, not only `header_navigation_integrity`.
+- BrowserStack row `141` now navigates to `/location/`, extracts rendered/schema/map coordinate candidates, compares them to feed lat/long with a 0.25 mile tolerance, and records expected/rendered coordinate evidence.
+- Full Round 1 proof after the fix:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-map-pin-full-20260519T220728Z/summary.json`
+  - row `141` passed `42/42` desktop+iPhone property sessions with feed/rendered coordinate evidence.
+- Workbook follow-up:
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites_EVS_Updated_20260519_v6.xlsx`
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - EVS Round 1 Media Interaction Rows Reclassified ✅
+- Tightened the Round 1 EVS / BrowserStack workbook contract so browser-observable media functionality is no longer over-deferred as generic media QA:
+  - Unit Detail Page row `89` now exercises the Virtual Tour / Matterport handoff.
+  - Unit Detail Page row `91` now exercises unit-detail photo/gallery modal behavior.
+  - Unit Detail Page row `92` now verifies rendered image presence but remains a human/media review item for property-specific image correctness.
+  - Features row `114` and Amenities row `124` now exercise camera/photo triggers and verify gallery/modal evidence.
+- The importer now classifies camera icon, photo modal, virtual tour, Matterport, and browser-observable image-render checks as EVS-owned where the assertion is functional; pure “is this the correct property photo?” judgment remains a review lane.
+- The BrowserStack runner now closes prior media overlays between checks, recognizes UIkit/lightbox/modal gallery surfaces, and records modal image evidence so sequential Matterport/photo checks do not create false warnings.
+- Focused OK4AN proof after the fix:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-media-interactions-smoke-OK4AN-v2-20260519T210658Z/summary.json`
+  - desktop and iPhone passed Matterport row `89`, photo/gallery row `91`, Features camera row `114`, and Amenities camera row `124`.
+  - row `92` warns by design because EVS can prove images render but property-specific image correctness still needs human/media confirmation.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+---
+
+### 2026-05-19 - EVS Round 1 QA Harness Tightening ✅
+- Tightened the Round 1 EVS / BrowserStack QA harness after the first full property batch:
+  - `export_evs_property_contact_truth.py` now resolves URL-list property ids/codes through the governed property identity matrix, so Round 1 header/footer checks receive feed-backed ThirtyLines contact truth instead of falling back to structural checks.
+  - Header/footer path matching now treats `http` and `https` on the same host as the same site for internal nav validation, fixing the Cobblestone at Eagle Harbor false warning caused by the `http://` batch URL resolving to `https://` site links.
+  - Reviews carousel validation now uses a 4.5 second dwell, observes actual active slide/transform/control state, and can fall back to next-control interaction instead of only comparing parent text/class.
+  - JavaScript runtime classification now ignores non-actionable browser/vendor noise such as ResizeObserver loop notifications and YouTube fullscreen permission-policy warnings, while preserving actionable errors.
+  - BrowserStack-only WebGL creation failures and aborted third-party media/vendor requests are now classified as ignored runtime/network noise; explicit SightMap/Matterport checks remain responsible for vendor functionality.
+  - Pond availability findings now include compact unit-level mismatch evidence for rendered-vs-feed unit/rent/date/sqft differences and use row-specific verdict wording for unit layouts, pricing, and availability.
+  - Apartments sort checks now evaluate combined size -> move-in date -> price order and emit the first inversion instead of requiring every independent ordering to be true at once.
+  - Floor-filter checks now preserve select options, selected method, target floor, before/after unit counts, and changed-unit evidence for spreadsheet/export review.
+  - Unit-detail SightMap checks now try the rendered Apartment/Unit Location control before deciding whether the SightMap iframe or unit-specific locate call is absent.
+  - Other Similar Homes detection is less brittle on unit-detail/mobile snapshots and recognizes broader same-site apartment/floorplan labels and links.
+- Cobblestone proof after the harness tightening:
+  - desktop and iPhone `header_navigation_integrity` both pass for header logo/home, header nav, footer nav, phone, Apply Now, and Schedule Tour.
+  - desktop and iPhone `portfolio_functionality_regression` both pass the Reviews carousel check.
+- Focused deep-journey proof after the final tightening:
+  - `/Users/mark/Property_Analytics/evs/reports/round1-tight-floor-proof-20260519T183244Z/summary.json`
+  - CoHo: 19 pass / 3 warn; remaining warnings are unit sort order and floor select options (`Any` only despite inferred unit floors).
+  - Camber Ridge: 15 pass / 7 warn; remaining warnings are Pond date/unit-set evidence, unit sort order, floor filter not changing visible units after selecting `2nd Floor`, and missing Apartment Location/SightMap control on the tested unit detail.
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane. It does not touch locked PIB files or create a parallel QA system.
+
+### 2026-05-19 - EVS Critical QA Summary / Severity Gate ✅
+- Tightened EVS severity policy so high-severity missing core functionality cannot hide as a generic warning:
+  - Missing SightMap surface/control now fails row `90`.
+  - SightMap runtime/vendor API errors such as `SightMap IFrame API: Unit with Unit Number ... was not found` are mapped back to row `90` as high-severity failures with the original error preserved in evidence.
+  - Missing high-severity application, schedule-tour, price-quote, or unit-detail handoffs are promoted from warning to failure when the core target/control is absent.
+  - Header logo/home, header phone, header Schedule Tour, header Apply Now, header primary nav, footer primary nav, and mobile menu parity are now high-severity header/footer failures when required evidence is absent.
+- Batch orchestration now writes a separate blocker-first export next to every full summary:
+  - `critical-summary.json`
+  - `critical-summary.csv`
+  - fields include `site_ready`, `needs_review`, `critical_fail_count`, `fail_count`, `high_warn_count`, top blockers, workbook row, profile, device, message, and compact evidence.
+- Proof artifacts:
+  - Two-property proof: `/Users/mark/Property_Analytics/evs/reports/round1-critical-summary-proof-v2-20260519T184939Z/critical-summary.csv`
+  - CoHo SightMap runtime mapping proof: `/Users/mark/Property_Analytics/evs/reports/round1-critical-summary-sightmap-map-proof-20260519T185135Z/critical-summary.json`
+- This extends the existing EVS / BrowserStack portfolio functionality QA lane and is intended to make launch batches auditable and blocker-first. It does not touch locked PIB files or create a parallel QA system.
+
+### 2026-05-18 - Copy Change Monitoring wired into Data Pond ✅
+- Added **Copy Change Monitoring** as the governed local route for permanent website copy/title/meta/FAQ/CTA changes.
+- New source contract:
+  - `/Users/mark/Property_Analytics/docs/COPY_CHANGE_MONITORING_SOURCE_CONTRACT_2026-05-18.md`
+- New local utility and operator entrypoint:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/copy_change_monitoring.py`
+  - `/Users/mark/Property_Analytics/scripts/register_copy_change_intervention.py`
+- Updated `/Users/mark/Property_Analytics/scripts/send_copy_change_impact_brief.py` so the Copy Change Impact Brief now:
+  - reads active copy-change waves/interventions from local registry tables instead of relying on the hardcoded property list
+  - seeds the existing April 17, 2026 cohort into `copy_wave_2026_04_17`
+  - supports multiple waves and property additions without code edits
+  - writes normalized local observations into `copy_change_observations`
+  - stores aggregate GSC, GA4 Organic Search, and GSC query-cohort evidence locally
+  - keeps the executive email as a concise quick read and no longer attaches raw JSON unless `--attach-json` is explicitly passed
+- Local SQLite tables now created/used in `/Users/mark/Property_Analytics/data/portfolio_analytics.db`:
+  - `copy_change_waves`
+  - `copy_change_interventions`
+  - `copy_change_observations`
+- The seeded April cohort currently has six interventions: Fairways at South Shore, Townhomes at Lake Park, The Pointe Bentonville, Elation at Grandway West, The Anatole, and Forest View.
+- This extends Site Content Creator, Website Change Watch, DataForSEO/Search Intelligence, EVS, Captain/Watchtower, and the existing Copy Change Impact Brief. It does not touch locked PIB files and does not create a new PIB renderer/report family.
+
+### 2026-05-17 - Property Narrative Canon Strategy Established ✅
+- Added the **Property Narrative Canon v1** as the governing core artifact for future VACS / Site Content Creator / Content Office strategy.
+- New canonical doc:
+  - `/Users/mark/Property_Analytics/docs/PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md`
+- Strategic posture:
+  - VACS should evolve from a narrow AI content generator into the narrative synthesis layer for Content Operations.
+  - The canon is the durable property narrative source from which site rewrites, VACS long-form drafts, GBP posts, social drafts, email snippets, FAQ/schema recommendations, blog/editorial briefs, Captain/Navigator content recommendations, and future publishing packages are derived.
+  - Data Pond remains factual authority; Captain's Log / Brief remains operating intelligence; VACS owns narrative synthesis; Site Content Creator owns live-site expression and harmonization; Content Office owns channel distribution and proof.
+  - DataForSEO is the active search/environment evidence source for SERP, keyword, OnPage, Business, AI visibility, and LLM mentions where available.
+  - Ahrefs is a future governed source for backlink, authority, competitor content-gap, and topic evidence after onboarding.
+  - SEMRush is terminated for the active operating lane; legacy SEMRush history can remain as historical evidence, but new content/search strategy should not revive SEMRush-dependent logic.
+- The first recommended implementation slice is one property, one canon, one live-site harmonization audit, one VACS long-form artifact, and one channel derivative package before broad publishing automation.
+- This extends Content Operations / VACS / Site Content Creator / Content Office / Captain Navigator. It does not touch locked PIB files and does not create a separate SEO report family.
+
+### 2026-05-14 - GSC Core Indexation Warning Added ✅
+- Added a true business-risk warning layer for Google Search Console URL Inspection inside `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`.
+- The alert system now checks daily `gsc_url_inspection` evidence for:
+  - canonical property homepage/core URL returning non-PASS
+  - all sampled URLs for a reportable property returning non-PASS
+  - explicit robots/noindex signals on inspected URLs
+- The warning intentionally does **not** escalate benign Search Console exclusions such as redirects, alternate canonicals, specials pages, and other non-core URL states.
+- Current 2026-05-14 verification:
+  - GSC URL Inspection had `0` core indexation warnings against the live/profile-backed portfolio
+  - the full alert preview now includes a `Core Indexation Warnings` summary tile
+  - synthetic critical warning rendering was verified
+- This extends the canonical Data Collection / monitoring alert lane. It does not touch locked PIB files and does not create a separate SEO report family.
+
+### 2026-05-14 - Cloudflare Edge Delivery Analytics Collector Added ✅
+- Added Cloudflare as an additive **Edge Delivery Intelligence** source in the canonical daily collection routine.
+- New canonical paths:
+  - `/Users/mark/Property_Analytics/config/cloudflare_analytics.yaml`
+  - `/Users/mark/Property_Analytics/Data_Collection/collectors/cloudflare_analytics_collector.py`
+  - `/Users/mark/Property_Analytics/scripts/smoke_cloudflare_analytics.py`
+  - `/Users/mark/Property_Analytics/docs/CLOUDFLARE_EDGE_DELIVERY_ANALYTICS_SOURCE_CONTRACT_2026-05-14.md`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0054_create_cloudflare_edge_daily_metrics.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/0040_create_cloudflare_edge_daily_metrics.sql`
+- Canonical DB table: `cloudflare_edge_daily_metrics` in `/Users/mark/Property_Analytics/data/portfolio_analytics.db`.
+- v1 uses Cloudflare GraphQL Analytics API `httpRequestsAdaptiveGroups` with `requestSource: "eyeball"` and configured zones/hostnames.
+- Stored facts include date, zone, hostname, path where feasible, requests, bytes, cached/uncached estimates, cache hit ratio, cache-status JSON, and edge status buckets with emphasis on 4xx/5xx.
+- Rows upsert on `metric_date, zone_id, hostname, path`; `path='__all__'` is the hostname/day aggregate row.
+- Daily orchestration now invokes Cloudflare edge analytics after the existing Cloudflare cache audit. Missing credentials or Cloudflare API failures are graceful advisory conditions and do not fail GA4, GSC, Portfolio Pulse, Insights Engine, or D1 mirror behavior.
+- Explicit source boundary: Cloudflare is edge-delivery/cache infrastructure intelligence only; it does not replace GA4, Heap, or GSC and does not change Portfolio Pulse email content.
+- This extends Data Collection / Data Pond and the existing Cloudflare cache-audit neighborhood. It does not touch locked PIB files and does not create a dashboard or speculative insight layer.
+
+### 2026-05-13 - Round 1 Property Website QA Batch Prepared ✅
+- Official Round 1 inputs:
+  - `/Users/mark/Downloads/Round 1 QA.docx`
+  - `/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx`
+- Added reusable importer `/Users/mark/Property_Analytics/scripts/import_round1_qa_batch.py`.
+  - Reads the Word doc URL list.
+  - Reconciles property names against the official workbook tabs.
+  - Resolves identities through `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py`.
+  - Writes `/Users/mark/Property_Analytics/evs/config/round-1-qa-targets.json`.
+  - Writes audit import report `/Users/mark/Property_Analytics/evs/reports/round-1-qa-batch-import.json`.
+- Round 1 target count is `22`; all doc-listed properties plus the user-confirmed Carlyle Place extra target resolve through the governed identity matrix and map to workbook tabs.
+- The original workbook/doc reconciliation warning for `Carlyle Place Apartments` is cleared by `/Users/mark/Property_Analytics/evs/config/round-1-qa-confirmed-extra-targets.json`.
+- Updated `/Users/mark/Property_Analytics/scripts/import_portfolio_qa_contract.py` and regenerated `/Users/mark/Property_Analytics/evs/config/portfolio-functionality-qa-contract.json` from the official workbook.
+  - Contract now imports `45` rows: `43` Functionality and `2` Data Integrity.
+  - Owner split: `34` EVS, `5` media QA, `2` forms QA, `4` lead-attribution QA.
+  - EVS executable profiles: `16` `portfolio_functionality_regression` checks and `18` `apartments_pricing_deep_journey` checks.
+  - Data Integrity rows map into the Apartments & Pricing deep/mobile source-backed Pond comparison path.
+- Added Round 1 batch definition `round_1_property_websites` in `/Users/mark/Property_Analytics/evs/config/portfolio-qa-batches.json`.
+- Added generic batch runner `/Users/mark/Property_Analytics/evs/orchestration/run-portfolio-qa-batch.mjs`.
+  - It reads the batch plan, loops target/profile/device combinations, stores per-target evidence under `evs/reports/<run_id>/`, and uses the mobile deep profile automatically for iPhone Apartments & Pricing checks.
+- Forms are now wired as a separate guarded lane instead of staying purely deferred:
+  - importer maps rows `164` and `165` to `contact_form_checks` under owner `forms_qa`
+  - default Round 1 runs still exclude forms
+  - `EVS_INCLUDE_FORMS=1` includes form checks alongside the normal batch
+  - `QA_INCLUDE_OWNERS=forms_qa EVS_RUN_PROFILES=contact_form_checks` reruns only forms
+  - actual submissions remain skipped unless `EVS_ENABLE_SYNTHETIC_FORM_SUBMIT=1`, `EVS_SYNTHETIC_EMAIL_DOMAIN`, and `EVS_SYNTHETIC_RUN_LABEL` are set
+  - shared EVS schema, API profile registry, web profile picker, and EVS persistence constraints now recognize `contact_form_checks`; migration `0053` seeds it as separate draft evaluation set `contact_form_checks_v1`
+  - no-submit smoke proof for Anatole (`OK4AN`) wrote `/Users/mark/Property_Analytics/evs/reports/round1-form-profile-smoke-OK4AN.json`; required-field validation passed and form submission correctly skipped while disabled
+- Generated first run plan `/Users/mark/Property_Analytics/evs/reports/round-1-qa-plan.json`.
+- Anatole first-property proof follow-up:
+  - fixed Round 1 Pond availability export so URL-list targets export property-specific Pond truth by governed property id instead of reusing the old five-property Pilot export
+  - `OK4AN` Pond export now returns `11` units and rows `79-81` pass on desktop and iPhone
+  - tightened mobile runtime classification so cancelled Matterport/SightMap/font media requests do not contaminate EVS functionality findings while media remains a separate owner lane
+  - remaining Anatole review items after fix: rows `83-84` sort order warn on desktop/mobile, row `102` mobile Apply Now lacks unit context, and row `155` review sort remains skipped until machine-readable review dates are exposed
+  - row `155` was then tightened to parse rendered review date text (`MM DD, YYYY`) instead of requiring `<time datetime>`; Anatole desktop now warns because DOM order is newest-first but visual masonry card order is not direct newest-first, while iPhone direct card order passes
+- First full run command:
+  - `QA_BATCH_ID=round_1_property_websites node evs/orchestration/run-portfolio-qa-batch.mjs`
+- Useful first-pass smoke command:
+  - `QA_BATCH_ID=round_1_property_websites EVS_RUN_PROFILES=portfolio_functionality_regression EVS_RUN_DEVICE_PROFILES=desktop_chrome EVS_TARGET_IDS=OK4AN node evs/orchestration/run-portfolio-qa-batch.mjs`
+
+### 2026-05-13 - Monteverde Website Change Watch Baseline ✅
+- Canonical name: **Monteverde Website Change Watch**.
+- Prior/adjacent references such as “Monteverde Monitoring,” “Monteverde SEO monitor,” “vendor SEO baseline,” or “Monteverde watch” should consolidate into **Monteverde Website Change Watch**.
+- Monteverde / `https://monteverdesatx.com/` now has an active website change-watch lane for external AI SEO vendor monitoring.
+- The watch now also monitors the new blog subdomain: `https://blog.monteverdesatx.com/`.
+- Governed property identity:
+  - property code `TX4MV`
+  - GA4 `488649687`
+  - GSC `sc-domain:monteverdesatx.com`
+  - community id `e62033cc-7695-480f-b247-e6a0018746e1`
+- New canonical paths:
+  - `/Users/mark/Property_Analytics/config/website_change_watch_properties.json`
+  - `/Users/mark/Property_Analytics/scripts/monitor_monteverde_website_watch.py`
+  - `/Users/mark/Property_Analytics/docs/WEBSITE_CHANGE_WATCH_MONTEVERDE_2026-05-13.md`
+  - `/Users/mark/Property_Analytics/reports/website_change_watch/monteverde/20260513T165310Z/baseline_report.md`
+- The initial clean baseline captured `9` sitemap pages, all HTTP `200`, `869` rendered text blocks, `4,668` visible words, `593` links, `195` CTA-like links, `212` images/alt text records, `9` JSON-LD blocks, and `18` custom schema-bearing scripts.
+- Baseline Data Pond reads were included for GA4, GSC, PSI, GTMetrix, DataForSEO OnPage/SERP/Labs/Business, GBP insights/reviews, Google Ads, unit availability, and Cloudflare synthetic cache checks.
+- Same-session gap fill:
+  - GTMetrix live row inserted for `2026-05-13`: score `84`, structure `86`, fully loaded `4618 ms`, FCP `486 ms`, TTI `950 ms`, `31` requests, `4.93 MB`
+  - GBP review summary derived from canonical `gbp_reviews`: `16` reviews, average rating `4.625`, `0` new reviews in the last 30 days
+  - Cloudflare synthetic checks persisted for homepage, floor plans, amenities, and contact on desktop/mobile clean/query variants; all sampled rows returned `CF-Cache-Status: DYNAMIC`, so this is now a cache finding rather than a missing-data gap
+- Strategic memorialization:
+  - The Monteverde watch is the seed pattern for a future portfolio-grade Website Change Watch capability, not a standalone SEO tool.
+  - Future integration should fold into Site Content Creator, Data Pond snapshot/diff tables, Captain Website/SEO/Content routines, EVS post-change validation, Watchtower freshness/alert surfaces, and Specs page-section contracts.
+  - Keep baseline, diff, and impact windows separate: original state before vendor work, field-level change trail during work, and delayed GA4/GSC/PSI/GTMetrix/DataForSEO/GBP/conversion impact after enough lag has elapsed.
+  - Backend accountability should be added through WordPress/WP Engine revision/activity-log evidence when access is available, feeding the same lane rather than a parallel monitor.
+- This extends Site Content Creator / Data Pond / Captain website routine / EVS direction. It does not touch canonical PIB files and does not create an alternate PIB/report renderer.
+
+### 2026-05-13 - Daily Spotlight PageSpeed Insights Performance Roundup Scheduled ✅
+- Canonical name: **Spotlight PageSpeed Insights Performance Roundup**.
+- This is the approved PSI-first replacement for the prior `Pilot Performance View For Spotlight 11` framing.
+- Report contract:
+  - title: `Spotlight Performance Roundup`
+  - subtitle: `PageSpeed Insights Performance`
+  - PageSpeed Insights performance is the dominant displayed score and trend
+  - New Users, core PSI/CWV fields, and BrowserStack remain supporting context
+  - GTMetrix is intentionally omitted from the Spotlight 11 view
+  - prior status chips/badges are removed
+- New canonical paths:
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/generate_spotlight_performance_roundup.py`
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/send_spotlight_performance_roundup_email.py`
+  - `/Users/mark/Property_Analytics/run_spotlight_performance_roundup_daily.sh`
+  - `/Users/mark/Property_Analytics/pilot_roundup/reports/spotlight/`
+  - `/Users/mark/Library/LaunchAgents/com.venterra.spotlight.performance.roundup.daily.plist`
+- Daily delivery:
+  - launchd job `com.venterra.spotlight.performance.roundup.daily` runs at `7:00 AM` local time
+  - email recipients: `mlaufhutte@venterraliving.com`, `sbynum@venterraliving.com`, `elongoria@venterraliving.com`, `jadomingue@venterraliving.com`
+  - subject format: `Spotlight PageSpeed Insights Performance - MM-DD-YYYY`
+  - duplicate-send protection uses delivery logs under `/Users/mark/Property_Analytics/logs/email_delivery/spotlight_performance_roundup`
+  - Codex automation `daily-spotlight-pagespeed-insights-performance` should act as a post-send watchdog, not as a second primary sender
+- Governed Spotlight 11 property set:
+  - `TX416`, `FL4TA`, `GA4BL`, `TX4CO`, `KY4TG`, `FL4GW`, `FL4HL`, `KY4MP`, `TX4FV`, `TX4GM`, `KY4SC`
+- Property identity is resolved through `/Users/mark/Property_Analytics/config/property_identity_matrix.json`; do not add one-off Spotlight property maps for this report family.
+- This extends the pilot roundup reporting family for the current Spotlight 11 daily performance lane. It does not touch canonical PIB files and does not create an alternate PIB renderer.
+
+### 2026-05-12 - Portfolio Functionality QA Contract Seeded In EVS ✅
+- The BrowserStack / EVS lane now has the first durable portfolio functionality QA contract for property sites that match the pilot template family.
+- Source workbook:
+  - `/Users/mark/Downloads/Revised QA_Portfolio.xlsx`
+- New contract/import paths:
+  - `/Users/mark/Property_Analytics/scripts/import_portfolio_qa_contract.py`
+  - `/Users/mark/Property_Analytics/evs/config/portfolio-functionality-qa-contract.json`
+  - `/Users/mark/Property_Analytics/evs/config/portfolio-qa-batches.json`
+  - `/Users/mark/Property_Analytics/evs/orchestration/build-portfolio-qa-plan.mjs`
+  - `/Users/mark/Property_Analytics/docs/PORTFOLIO_FUNCTIONALITY_QA_SYSTEM_2026-05-12.md`
+- EVS persistence now has an evaluation-set/result-storage shape for this lane:
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0053_create_evs_batch_result_tables.sql`
+  - `evs_evaluation_sets` seeds `portfolio_functionality_qa_v1`
+  - `evs_batches`, `evs_batch_targets`, `evs_batch_runs`, `evs_findings`, and `evs_source_truth_snapshots` store future launch-batch URL lists, per-site/profile/device execution, source-truth artifacts, and row-level assertion findings
+  - `/v1/evs/evaluation-sets`, `GET /v1/evs/batches`, `POST /v1/evs/batches`, and `/v1/evs/batches/:batchId` expose and create the durable records for future EVS display work
+- The imported contract preserves all `43` workbook rows where `Element == Functionality` and keeps row-level lineage back to `Website QA Checklist`.
+- Ownership split:
+  - `32` EVS-owned checks for browser-observable routing, CTAs, availability comparison, map coordinate validation, unit-detail continuity, filters, sorting, and no-submit vendor handoffs
+  - `5` media QA checks deferred to media/image ownership
+  - `2` form QA checks deferred to form ownership
+  - `4` lead-attribution checks deferred until governed synthetic-lead + AH/EAI proof workflow exists
+- Initial executable batch is `pilot_production_functionality`, covering:
+  - `https://championsgreen-ga.com/`
+  - `https://thedistrictuniversal.com/`
+  - `https://theharrisonsandysprings.com/`
+  - `https://ventanaapts.com/`
+  - `https://calaismidtownapartments.com/`
+- Future launch batches should use the URL-list input path in the plan builder instead of creating new one-off BrowserStack scripts.
+- This extends EVS/BrowserStack. It does not touch canonical PIB files or create a parallel QA renderer/report family.
+- Same-day implementation follow-through:
+  - `portfolio_functionality_regression` was added to the BrowserStack runner and shared EVS profile/schema/UI metadata
+  - EVS-owned checks now split into `16` broad portfolio functionality checks and `16` `apartments_pricing_deep_journey` checks
+  - BrowserStack production pilot run passed on `desktop_chrome` for all five pilot sites with no functional warnings/failures
+  - BrowserStack production pilot run passed on `iphone_safari` for all five pilot sites with no functional warnings/failures
+  - expected skips remain for specials-bar functionality when no specials toggle is present and for map-pin coordinate validation until lat/long config is added
+  - iPhone runs still show the known BrowserStack screenshot artifact-capture warning, but functional QA classification is `pass`
+  - `apartments_pricing_deep_journey` now maps the desktop EVS-owned deeper checks: filters, rendered availability structure, sort-order inspection, floor metadata/filter behavior, unit-detail continuity, SightMap unit locate config, Renting Made Simple content, unit-specific quote/apply/schedule handoffs, similar-homes surface detection, and review-date sort validation when source dates are exposed
+  - BrowserStack production desktop deep pilot completed for all five pilot sites. Current findings: recurring list/grid sort-order warnings on the observed unit rows; Ventana additionally needs review for missing Other Similar Homes detection; source-backed availability warnings surface where rendered units do not match Pond; review sort remains skipped until valid machine-readable review dates are exposed
+  - Champions Green desktop deep rerun is clean after filtering media-owned embedded model noise (`Model not found (404)`) out of EVS functional classification
+  - `apartments_pricing_mobile_journey` is now the dedicated iPhone deep path for Apartments & Pricing. It reuses the governed workbook rows from the deep profile, but uses bounded mobile HTML snapshots and per-row checkpoints instead of fragile desktop-style locator interaction.
+  - Final BrowserStack production Pilot mobile run generated `/Users/mark/Property_Analytics/evs/reports/browserstack-pilot-apartments_pricing_mobile_journey-production-iphone_safari.json` at `2026-05-12T22:08:02.698Z`; all `5` Pilot properties exited `0`, none timed out, and artifact capture produced no warnings. Contract-backed result: `57` pass, `18` warn, `5` skipped.
+  - Current mobile findings: recurring list/grid sort-order warnings; row `qa_102` Apply Now opens property-level Pipeline application URLs without explicit unit context; review sort is skipped because only one valid machine-readable review datetime is exposed; Champions Green warns on `37` rendered vs `38` Pond units; The Harrison warns on `12` rendered vs `57` Pond units; Ventana does not expose Other Similar Homes in the bounded mobile unit-detail snapshot.
+  - `header_navigation_integrity` is now a source-backed header/footer profile. It validates header logo/home, header/footer phone `tel:` links against ThirtyLines `officePhone`/`conciergePhone`, property-specific Apply Now against feed `pipelineURL`, Schedule Tour against feed `tourURL`, primary nav destinations, footer parity, and mobile menu parity.
+  - Header/footer Pilot proof: desktop `/Users/mark/Property_Analytics/evs/reports/browserstack-pilot-header_navigation_integrity-production-desktop_chrome.json` at `2026-05-12T22:21:15.529Z` and iPhone `/Users/mark/Property_Analytics/evs/reports/browserstack-pilot-header_navigation_integrity-production-iphone_safari.json` at `2026-05-12T22:24:20.966Z`; all `5` Pilot properties exited `0` on both devices with no timeouts. Header phone/logo/apply/schedule/nav and footer phone/apply/nav passed everywhere. Template policy: footer home/brand link is not required and absent footer home links are reported as skipped/not applicable. Recurring skip: footer Schedule Tour is not required on this template because header/mobile menu owns that CTA.
+  - `run-pilot-browserstack-smoke.mjs` now has `BROWSERSTACK_PROPERTY_TIMEOUT_MS`, and the deep runner has `BROWSERSTACK_CHECK_TIMEOUT_MS`, preventing a slow BrowserStack mobile session from blocking a launch batch indefinitely
+  - `lead_attribution_e2e` is now wired as a separate dormant EVS test structure for feed-backed advertiser URL checks, phone-swap verification, recipient-email verification, and governed synthetic form drafts:
+    - `/Users/mark/Property_Analytics/evs/config/lead-attribution-e2e.json`
+    - `/Users/mark/Property_Analytics/scripts/export_evs_lead_attribution_truth.py`
+    - source truth comes from ThirtyLines `trackingCodes[].trackingId`, `marketingSourceCd`, `phoneNumber`, and `email`
+    - generated advertiser URLs default to `?id=<trackingId>` and can be adjusted with `EVS_ATTRIBUTION_QUERY_PARAM`
+    - default behavior is no-submit; actual form submit requires `EVS_ENABLE_SYNTHETIC_FORM_SUBMIT=1`, `EVS_SYNTHETIC_EMAIL_DOMAIN`, and `EVS_SYNTHETIC_RUN_LABEL`
+    - synthetic identity now follows the team convention: first name `Venterra`, last/full name token `<Property><CTA>-<Source>` such as `ApexForm-Aptlist`, and email `<property><cta>-<source>@venterradev.com` such as `apexform-aptlist@venterradev.com`
+    - local Calais proof selected `TX4MIALIST` / `APL` and passed advertiser URL load, tracking ID observability, phone swap, recipient-email observability, and synthetic form draft against `https://calaismidtownapartments.com/?id=TX4MIALIST`
+    - the first governed submit attempt at `2026-05-13T15:24Z` was corrected to `blocked_browser_validation_not_submitted` after screenshot review showed the required `Number of Beds` field was missing
+    - the corrected governed submit at `2026-05-13T15:29Z` filled `Number of Beds` and max rent, captured the acknowledgement text (`Your request has been submitted...`), and wrote the audit row `/Users/mark/Property_Analytics/evs/reports/calais-TX4MIALIST-corrected-submitted-audit-row-20260513T102927.csv`
+    - operator then changed the synthetic sender domain from `yopmail.com` to `venterradev.com`; the runner default, lead-attribution config, and QA docs now use `<property><cta>-<source>@venterradev.com`
+    - next-source Calais submit used `TX4MIAR` / `APR` with `calaismidtownform-aptratings@venterradev.com`, routed to `venterra_calaismidtown_apartmentratings_vl@leads.anyonehome.com`, captured on-page acknowledgement, and wrote `/Users/mark/Property_Analytics/evs/reports/calais-TX4MIAR-submitted-audit-row-20260513T104216.csv`
+    - combined Calais submission ledger for downstream Anyone Home confirmation: `/Users/mark/Property_Analytics/evs/reports/lead-attribution-calais-submission-ledger-20260513T104216.csv`
+    - the BrowserStack runner now fills property-specific required contact fields and only treats a synthetic submit as clean when browser validation is absent or an on-page acknowledgement is detected
+    - migration `0053` seeds this as draft evaluation set `lead_attribution_e2e_v1`, separate from `portfolio_functionality_qa_v1`
+  - Pond availability is now wired into the deep profile through `/Users/mark/Property_Analytics/scripts/export_evs_pond_availability.py`, which resolves Pilot identities through `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py` and exports latest `unit_availability_units` rows from `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+  - The BrowserStack pilot orchestrator auto-generates this export for `apartments_pricing_deep_journey` and `apartments_pricing_mobile_journey` unless `POND_AVAILABILITY_UNITS_JSON_PATH` is provided or `EVS_DISABLE_POND_AVAILABILITY_EXPORT=1`
+  - Source-backed availability proof: strict BrowserStack desktop full Pilot rerun generated `/Users/mark/Property_Analytics/evs/reports/browserstack-pilot-apartments_pricing_deep_journey-production-desktop_chrome.json` at `2026-05-12T21:23:17.312Z`; District, Ventana, and Calais match Pond availability exactly; Champions warns with `37` rendered units vs `38` Pond units; The Harrison warns with `11` rendered units vs `57` Pond/structured units
+
+### 2026-05-11 - Delta Pearland APO Case Study Post-Rule Checkpoint ✅
+- The Delta Pearland / `thedeltapearland.com` is now configured as the active APO optimization case study domain in:
+  - `/Users/mark/Property_Analytics/config/cloudflare_cache_audit.yaml`
+  - `/Users/mark/Property_Analytics/config/cloudflare_full_page_cache.yaml`
+  - `/Users/mark/Property_Analytics/ops/cloudflare/generate_delta_apo_case_study.py`
+- Cloudflare token visibility is materially improved for the Delta zone: zone/settings/ruleset reads, cache purge, and cache-rules writes are available; older firewall endpoints still return limited visibility.
+- APO is enabled and the WordPress plugin connection is visible in Cloudflare settings (`cf=true`, `wordpress=true`, `wp_plugin=true`) for `thedeltapearland.com` and `www.thedeltapearland.com`.
+- Applied the controlled Phase 1 homepage-only cache ruleset:
+  - ruleset id `9334c6925c4b464e9a21f85f000317f5`
+  - apply artifact `/Users/mark/Property_Analytics/outputs/cloudflare_full_page_cache/20260511T191015Z/thedeltapearland.com.applied.json`
+  - rules bypass admin/API/auth/session traffic and cache anonymous homepage HTML with edge TTL override `7200`
+- Post-apply purge and retest did not produce edge HTML HIT behavior:
+  - latest cache audit reports warm HIT coverage `0.00%`
+  - homepage and `/floor-plans/` still return `cf-cache-status: DYNAMIC`
+  - responses continue to show `vary: Accept-Encoding,Cookie`, WP Engine `x-cacheable: SHORT`, and Cloudflare/WP cookies on HTML
+- Working conclusion: this is no longer a basic APO enablement or ruleset-permission problem. The next optimization lane is origin/cacheability behavior, especially `Vary: Cookie`, anonymous cookie emission, WP Engine cache headers, and whether security/performance features like Browser Integrity / bot cookies are affecting edge HTML cache eligibility.
+- Current case-study artifacts:
+  - `/Users/mark/Property_Analytics/reports/cloudflare_apo_case_study/delta_pearland/2026-05-11/delta_apo_case_study_baseline_2026-05-11.md`
+  - `/Users/mark/Property_Analytics/reports/cloudflare_cache_audit/2026-05-11/cloudflare_cache_audit_2026-05-11.md`
+
+### 2026-05-11 - Delta Cache Blocker Isolation Tests
+- Ran controlled Cloudflare-side cache blocker tests for The Delta Pearland after APO and the Phase 1 homepage cache rule were live.
+- Negative tests:
+  - `browser_check` off did not produce edge HIT; setting was restored to `on`
+  - a temporary `http_response_cache_settings` rule with `strip_set_cookie: true` did not remove the observed `__cf_bm` cookie from delivered homepage responses and did not produce edge HIT; the response ruleset was deleted
+  - temporarily adding `origin_cache_control: false` to the homepage cache rule did not produce edge HIT; the request cache ruleset was restored to the original Phase 1 payload
+  - legacy Page Rule `cache_everything` / `edge_cache_ttl` / `explicit_cache_control=off` could not be tested because the Page Rules endpoint rejects the current account-owned token with code `1011`
+  - Cloudflare Trace could not be used because the account request-tracer endpoint returned authentication error `10000`
+- Final live state after cleanup:
+  - `browser_check=on`
+  - no `http_response_cache_settings` entrypoint exists
+  - request cache ruleset `9334c6925c4b464e9a21f85f000317f5` remains the two-rule Phase 1 homepage cache ruleset
+  - homepage still returns `cf-cache-status: DYNAMIC`
+- Experiment log:
+  - `/Users/mark/Property_Analytics/reports/cloudflare_apo_case_study/delta_pearland/2026-05-11/delta_cache_experiment_log_2026-05-11.md`
+- Working conclusion: the next useful investigation is upstream/WP Engine or a Cloudflare security/bot feature not exposed through the current token, because `__cf_bm`, `Vary: Cookie`, and `x-cacheable: SHORT` persist through the tested Cloudflare cache controls.
+
+### 2026-05-11 - Delta WP Engine Edge Full Page Cache Breakthrough ✅
+- WP Engine portal showed `Edge Full Page Cache (primary domain only)` was `Off` for the Delta production environment.
+- Confirmed the Cloudflare DNS origin targets `141.193.213.10` / `141.193.213.11` are WP Engine-owned (`WPENG`) and still return `server: cloudflare`, meaning the Venterra Cloudflare zone is fronting WP Engine's own Cloudflare-backed edge layer.
+- Enabled WP Engine Edge Full Page Cache from the WP Engine portal and cleared all WP Engine caches.
+- Purged Cloudflare cache for:
+  - `https://thedeltapearland.com/`
+  - `https://www.thedeltapearland.com/`
+  - `https://thedeltapearland.com/floor-plans/`
+- Post-enable probe:
+  - root moved `MISS -> HIT`
+  - `/floor-plans/` moved `MISS -> HIT`
+  - `www` root stayed `HIT`
+- Formal cache audit after the change:
+  - synthetic status `pass`
+  - warm HIT coverage `100.00%`
+  - homepage warm desktop TTFB `60.2 ms`
+  - homepage warm mobile TTFB `46.0 ms`
+- The audit's top-level domain status still reads `fail` only because Cloudflare GraphQL analytics access returns a path/access error; live synthetic cache behavior is now passing.
+- Current evidence:
+  - `/Users/mark/Property_Analytics/outputs/cloudflare_apo_case_study/delta_pearland/20260511T_wpengine_efpc_post_enable_probe.json`
+  - `/Users/mark/Property_Analytics/reports/cloudflare_cache_audit/2026-05-11/cloudflare_cache_audit_2026-05-11.md`
+  - `/Users/mark/Property_Analytics/reports/cloudflare_apo_case_study/delta_pearland/2026-05-11/delta_cache_experiment_log_2026-05-11.md`
+- Remaining caveats to preserve for the case study:
+  - `__cf_bm`, `Vary: Cookie`, and WP Engine `x-cacheable: SHORT` still appear on responses, but no longer prevent warm Cloudflare HIT in the current configuration
+  - Cloudflare Trace beta still fails with `hostname does not belong to your account` despite valid zone/DNS/proxy evidence
+  - Live PSI remains noisy and should be rerun after caches stabilize for at least one normal traffic window
+- Stabilized recheck later on 2026-05-11:
+  - direct root probes returned `HIT` on all 10 requests with `Age` increasing from `289` to `295`
+  - direct `/floor-plans/` probes returned `HIT` on all 10 requests with `Age` increasing from `257` to `262`
+  - formal cache audit kept synthetic status `pass`, warm HIT coverage `100.00%`, desktop homepage warm TTFB `38.77 ms`, and mobile homepage warm TTFB `52.23 ms`
+  - fresh PSI showed desktop score `61` with TTFB `10 ms`, LCP `2.86s`, TBT `328.4 ms`; mobile score `35` with TTFB `12 ms`, LCP `13.36s`, TBT `1005.5 ms`
+  - interpretation: edge/server delivery gain is confirmed, desktop Lighthouse moved materially, and mobile remains mostly a render/LCP/third-party problem rather than a server-response problem
+
+### Pilot Morning 2026-05-10 Roundup Failure / False Bootstrap Alert Fix ✅
+- On 2026-05-10, the pilot morning data collection substantially completed, but the daily CWV email did not send.
+- Actual root cause:
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/generate_pilot_roundup.py`
+  - the `Main Pilot Reference` GTMetrix display path called an undefined helper `trend_color(...)`
+  - the same line also exposed an f-string rendering issue once patched
+- Corrected live behavior:
+  - `trend_color(...)` was replaced with the existing delta/value helpers:
+    - `delta_color(...)`
+    - `fmt_delta(...)`
+  - the GT delta HTML is now prebuilt before the card f-string so the renderer does not trip on nested escaping
+- Alerting issue fixed at the same time:
+  - `/Users/mark/Property_Analytics/run_pilot_morning_daily.sh`
+  - the global `ERR` trap now suppresses the false fallback `Bootstrap / Shell` alert when a stage-specific pilot failure has already written the on-disk failure marker
+  - this matters because the piped workflow body runs in a subshell, so in-memory shell variables alone were not a sufficient duplicate-alert guard
+- Recovery outcome:
+  - `Pilot Performance Roundup - 05-10-2026` was regenerated and sent successfully
+  - `RESOLVED: Pilot Morning Workflow Recovered - 2026-05-10` was sent to Mark only
+
+### Pilot Morning 2026-05-11 Send Suppression Root Cause ✅
+- On 2026-05-11, the pilot morning workflow completed successfully and generated fresh GTMetrix, PSI, homepage evidence, exports, and the roundup artifact, but the email still did not send.
+- Root cause:
+  - the live LaunchAgents were still explicitly pinning `PILOT_SUMMARY_EMAILS_ENABLED=0`
+  - affected files:
+    - `/Users/mark/Library/LaunchAgents/com.venterra.pilot.morning.daily.plist`
+    - `/Users/mark/Library/LaunchAgents/com.venterra.pilot.roundup.daily.plist`
+  - this overrode the wrapper defaults in:
+    - `/Users/mark/Property_Analytics/run_pilot_morning_daily.sh`
+    - `/Users/mark/Property_Analytics/run_pilot_roundup_daily.sh`
+- Corrected live posture:
+  - both LaunchAgents now pin `PILOT_SUMMARY_EMAILS_ENABLED=1`
+  - launchd must be reloaded after plist edits so the corrected environment takes effect
+- Impact:
+  - the May 11 missed roundup was recoverable without recollecting data because the full artifact already existed on disk
+
+### Executive-Approved Output Lock ✅
+- When Mark says a report, email, document, deck, spreadsheet, JSON contract, or other executive-facing artifact has been approved, the artifact format is locked for that workstream.
+- Agents must reuse the exact approved template, structure, section order, labels, terminology, audience boundary, delivery channel, and attachment/link strategy unless Mark explicitly asks to change one of those elements.
+- Requested corrections after approval are data/source/content alignment tasks first. They are not permission to redesign, simplify, rename, reframe, or substitute a different report family.
+- Companion Community Manager / Site Manager deliverables must stay in their approved companion format. Do not replace them with a different reduced report just because it seems adjacent or cleaner.
+- Before sending anything after an executive format has been approved, reconcile against the approved artifact and stop if the output differs materially.
+- Creativity remains welcome only after the approved deliverable contract is satisfied and only inside the lane Mark requested.
+
+### 2026-05-08 Spotlight / Watchlist Data Authority Incident
+- A Forest View data mismatch exposed that the VP-approved Spotlight companion brief and the Watchlist/Captain report path were using different source paths.
+- VP-approved Spotlight companion data authority for the current correction pass:
+  - T30 funnel: `/Users/mark/Downloads/Funnel Metrics .xlsx`
+  - T90 funnel: `/Users/mark/Downloads/Funnel T90.xlsx`
+  - Forest View source performance: `/Users/mark/Downloads/Source Perfromance.xlsx`
+  - Forest View availability/unit mix: `/Users/mark/Downloads/Availability.xlsx`
+  - service delivery: `/Users/mark/Downloads/T90 Service Delivery (1).xlsx`
+  - abandoned apps: process context only unless property attribution exists
+- Do not use `/Users/mark/Downloads/T30 Funnel Metrics By Prop.xlsx` for approved Spotlight companion reporting unless BI confirms it is exported as a full-funnel, unfiltered T30 property file. The observed file was filtered to Website / Dependent Event Volume and produced wrong Forest View values.
+- Current recovery instruction: preserve the exact approved companion report format that was sent today; correct data alignment only.
+
+### Pilot Twin Mapping Update ✅
+- The Calais Midtown twin mapping was updated on 2026-05-08:
+  - removed `The Delta Pearland`
+  - replaced with `Coles Crossing`
+- Canonical source updated:
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/config/pilot_control_cwv_config.json`
+- Because the pilot roundup and CSV exports now read the twin cohort from the shared pilot config, the change automatically propagates to:
+  - pilot roundup HTML/MD
+  - `PSI_Day_Over_Day_Scores_latest.csv`
+  - `GTMetrix_Daily_Scores_latest.csv`
+- Current observed state after regeneration:
+  - PSI row for `Coles Crossing` is present
+  - GT row for `Coles Crossing` is present but blank, because there is not yet a same-day canonical GTMetrix row for that property in `gtmetrix_metrics`
+
+### Pilot CWV Daily Email Default Restored ✅
+- On 2026-05-09, the pilot morning workflow completed successfully but the final roundup email was suppressed by policy.
+- Root cause:
+  - `/Users/mark/Property_Analytics/run_pilot_morning_daily.sh`
+  - `/Users/mark/Property_Analytics/run_pilot_roundup_daily.sh`
+  - had drifted to `PILOT_SUMMARY_EMAILS_ENABLED=${PILOT_SUMMARY_EMAILS_ENABLED:-0}`
+- Corrected live default:
+  - both wrappers now default to `1`
+  - specialty/pilot summary mail remains suppressible only when explicitly overridden in the environment
+- Impact:
+  - daily Pilot Performance Roundup routine send should resume automatically on future scheduled runs
+
+### Main Pilot Reference Is Now Tracked For GTMetrix ✅
+- The bottom `Main Pilot Reference` row is no longer a PSI-only special case for GT.
+- Canonical change:
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/config/pilot_control_cwv_config.json`
+    - `main_pilot_reference.property_id = "main_pilot_reference"`
+- Daily GT collection now treats the main reference as part of the tracked non-pilot GT cohort:
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/scripts/collect_pilot_twin_gtmetrix.py`
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/scripts/validate_pilot_twin_gtmetrix.py`
+- GT export now reads historical GT data for the main reference row instead of leaving it blank:
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/scripts/export_gtmetrix_daily_scores.py`
+- Roundup bottom reference card now shows GTMetrix alongside PSI when a stored GT row exists:
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/generate_pilot_roundup.py`
+- First live stored main-reference GT row:
+  - metric date `2026-05-09`
+  - `Today GTMetrix = 99.0`
+
+### Pilot KPI Measurement Workbook Version Resolution ✅
+- The Pilot KPI / tracker Measurement ingestion no longer hardcodes `Measurement_Dashboard_1.1.xlsx`.
+- Canonical parser:
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/scripts/measurement_dashboard_parser.py`
+- Current behavior:
+  - discovers `Measurement_Dashboard*.xlsx` files in the shared `Guest_Card_Reports` drop
+  - selects the highest version / newest workbook unless `MEASUREMENT_DASHBOARD_PATH` explicitly overrides it
+  - stores one active Measurement workbook family in `measurement_daily_raw_values` / `measurement_daily_metrics` so older workbook versions do not duplicate rows
+  - corrects an obvious adjacent-year tab typo in context, e.g. `5.6.25` in the 2026 daily run sequence is ingested as `2026-05-06`
+- Current live proof after regeneration:
+  - source file: `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Guest_Card_Reports/Measurement_Dashboard_1.3.xlsx`
+  - latest Measurement date: `2026-05-07`
+  - tracker JSON source metadata now points at `Measurement_Dashboard_1.3.xlsx`
+
+### SEMRush Sunset / DataForSEO Successor ✅
+- SEMRush is now in governed sunset mode across the daily ops layer.
+- Canonical policy path:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/source_freshness_policy.py`
+- Operational effect:
+  - Morning collection no longer treats SEMRush as an active lane when `SEMRUSH_DEPRECATED` is left at its default enabled posture.
+  - Alerting no longer raises freshness or collection-failure pressure for SEMRush.
+  - Watchtower / health now uses `dataforseo` as the active weekly automated search-intelligence advisory source instead of SEMRush.
+- Replacement evidence source:
+  - `/Users/mark/Property_Analytics/data/portfolio_analytics.db:dataforseo_serp_runs`
+  - latest live DataForSEO run date at cutover check: `2026-05-06`
+- Important boundary:
+  - historical SEMRush tables and specialty/search-intelligence code paths remain in place for compatibility and historical reference.
+  - this is a graceful ops deprecation, not a destructive schema purge.
+
+### Advisory / Manual Control-Plane Cleanup ✅
+- The daily closure model now distinguishes a general advisory tail from a pure manual-dependency tail.
+- Shared closure output can now emit:
+  - `summary_reason=core_closed_with_manual_dependency_open`
+  - instead of the more generic `core_closed_with_advisory_open`
+- Current live example on `2026-05-07`:
+  - core sources are closed
+  - Morning Full is sendable
+  - only `property_operating_metrics` remains open as a manual dependency
+- Targeted/manual specialty lanes with no scheduled run now surface as idle/on-demand instead of false missing pressure:
+  - `browserstack`
+  - `evs`
+  - `sightmap`
+- Duplicate BI advisory aliases were removed from the closure/watchtower view so `bi_report` is the canonical manual BI lane instead of showing parallel `bi_manual` / `bi_metrics` noise.
+- Manual dependency retry rows now use `status=manual_wait` instead of looking like ordinary automated retry debt when no source file exists yet.
+- Live proof:
+  - `collection_retry_queue.queue_id=2205` for `property_operating_metrics` on `2026-05-07` now sits in `manual_wait`, which is the correct posture because no fresh AR4PB file is present to ingest.
+
+### Cloudflare Cache Audit Semantics ✅
+- The Cloudflare cache audit still records real advisory findings, but it no longer overloads `error_message` on successful runs.
+- Canonical behavior now:
+  - `status=completed`
+  - `error_message` only when the collector actually fails
+  - advisory cache issues summarized in `notes`
+- Fresh live proof:
+  - `/Users/mark/Property_Analytics/data/portfolio_analytics.db` row `collection_id=1051` for `cloudflare_cache_audit` on `2026-05-07`
+  - notes now read `Cloudflare cache audit completed with 5 advisory finding(s)...`
+
+### Delta Pearland APO Case Study Prep ✅
+- The Delta Pearland is now included in the governed Cloudflare cache audit and full-page cache rollout manifests:
+  - `/Users/mark/Property_Analytics/config/cloudflare_cache_audit.yaml`
+  - `/Users/mark/Property_Analytics/config/cloudflare_full_page_cache.yaml`
+- Identity discipline:
+  - governed property code `TX4DP`
+  - current Cloudflare/Data Collection key `441503068`
+  - domain `thedeltapearland.com`
+- New repeatable case-study generator:
+  - `/Users/mark/Property_Analytics/ops/cloudflare/generate_delta_apo_case_study.py`
+- Baseline artifact:
+  - `/Users/mark/Property_Analytics/reports/cloudflare_apo_case_study/delta_pearland/2026-05-11/delta_apo_case_study_baseline_2026-05-11.md`
+- Initial findings:
+  - Cloudflare is active, but homepage and floor-plan HTML remain `CF-Cache-Status: DYNAMIC`
+  - warm HIT coverage is `0.0%`
+  - live PSI baseline on 2026-05-11 was mobile `29`, desktop `42`
+  - current read token resolves the zone but lacks analytics/settings/ruleset permissions needed for full Cloudflare governance
+- APO enablement should isolate caching first. Do not combine first enablement with edge HTML rewrites or experimentation changes.
 
 ## 🎯 READ THIS FIRST
 
@@ -14,6 +1216,12 @@
 5. Review "Session Log" for recent changes
 6. Update this file after EVERY significant action
 
+**Before every build, report, email send, or new script:**
+1. Check the capability register for an existing canonical owner/path.
+2. Extend or orchestrate the existing capability unless the user explicitly approves a new path.
+3. For PIB-family, Captain, Watchlist, Spotlight, and specialty brief emails, use the existing report-family shell/sender path documented for that report family; do not create one-off send wrappers or bypass the canonical delivery path for convenience.
+4. If the right path is unclear, stop and identify the nearest existing capability before building.
+
 **Critical Paths:**
 - Master DB: `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
 - Property Registry: `/Users/mark/Property_Analytics/config/venterra_properties_official.json`
@@ -23,9 +1231,333 @@
 - Capability register: `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
 - Full system audit: `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
 
+### Captain Active Routine Governance ✅
+- Captain work is now governed as an active operating system rather than a report-only lane.
+- New standard:
+  - `/Users/mark/Property_Analytics/docs/CAPTAIN_ACTIVE_ROUTINES_AND_SOURCE_VALIDATION_STANDARD_2026-05-09.md`
+- New routine manifest:
+  - `/Users/mark/Property_Analytics/config/captain_active_routine_manifest.json`
+- New local Data Pond audit:
+  - `/Users/mark/Property_Analytics/scripts/audit_captain_active_routines.py`
+- Purpose:
+  - define the required Captain routines for source readiness, property memory, funnel watch, inventory/product watch, channel efficiency, website/content/SEO, competitor watch, reputation/friction, experience validation, and action/proof tracking
+  - check whether each Captain has the current source lanes required to watch, research, validate, and brief the property
+  - keep local Data Pond source readiness separate from remote D1 runtime readiness, which remains covered by `/Users/mark/Property_Analytics/scripts/audit_captain_readiness.py`
+- Current proof outputs:
+  - `/Users/mark/Property_Analytics/reports/captains_log/routines/forest_view_active_routine_audit_2026-05-09.json`
+  - `/Users/mark/Property_Analytics/reports/captains_log/routines/captain_active_routine_audit_2026-05-09.json`
+- Boundary:
+  - this is an orchestration/readiness layer feeding existing Captain / Watchlist / Spotlight / PIB-family outputs
+  - it does not create a new report family and does not permit mutating approved executive formats
+
+### Fleet Scribe + Expert Bench Governance ✅
+- Official report creation is now modeled as a Fleet Scribe Office, not as a property Captain acting alone.
+- New standard:
+  - `/Users/mark/Property_Analytics/docs/FLEET_SCRIBE_AND_EXPERT_BENCH_STANDARD_2026-05-09.md`
+- New expert-bench manifest:
+  - `/Users/mark/Property_Analytics/config/fleet_scribe_expert_bench_manifest.json`
+- New audit:
+  - `/Users/mark/Property_Analytics/scripts/audit_fleet_scribe_expert_bench.py`
+- Captain hierarchy update:
+  - `/Users/mark/Property_Analytics/docs/CAPTAIN_COMMAND_HIERARCHY_2026-04-28.md` now includes Fleet Scribe artifact ownership and added expert consulting roles.
+- Publication chain:
+  - Captain Read -> Commodore Review -> Fleet Review -> Expert Bench Consultation -> Fleet Scribe Official Publication
+- Expert lanes / single adjustment points now include Quartermaster, Leasing Performance Advisor, Revenue Advisor, Signals Officer, Navigator, Market Scout, Product Readiness Officer, Reputation Officer, Resident Experience Officer, Engineer, Seasonality/Demand Timing Advisor, Unit-Type Fit Advisor, Market Elasticity Advisor, Operational Capacity Advisor, Trust and Proof Advisor, and Peer Borrowing Advisor.
+- Current proof outputs:
+  - `/Users/mark/Property_Analytics/reports/fleet_scribe/expert_bench/forest_view_expert_bench_audit_2026-05-09.json`
+  - `/Users/mark/Property_Analytics/reports/fleet_scribe/expert_bench/fleet_scribe_expert_bench_audit_2026-05-09.json`
+- Boundary:
+  - the Fleet Scribe preserves approved report templates and delivery discipline
+  - expert consultation tunes narrow decision algorithms and does not create competing reports
+- Structure/directive reference:
+  - `/Users/mark/Property_Analytics/docs/FLEET_SCRIBE_OFFICE_STRUCTURE_AND_BENCH_DIRECTIVES_2026-05-09.md`
+  - details the Captain, Commodore, Fleet, Consulting Bench, and Fleet Scribe offices plus current directive settings for each expert lane.
+
+### GBP KSM Standardization ✅
+- The canonical GBP credential path is now standardized through `/Users/mark/Property_Analytics/utils/config_manager.py` instead of hardcoded local `Portfolio_Monitoring/credentials` reads.
+- New governed config getters:
+  - `/Users/mark/Property_Analytics/utils/config_manager.py:get_gbp_credentials_path()`
+  - `/Users/mark/Property_Analytics/utils/config_manager.py:get_gbp_token_path()`
+- `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py` now uses those getters for both GBP reviews and GBP insights so the two lanes cannot drift onto different auth artifacts.
+- `/Users/mark/Property_Analytics/Data_Collection/collectors/gbp_collector.py` test mode now also resolves through the canonical GBP config getters.
+- Important current state on 2026-05-06:
+  - `KSM_PROFILE=marketingops` is set
+  - `KSM_GBP_CLIENT_SECRET_UID` is not set
+  - `KSM_GBP_TOKEN_UID` is not set
+  - so the live machine still falls back to the legacy local GBP files
+- Root GBP failure remains the legacy token artifact itself: `gbp_token.pickle` contains serialized references to `google.auth._regional_access_boundary_utils.*`, but the current scheduled Python environment (`google-auth 2.38.0`) does not expose that internal module. Standardizing the Keeper path removes local-file drift; the next true recovery step is to regenerate the GBP token in the same governed runtime and store that artifact in Keeper.
+- 2026-05-07 live repair:
+  - `/Users/mark/Property_Analytics/Data_Collection/collectors/gbp_collector.py` now uses one governed auth loader for both reviews and insights, prefers stable authorized-user JSON token storage, and includes a one-time compatibility shim so legacy GBP pickles can be deserialized, refreshed, and migrated forward instead of blocking the morning run.
+  - `/Users/mark/Property_Analytics/utils/config_manager.py:get_gbp_token_path()` now prefers `Portfolio_Monitoring/credentials/gbp_token.json` when present, falling back to the old pickle only for migration/bootstrap.
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py` insights collection now reuses `self.gbp_collector.creds` instead of opening the token file separately with raw `pickle.load(...)`, removing the auth split that caused reviews and insights to drift.
+  - Live proof on 2026-05-07:
+    - the legacy pickle successfully refreshed into `/Users/mark/Property_Analytics/Portfolio_Monitoring/credentials/gbp_token.json`
+    - GBP reviews API calls succeeded against live matched properties
+    - GBP Business Profile Performance API calls succeeded with the same shared credentials
+  - Remaining governance gap:
+    - `KSM_GBP_CLIENT_SECRET_UID` and `KSM_GBP_TOKEN_UID` are still unset, so the machine is operational again but not yet fully KSM-only for GBP. The next credential-hardening step is to store the client secret and the new JSON token in Keeper and populate those UIDs.
+
+### PQ Terminology Standardization ✅
+- User-facing Captain / diagnostic reporting language now uses `PQ` (`Price Quote`) instead of `RFP`.
+- Important boundary:
+  - the underlying Marketing BI storage fields remain `rfp_t7`, `rfp_t30`, etc. for compatibility with existing ingests and queries
+  - only the display/read-model wording changed
+- Updated user-facing/reporting paths:
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_spotlight_captains_brief.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`
+  - `/Users/mark/Property_Analytics/Data_Collection/read_models/property_diagnostic_json.py`
+  - related Captain display/docs
+
+### Marketing Source Display Alias Governance ✅
+- User-facing Captain/watchlist reporting now treats certain BI source labels as governed display aliases rather than raw workbook taxonomy.
+- Current active display aliases:
+  - `ADC` / `Apartments.com` -> `Apartments.com / ADC`
+  - `Drive By` -> `Walk-In / Drive-By`
+- Important boundary:
+  - underlying stored source values in BI-ingested tables are unchanged
+  - this is a reporting/readability standard, not a source-truth rewrite or historical source merge
+- Updated active reporting paths:
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_spotlight_captains_brief.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_watchlist_diagnostic_drafts.py`
+
+### Multifamily SEO + Local Content Action Standard ✅
+- VP-supplied SEO/GEO/AEO/AIO guidance from `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/MULTIFAMILY SEO.docx` is now memorialized as `/Users/mark/Property_Analytics/docs/MULTIFAMILY_SEO_LOCAL_CONTENT_ACTION_STANDARD_2026-05-07.md`.
+- Policy:
+  - this is an additive Data Pond / Site Content Creator / Captain reporting lane, not a parallel SEO report system
+  - every website, GBP, social, FAQ, metadata, or shadow-page recommendation must tie to the property's actual leasing condition and current page evidence
+  - do not invent local facts, employers, distances, specials, competitor claims, or rankings
+  - audit property data and page evidence separately, then synthesize exact copy/content actions
+- Watchlist Decision Output v1.1 now includes a compact `SEO + Local Content Action Pack` after the Competitive Market Read and before Recommendation Packages, using DataForSEO on-page snapshots, inventory pressure, subject rent/special posture, and competitor evidence.
+- The site-manager Word attachment now includes a plain-English website copy and local content checklist derived from the same governed evidence.
+
+### Channel Economics By Source ✅
+- Captain/read-model marketing economics now expose per-channel `cost per lease` and derived `cost per move-in` where the BI source lanes support it.
+- Calculation standard:
+  - use `marketing_bi_cost_per_conversion_rows` as the official lease/application/guest-card cost lane
+  - use `marketing_bi_source_performance_rows` for per-source lease and move-in counts
+  - derive `cost per move-in` only where channel economics and move-in counts are both present
+- Canonical implementation paths:
+  - `/Users/mark/Property_Analytics/Data_Collection/read_models/property_diagnostic_json.py`
+  - `/Users/mark/Property_Analytics/Data_Collection/read_models/vp_property_retrieval_json.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_watchlist_diagnostic_drafts.py`
+
+### Unit-Type Spend / Targeting Support Section ✅
+- The reusable local Captain Brief now carries a PIB-style secondary `Unit-Type Spend / Targeting` section below the primary marketing channel content.
+- Purpose:
+  - show how much paid search spend is explicitly classified to unit-type intent versus generic capture
+  - preserve the Captain Brief as the executive read while adding deeper ad-structure evidence underneath
+- Current governed implementation path:
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`
+- Source policy:
+  - prefer `ad_keyword_performance` when present locally
+  - fall back to remote D1 `ad_keyword_performance` through the Keeper-backed Wrangler helper
+  - if the local mirror is behind or remote D1 is temporarily unavailable, use the latest generated marketing mirror SQL batch as a controlled fallback for report generation
+- Important boundary:
+  - no locked PIB renderers/templates were changed
+  - this reuses the PIB data lane concept in the Captain report family without creating a parallel PIB system
+- 2026-05-06 app parity pass:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts` now exposes the same unit-type targeting block in `sourceSpendRead.unitTypeTargeting`
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/captain/page.tsx` now renders the same section in the Captain app
+  - the Captain app and the generated Captain Brief now share the same evidence lane instead of diverging on paid-search unit-type targeting
+
+### Captain Reconciliation Plan ✅
+- The current reconciliation truth is now documented in `/Users/mark/Property_Analytics/docs/CAPTAIN_RECONCILIATION_PLAN_2026-05-06.md`.
+- Key conclusion:
+  - the Elation `Unit-Type Spend / Targeting` enhancement is valid
+  - the real blocker is branch lineage because current `main` does not yet contain the Captain runtime/app foundation
+- Governed promotion order:
+  1. `PR 1: Captain foundation to main`
+  2. `PR 2: Captain marketing enrichment to main`
+- Required foundation files include:
+  - Captain API/runtime: route, runtime, index wiring, and migrations `0026` / `0027`
+  - Captain web/client: `apps/web/src/lib/api.ts`, `apps/web/src/app/analysis/captain/page.tsx`, and the discoverability hooks in analysis/sidebar
+- Required enrichment files include:
+  - `reports/captains_log/generate_captains_brief_vnext.py`
+  - follow-up patching of Captain runtime/page for `unitTypeTargeting`
+  - docs/memory updates
+
+### D1 Mirror Core vs Advisory Classification ✅
+- The D1 mirror contract now distinguishes `core_success` from overall advisory degradation.
+- Canonical implementation paths:
+  - `/Users/mark/Property_Analytics/apps/api/scripts/d1_mirror_sync.py`
+  - `/Users/mark/Property_Analytics/generate_morning_full_report.py`
+  - `/Users/mark/Property_Analytics/Data_Collection/monitoring/alert_sender.py`
+- Policy:
+  - `guest_cards_to_d1.py`, `pib_data_to_d1.py`, and `marketing_data_to_d1.py` are core mirror sync steps
+  - `captain_sources_to_d1.py` is advisory for the global D1 mirror health signal
+  - Morning Full and central alerts should only raise `D1 mirror verification failed` when `core_success` is false
+  - if Captain-source sync fails but core mirror work succeeds, the mirror should surface as degraded/watch rather than full alert
+- 2026-05-07 live validation note:
+  - repeated mirror reports were failing at `captain_sources_to_d1.py` with Wrangler `fetch failed`
+  - subprocess handling is now hardened in both `d1_mirror_sync.py` and `captain_sources_to_d1.py` so Wrangler runs are placed in their own process groups and are cleaned up on timeout instead of lingering
+  - `captain_sources_to_d1.py` now recreates `available_unit_interest_metrics` before insert, eliminating the remote schema-drift failure on the missing `bedrooms` column
+  - the deeper root cause was an oversized Captain advisory payload: the mirror was pushing broad global BI tables the live Captain runtime did not actually query, inflating the source packet to ~391 MB / 235,680 insert statements
+  - the Captain D1 contract is now narrowed to the actual runtime read set, dropping the payload to 2,021 insert statements in one small batch and adding the previously-needed `marketing_bi_source_performance_rows` lane
+  - a fresh full mirror run succeeded at `/Users/mark/Property_Analytics/apps/api/scripts/generated/d1_mirror_report_20260507_121437.json` with `success=true`, `core_success=true`, and `mirror_status=success`
+  - Morning Full regenerated cleanly and now shows `Overall Status: HEALTHY | All critical systems are fresh and passing checks`
+
 ---
 
 ## 📊 CURRENT SYSTEM STATE
+
+### Property Diagnostic JSON Data Layer ✅
+- Added the first retrieval-first property diagnostic JSON read model for the VP data-layer ask:
+  - `/Users/mark/Property_Analytics/Data_Collection/read_models/property_diagnostic_json.py`
+  - first generated artifact: `/Users/mark/Property_Analytics/reports/property_diagnostics/tx4eg_property_diagnostic_2026-05-06.json`
+- The first property is Elation at Grandway West / `TX4EG`, resolved through `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py` and the governed identity matrix.
+- The JSON is one property object with clean numeric fields, current-month / T30 / T90 windows where source data supports them, portfolio comparisons where available, market comparisons where the competitor ledger supports them, derived issue flags, source references, and explicit `missing_data` entries.
+- Included source lanes: Marketing BI Traffic Conversions, Marketing Ops Summary, GA4 daily/channel metrics, unit availability feed, ad-spend/cost workbooks, competitor market research, Reputation.com, GBP review sentiment, and DataForSEO on-page snapshots.
+- Boundaries: this is a Data Collection / Data Pond read model for downstream agents. It does not mutate locked canonical PIB generation/rendering/sending files and does not create a parallel PIB renderer.
+- 2026-05-06 source-mix expansion: Marketing BI source/origin performance and T365 move-in source routes were added through `/Users/mark/Property_Analytics/Data_Collection/utils/marketing_bi_excel_export_ingest.py` and migrations `0045` / `032`. The Elation JSON now includes source/origin performance from `perf-region.xlsx` and actual move-ins by marketing/conversion source from `t365.xlsx`; resident names from T365 are intentionally not stored.
+- 2026-05-06 source-spend closure: `/Users/mark/Downloads/Month by Month Adv spend per property.xlsx` is now ingested as `marketing_bi_monthly_ad_spend_source_rows`, adding month/source spend, total, budget, and actual-vs-budget for each property. Elation now carries `20` source-spend rows across January-May 2026, including May ADC `$2,000`, Google Ads `$1,707.44`, Forthea Fees `$273.1904`, Zillow `$0`, monthly total `$3,980.6304`, and budget `$3,000`.
+- 2026-05-06 gap-fill expansion: added Portfolio Box Score, T90 Service Delivery, and Abandoned application detail tables through migration `0046` / infra `033`. Elation now carries Portfolio Box Score make-ready percentage (`85.714286`), ready-available count (`42`), and T90 service delivery posture (`1` no-response, `1` unresolved 48h+, first response `14`, total resolution `96`). Abandoned exports have no property column, so they are stored without property attribution and do not yet satisfy the Elation property-level abandoned-app requirement.
+
+### Pilot Roundup Email Consolidation ✅
+- The default pilot CWV summary delivery is now a single consolidated routine email:
+  - subject: `Pilot Performance Roundup - MM-DD-YYYY`
+  - HTML body: pilot roundup
+  - attachments:
+    - `PSI_Day_Over_Day_Scores_latest.csv`
+    - `GTMetrix_Daily_Scores_latest.csv`
+- The roundup mailer no longer attaches the markdown artifact.
+- The daily pilot morning workflow no longer sends the separate `Pilot Data Exports` routine email; the CSVs are attached to the roundup instead.
+- The attached CSVs now mirror the roundup cohort structure with explicit `Group` labels for:
+  - `pilot`
+  - `sister`
+  - `twin`
+  - `main_pilot_reference`
+- PSI CSV now includes pilots, sisters, twins, and the bottom main pilot reference row.
+- GT CSV now includes pilots, sisters, twins, and the bottom main pilot reference row; twin GT cells may remain blank where no canonical GTMetrix history exists for that twin property.
+- As of 2026-05-04, the daily pilot morning workflow now includes a dedicated same-day twin GTMetrix collection/validation loop before exports, so the twin GT rows in the consolidated roundup attachments should populate automatically on future runs instead of requiring manual backfill.
+- Canonical paths:
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/send_pilot_roundup_email.py`
+  - `/Users/mark/Property_Analytics/run_pilot_morning_daily.sh`
+  - `/Users/mark/Property_Analytics/pilot_roundup/README.md`
+
+### Single Daily Summary Policy ✅
+- The canonical routine daily email is now the Morning Full Portfolio Report only:
+  - `/Users/mark/Property_Analytics/run_daily_health_report.sh`
+  - `/Users/mark/Property_Analytics/send_morning_full_report.py`
+- Specialty/pilot routine summaries are now opt-in instead of opt-out:
+  - `/Users/mark/Property_Analytics/run_pilot_morning_daily.sh`
+  - `/Users/mark/Property_Analytics/run_pilot_roundup_daily.sh`
+  - `/Users/mark/Property_Analytics/utils/specialty_email_policy.py`
+- Live launch agents now explicitly pin `PILOT_SUMMARY_EMAILS_ENABLED=0` for:
+  - `/Users/mark/Library/LaunchAgents/com.venterra.pilot.morning.daily.plist`
+  - `/Users/mark/Library/LaunchAgents/com.venterra.pilot.roundup.daily.plist`
+- Operational intent:
+  - one routine daily email unless there is a true failure/recovery condition
+  - specialty artifacts still generate on disk
+  - specialty or pilot summary mail can be re-enabled intentionally with `PILOT_SUMMARY_EMAILS_ENABLED=1`
+
+### POP Brief Diagnostic Recommendation Standard ✅
+- Added the governed diagnostic standard for watchlist/spotlight/critical POP Brief and Captain recovery work:
+  - `/Users/mark/Property_Analytics/docs/POP_BRIEF_DIAGNOSTIC_RECOMMENDATION_STANDARD_2026-05-04.md`
+- Source input was the 2026-05-04 team transcript:
+  - `/Users/mark/Downloads/Watchlist Organization - Plan - Mark's Agents.docx`
+- The standard turns the team feedback into a repeatable Captain decision tree:
+  - start with recovery math and the primary constraint
+  - diagnose the funnel before upstream causes
+  - branch into floorplan/unit exposure, pricing/concession, source/spend, competitive visibility, website/content/media, reputation/resident experience, and operations/people constraints
+  - require every recommendation to include evidence, confidence, owner, due date, expected lift, proof check, and optional do-not-recommend gate
+  - produce both an internal Captain diagnostic and a concise property action plan from the same governed read model
+- Linked the standard from `/Users/mark/Property_Analytics/docs/POP_BRIEF_GROUNDING_CORE_2026-04-24.md` and `/Users/mark/Property_Analytics/docs/CAPTAIN_DOCTRINE_2026-05-04.md`.
+- First runtime implementation is now wired:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts` derives `diagnosticRead` for latest Captain Brief responses and persisted Captain Brief payloads
+  - `marketingInsight` now carries `sourceSpendRead` from Marketing BI cost-per-conversion and ad-spend performance rows, including best visible lease/application/guest-card source economics and spend posture
+  - `diagnosticRead` now carries `designationDoctrine`, so Spotlight means accelerated recovery watch and Critical means escalated recovery command inside the Captain read model
+  - `diagnosticRead` now carries `peerFamilyRead`, selecting stronger same-region or portfolio peers from Marketing Ops Summary rows and proposing borrowable peer tactics with proof checks
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts` exposes the `diagnosticRead` contract to the web app
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/captain/page.tsx` renders a `Diagnostic Plan` section with primary constraint, recovery math, designation doctrine, peer-family help, recommended fixes, proof checks, and do-not-recommend gates, plus source/spend economics inside the Marketing BI read
+  - `/Users/mark/Property_Analytics/apps/api/test/platform/captain-brief-read.test.ts` verifies derived inventory constraint, 10% exposure recovery math, guest-card requirement, source/spend read, peer-family read, and recommendation gates
+- Added the first local watchlist diagnostic draft generator:
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_watchlist_diagnostic_drafts.py`
+- First May 2026 draft packet generated from the current monthly spotlight config:
+  - `/Users/mark/Property_Analytics/reports/captains_log/watchlist_diagnostics/2026-05-04/watchlist_diagnostic_drafts_2026-05-04.json`
+  - `/Users/mark/Property_Analytics/reports/captains_log/watchlist_diagnostics/2026-05-04/watchlist_diagnostic_drafts_2026-05-04.md`
+- First-pass pattern: all `19` active May spotlight/watchlist properties read as inventory or stale-unit constrained before demand, with source/spend economics and peer-family tactics included as advisory context rather than the primary fix.
+- This is a Captain/POP read-model implementation and doctrine update. It does not mutate locked canonical PIB generation/rendering behavior.
+
+### Property Region Governance ✅
+- Promoted the 2026-05-04 `regions.xlsx` workbook into a governed property-region source route:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/property_regions_ingest.py`
+  - `/Users/mark/Property_Analytics/docs/PROPERTY_REGIONS_SOURCE_CONTRACT_2026-05-04.md`
+- The ingester reads the workbook `Region` / `Property` columns, skips regional `Total` rows, and resolves every property label through `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py`.
+- Initial load from `/Users/mark/Downloads/regions.xlsx` resolved `91` active property rows, `14` regions, and `0` unmapped property labels.
+- Local `properties.encasa_region` was already aligned for those `91` rows; the official registry now carries `encasa_region` for the same `91` active workbook properties, and `config/property_identity_matrix.json` was rebuilt from the canonical sources.
+- Current workbook regions: Arkansas, Atlanta GA, Austin TX, Dallas TX, Florida, Houston TX, Kansas City, Kentucky, Killeen, Nashville TN, Oklahoma, Raleigh NC, San Antonio TX, and Savannah GA.
+- `Sundara at Spring Cypress` and `The Vine Kyle Parkway` were not present in the workbook and remain without official-registry/local-DB `encasa_region`; the identity matrix still carries region context where existing community/source evidence provides it.
+- Captain peer-family reads, regional benchmarks, and Commodore/regional synthesis should use this governed region path rather than local one-off property-region maps.
+
+### Spotlight Weekly Field Notes Source Route ✅
+- Promoted the 2026-05-04 Spotlight weekly notes/action-plan folder into an additive governed Data Pond source route:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/spotlight_weekly_field_notes_ingest.py`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0042_create_spotlight_weekly_field_notes.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/029_create_spotlight_weekly_field_notes.sql`
+  - `/Users/mark/Property_Analytics/docs/SPOTLIGHT_WEEKLY_FIELD_NOTES_SOURCE_CONTRACT_2026-05-04.md`
+- Source folder:
+  - `/Users/mark/Downloads/spotlight`
+- The source is explicitly additive human field intelligence. It does not replace official metrics, Marketing Ops Summary, guest cards, unit availability, reputation, or locked PIB generation.
+- Initial local load completed on 2026-05-04:
+  - `14` source files seen
+  - `6` property snapshots upserted into `spotlight_weekly_field_snapshots`
+  - `74` action items upserted into `spotlight_weekly_action_items`
+  - `0` unmapped files
+- Mapped weekly packets: Botanic Luxury, Forest View, Steeplechase, The Pointe Bentonville, The Reserves of Thomas Glen, and The Retreat.
+- 2026-05-05 Grand Harbor note intake: `/Users/mark/Downloads/spotlight/The Cape at Grand Harbor.docx` now ingests as The Cape at Grand Harbor / `TX4GH` through the governed property identity matrix. The parser now skips Word temp lock files (`~$*.docx`) and captures daily-note fields such as occupancy, leased %, 60-day trend, goal this week, applications, reservation fees, tours, social ads, outreach visits, work orders, move-ins, NTV, renewals, and vacant-ready/unready counts into `spotlight_weekly_field_snapshots.metrics_json`. Local Pond load wrote the `2026-05-05` TX4GH snapshot; the remote Captain source sync packet included `1` Spotlight snapshot for TX4GH but the Wrangler remote D1 upload ended with a network `fetch failed`, so that remote sync is retryable.
+- The ingester groups Excel action plans plus Word/TXT narrative notes by governed property identity and report date. It stores occupancy/trend/leasing activity, recovery goals, source narratives, action owner/deadline/status/notes, derived action category, and quality flags for vague, missing, or past-due actions.
+- `apps/api/scripts/captain_sources_to_d1.py` now mirrors the Spotlight weekly snapshot and action-item tables for property-scoped Captain source syncs.
+- Intended Captain use: explain metric movement, verify recovery execution, remember repeated blockers, escalate ownerless/stale actions, and preserve source-reconciliation gaps without overriding source-of-record data.
+
+### Competitor Market Research Evidence Ledger ✅
+- Added the first governed competitor market research source route for POP Brief / Captain competitive slices:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/competitor_market_research_ingest.py`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0043_create_competitor_market_research.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/030_create_competitor_market_research.sql`
+  - `/Users/mark/Property_Analytics/docs/COMPETITOR_MARKET_RESEARCH_SOURCE_CONTRACT_2026-05-05.md`
+- The route stores timestamped sourced observations for competitor rents, specials, availability, USPs, media/package indicators, reputation, and explicit source gaps in:
+  - `competitor_market_research_snapshots`
+  - `competitor_market_research_observations`
+- First manual research packet:
+  - `/Users/mark/Property_Analytics/Data_Collection/manual_sources/competitor_market_research/the_pointe_bentonville_2026-05-05.json`
+- Initial load for The Pointe Bentonville / `AR4PB` completed with `1` snapshot, `15` sourced observations, and `0` unmapped packets.
+- The first PIB-style competitor slice artifact was generated at:
+  - `/Users/mark/Property_Analytics/reports/captains_log/competitor_market_slices/2026-05-05/ar4pb_competitor_market_slice_2026-05-05.html`
+- `apps/api/scripts/captain_sources_to_d1.py` now mirrors the competitor market research tables for property-scoped Captain source packets. AR4PB dry run includes `1` snapshot and `15` observations.
+- Current report logic: competitor intelligence is advisory and must carry source URL, captured date, and confidence (`confirmed`, `directional`, `conflict`, `missing`). ADC / Apartments.com package status remains a source gap unless captured through a controlled package source or verified login/API path.
+- 2026-05-06 Spotlight competitor batch run: added `/Users/mark/Property_Analytics/Data_Collection/utils/build_competitor_market_packets.py` to build dated official-page competitor packets from governed `property_competitors` comp sets plus the subject property's internal `unit_availability_units` rent/special posture. Built and ingested 2026-05-06 packets for the 11 current Spotlight properties: Botanic Luxury, Avasa Hammock Landing, Steeplechase, The Anatole, Avasa at 1604, College View, Forest View, The Reserves of Thomas Glen, The Retreat at Lakeland, The Retreat, and The Metropolitan. Also loaded the Grand Harbor packet and corrected eight comp-set URL gaps before rebuilding. Remaining source gaps are preserved as `source_gap` rows rather than inferred claims.
+- Follow-up Captain runtime wiring completed:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts` now derives `competitorMarketRead` for Captain Brief reads and persisted brief payloads.
+  - The read model answers pricing-vs-advertising, ad-copy, web-copy, and package-status questions from sourced competitor observations and keeps ADC/package status gated when missing.
+  - Correction after report QA: Captain competitor reads now pull the subject property's own current visible rent range and visible specials directly from `unit_availability_units` using the latest GA4/unit-feed snapshot, so the Captain Brief does not depend on manually entered subject rows for our own rent/special posture.
+  - 2026-05-05 Elation test pass: added `/Users/mark/Property_Analytics/Data_Collection/manual_sources/competitor_market_research/elation_grandway_west_2026-05-05.json`, loaded `1` TX4EG snapshot with `13` observations, and generated a full property-aware Captain Brief at `/Users/mark/Property_Analytics/reports/captains_log/elation_at_grandway_west/elation_at_grandway_west_captains_brief_vnext_generated_2026-05-05_email_outlook.html`. The reusable vNext generator now avoids Benton/The Pointe hardcoding, embeds a Competitive Market Read inside the full Brief, ignores invalid nonpositive unit-feed rents, and requires a controlled ADC/package source before package-positioning claims are made.
+  - 2026-05-05 Elation comp-set cleanup: removed The Grand Parkway Senior Apartments from the Elation operating comp table because it is a senior community, and replaced the prior Luxe at Katy conflict row with the current Luxe official-site special: lowest prices available for a limited time plus app/admin fee credits at move-in. `Data_Collection/utils/competitor_market_research_ingest.py` now replaces a packet's observation set on re-ingest so removed competitors do not linger as stale rows.
+  - 2026-05-05 USP display pass: the Elation Captain Brief now renders captured USP evidence as a `USP Direction` block inside the Competitive Market Read instead of dumping the full amenities string into a table cell. The block separates convenience, location, and pet/lifestyle differentiators and includes an exact copy angle for web/ad/leasing-script use.
+  - 2026-05-05 team-action intelligence pass: the local vNext Captain Brief now renders a `Team Action Intelligence` section near the top of the Brief. It uses Spotlight action-plan rows when available; otherwise it derives team work from reliable Brief facts such as aged unit/floorplan pressure, cancellation/denial drivers, competitor specials/value pressure, and search/local USP opportunities. Each row names the action, owner lane, metric tied to the action, why it matters, and proof expected.
+  - 2026-05-05 competitive USP gap pass: the Elation Captain Brief now adds `Visible Advantage Gaps` under `USP Direction`, showing what Elation can press against the captured comp read: the connected-living bundle, up-to-3-pets positioning, and I-10/Grand Parkway framing. The section explicitly distinguishes visible gaps in captured evidence from absolute claims that a competitor lacks a feature.
+  - 2026-05-05 team-action wording refinement: replaced stale/180+ unit tasking in the Team Action Intelligence and 30-Day Recovery Plan with a floorplan exposure huddle. Aged inventory remains available as supporting context in Inventory/Operations, but the team-facing action is now focused on A2/A1 offer, tour path, follow-up message, and ownership.
+  - 2026-05-05 website-copy opportunity pass: the Elation Captain Brief now includes a `Website Copy Opportunity` section after the competitive USP read. It evaluates the hero/first-viewport message, primary value copy, and offer/special copy against the current USP, search, and comp read, then gives exact replacement copy and priority. The section emphasizes sharper value-defense copy rather than adding more generic page text.
+  - 2026-05-05 responsibility-register display cleanup: removed the visible `Captain Responsibility Register` from the outbound Captain Brief because the Captain is creating the Brief, not reading its own internal watch/action register. Runtime data remains available for orchestration behind the scenes; the visible Brief now moves directly from Admiral Read into Team Action Intelligence.
+  - 2026-05-05 channel-activation pass: the Elation Captain Brief now includes `GBP And Social Activation` after the website copy opportunity section. It provides channel-ready GBP post copy, social feed copy, and floorplan-specific push copy, with audience, CTA, and proof expected so the team can turn the recovery read into visible local demand and trackable follow-up.
+  - The Captain-facing summary now prioritizes decision logic rather than a competitor spreadsheet: our visible rent/specials, lower-rent comp pressure, confirmed competitor specials, pricing/advertising/copy/package decision posture, and source gaps.
+  - Trust-display pass: `competitorMarketRead` now includes explicit `why` explanations and `evidenceReferences` (`CM-1` through `CM-4`). The Captain UI renders superscript source markers beside claims and a bottom `Data Integrity` panel that describes source, date, confidence, and interpretation limits.
+  - 2026-05-05 Captain Brief display-discipline pass: the local vNext email artifact no longer opens with source/status gating or internal data-route narrative. Captain-facing sections now lead with business facts and recommendations, source references move to a bottom `Sources Used` table, internal source-routing/runtime rows are filtered from the responsibility register, and visible wording avoids failure/partial/missing-style language while preserving the underlying data unchanged.
+  - 2026-05-05 performance-table fix: the local vNext Captain Brief now fills portfolio averages and vs-portfolio comparisons for T7/T30 volume rows, closing ratio, and guest cards per available door. Volume benchmarks use same-report-date portfolio property averages from `marketing_bi_traffic_conversions_full`; conversion benchmarks use portfolio weighted rates; guest cards per available door is calculated as guest cards divided by available units for the property and by the same rule across properties with current availability.
+  - 2026-05-05 performance-trend fix: T7/T30 conversion-rate trend rows now calculate from the same current/prior-year numerator and denominator pairs in `marketing_bi_traffic_conversions_full` (for example visits divided by guest cards this year vs visits divided by guest cards prior year). Guest cards per available door remains labeled `current only` when the current Brief has current available units but no prior-year available-unit denominator.
+  - `diagnosticRead` now carries `competitorMarketRead`, adds competitive-market recommendations when visible value pressure is present, and adds a do-not-recommend gate against unsupported ADC/package claims.
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/captain/page.tsx` now renders a `Competitive Market Read` section with source-backed counts, visible rent pressure, confirmed specials, Stephanie-answer logic, and source gaps.
+  - `/Users/mark/Property_Analytics/apps/api/test/platform/captain-brief-read.test.ts` verifies competitor source readiness, visible value pressure, package gating, and the competitive-market diagnostic recommendation.
+
+### Loose Code Workstream Organization ✅
+- Added an explicit organization layer for the large dirty/untracked workspace so active work can be split by capability instead of promoted as one oversized branch.
+- Working docs:
+  - `/Users/mark/Property_Analytics/docs/LOOSE_CODE_WORKSTREAM_ORGANIZATION_2026-05-04.md`
+  - `/Users/mark/Property_Analytics/docs/LOOSE_CODE_PATHSPEC_MANIFEST_2026-05-04.json`
+- Current inventory at the time of organization: `117` tracked modified files and `360` untracked files visible to Git. No locked canonical PIB generator/template/sender files were touched.
+- The current branch name `codex/pilot-control-cwv-reporting` does not describe the whole loose workspace. The split plan groups work into property identity governance, data collection closure, Marketing BI / Marketing Ops source routes, Reputation.com, Captain runtime/briefs, platform auth/control plane, EVS/BrowserStack, Edge Experimentation, content/site/VACS/intelligence, pilot CWV/tracker/roundup, and generated artifacts/logs.
+- The recommended first promotion order is property identity governance -> Marketing BI / Marketing Ops source routes -> Captain runtime and brief family, because later Captain reads depend on the governed source routes.
 
 ### Marketing Ops Summary Source Route ✅
 - Promoted the 2026-05-04 `Marketing Ops Summary.xlsx` workbook from ad hoc spreadsheet evidence into a governed Data Pond source route:
@@ -208,10 +1740,10 @@
   - last campaign activity
   - current posture
   - campaign status
-- 04/30/2026 update: the vNext generator can now pull remote D1 Captain runtime state through the Keeper-backed Wrangler helper and include live open watch items, open actions, and recent support-lane runs in the generated Brief. This keeps the local artifact tied to the active Captain responsibility register rather than only static Pond facts.
+- 04/30/2026 update, refined 05/05/2026: the vNext generator can pull remote Captain runtime state through the Keeper-backed Wrangler helper and include business-facing open watch items and open actions in the generated Brief. Internal source-route and support-tool rows are filtered from the Captain-facing responsibility register so the artifact stays focused on operating ownership.
 - The generator now supports `--send` and `--recipient` for Outlook-safe email delivery through the shared `utils.email_sender.EmailSender` path.
 - 04/30/2026 trust upgrade: the vNext generator no longer hardcodes the T7/T30 performance table or advertising-spend values. It now prefers `marketing_bi_traffic_conversions_full` for guest cards, visits, applications, RFP/lease proxy, closing ratio, and YoY trends; `available_unit_interest_metrics` for guest-cards-per-available-door and exposure; `marketing_bi_ad_spend_performance_month` for latest structured spend/monthly volume; and `marketing_bi_cost_per_conversion_rows` for source cost-per-conversion context. When current-month channel spend is not structured, the Brief states that limitation explicitly instead of carrying inferred channel dollars.
-- 04/30/2026 evidence-gate upgrade: the vNext generator now renders a `Brief Quality Gate` near the top of the report. It classifies required evidence lanes as `present`, `stale`, or `missing`, labels each lane by authority (`authoritative`, `advisory`, `external evidence`, or `runtime`), and assigns the Brief status as `Admiral Ready`, `Admiral Ready With Source Notes`, or `Draft: Missing Authoritative Sources`. The Pointe currently gates as `Draft: Missing Authoritative Sources` because the official operating-truth route exists but has no AR4PB source row yet; the rest of the current evidence stack is mostly present/fresh.
+- 04/30/2026 source-trust work, refined 05/05/2026: the vNext generator keeps source accounting in the generator/read model, but no longer renders a top source/status gate in the Captain-facing email. The email now places a descriptive `Sources Used` panel at the bottom and avoids internal data-route vocabulary in the main read.
 - 04/30/2026 operating-truth route check: the canonical `property_operating_metrics` schema now exists locally and remotely, but AR4PB has `0` rows in both places. Tested available candidate files (`Multifamily Occupancy Risk and Lease Ranking - with Actionability Details.xlsx` and `BI-Metrics-Run20260430.xlsx`); they are analytical / guest-card conversion sources, not the official operating metrics feed. Benton now has a critical open D1 action `route_official_operating_metrics` assigned to `Quartermaster / Data Pond`, due `2026-05-01`, with the required fields listed in evidence JSON.
 - 04/30/2026 operating-truth intake contract: added a drop-ready AR4PB template at `/Users/mark/Property_Analytics/docs/contracts/property_operating_metrics_template_AR4PB.csv` and operator helper `/Users/mark/Property_Analytics/scripts/operating_metrics_brief_intake.py`. The helper can copy a dated template into the monitored OneDrive drop, validate a filled CSV/XLSX through the canonical ingester, optionally write local Pond + remote D1 rows, and regenerate/send the Captain Brief. A blank dated template was copied to `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Guest_Card_Reports/Property-Operating-Metrics-AR4PB-20260430.csv`.
 - The Pointe generated run for 04/29/2026 produced:
@@ -406,10 +1938,10 @@
 - **Current service-identity inputs in app layer:** `PLATFORM_SHARED_TOKEN` and `EVS_SHARED_TOKEN` remain transitional fallback concepts; VACS now uses Access service-token auth as its canonical route model
 
 ### Master Database ✅
-**Location:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
-**Size:** 166 MB  
-**Last Updated:** 2026-01-28 21:59  
-**Schema:** 60+ tables (Phases 1-4 complete)  
+**Location:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
+**Size:** 166 MB
+**Last Updated:** 2026-01-28 21:59
+**Schema:** 60+ tables (Phases 1-4 complete)
 **Properties:** 92 in database, 91 in registry
 
 ### Data Freshness (AS OF 2026-01-28 22:51)
@@ -463,7 +1995,7 @@
 ### Core Components
 
 #### 1. Master Database (Single Source of Truth)
-**Path:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`  
+**Path:** `/Users/mark/Property_Analytics/data/portfolio_analytics.db`
 **Writers:**
 - Data_Collection system (primary)
 - Legacy collectors (deprecated, don't use)
@@ -483,8 +2015,8 @@
 - Phase 4: Anomaly Detection (SOFT/INFO only) ✅
 
 #### 2. Property Registry (Single Source of Truth)
-**Path:** `/Users/mark/Property_Analytics/config/venterra_properties_official.json`  
-**Properties:** 91 Venterra properties  
+**Path:** `/Users/mark/Property_Analytics/config/venterra_properties_official.json`
+**Properties:** 91 Venterra properties
 **Contains:** GA4 IDs, GSC URLs, names, aliases, site types
 
 **Used By:** EVERYTHING - never hardcode property lists
@@ -637,16 +2169,16 @@ Data_Collection/
 ## 🚨 CRITICAL ISSUES (Priority Order)
 
 ### 1. GSC Collection Unstable (CRITICAL)
-**Impact:** Only 3-5 properties collecting, 90 properties stale  
-**Evidence:** Jan 25 data shows only 3 properties  
-**Root Cause:** Collection hangs or fails during GSC processing  
-**Owner:** Mark is debugging in parallel thread  
+**Impact:** Only 3-5 properties collecting, 90 properties stale
+**Evidence:** Jan 25 data shows only 3 properties
+**Root Cause:** Collection hangs or fails during GSC processing
+**Owner:** Mark is debugging in parallel thread
 **Next Steps:** Wait for Mark's fix from other session
 
 ### 2. GA4 Collection Incomplete (HIGH)
-**Impact:** 15 properties not collecting  
-**Evidence:** 76/92 properties have recent data  
-**Root Cause:** Unknown - need to check logs  
+**Impact:** 15 properties not collecting
+**Evidence:** 76/92 properties have recent data
+**Root Cause:** Unknown - need to check logs
 **Next Steps:** Review collection logs for those 15 properties
 
 ### 3. Multiple Scheduled Jobs Failing (MEDIUM)
@@ -659,8 +2191,8 @@ Data_Collection/
 **Next Steps:** Check logs for the remaining failing jobs
 
 ### 4. Legacy Collection System Broken (LOW)
-**Impact:** Cannot use as fallback  
-**Evidence:** ModuleNotFoundError in Portfolio_Monitoring  
+**Impact:** Cannot use as fallback
+**Evidence:** ModuleNotFoundError in Portfolio_Monitoring
 **Action:** Deprecate or fix import paths
 
 ---
@@ -1458,11 +2990,11 @@ tail -100 /Users/mark/Property_Analytics/logs/psi_daily_collection.log
 
 ## 🎯 PROJECT SCOPE & SCALE
 
-**System Type:** Production-grade portfolio analytics platform  
-**Organization:** Venterra Living (multifamily real estate)  
-**Properties:** 91 active properties across multiple states  
-**Data Volume:** ~500MB daily processing  
-**Database Size:** 161 MB (growing)  
+**System Type:** Production-grade portfolio analytics platform
+**Organization:** Venterra Living (multifamily real estate)
+**Properties:** 91 active properties across multiple states
+**Data Volume:** ~500MB daily processing
+**Database Size:** 161 MB (growing)
 **API Calls:** ~2,000/day across 6 external services
 
 **Key Stakeholders:**
@@ -1503,9 +3035,9 @@ tail -100 /Users/mark/Property_Analytics/logs/psi_daily_collection.log
 
 ## 📞 CONTACT & SUPPORT
 
-**System Owner:** Mark Laufhutte  
-**Email:** mlaufhutte@venterraliving.com  
-**Location:** Local development environment (macOS)  
+**System Owner:** Mark Laufhutte
+**Email:** mlaufhutte@venterraliving.com
+**Location:** Local development environment (macOS)
 **Repository:** Local Git only (contains credentials, not remote)
 
 **Atlas AI:**
@@ -1524,8 +3056,8 @@ tail -100 /Users/mark/Property_Analytics/logs/psi_daily_collection.log
 
 ## Session: January 29, 2026 - ThirtyLines Integration & Competitor Analysis
 
-**Duration:** ~2 hours  
-**Status:** Phase 1 Complete - Awaiting Competitor Excel Sheet  
+**Duration:** ~2 hours
+**Status:** Phase 1 Complete - Awaiting Competitor Excel Sheet
 **Session Memory:** `SESSION_MEMORY_THIRTYLINES_COMPETITOR_ANALYSIS_2026-01-29.md`
 
 ### Major Accomplishments
@@ -1637,8 +3169,8 @@ v_latest_availability - View for current data
 
 ## Session: January 31, 2026 - PIB v1.9.0 LOCKED OFFICIAL
 
-**Duration:** ~2 hours  
-**Status:** Complete - v1.9.0 Locked as Official Standard  
+**Duration:** ~2 hours
+**Status:** Complete - v1.9.0 Locked as Official Standard
 **Commit:** `5498769`
 
 ### Major Accomplishments
@@ -1727,9 +3259,9 @@ v_latest_availability - View for current data
 
 ### Status
 
-**PIB v1.9.0:** 🔒 LOCKED OFFICIAL STANDARD  
-**Template:** `templates/executive_email_template.py`  
-**Generator:** `generate_property_intelligence_brief.py`  
+**PIB v1.9.0:** 🔒 LOCKED OFFICIAL STANDARD
+**Template:** `templates/executive_email_template.py`
+**Generator:** `generate_property_intelligence_brief.py`
 **Last Verified:** 2026-01-31 01:16 UTC
 
 **Critical Rules:**
@@ -1821,7 +3353,7 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 
 ## Session: April 10, 2026 - D1 Mirror and Collection Governance Integrity Repair
 
-**Status:** In progress  
+**Status:** In progress
 **Primary areas:** `/Users/mark/Property_Analytics/Data_Collection/`, `/Users/mark/Property_Analytics/apps/api/scripts/`
 
 ### What changed
@@ -1872,7 +3404,7 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 
 ## Session: April 8-9, 2026 - Pilot Site Evidence, Harmonization, and Daily Evaluation
 
-**Status:** Complete  
+**Status:** Complete
 **Reference:** `/Users/mark/Property_Analytics/SESSION_MEMORY_2026-04-08_PILOT_SITE_EVIDENCE_AND_HARMONIZATION.md`
 
 ### What changed
@@ -1912,7 +3444,7 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 
 ## Session: April 8, 2026 - Spotlight April Monthly Config Activation
 
-**Status:** Complete  
+**Status:** Complete
 **Primary area:** `/Users/mark/Property_Analytics/Spotlight_Properties_Report/`
 
 ### What changed
@@ -1962,7 +3494,7 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 
 ## Session: May 4, 2026 - May Spotlight Captain Activation
 
-**Status:** Complete  
+**Status:** Complete
 **Primary areas:** `/Users/mark/Property_Analytics/Spotlight_Properties_Report/`, `/Users/mark/Property_Analytics/scripts/standup_captain_roster.py`
 
 ### What changed
@@ -2023,7 +3555,7 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 
 ## Session: April 10, 2026 - Guest Card Recovery and D1 Mirror Catch-Up
 
-**Status:** Complete  
+**Status:** Complete
 **Primary areas:** `/Users/mark/Property_Analytics/Data_Collection/`, `/Users/mark/Property_Analytics/apps/api/scripts/`
 
 ### What changed
@@ -2374,6 +3906,26 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
 - Operational intent:
   - this paired pilot+sister layout is now the default Pilot CWV roundup presentation, replacing the prior pilot-only version
+
+### 2026-05-04 - Pilot roundup default now includes twin cohort and bottom archetype reference
+
+- Extended the default roundup generator:
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/generate_pilot_roundup.py`
+- New default report shape now adds:
+  - third KPI row = twin-property metrics
+  - compact same-region twin tables under each pilot + sister grouping
+  - bottom `Main Pilot Reference` section for the separate archetype site
+- Twin mappings now baked into the default roundup:
+  - District -> Gateway North / The Villages at Oakleaf / Luma Headwaters
+  - Champions Green -> Tree Park / The Maddox / Villas at Newnan Crossing
+  - The Harrison -> Tree Park / Apex West Midtown / Tuscany at Lindbergh
+  - Calais Midtown -> The Delta Pearland / Fairways at South Shore / Highpark
+  - Ventana -> Avasa at 1604 / Park on Wurzbach / Westover Oaks
+- The separate bottom reference currently uses a live PSI read from:
+  - `https://pilot.venterradev.com/`
+- The originally provided host `https://pilot.venterrradev.com/` did not resolve locally, so the report now records that fallback note directly in the rendered reference section.
+- Supporting documentation updated:
+  - `/Users/mark/Property_Analytics/pilot_roundup/README.md`
 
 ### 2026-04-11 - Watchtower daily collection operations foundation
 
@@ -5557,3 +7109,1137 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Verification on `AR4PB` dry run showed local Captain source SQL includes Reputation.com rows: `1` leaderboard row, `1` component row, `5` score trend rows, and `0` local competition rows for The Pointe Bentonville.
 - Follow-up enrichment: the Captain source mirror now includes recent `gbp_reviews`, `gbp_review_sentiment`, and `gbp_reviews_summary` rows alongside `gbp_daily_insights`, so `reputationInsight` can blend the Reputation.com score layer with GBP resident voice, reply coverage, low-star examples, sentiment themes, and local profile action visibility.
 - VP feedback on the Reputation.com brief was incorporated: the Risk Watchlist now includes a `Why It Made The List` column that names row-level trigger facts such as score under 780, response under 70%, rating under 4.00, and elevated negative review mix.
+
+### 2026-05-04 - Marketing Operations / Flagship doctrine formalized
+
+- Added formal doctrine artifacts in `/Users/mark/Property_Analytics/docs/`:
+  - `MARKETING_OPERATIONS_CHARTER_2026-05-04.md`
+  - `FLAGSHIP_OPERATING_MODEL_2026-05-04.md`
+  - `CAPTAIN_DOCTRINE_2026-05-04.md`
+  - `CAPTAIN_READINESS_CHECKLIST_2026-05-04.md`
+- These documents formalize the operating relationship between:
+  - `Marketing Operations` as the department
+  - `The Flagship` as the command/operating model
+  - `Captain` as the named property-scoped intelligence owner
+- The doctrine standardizes:
+  - department mission and authority boundaries
+  - the six-step Captain method: Collect, Reconcile, Diagnose, Direct, Track, Learn
+  - designation posture for `Critical`, `Spotlight`, and `Sale` properties
+  - the minimum readiness standard required before a Captain is treated as fully stood up
+- This is a doctrine and operating-model formalization layer. It does not replace existing Captain hierarchy or memory standards; it extends them into department-level operating guidance for MarketingOps / the Flagship.
+
+### 2026-05-04 - Portfolio Captain fleet stood up under Flagship doctrine
+
+- Extended `/Users/mark/Property_Analytics/scripts/standup_captain_roster.py` so Captain activation can now stand up the full governed portfolio through a `--portfolio` scope, while preserving monthly Spotlight overlays and the documented pilot set.
+- Added doctrine/operating artifacts:
+  - `/Users/mark/Property_Analytics/docs/FLAGSHIP_COMMAND_TEMPLATES_2026-05-04.md`
+  - `/Users/mark/Property_Analytics/docs/PORTFOLIO_CAPTAIN_ACTIVATION_STANDARD_2026-05-04.md`
+- New activation model:
+  - baseline `portfolio` scope from the governed identity matrix
+  - `spotlight` overlay from the current monthly Spotlight config, including `designation` and `market`
+  - `pilot` overlay preserved for the five documented pilot properties
+- Ran portfolio standup with remote apply on `2026-05-04` and verified remote D1 state:
+  - `93` active Captain properties
+  - `1,023` active support-agent rows
+  - `93` active Captain activation memory entries
+  - `19` properties carrying the current May Spotlight overlay
+  - `5` properties carrying the pilot overlay
+- Verification sample in remote D1:
+  - `AR4PB` now shows `portfolio,spotlight` with designation `Critical` and market `Arkansas`
+  - `TX4FA` now shows `portfolio,spotlight` with designation `Sale` and market `Houston`
+  - `TX4VE` now shows `portfolio,pilot`
+
+### 2026-05-04 - Captain readiness audit and Commodore fleet summary added
+
+- Added shared fleet helper `/Users/mark/Property_Analytics/scripts/captain_fleet_support.py` for Captain audit/report scripts that need governed identity, latest activation manifests, and remote D1 queries.
+- Added readiness audit script `/Users/mark/Property_Analytics/scripts/audit_captain_readiness.py`.
+- Audit outputs generated:
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/captain_readiness_audit_2026-05-04.json`
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/captain_readiness_audit_2026-05-04.md`
+- 05/04/2026 readiness snapshot:
+  - `28` ready
+  - `63` partial
+  - `2` source-gap
+  - no activation-gap properties
+- Added first portfolio Commodore generator `/Users/mark/Property_Analytics/reports/captains_log/generate_portfolio_commodore_read.py`.
+- Commodore outputs generated:
+  - `/Users/mark/Property_Analytics/reports/captains_log/commodore/portfolio_commodore_read_2026-05-04.json`
+  - `/Users/mark/Property_Analytics/reports/captains_log/commodore/portfolio_commodore_read_2026-05-04.md`
+- Added designation-aware runtime posture exposure in `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts`:
+  - `getCaptainStatus` now returns `commandPosture`
+  - Captain brief-run payloads now carry `commandPosture`
+  - latest Captain read responses now surface `designation`, `market`, `scopeTypes`, cadence mix, and derived intensity (`baseline`, `focused`, `urgent`)
+- Current dominant fleet pattern after standup: `no recent runtime` on `65` properties, which is expected immediately after portfolio-wide activation and is now visible as the first operating pressure for Commodore review.
+
+### 2026-05-04 - Morning portfolio collection lockout caused by headless GBP OAuth fallback
+
+- Investigated portfolio freshness alert showing:
+  - GA4 critical at `2026-04-30`
+  - GSC critical at `2026-04-28`
+  - Google Ads / guest cards stale
+  - unit availability / PageSpeed warning at `2026-05-01`
+- Root cause was a real hung collector process, not just stale reporting:
+  - PID `31364` started on `2026-05-02 05:00 AM CDT`
+  - it held `/Users/mark/Property_Analytics/Data_Collection/logs/daily_master_collection.lock`
+  - all later scheduled collector runs on `2026-05-03` and `2026-05-04` failed immediately with `Another collection run is already active`
+- Why it hung:
+  - `/Users/mark/Property_Analytics/Data_Collection/collectors/gbp_collector.py` could not unpickle the saved GBP OAuth token because the runtime was missing `google.auth._regional_access_boundary_utils`
+  - the collector then fell back to `InstalledAppFlow.run_local_server()` interactive OAuth during unattended launchd execution
+  - that browser-auth prompt blocked the master collector before GA4/GSC/Ads/PSI collection began
+  - the retry worker hit the same initialization path and was also unable to remediate the day
+- Canonical fix now in place:
+  - GBP collector now supports `allow_interactive_auth=False` for unattended runs
+  - master collection initialization passes headless mode by default and skips GBP collector initialization instead of launching interactive OAuth
+  - interactive OAuth remains opt-in only via `ALLOW_INTERACTIVE_GBP_AUTH=1`
+- Operational recovery:
+  - terminated the hung May 2 collector process
+  - confirmed a new manual canonical collection run now proceeds past GBP initialization and into GA4 collection instead of freezing
+
+### 2026-05-04 - Designation-aware Captain cadence and catch-up planning
+
+- Extended `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts` scheduled execution logic so designation now changes runtime behavior directly:
+  - daily scheduled selection still includes normal daily agents
+  - `Critical` properties now also pull `reputation_watch` and `logkeeper` into the daily cadence instead of waiting only for the weekly bucket
+  - scheduled bucket ordering now prioritizes `Critical`, then `Sale`/`Spotlight`, then baseline properties when rows share a bucket
+- Added `/Users/mark/Property_Analytics/scripts/generate_captain_runtime_catchup_plan.py`.
+- Catch-up outputs generated:
+  - `/Users/mark/Property_Analytics/reports/captains_log/commodore/captain_runtime_catchup_plan_2026-05-04.json`
+  - `/Users/mark/Property_Analytics/reports/captains_log/commodore/captain_runtime_catchup_plan_2026-05-04.md`
+- Current catch-up split from the readiness audit:
+  - `2` properties need source fixes before runtime catch-up
+  - `8` designated `Spotlight` / `Sale` properties need focused cadence catch-up
+  - `55` remaining baseline properties need normal cadence catch-up
+  - `0` currently missing-runtime `Critical` properties in this first snapshot
+
+### 2026-05-04 - Governed Captain catch-up runner and designation-aware severity
+
+- Added `/Users/mark/Property_Analytics/scripts/run_captain_runtime_catchup.py` so the catch-up plan can be executed as a governed batch against `/v1/captain/properties/:propertyId/run` and optional brief creation, instead of staying as a passive report only.
+- The runner consumes the latest generated catch-up plan and supports lane-scoped execution such as `fix_sources_first`, `focused_cadence`, and `baseline_cadence`.
+- Dry-run proof on 05/04/2026 against the `focused_cadence` lane surfaced the first five targeted properties correctly: `FL4GW`, `FL4HL`, `FL4VC`, `KY4MP`, and `TX4CO`.
+- Extended `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts` with a light designation-aware severity layer:
+  - `Critical` properties now elevate medium/high source-authority and source-freshness watch severity upward one step
+  - `Critical` properties now elevate matching action priority upward one step
+- This keeps designation effects grounded in actual operating outputs without rewriting the broader lane logic yet.
+
+### 2026-05-05 - Captain Brief marketing channel presentation pass
+
+- Refined the local vNext Captain Brief Marketing Channel Performance section in `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`.
+- The section now presents application/cancellation drivers as a ranked source-and-reason table, paid-search activity as compact heartbeat metrics, and a single spend-direction takeaway that explains why the team should fix channel leakage before adding broad traffic spend.
+- First user-feedback correction pass now moves the Elation Captain Brief toward T30/T90 action readiness: the stat/performance read removes prior-year variance emphasis, removes average-vacancy-time from the top KPI row, adds T30/T90 funnel and closing-ratio reads, rewrites recovery math around the net exposure target and current funnel, reframes paid search as health/action rather than existence, adds source URLs to competitor rows, and upgrades the 30-day plan to floorplan-specific ad/copy/follow-up execution.
+- This is presentation/orchestration work for the local Captain Brief artifact and does not mutate locked canonical PIB generation/rendering behavior.
+
+### 2026-05-05 - AptIQ watchlist summary source route added
+
+- Added a governed local source route for AptIQ / ApartmentIQ-style watchlist summary PDFs:
+  - `/Users/mark/Property_Analytics/Data_Collection/utils/aptiq_watchlist_summary_ingest.py`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0044_create_aptiq_watchlist_summaries.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/031_create_aptiq_watchlist_summaries.sql`
+  - `/Users/mark/Property_Analytics/docs/APTIQ_WATCHLIST_SUMMARY_SOURCE_CONTRACT_2026-05-05.md`
+- The route stores summary-level and page-level evidence in:
+  - `aptiq_watchlist_summaries`
+  - `aptiq_watchlist_summary_pages`
+- The ingester resolves property identity through `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py`, uses the filename label as the identity anchor to avoid OCR title truncation, and OCRs scanned PDFs with `pdftoppm` + `tesseract` when embedded text is absent.
+- Initial local load from `/Users/mark/Downloads/watchlist` ingested `11` AptIQ watchlist PDFs, `102` pages, `0` unmapped files, and used OCR for `7` scanned PDFs. Mapped properties: Avasa at 1604 (`TX416`), Botanic (`GA4BL`), College View (`TX4CO`), Forest View (`TX4FV`), Avasa Hammock Landing (`FL4HL`), Steeplechase (`KY4SC`), The Anatole (`FL4TA`), The Metropolitan (`KY4MP`), The Reserves of Thomas Glen (`KY4TG`), The Retreat (`TX4GM`), and The Retreat at Lakeland (`FL4RL`).
+- `apps/api/scripts/captain_sources_to_d1.py` now includes these AptIQ summary tables for property-scoped Captain source packets when matching rows exist.
+- This is advisory market/recovery evidence. It does not override Data Pond source-of-record operating metrics, unit availability, guest cards, or Marketing BI funnel facts.
+- Added a focused tomorrow-prep readiness audit for the `11` AptIQ-backed Spotlight properties:
+  - `/Users/mark/Property_Analytics/reports/captains_log/audit_spotlight_report_readiness.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/spotlight_report_readiness_2026-05-05.json`
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/spotlight_report_readiness_2026-05-05.md`
+- Readiness result: all `11` properties are report-draft ready on core sources: AptIQ, Marketing Ops Summary, T30/T90 traffic conversions, guest cards, unit availability, cancellation/denial, ad-spend month, GBP reviews, and Reputation.com. Advisory gaps remain for detailed competitor-market packets across the batch, Spotlight field/action notes for some properties, and available-unit-interest rows for many properties. Official operating metrics are audited but not yet treated as blocking for this Spotlight report batch because Marketing Ops + source tables can support draft recovery reads.
+- 2026-05-05 DataForSEO readiness addendum: the Spotlight readiness audit now checks DataForSEO search/on-page/business-profile/keyword/AI-visibility evidence explicitly. Initial coverage was `7` of `11` AptIQ-backed Spotlight properties with DataForSEO rows dated `2026-04-29`; `TX4CO` College View, `FL4HL` Hammock Landing, `KY4MP` The Metropolitan, and `FL4RL` The Retreat at Lakeland needed collection before non-branded rank, website-copy, business-profile, and AI/search-market recommendations could be fully source-backed. Follow-up catch-up completed on `2026-05-06`: SERP collection wrote `12` runs at `$0.042` and deep enrichment wrote on-page, business-profile, keyword-demand, Labs, backlink summary, and AI-visibility rows for all four properties. Remote D1 DataForSEO mirror then wrote `12` SERP runs, `306` SERP results, `12` property keyword ranking rows, `12` keyword metric rows, `66` Labs ranked-keyword rows, `4` on-page snapshots, `4` business-profile rows, and `4` AI-visibility probes. The Spotlight readiness audit now shows DataForSEO ready for all `11` properties. DataForSEO remains advisory evidence and does not replace operating, funnel, unit, reputation, or pricing facts.
+
+### 2026-05-05 - GSC freshness policy alignment
+
+- Corrected GSC freshness handling so natural Search Console lag is treated as fresh instead of noisy warning state when data is current for that source's normal delay window.
+- `/Users/mark/Property_Analytics/Data_Collection/utils/source_freshness_policy.py` now treats `gsc` as expected through `today - 3 days`.
+- `/Users/mark/Property_Analytics/generate_morning_full_report.py` now uses the shared freshness policy for core source rows instead of the old raw-age-only heuristic, while still escalating true stale critical-source states to report `critical`.
+- `/Users/mark/Property_Analytics/apps/api/src/routes/health.ts` now mirrors the same `gsc` expected-lag rule so Watchtower/API freshness agrees with Morning Full.
+- Verified on `2026-05-05`: `gsc` latest `2026-05-02` now evaluates `fresh`, not `warning`.
+
+### 2026-05-05 - D1 mirror Captain sync transient retry hardening
+
+- Investigated Morning Full `D1 mirror verification failed` on `2026-05-05`.
+- Root cause was not Wrangler auth or the core mirror steps. The failing sub-step was `captain_sources_to_d1.py`, which hit transient Cloudflare/Wrangler `fetch failed` errors during remote D1 import.
+- `/Users/mark/Property_Analytics/apps/api/scripts/d1_mirror_sync.py` now retries `captain_sources_to_d1.py` up to three times when stderr/stdout indicate transient connectivity failure (`fetch failed`, connectivity issue, remote disconnect, reset, timeout).
+- `/Users/mark/Property_Analytics/apps/api/scripts/captain_sources_to_d1.py` now also retries its own remote Wrangler import up to three times on the same transient failure class instead of exiting immediately on the first dropped fetch.
+- Intent: a brief Cloudflare import flake in the Captain-source mirror should self-heal before the full D1 mirror is marked failed.
+
+### 2026-05-06 - Operating metrics retry hook and closure helper hardening
+
+- Fixed a real orchestration bug in `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`.
+- `collect_operating_metrics_data()` was calling `self._queue_source_retry(...)`, but the collector class only implemented `_queue_property_retry(...)`, which caused the live failure:
+  - `'PortfolioDataCollector' object has no attribute '_queue_source_retry'`
+- Added `_queue_source_retry(...)` as the governed source-level wrapper over `_queue_property_retry(...)`, using the canonical source-level retry property id marker.
+- Hardened `/Users/mark/Property_Analytics/Data_Collection/utils/daily_collection_closure.py` so direct operational use is less brittle:
+  - `evaluate_daily_collection_closure(...)` now accepts either a DB path or an existing `sqlite3.Connection`
+  - `target_date` now accepts ISO date strings as well as `date` objects
+- Verified direct-use closure evaluation on `2026-05-06` and `2026-05-05` now returns structured closure state instead of throwing type/table errors during audit use.
+- Reordered `/Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py` so same-morning retries now prioritize missing core source lanes (`unit_availability`, `d1_mirror`) before long-running advisory retries (`psi`, `property_operating_metrics`).
+- Intent: when the day is open because core sources never wrote a run row, the retry worker should clear those first instead of spending 10+ minutes inside PSI before it even touches closure-critical sources.
+
+### 2026-05-06 - Captain Command Center UI slice
+
+- Added the first Data Pond Captain Command Center slice on the existing Captain page:
+  - `/Users/mark/Property_Analytics/apps/web/src/app/analysis/captain/page.tsx`
+  - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/captain.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/captain/runtime.ts`
+- New API reads:
+  - `GET /v1/captain/roster`
+  - `GET /v1/captain/properties/:propertyId/command-center`
+- The UI now shows a portfolio Captain roster, command posture, support-agent counts, latest runs, memory entries, source/knowledge coverage, active watch items, and open actions above the existing Captain Brief preview.
+- This is intentionally a Captain inspection/control surface, not a replacement report renderer. The Brief remains what the Captain says; the Command Center is how operators inspect the Captain's runtime, memory, source coverage, and follow-through.
+- Verified:
+  - API `npm run typecheck`
+  - web `npm run build`
+  - `bash scripts/check_property_identity_governance.sh`
+  - `bash scripts/check_pib_guardrails.sh`
+  - `bash scripts/check_context_discipline.sh`
+- Local dev servers started for review:
+  - API: `http://localhost:8788`
+  - Web: `http://localhost:3000`
+- Follow-up display correction after Elation QA: the legacy Brief `Source Readiness` block was using outdated/too-narrow source mappings for traffic conversions, GBP, PSI, and DataForSEO visibility. `apps/api/src/platform/captain/runtime.ts` now reads T30/T90 funnel from `marketing_bi_traffic_conversions_full`, falls back from GBP insights to GBP reviews, falls back from PageSpeed to pilot PSI where available, and includes DataForSEO ranking/on-page/business-profile dates in both source scout and Brief source readiness. `/analysis/captain` now has labels for those DataForSEO and Marketing Ops rows. This corrects UI under-reporting without changing the underlying data.
+
+### 2026-05-06 - Captain Brief team-feedback compliance pass
+
+- Removed the search agenda from the visible local vNext Captain Brief generator after direct team feedback:
+  - no `Paid Search Health` KPI card
+  - no standalone search-evidence section
+  - no `Website / SEO` marketing note
+  - no audience-facing `Website And Search Clarity Diagnosis` label
+- The top KPI grid now uses action-ready recovery facts instead: exposure, net move-ins needed, primary gap, T30 closing ratio, T90 closing ratio, guest cards needed, visible special, current T30 guest cards, and the action lane.
+- The website section remains, but is now `Website Content Diagnosis`: it uses page-structure evidence only to recommend exact title/meta/H1/hero/offer copy and page-structure changes. DataForSEO stays as bottom-source support when used, not as a visible search KPI or search agenda.
+- Regenerated the Elation Captain Brief proof artifact after the correction:
+  - `/Users/mark/Property_Analytics/reports/captains_log/elation_at_grandway_west/elation_at_grandway_west_captains_brief_vnext_generated_2026-05-06_email_outlook.html`
+- Added a corrected 11-property readiness audit that resolves mixed property-code / GA4 / feed-id source keys through governed identity:
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/spotlight_11_source_audit_2026-05-06.md`
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/spotlight_11_source_audit_2026-05-06.json`
+- Current result: `10` of `11` AptIQ-backed Spotlight properties have all audited critical lanes loaded. Avasa Hammock Landing has raw GBP reviews but no derived review-sentiment rows yet. Advisory lanes remain incomplete across the batch where no available-unit-interest, Spotlight field/action, or competitor-market packet exists.
+- This is local Captain Brief/report-prep orchestration work and does not mutate locked canonical PIB generation/rendering behavior.
+- Follow-up readiness closure for Avasa Hammock Landing: added `/Users/mark/Property_Analytics/Data_Collection/utils/gbp_review_sentiment_backfill.py`, a deterministic GBP review sentiment backfill utility that resolves property identity through the governed matrix and classifies sentiment/themes from collected GBP review star ratings and source review text. It does not call an LLM or invent review facts. Running it for `FL4HL` populated `138` review-sentiment rows under GA4/property id `416886840` from collected GBP reviews. The corrected 11-property audit now shows all `11` AptIQ-backed Spotlight properties at `12/12` audited critical source lanes.
+
+### 2026-05-06 - New BI Data Intake Batch
+
+- Ingested the 2026-05-06 workbook batch from `/Users/mark/Downloads` into local Data Pond source routes and evidence ledgers.
+- Purpose-built loads:
+  - `Marketing Ops Summary (2).xlsx`: `91` mapped rows into `marketing_ops_summary_rows`, source-as-of `2026-05-05`
+  - `cdreason.xlsx`: `4,762` rows into `marketing_cancel_denial_by_source`
+  - `Init Contact  Property  Mktg Src (1).xlsx`: `728` rows into `marketing_bi_conversion_dashboard_rows`; `(2)` was an identical browser download copy and remains preserved in generic evidence
+  - `Ad Spend Total, GCards, Visits, Leases and Ad Spend Δ by Calendar Period (bins) (1).xlsx`: `364` rows into `marketing_bi_ad_spend_performance_month`
+  - `Ad Spend Total and Ad Spend Δ by Region (1).xlsx`: `91` rows into `marketing_bi_ad_spend_property_month`
+  - `VacDays*` workbooks: `6,108` rows into `marketing_bi_vacancy_days_units`
+- Generic BI evidence ledger:
+  - `88,785` rows from the main workbook batch plus `15` rows from `region.xlsx` were preserved in `marketing_bi_excel_export_rows`, including conversion detail, leasing detail, ticket category/DoW, value proposition, Kingsley/NPS/renewal/rent-pricing, portfolio summary/demographic, available, and regional C&D rollups.
+- `region.xlsx` was confirmed to be a regional C&D rollup (`Region`, `C&Ds`, `Apps`, `GCards`), not a property-region assignment source; property configs were not mutated from that file.
+- `PSI_Day_Over_Day_Scores_2026-05-06.csv` and `GTMetrix_Daily_Scores_2026-05-06.csv` were recognized as generated export artifacts from canonical pilot tables. Local DB already had `10` mobile PSI rows and `23` GTMetrix rows dated `2026-05-06`.
+- `Data_Collection/utils/marketing_bi_excel_export_ingest.py` now normalizes browser download suffixes like ` (1)` / ` (2)` for source-type detection while preserving the real source file path in stored evidence.
+- Intake report:
+  - `/Users/mark/Property_Analytics/reports/data_intake/data_intake_report_2026-05-06.md`
+- Refreshed Spotlight readiness after intake:
+  - `/Users/mark/Property_Analytics/reports/captains_log/readiness/spotlight_report_readiness_2026-05-06.md`
+  - result: `11` of `11` ready, `0` source-work blockers
+
+### 2026-05-06 - Website content diagnosis pattern wired
+
+- Added Stephanie-style website content logic to the Captain Brief standard and local vNext generator.
+- Updated `/Users/mark/Property_Analytics/docs/POP_BRIEF_DIAGNOSTIC_RECOMMENDATION_STANDARD_2026-05-04.md` so website recommendations must choose a posture before prescribing copy:
+  - `Tighten`
+  - `Split`
+  - `Clarify`
+  - `Expand`
+  - `Leave mostly alone`
+- Updated `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`:
+  - pulls DataForSEO OnPage title, meta description, H1 JSON, word count, internal/external link counts, and image count
+  - replaces the lighter `Website Copy Opportunity` section with `Website Content Diagnosis`
+  - outputs current on-page signals, why the page needs the selected posture, exact title/meta/H1/hero/special copy changes, and a child-page rule
+  - explicitly warns against solving a diluted one-page property site by adding more homepage copy
+- Generated a fresh Hammock Landing test artifact with the new section:
+  - `/Users/mark/Property_Analytics/reports/captains_log/avasa_hammock_landing/avasa_hammock_landing_captains_brief_vnext_generated_2026-05-06_email_outlook.html`
+
+### 2026-05-06 - Weekly property source-performance intake
+
+- Ingested `19` detailed `perf-by-source-*.xlsx` Marketing BI workbooks from `/Users/mark/Downloads` into the local Data Pond.
+- `Data_Collection/utils/marketing_bi_excel_export_ingest.py` now treats `perf-by-source-*` files as the weekly source-performance feed and resolves Selection rows through the governed property identity matrix when a property key is present in the filename or row context.
+- Loaded `521` rows into `marketing_bi_source_performance_rows`:
+  - `198` property Selection rows
+  - `323` Portfolio benchmark rows
+  - `19` mapped Selection properties
+  - `0` unmapped Selection rows in this batch
+- `Data_Collection/read_models/property_diagnostic_json.py` now prefers property-specific weekly `perf-by-source-*` exports before older source-performance exports when building structured diagnostic JSON.
+- Regenerated Elation's diagnostic JSON at `/Users/mark/Property_Analytics/reports/property_diagnostics/tx4eg_property_diagnostic_2026-05-06.json`; the source layer now reads from `perf-by-source-elation` with `677` guest cards, `122` visits, `62` applications, `16` leases, and `10` move-ins in the latest total row.
+- This work does not mutate locked canonical PIB generation/rendering behavior.
+
+### 2026-05-06 - Pond-wide PSI read-model correction
+
+- Confirmed the local Pond has two PSI layers:
+  - `pagespeed_metrics`: portfolio-wide PSI/CWV table with `16,896` rows across `93` property ids through `2026-05-06`
+  - `pilot_control_psi_metrics`: pilot/control-specific PSI table with `436` rows across `10` property ids through `2026-05-06`
+- Elation PSI exists in `pagespeed_metrics` under GA4 property id `378381999`, not in the pilot/control table.
+- Corrected `/Users/mark/Property_Analytics/Data_Collection/read_models/property_diagnostic_json.py` so website health reads `pagespeed_metrics` first by GA4 id and falls back to `pilot_control_psi_metrics`.
+- Regenerated `/Users/mark/Property_Analytics/reports/property_diagnostics/tx4eg_property_diagnostic_2026-05-06.json`; Elation now shows latest PSI rows from `2026-05-06`:
+  - mobile performance `61`, LCP `5.78`, CLS `0.054`, FID/interaction fallback `33`
+  - desktop performance `89`, LCP `1.28`, CLS `0.034`, FID/interaction fallback `20`
+- The JSON no longer flags `website_performance.psi_scores` as missing for Elation.
+
+### 2026-05-06 - Abandoned application attribution status
+
+- Confirmed `marketing_bi_abandoned_application_rows` contains the abandoned application export:
+  - `962` loaded rows dated `2026-05-06`
+  - approximately `480` likely unique rows after accounting for duplicated browser-export copies
+  - `0` distinct property ids because the export has no property id/name/region/community key
+- Updated `/Users/mark/Property_Analytics/Data_Collection/read_models/property_diagnostic_json.py` so structured JSON no longer marks abandoned applications as simply missing when the export is loaded.
+- The JSON now reports `property_attribution_status: source_loaded_no_property_key`, loaded-row counts, latest report date, and `publish_property_count: false`.
+- Elation's regenerated specimen JSON includes the abandoned-applications source note and no longer lists abandoned applications in `missing_data`.
+
+### 2026-05-06 - VP property retrieval JSON contract
+
+- Added `/Users/mark/Property_Analytics/Data_Collection/read_models/vp_property_retrieval_json.py` as the dedicated serializer for the VP-requested retrieval contract.
+- Memorialized the contract at `/Users/mark/Property_Analytics/docs/VP_PROPERTY_RETRIEVAL_JSON_CONTRACT_2026-05-06.md`.
+- This is separate from the internal Captain diagnostic JSON and outputs the requested one-object-per-property structure:
+  - Demand Signals
+  - Funnel Conversion
+  - Inventory / Product
+  - Demand vs Inventory Matching
+  - Pricing / Market Position
+  - Marketing Efficiency
+  - Reputation / Product Friction
+  - Website Performance
+  - Derived boolean flags
+  - Explicit missing data
+- Current month is month-to-date through latest available source date.
+- `pd` is treated as paid traffic in GA4 channel grouping.
+- Generated the Elation specimen file:
+  - `/Users/mark/Property_Analytics/reports/property_diagnostics/vp_contract/tx4eg_vp_retrieval_2026-05-06.json`
+- Later Spotlight production should generate 11 separate files, one object per property.
+- Revision after contract QA: the VP serializer now emits compact metric objects instead of repeated `null` comparison fields. Required unavailable values are represented as `available: false` with a `missing_data_path`, and the reason appears once in `missing_data`.
+- The Elation specimen now has `0` JSON null values and fills additional computable values from the Pond, including GA4 conversion rate, available-unit T30/T90 averages, PSI T30/T90 averages, spend budget-vs-actual rollups, and cost-per-guest-card rollups.
+
+### 2026-05-06 - Captain's Brief vNext report memorialized
+
+- Memorialized the current Captain's Brief vNext report path at `/Users/mark/Property_Analytics/docs/CAPTAINS_BRIEF_VNEXT_REPORT_MEMO_2026-05-06.md`.
+- Canonical local report generator remains `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py`.
+- The generator resolves property identity through `/Users/mark/Property_Analytics/Data_Collection/utils/property_identity.py`, reads Data Pond facts, renders browser and Outlook-safe HTML, and can send through the shared email sender.
+- Current visible-report discipline:
+  - no paid-search KPI card
+  - no standalone Search Evidence section
+  - no top source-readiness / missing-source narrative
+  - sources stay at the bottom
+  - recommendations include the why, owner lane, expected effect, and proof expected
+  - website content diagnosis chooses a posture before prescribing copy
+  - PSI/Core Web Vitals appear as conversion-health support, not as a search agenda
+- Grand Harbor proof artifact:
+  - `/Users/mark/Property_Analytics/reports/captains_log/the_cape_at_grand_harbor/the_cape_at_grand_harbor_captains_brief_vnext_generated_2026-05-06_email_outlook.html`
+- Grand Harbor email proof:
+  - `a735e31a-9d33-43f9-8406-195de76d487b@property-analytics.local`
+- Boundary: this is Captain's Log report work. It does not mutate locked canonical PIB generator/template/sender files.
+
+### 2026-05-06 - Watchlist Decision Output standard v1.0
+
+- Memorialized the accepted Watchlist Decision Output format as v1.0:
+  - `/Users/mark/Property_Analytics/docs/WATCHLIST_DECISION_OUTPUT_STANDARD_V1_0_2026-05-06.md`
+- This is an additive Watchlist reporting standard fed by Data Pond facts; it does not replace the VP retrieval JSON, Captain Brief vNext, POP Brief, canonical PIB, or source routes.
+- Mandatory emailed output requirement:
+  - use the PIB-style Venterra header from `/Users/mark/Property_Analytics/reports/captains_log/captain_brief_header.py`
+- Required v1.0 sections:
+  - Executive Diagnosis
+  - Primary Constraint
+  - Confidence
+  - KPI / pressure tiles
+  - Scorecard with visual score bars
+  - Constraint Resolution
+  - Funnel Snapshot
+  - Channel Budget Efficiency
+  - False-Cut Protection
+  - Recommended Actions
+  - T30 / T90 Expected Outcomes
+  - Final Recommendation
+  - bottom Sources Used
+- First accepted visual artifact:
+  - `/Users/mark/Property_Analytics/reports/captains_log/the_pointe_bentonville/the_pointe_watchlist_decision_output_example_2026-05-06.html`
+- First accepted email send:
+  - subject `The Pointe Bentonville - Watchlist Decision Output`
+  - message id `5c71a194-3c3c-45d1-b43a-b4a69646bf9d@property-analytics.local`
+- Visual discipline: tiles, score bars, decision pills, short bullets, action cards, and bottom source table. Avoid long dense paragraphs, unbranded emails, raw dumps, and unsupported claims.
+
+### 2026-05-06 - Capability-first build and delivery discipline tightened
+
+- Operator correction: future work must not bypass an existing canonical capability or report-family delivery path just because a direct utility can do the job.
+- Updated the top-level required reading block in this memory file so every build, report, email send, and new script must first check the capability register and use the existing owner/path where one exists.
+- Specific report/email rule:
+  - PIB-family, Captain, Watchlist, Spotlight, and specialty brief emails must use the existing documented report-family shell/sender path for that family.
+  - Direct `utils.email_sender.EmailSender` use is allowed only inside the canonical report-family sender or with explicit operator approval.
+  - Do not create one-off send wrappers for report delivery when an established sender/orchestrator exists or should be extended.
+- The Elation Watchlist companion workbook send was delivered successfully, but it exposed this discipline gap because the direct shared email utility was used instead of first extending/using the universal PIB-style delivery path for the Watchlist family.
+- Follow-up correction: added the governed Watchlist Decision Output sender at `/Users/mark/Property_Analytics/reports/captains_log/send_watchlist_decision_output_email.py` and documented it in `/Users/mark/Property_Analytics/docs/WATCHLIST_DECISION_OUTPUT_STANDARD_V1_0_2026-05-06.md`. Future Watchlist emails must use that sender, including companion workbook attachments.
+- Corrected and resent the Elation Watchlist Decision Output with `Competitive Market Read` promoted into the main decision flow and Elation's subject rent populated from the internal unit feed (`$1,270-$2,065`). Corrected send proof: `348861ca-fa94-4abb-a3e8-0b38a7cd25b1@property-analytics.local`.
+
+### 2026-05-07 - Spotlight 11 report preparation completed
+
+- Re-ran governed readiness for the 11 current Spotlight properties and generated Captain's Brief vNext browser/email artifacts for all 11:
+  - TX416 Avasa at 1604
+  - GA4BL Botanic Luxury
+  - TX4CO College View
+  - TX4FV Forest View
+  - FL4HL Avasa Hammock Landing
+  - KY4SC Steeplechase
+  - FL4TA The Anatole
+  - KY4MP The Metropolitan
+  - KY4TG The Reserves of Thomas Glen
+  - TX4GM The Retreat
+  - FL4RL The Retreat at Lakeland
+- Loaded the latest `/Users/mark/Downloads/available units.xlsx` workbook into `available_unit_interest_metrics`; that file contains Pointe-level rows plus region rows, so it does not close property-level available-interest rows for the full Spotlight 11.
+- Re-ran the weekly Spotlight field-note/action ingest against `/Users/mark/Downloads/spotlight`; mapped field packets remain present for Botanic, Forest View, Steeplechase, Pointe, Thomas Glen, The Retreat, and Grand Harbor. No weekly field-note/action source files are present for Avasa 1604, College View, Hammock Landing, The Anatole, The Metropolitan, or Retreat at Lakeland.
+- Confirmed the Brief generator already derives property-level exposure/availability from Marketing Ops and unit availability when the specialized available-interest export is missing, so the reports can draft without inventing floorplan-level guest-card-per-available-unit facts.
+- Corrected `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py` so source-performance sections prefer `marketing_source` rows but fall back to `origin` rows when that is the only BI source-performance shape available. This specifically closed the visible source-performance hole for The Retreat at Lakeland.
+
+### 2026-05-07 - Same-day Marketing Ops and Portfolio Box Score refresh
+
+- Ingested `/Users/mark/Downloads/Marketing Ops Summary today.xlsx` through the governed Marketing Ops Summary source route:
+  - `91` rows found
+  - `91` rows upserted
+  - `91` mapped properties
+  - source as-of date `2026-05-06`
+  - report date `2026-05-07`
+- Ingested `/Users/mark/Downloads/Portfolio Box Score today.xlsx` through the governed Marketing BI Excel source route:
+  - `91` Portfolio Box Score rows upserted
+  - report date `2026-05-07`
+- Updated `/Users/mark/Property_Analytics/Data_Collection/utils/marketing_bi_excel_export_ingest.py` so Portfolio Box Score routing accepts dated/renamed workbooks whose normalized filename starts with `portfolio box score`, instead of requiring the exact filename `Portfolio Box Score.xlsx`.
+- Re-ran the 11 current Spotlight Captain's Brief vNext artifacts after the refresh so the drafts use the latest operating snapshot and product-readiness metrics.
+- This refresh improved the operating/product-readiness data used by the reports, but it did not close the remaining advisory lanes for specialized `available_interest` exports or weekly Spotlight notes/actions where property-specific source files have not been provided.
+
+### 2026-05-07 - Full guest-card-per-unit export loaded
+
+- Ingested `/Users/mark/Downloads/guest-cards-per-unit.xlsx` through the governed Marketing BI Excel available-unit-interest route:
+  - `107` available-unit-interest rows upserted
+  - `445` generic evidence rows stored
+  - `0` ingest errors
+- Updated `/Users/mark/Property_Analytics/Data_Collection/utils/marketing_bi_excel_export_ingest.py` so available-unit-interest routing accepts the current and common filename variants:
+  - `available units.xlsx`
+  - `guest-cards-per-unit.xlsx`
+  - `guest cards per unit.xlsx`
+  - `guest cards per unit type.xlsx`
+  - `guset cards per unit type.xlsx`
+- The new export closed the `available_interest` advisory lane for all 11 current Spotlight properties.
+- Re-ran the 11 current Spotlight Captain's Brief vNext artifacts so they use the full guest-card-per-unit data.
+- Remaining advisory gaps after this load are only weekly Spotlight human field notes/actions for properties whose specific weekly note/action files have not been provided.
+
+### 2026-05-07 - Watchlist companion workbook v1.2 current standard
+
+- Versioned the Watchlist companion workbook standard as `/Users/mark/Property_Analytics/docs/WATCHLIST_COMPANION_WORKBOOK_STANDARD_V1_2_2026-05-07.md`.
+- Generated the current Elation v1.2 companion workbook:
+  - `/Users/mark/Property_Analytics/reports/captains_log/elation_at_grandway_west/elation_watchlist_companion_v1_2_2026-05-07.xlsx`
+  - data export `/Users/mark/Property_Analytics/reports/captains_log/elation_at_grandway_west/elation_watchlist_companion_data_2026-05-07.json`
+- v1.2 adds `Demand_vs_Availability`, promotes `T30 GC / Available Unit` and `T7 GC / Available Unit` into the Summary tab, and preserves bedroom-level available-interest rows under the governed property identity.
+- Added `bedrooms` to the available-unit-interest schema and corrected the Marketing BI Excel ingester so `Bedrooms` rows inherit the active parent property identity instead of becoming unscoped rows.
+- Corrected Captain Brief available-interest reads to filter `current_level = 'Property'` where property-total metrics are required, preventing bedroom rows from being selected as the latest property KPI.
+- Re-ran the 11 current Spotlight Captain Brief vNext artifacts after this correction.
+
+### 2026-05-07 - Watchlist shared repository established
+
+- Created the shared company Watchlist repository at `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Watchlist_Data`.
+- Documented the standard at `/Users/mark/Property_Analytics/docs/WATCHLIST_SHARED_REPOSITORY_STANDARD_2026-05-07.md`.
+- Created repository guidance files:
+  - `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Watchlist_Data/00_README/README_Watchlist_Data_Repository.md`
+  - `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Watchlist_Data/00_README/Daily_BI_Export_Checklist.md`
+- Active boundary: this shared directory is a repository/publication/exchange layer only. Data Pond remains the governed system of record after ingestion.
+- Future internal Watchlist/Captain/Spotlight emails should link to published files in this repository when practical instead of attaching large report artifacts.
+
+### 2026-05-07 - Watchlist Decision Output v1.1 recovered and canonicalized
+
+- Promoted the Watchlist Decision Output from stale static examples into a reusable canonical renderer:
+  - `/Users/mark/Property_Analytics/reports/captains_log/generate_watchlist_decision_output.py`
+- Documented the v1.1 standard:
+  - `/Users/mark/Property_Analytics/docs/WATCHLIST_DECISION_OUTPUT_STANDARD_V1_1_2026-05-07.md`
+- v1.1 hard rules:
+  - do not send stale static Watchlist examples as live reports
+  - use `Recommendation Guardrails`, not `False-Cut Protection`
+  - use governed source labels such as `Apartments.com / ADC` and `Walk-In / Drive-By`
+  - avoid user-facing `RFP`
+  - keep repository links as a quiet bottom utility, not a dominant top block
+  - send shared-repository tests with no attachments through the Watchlist report-family sender
+- Generated and published The Pointe v1.1 Watchlist Decision Output:
+  - local: `/Users/mark/Property_Analytics/reports/captains_log/the_pointe_bentonville/ar4pb_watchlist_decision_output_v1_1_2026-05-07.html`
+  - repository: `/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Watchlist_Data/05_Current_Reports/Watchlist/The Pointe Bentonville/2026-05-07/The_Pointe_Bentonville_Watchlist_Decision_Output_v1_1_2026-05-07.html`
+- Sent the v1.1 test through `/Users/mark/Property_Analytics/reports/captains_log/send_watchlist_decision_output_email.py` with `--no-html-attachment`; send proof `8207e82a-e630-4d3f-919b-441aa8699583@property-analytics.local`.
+- Correction after operator review: the actual accepted 2026-05-06 9:06 PM final was the full Elation report, not the compressed Pointe test shape. The active v1.1 standard now preserves the full section architecture from `/Users/mark/Property_Analytics/reports/captains_log/elation_at_grandway_west/elation_watchlist_decision_output_v1_1_2026-05-06.html`, including Constraint Resolution, Inventory Pressure, Product Readiness / Make-Ready, Channel Decision Check, Competitive Market Read, Recommendation Packages, Current Funnel Stress Test, and the full Secondary Evidence Appendix.
+- Support/agency fee rows must be excluded from visible channel decision tables. `/Users/mark/Property_Analytics/reports/captains_log/elation_at_grandway_west/build_elation_watchlist_decision_output_v1_1.py` now filters those rows from `Channel Budget Efficiency` and `Current Spend + Output Efficiency`.
+- Restored full-condition Elation send proof: `bee9648a-873b-4669-8bdc-bf775e77e06f@property-analytics.local`.
+- Published the Elation v1.1 support package into the shared `Watchlist_Data` repository and resent through the canonical Watchlist sender with bottom inline links only and no attachments. The linked package includes the HTML report, a Word copy of the email content, the v1.2 Excel companion workbook, and the enhanced VP JSON data layer. Send proof: `81d6518b-f8a6-45ad-8b24-1ce51635d028@property-analytics.local`.
+- 2026-05-07 display corrections: Watchlist human-facing dates must render as `MM/DD/YYYY` with no timestamps; owner lines/role-call labels are removed from the report body; the v1.1 header line is centered as `v1.1` with smaller italic `by MarketingOps`; the Executive Diagnosis panel is compact; outbound repository links must be SharePoint/OneDrive web URLs, never `file://` local sync paths.
+- 2026-05-07 Captain Brief vNext correction: `/Users/mark/Property_Analytics/reports/captains_log/generate_captains_brief_vnext.py` now removes owner columns and visible role-call labels from the main email body, keeps action/proof language, and relies on `MM/DD/YYYY` dates only. Full Critical Captain Brief emails were regenerated and sent for Elation at Grandway West, The Cape at Grand Harbor, and The Pointe Bentonville.
+- 2026-05-07 correction after operator rejection: the requested three Critical emails must use Watchlist Decision Output v1.1, not Captain Brief vNext. Added `/Users/mark/Property_Analytics/reports/captains_log/build_critical_watchlist_decision_outputs_v1_1.py` to generate the accepted v1.1 structure for the three Critical properties: Elation at Grandway West, The Cape at Grand Harbor, and The Pointe Bentonville. The batch validates required sections (`Scorecard`, `Constraint Resolution`, `Product Readiness / Make-Ready`, `Channel Decision Check`, `Recommendation Packages`, `Secondary Evidence Appendix`, etc.) and sends through `/Users/mark/Property_Analytics/reports/captains_log/send_watchlist_decision_output_email.py` with no attachments. Corrected send proofs: Elation `1cb5f809-21cc-4600-84ba-ef07f458128d@property-analytics.local`; Cape `db928da0-afbf-4ff1-89b1-04d4a9af68a8@property-analytics.local`; Pointe `9adf38e3-38a2-442c-bace-616b69d7b477@property-analytics.local`.
+- 2026-05-07 immediate correction: the Critical Watchlist builder initially mapped make-ready to `marketing_ops_summary_rows`, but the correct source is `marketing_bi_portfolio_box_score_rows`. Fixed the builder so top Make-Ready and Product Readiness values come from Portfolio Box Score. Resent corrected emails with make-ready populated: Elation `13538a9d-cef1-4a62-bf1f-93b4cb3eb604@property-analytics.local`; Cape `0d3706ab-095d-4789-b297-e7c63bd877bd@property-analytics.local`; Pointe `052a3df0-ee2d-4f67-bdd1-50e9385c15fa@property-analytics.local`.
+- 2026-05-07 Spotlight example: generalized the Watchlist Decision Output v1.1 builder to accept an arbitrary `--property` / `--captain` pair after validating the 3 Critical path. Generated and sent the first Spotlight example for Avasa at 1604 with required v1.1 sections, make-ready populated, no owner-role clutter, no bad dates, and no attachments. Send proof: `f7c876fd-8d98-40d0-a6d9-7a996cb1092a@property-analytics.local`.
+- 2026-05-07 Avasa competitor display correction: Avasa's competitor packet contains subject rent plus competitor specials/USP snippets, but no competitor rent values. The Watchlist v1.1 builder now separates subject visible rent from competitor evidence and suppresses the competitor rent column when competitor rents were not captured, instead showing a clear `Competitor rent status` note. Resent Avasa example after correction: `7cb4fb72-c7c1-477e-b011-c47c0ff5ac68@property-analytics.local`.
+### 2026-05-07 - GBP is now genuinely Keeper-backed, and Hammock was a mapping drift issue
+
+- Closed the last GBP auth/governance gap instead of only stabilizing around it.
+- What changed in code:
+  - `/Users/mark/Property_Analytics/utils/config_manager.py`
+    - `Config.get_gbp_token_path()` now prefers Keeper materialization when `KSM_GBP_TOKEN_UID` is present, with local JSON only as true fallback.
+  - `/Users/mark/Property_Analytics/utils/keeper_file_materializer.py`
+    - added `upload_keeper_file(...)` so refreshed file-backed OAuth artifacts can be pushed back into Keeper.
+  - `/Users/mark/Property_Analytics/Data_Collection/collectors/gbp_collector.py`
+    - GBP still normalizes tokens into stable authorized-user JSON, but now also uploads refreshed token state back to Keeper when the GBP token UID is configured.
+- Live Keeper wiring now exists in the scheduled launchd runtime:
+  - `KSM_GBP_CLIENT_SECRET_UID=W06j0C6nHmT25dyr7sVYTA`
+  - `KSM_GBP_TOKEN_UID=yDAkWDdIFlYjvDbjVl6McQ`
+  - applied to:
+    - `/Users/mark/Library/LaunchAgents/com.venterra.portfolio.collection.plist`
+    - `/Users/mark/Library/LaunchAgents/com.venterra.portfolio.retry-cycle.plist`
+- Keeper-backed proof:
+  - direct config resolution now materializes both GBP client secret and GBP token from Keeper temp files when those env vars are present
+  - direct collector init succeeded headlessly, logged `Uploaded refreshed GBP OAuth token to Keeper`, and initialized the GBP Performance API service cleanly
+- Hammock root cause:
+  - `Avasa Hammock Landing` was not failing because of bad OAuth anymore
+  - it was mapped to a stale GBP location id (`9439661870997370401`) that returned `403 PERMISSION_DENIED` on the Performance API
+  - corrected governed mapping in `/Users/mark/Property_Analytics/Portfolio_Monitoring/data/all_properties_gbp_matched.json` to `8521091931329757992`
+  - direct API verification then succeeded for both reviews and performance data
+- Canonical live result after reruns:
+  - `gbp_reviews` latest row: `collection_id=1050`, `completed`, `91 total / 91 success / 0 skipped / 0 failed`
+  - `gbp_insights` latest row: `collection_id=1049`, `completed`, `91 total / 91 success / 0 skipped / 0 failed`
+- Net effect:
+  - GBP is no longer merely “working because local files happen to exist”
+  - it is now on the governed KSM path for unattended runs, with refreshed token state pushed back into Keeper and Hammock fixed at the mapping layer
+### 2026-05-07 - Morning Full acceptance now treats intentional hold as healthy control flow
+
+- Closed a recurring false-failure path in the canonical daily summary wrapper.
+- Root issue:
+  - `/Users/mark/Property_Analytics/send_morning_full_report.py` correctly returned `0` when Morning Full was intentionally held because closure was still open
+  - but `/Users/mark/Property_Analytics/scripts/verify_morning_delivery.py` still assumed that missing same-run delivery evidence was an error
+  - result: `com.venterra.daily.health` exited `1` even when the system was doing the right thing
+- Fix:
+  - `send_morning_full_report.py` now writes a small status artifact to `/Users/mark/Property_Analytics/logs/morning_full_status/`
+  - statuses include:
+    - `held`
+    - `dry_run`
+    - `already_delivered`
+    - `delivered`
+    - `report_missing`
+  - `verify_morning_delivery.py` now reads that status file and passes when delivery was intentionally deferred by closure policy
+- Net effect:
+  - the daily summary lane no longer treats “correctly held until later” as operational failure
+  - Morning Full still enforces true delivery evidence when a send was expected
+
+### 2026-05-07 - Closure now distinguishes core-ready from advisory tail
+
+- Tightened the shared closure model in `/Users/mark/Property_Analytics/Data_Collection/utils/daily_collection_closure.py`.
+- Before this change, once the retry cutoff passed, any remaining queue item forced `state=blocked`, even if all core sources were already closed and only advisory/manual work remained.
+- New posture:
+  - `state=advisory`
+  - `summary_reason=core_closed_with_advisory_open`
+- This is used when:
+  - there are no unresolved core source lanes
+  - but advisory/manual retry items still remain in the queue
+- Operational effect:
+  - Morning Full can read as sendable with advisory tail instead of falsely blocked
+  - Watchtower now renders that middle state explicitly instead of collapsing it into red pressure
+- On 2026-05-07 this changed the day from:
+  - `blocked`
+  - to `advisory`
+  - because only `psi` and `property_operating_metrics` remained after core closure
+
+### 2026-05-07 - PSI now reconciles from actual stored coverage instead of per-attempt noise
+
+- Closed the biggest remaining false-pressure lane in same-day retries.
+- Root issue:
+  - `/Users/mark/Property_Analytics/Portfolio_Dashboard/scripts/collect_daily_psi.py` was grading each run from that run's in-memory attempt stats
+  - repeated whole-portfolio retries could leave the latest `data_collections` row marked `partial` even when the database already had complete same-day mobile+desktop coverage across the whole portfolio
+  - the retry worker kept re-running all 93 properties because it only trusted the latest run row
+- Fixes:
+  - `collect_daily_psi.py` now:
+    - writes `collection_id` into `pagespeed_metrics`
+    - can target a subset via repeatable `--property-id`
+    - computes final run status from actual stored same-day coverage in `pagespeed_metrics`, not only attempt-local counters
+  - `/Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py` now:
+    - detects the truly incomplete PSI property set from stored same-day mobile/desktop coverage
+    - targets only those properties on retry
+    - immediately resolves the PSI queue and reconciles the latest PSI run row to `completed` when stored same-day coverage is already whole
+- Live result on 2026-05-07:
+  - latest PSI run `collection_id=1046` now reads:
+    - `status=completed`
+    - `93 total / 93 success / 0 failed`
+    - notes: `PSI run reconciled to completed after confirming same-day mobile and desktop coverage in stored data.`
+  - queue item `2204` for PSI is now `resolved`
+- Net effect:
+  - PSI no longer overstates incompleteness after cumulative retries have already closed the day
+  - future retries can focus on the actual laggards instead of brute-force rerunning the full portfolio
+
+### 2026-05-07 - Watchlist v1.1 adds GA4, GBP, and enhanced PSI trend evidence
+
+- Updated the active Watchlist Decision Output renderer:
+  - `/Users/mark/Property_Analytics/reports/captains_log/build_critical_watchlist_decision_outputs_v1_1.py`
+- Boundary:
+  - this is Watchlist report-family work only
+  - no locked canonical PIB generator/template/sender files were touched
+- New secondary evidence blocks:
+  - `GA4 Website Demand`
+    - T30 sessions, users, conversions, bounce rate
+    - current T30 vs prior T30 trend indicators
+    - channel rows for sessions/conversions by GA4 channel group
+  - `GBP Local Demand`
+    - profile views, website clicks, calls, directions
+    - total actions, total queries, action rate, discovery rate
+    - current T30 vs prior T30 trend indicators
+  - enhanced `Website Technical Health`
+    - latest mobile/desktop PSI, LCP, CLS, FID/INP proxy, Speed Index
+    - latest-vs-prior PSI trend indicators
+    - threshold-based conversion-risk watch list
+- Visual standard:
+  - compact evidence cards and tables
+  - trend arrows and color logic
+  - all displayed dates remain `MM/DD/YYYY`
+- Verification:
+  - generated Avasa proof artifact without sending:
+    - `/Users/mark/Property_Analytics/reports/captains_log/avasa_at_1604/tx416_watchlist_decision_output_v1_1_2026-05-07.html`
+  - `python3 -m py_compile reports/captains_log/build_critical_watchlist_decision_outputs_v1_1.py` passed
+  - `bash scripts/check_pib_guardrails.sh` passed
+  - `bash scripts/check_context_discipline.sh` passed
+
+### 2026-05-07 - Watchlist recovery KPI wording changed to Net Leases
+
+- Updated the active Watchlist Decision Output renderer:
+  - `/Users/mark/Property_Analytics/reports/captains_log/build_critical_watchlist_decision_outputs_v1_1.py`
+- User-facing change:
+  - top KPI tile now reads `Net Leases Needed`
+  - funnel stress row now reads `PQ / Net Leases`
+  - supporting line now says net leases require the calculated visits/guest cards at current closing
+- Boundary:
+  - math is unchanged; this remains the exposure-under-10% recovery gap expressed in lease/PQ terms for action clarity
+  - no locked PIB files were touched
+
+### 2026-05-07 - Watchlist email / site-manager attachment separation
+
+- Updated the active Watchlist Decision Output report family:
+  - `/Users/mark/Property_Analytics/reports/captains_log/build_critical_watchlist_decision_outputs_v1_1.py`
+  - `/Users/mark/Property_Analytics/reports/captains_log/send_watchlist_decision_output_email.py`
+- Main email cleanup:
+  - removed `Constraint Resolution`
+  - removed `Channel Decision Check`
+  - removed `Historical Cost Efficiency`
+  - kept the remaining executive/secondary evidence email structure
+- Site-manager Word attachment:
+  - generated as a separate `.docx` from the same governed source data
+  - excludes the internal/technical blocks the user named: `Constraint Resolution`, `Channel Decision Check`, `Recommendation Packages`, `Current Funnel Stress Test`, `Unit-Type Spend / Targeting`, and `Website Technical Health`
+  - keeps practical operating content: plain-English read, work-first list, funnel trend, inventory pressure, channel budget, competitive market, source output, current spend/output, website/local demand, reputation/product friction, and expected improvement
+- Delivery:
+  - canonical Watchlist sender now supports `.docx` MIME attachments
+  - test sent for The Pointe Bentonville with HTML report, site-manager Word doc, companion workbook, and VP JSON attached
+- Boundary:
+  - no locked PIB files were touched
+  - no one-off email sender was created
+
+### 2026-05-07 - Watchlist Decision Output v1.2 comparison standard
+
+- Versioned the active Watchlist Decision Output family as v1.2:
+  - standard doc: `/Users/mark/Property_Analytics/docs/WATCHLIST_DECISION_OUTPUT_STANDARD_V1_2_2026-05-07.md`
+  - renderer remains `/Users/mark/Property_Analytics/reports/captains_log/build_critical_watchlist_decision_outputs_v1_1.py` but emits `_v1_2_` artifacts through `REPORT_VERSION`
+- v1.2 requirements added from Stephanie feedback:
+  - restore portfolio and regional comparisons
+  - show T30 and T90 direction
+  - add portfolio/regional analysis for funnel and channel/source sections
+  - restore guest-card-to-available-unit-type analysis from `available_unit_interest_metrics`
+  - use direct channel language; no defensive marketing framing where downstream output does not support spend
+- v1.2 insight correction:
+  - every major section must include an interpretation panel that explains what the evidence likely means, why it may be happening, what to do next, and what to avoid
+  - tables are supporting evidence, not the report narrative
+  - added `Damage / Friction Check` to surface conversion-damaging factors from negative reviews, attention reviews, service/ticket rows, no-response aging, reopen/ticket posture, make-ready/readiness, and other trust blockers
+- v1.2 funnel-gap correction:
+  - `Current Funnel Stress Test` now distinguishes broad traffic-volume sufficiency from the actual recovery gap
+  - if current T30 demand already exceeds broad needs, the report says there is no broad traffic gap and points to net exposure, floorplan/product fit, follow-up, offer clarity, pricing/concession fit, and service/readiness blockers instead of showing misleading zero-gap rows
+- v1.2 reputation expansion:
+  - `Reputation / Product Friction` now follows the richer PIB reputation lane instead of a thin rating table
+  - the report pulls GBP review volume, star mix, reply capture, sentiment score/breakdown, theme sentiment, critical review action items, Reputation.com score trend/components, and local reputation competition where available
+  - labels now separate GBP all-time/review-level evidence from Reputation.com current-period evidence to avoid confusing response/review-count reads
+- v1.2 unit-type targeting readability correction:
+  - `Unit-Type Spend / Targeting` no longer renders raw keyword JSON/Python arrays
+  - bedroom search terms are classified under matching bedroom lanes (`1 BR`, `2 BR`, etc.)
+  - General search terms exclude inactive and bedroom-specific keywords and render plain search phrases with readable spend/click/conversion context
+- v1.2 run-date correction:
+  - Watchlist Decision Output artifact filenames, visible report header dates, and email subject dates now use the actual run date
+  - this prevents fresh runs from carrying a stale hardcoded report date
+- The site-manager companion Word report is also versioned as v1.2 and render-checked:
+  - `/Users/mark/Property_Analytics/reports/captains_log/the_pointe_bentonville/ar4pb_site_manager_action_plan_v1_2_2026-05-07.docx`
+  - render QA: `/Users/mark/Property_Analytics/reports/captains_log/the_pointe_bentonville/docx_render_check_v1_2`
+- Boundary:
+  - Watchlist report-family change only
+  - no locked PIB files were touched
+
+### 2026-05-09 - Directive Control Center added
+
+- Added an enterprise Directive Control Center as governed policy infrastructure for the Captain / Commodore / Fleet / Expert Bench / Fleet Scribe operating model.
+- Governing source: `/Users/mark/Property_Analytics/docs/FLEET_SCRIBE_OFFICE_STRUCTURE_AND_BENCH_DIRECTIVES_2026-05-09.md`.
+- Placement follows the existing platform pattern:
+  - domain services: `/Users/mark/Property_Analytics/apps/api/src/platform/directives`
+  - API route: `/Users/mark/Property_Analytics/apps/api/src/routes/directives.ts`
+  - D1 migration: `/Users/mark/Property_Analytics/apps/api/migrations/0047_create_directive_control_center.sql`
+  - admin surface: `/Users/mark/Property_Analytics/apps/web/src/app/admin/directives/page.tsx`
+- The model treats directives as structured policy data, not loose prompt text. Profiles include identity, purpose, decision questions, sources, output contract, guardrails, do-not-allow rules, evidence requirements, confidence thresholds, freshness policy, escalation triggers, publication permissions, external communication permissions, report-family applicability, owner, version, effective date, approval status, and approval metadata.
+- Runtime behavior resolves through approved active directive versions. Draft directives are simulation-only.
+- Workflow states now include `draft`, `submitted_for_review`, `approved`, `active`, `rejected`, `retired`, and `rolled_back`.
+- Audit tables and service integration capture directive creation, editing, validation, approval, activation, rejection, retirement, rollback, runtime use, simulation runs, and validation failures.
+- The UI/API contract is documented at `/Users/mark/Property_Analytics/docs/DIRECTIVE_CONTROL_CENTER_UI_CONTRACT_2026-05-09.md`; the first `/admin/directives` page provides structured list/search/view, with workflow actions exposed through the governed API.
+- Simulation fixtures cover:
+  - Navigator content recommendation with weak local proof
+  - Quartermaster stale/conflicting source condition
+  - Fleet Scribe publication attempt with template variance or missing approval
+- Boundary:
+  - additive to Data Pond, Captain runtime, Watchlist, Spotlight, PIB, Fleet Scribe, and approved artifact generation systems
+  - no locked PIB generation/rendering/sending files were changed
+
+### 2026-05-09 - Directive Control Center audit/hardening pass
+
+- Completed an enterprise audit and hardening pass for the Directive Control Center.
+- Audit record: `/Users/mark/Property_Analytics/docs/DIRECTIVE_CONTROL_CENTER_AUDIT_HARDENING_2026-05-09.md`.
+- Hardening added:
+  - directive version hashes and runtime snapshot hashes
+  - immutable runtime snapshot and audit event triggers
+  - post-draft directive content immutability
+  - one-open-draft, one-submitted, and one-active-version DB constraints per profile
+  - dedicated `directiveControlCenter` permission surface
+  - stricter validation for permissions, freshness, confidence, report families, active-state safety, Fleet Scribe controls, and Quartermaster source gates
+  - simulation isolation and expanded governance failure fixtures
+  - request/correlation identifiers for audit and runtime usage tracing
+- Verification:
+  - API typecheck passed
+  - Directive Control Center platform tests passed
+  - web build passed
+- Boundary:
+  - hardening only; no Captain’s Office implementation was started in that pass
+  - no parallel reporting system created
+  - no locked PIB files touched
+
+### 2026-05-09 - Captain Runtime Orchestration foundation
+
+- Added the first governed Captain Runtime Orchestration Layer.
+- Architecture doc: `/Users/mark/Property_Analytics/docs/CAPTAIN_RUNTIME_ORCHESTRATION_ARCHITECTURE_2026-05-09.md`.
+- Implementation:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/captain-runtime`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/captain-runtime.ts`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0048_create_captain_runtime_orchestration.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/0035_create_captain_runtime_orchestration.sql`
+- Runtime behavior:
+  - receives property-scoped interactions
+  - classifies intent
+  - resolves property context
+  - resolves active directives through the Directive Resolver
+  - builds immutable evidence packets
+  - enforces governance before reasoning
+  - builds structured runtime payloads
+  - validates structured reasoning output
+  - stores memory candidates instead of mutating canonical memory
+  - routes interactions to Captain / Bench / Fleet Scribe lanes
+  - preserves audit events, evidence hashes, directive lineage, payload hashes, and response hashes
+- Boundary:
+  - GPT is treated as a constrained reasoning engine, not truth, memory, workflow, governance, or policy
+  - no locked PIB files touched
+  - no parallel reporting system created
+  - Fleet Scribe and Quartermaster boundaries remain blocking controls
+
+### 2026-05-09 - Captain Runtime Orchestration audit/hardening pass
+
+- Completed the enterprise hardening pass for the Captain Runtime Orchestration foundation.
+- Audit record: `/Users/mark/Property_Analytics/docs/CAPTAIN_RUNTIME_ORCHESTRATION_AUDIT_HARDENING_2026-05-09.md`.
+- Hardening added:
+  - runtime session idempotency keys and correlation lineage
+  - immutable/no-delete protections for sessions, interactions, evidence packets, reasoning requests, reasoning responses, and audit events
+  - replayable evidence packet hashes that exclude volatile ids/timestamps
+  - evidence packet validation before reasoning
+  - payload validation for directive/evidence hashes, output conflicts, and size controls
+  - strict structured-response validation for required sections, forbidden hallucinated fields, enums, confidence, and response size
+  - side-effect validation before memory/routing persistence
+  - candidate-memory expiration, conflict state, source evidence hash, and duplicate signature
+  - route-level runtime-mode authorization so editors cannot force escalated, executive, or simulation mode
+- Verification:
+  - API typecheck passed
+  - Captain Runtime Orchestration tests passed
+- Boundary:
+  - hardening only; no Captain’s Office UI or real GPT provider added in that pass
+  - no locked PIB files touched
+  - no parallel reporting system created
+
+### 2026-05-09 - Captain’s Office operational workspace
+
+- Added the first governed Captain’s Office operational workspace.
+- Official naming:
+  - interface: `Captain’s Office`
+  - runtime intelligence actor: `Captain`
+  - orchestration layer: `Captain Runtime`
+  - policy/governance layer: `Directive Control Center`
+- Architecture doc: `/Users/mark/Property_Analytics/docs/CAPTAIN_OFFICE_ARCHITECTURE_2026-05-09.md`.
+- Web routes:
+  - `/captains`
+  - `/captains/[propertyId]`
+  - `/captains/[propertyId]/history`
+  - `/captains/[propertyId]/watchlist`
+  - `/captains/[propertyId]/memory-candidates`
+- API read routes added under `/v1/captain-runtime`:
+  - `/properties/:propertyId/office`
+  - `/properties/:propertyId/history`
+  - `/properties/:propertyId/evidence`
+  - `/properties/:propertyId/memory-candidates`
+- Boundary:
+  - UI consumes Captain Runtime; it does not recreate runtime logic
+  - no direct GPT access
+  - no Data Pond mutation
+  - no memory promotion workflow
+  - no raw internal prompt/payload exposure
+  - no locked PIB files touched
+  - no parallel reporting system created
+
+### 2026-05-09 - Expert Reads / Consulting Bench runtime controls
+
+- Added the first governed Expert Reads runtime foundation for Consulting Bench lanes.
+- Architecture doc: `/Users/mark/Property_Analytics/docs/EXPERT_READS_RUNTIME_ARCHITECTURE_2026-05-09.md`.
+- Implementation:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/expert-reads`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/expert-reads.ts`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0049_create_expert_reads.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/0036_create_expert_reads.sql`
+- Expert Reads are structured specialist contributions, not autonomous agents, independent assistants, report authors, chatbot lanes, or report generators.
+- Runtime behavior:
+  - resolves active lane directives through the Directive Resolver
+  - consumes immutable Captain evidence packets by id
+  - enforces lane-specific governance for Quartermaster, Navigator, Revenue Advisor, Signals Officer, Product Readiness Officer, Trust And Proof Advisor, and the other Consulting Bench lanes
+  - persists Expert Read requests, final reads, findings, recommendations, and audit events with evidence/directive hash lineage
+  - keeps draft/incomplete/blocked reads out of Fleet Scribe publishable input posture
+- Boundary:
+  - no Data Pond mutation
+  - no memory promotion
+  - no direct GPT provider integration
+  - no Fleet Scribe bypass
+  - no Quartermaster bypass
+  - no locked PIB files touched
+  - no parallel reporting system created
+
+### 2026-05-10 - Expert Reads / Consulting Bench audit/hardening pass
+
+- Completed the enterprise hardening pass for the Expert Reads runtime layer.
+- Audit record: `/Users/mark/Property_Analytics/docs/EXPERT_READS_RUNTIME_AUDIT_HARDENING_2026-05-10.md`.
+- Hardening added:
+  - Expert Reads evidence compatibility validation with replayed Captain evidence packet hashes
+  - source Captain Runtime session/interaction lineage assertions when source ids are supplied
+  - deterministic `request_hash` replay protection and duplicate-request audit events
+  - database-level prevention of self-authorized `publishable` Expert Read states
+  - audit hash lineage columns for evidence, directive, and read hashes
+  - stronger structured output validation for evidence refs, proof metrics, freshness, blocked states, and output size
+- Boundary:
+  - no Expert Reads UI, real GPT provider, autonomous Bench agents, Fleet Scribe publication tooling, locked PIB edits, or parallel reporting system added
+
+### 2026-05-10 - Captain’s Office Expert Reads visibility
+
+- Added governed Expert Reads visibility and request workflow inside Captain’s Office.
+- Integration doc: `/Users/mark/Property_Analytics/docs/CAPTAIN_OFFICE_EXPERT_READS_INTEGRATION_2026-05-10.md`.
+- Web route:
+  - `/captains/[propertyId]/expert-reads`
+- UI behavior:
+  - lists property Expert Reads from existing `/v1/expert-reads/properties/:propertyId`
+  - renders detail inside the static-compatible route instead of adding an unbounded dynamic Expert Read id route
+  - shows lane, confidence, freshness, publishability, escalation, blocked states, findings, recommendations, do-not-do guidance, conflicts, and evidence/directive/read/request hash lineage
+  - allows controlled lane-specific Expert Read requests through existing `/v1/expert-reads`
+- Boundary:
+  - Captain’s Office consumes Expert Reads APIs only
+  - no new runtime, no autonomous expert agents, no report authoring system, no Data Pond mutation, no memory promotion, no Fleet Scribe bypass, no Quartermaster bypass
+
+### 2026-05-10 - Property Access Control foundation
+
+- Added canonical property-scoped authorization for Captain’s Office, Captain Runtime, Expert Reads, and future Fleet/Scribe property workflows.
+- Architecture doc: `/Users/mark/Property_Analytics/docs/PROPERTY_ACCESS_CONTROL_ARCHITECTURE_2026-05-10.md`.
+- Implementation:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/access/property-access-control.ts`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0050_create_property_access_control.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/0037_create_property_access_control.sql`
+- Current capability:
+  - central `PropertyAccessControl` service for property, region, portfolio, capability, runtime-mode, and Expert Read lane authorization
+  - explicit grant persistence in `property_access_grants`
+  - immutable audit trail in `property_access_audit_events`
+  - fail-closed behavior for missing actors, missing/unresolvable property scope, unsupported runtime modes, unsupported expert lanes, and missing capabilities
+  - route enforcement on Captain Runtime interactions, Captain’s Office reads, runtime history, evidence lineage, memory candidates, and Expert Reads request/read endpoints
+- Boundary:
+  - no parallel auth system
+  - no UI-only enforcement
+  - no real GPT integration
+  - no AI/runtime/report behavior changed
+  - no locked PIB files touched
+
+### 2026-05-10 - Property Access Control audit/hardening pass
+
+- Completed enterprise hardening for the canonical property-scoped authorization layer.
+- Audit record: `/Users/mark/Property_Analytics/docs/PROPERTY_ACCESS_CONTROL_AUDIT_HARDENING_2026-05-10.md`.
+- Hardening added:
+  - explicit `allow` / `deny` grant effects
+  - deterministic grant precedence: property before region before portfolio, and same-scope deny before allow
+  - duplicate active grant prevention through canonical grant fingerprints
+  - strict denial for unknown authorization actions, invalid runtime modes, and invalid Expert Read lanes
+  - scope consistency constraints for property, region, and portfolio grants
+  - revoked and expired grants excluded from access decisions
+  - Expert Read detail denials masked as not found to reduce record inference while still auditing the denial
+- Boundary remains unchanged:
+  - no grant-management UI
+  - no AI/runtime/report behavior changed
+  - no PIB/reporting coupling
+
+### 2026-05-10 - Awareness Network / Memory Stewardship foundation
+
+- Added the first governed Awareness Network and Memory Stewardship foundation.
+- Charter and architecture docs:
+  - `/Users/mark/Property_Analytics/docs/AWARENESS_NETWORK_CHARTER_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MEMORY_STEWARDSHIP_ARCHITECTURE_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/AGENT_IDENTITY_AND_CHARTER_MODEL_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MEMORY_TAXONOMY_AND_CARE_METADATA_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/AGENT_SELF_NOTES_AND_COMMITMENTS_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/REGIONAL_AWARENESS_MODEL_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MEMORY_GOVERNANCE_AND_CARE_RULES_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/CAPTAINS_OFFICE_AWARENESS_INTEGRATION_2026-05-10.md`
+- Implementation:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/awareness`
+  - `/Users/mark/Property_Analytics/apps/api/src/routes/awareness.ts`
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0051_create_awareness_network.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/0038_create_awareness_network.sql`
+- Current capability:
+  - bounded Agent Identity and Agent Charter models
+  - MemoryItem taxonomy with lifecycle state, allowed/blocked uses, sensitivity, visibility, correction path, freshness, and Care Metadata
+  - governed self notes and commitment memory
+  - Memory Posture service for what a Captain knows, owes, doubts, should verify, and should not recommend without more evidence
+  - summary-level Regional Awareness and Doctrine Candidate foundation
+  - Memory Stewardship governance checks through PropertyAccessControl and care rules
+  - deterministic reflection routines that produce suggestions only
+  - minimal Captain’s Office visibility for Memory Posture, self notes, commitments, regional summary, and care warnings
+- 2026-05-10 hardening / naming alignment:
+  - `Captain’s Office` remains the human-facing operational workspace
+  - `Captain’s Quarters` is the Captain working memory / stewardship space
+  - `Captain’s Log` is chronological continuity / archive / lineage
+  - added `/Users/mark/Property_Analytics/docs/CAPTAINS_QUARTERS_MODEL_2026-05-10.md`
+  - added `/Users/mark/Property_Analytics/docs/CAPTAINS_LOG_MODEL_2026-05-10.md`
+  - added `/Users/mark/Property_Analytics/docs/AWARENESS_NETWORK_AUDIT_HARDENING_2026-05-10.md`
+  - added `/Users/mark/Property_Analytics/apps/web/src/app/captains/[propertyId]/quarters/page.tsx`
+  - hardening added: Captain charter forbidden-authority validation, memory publication-state blocks, care-metadata use checks, correction/expiration/supersession helpers, no-delete/immutability persistence triggers, neutral commitment wording checks, and reflection archive/supersession suggestions
+- Boundary:
+  - no real GPT integration
+  - no autonomous agents
+  - no Data Pond mutation
+  - no memory promotion to canonical truth
+  - no report publishing
+  - no surveillance or people scoring
+  - no Quartermaster, Fleet Scribe, Directive Control Center, or PropertyAccessControl bypass
+
+### 2026-05-10 - Cross-System Runtime Acceptance Audit ✅
+
+- Completed the final governed-runtime foundation gate before any future Model Provider Gateway work.
+- Acceptance doc:
+  - `/Users/mark/Property_Analytics/docs/CROSS_SYSTEM_RUNTIME_ACCEPTANCE_AUDIT_2026-05-10.md`
+- Cross-system acceptance tests:
+  - `/Users/mark/Property_Analytics/apps/api/test/platform/cross-system-runtime-acceptance.test.ts`
+- Verified integrated chain:
+  - Captain’s Office
+  - PropertyAccessControl
+  - Captain Runtime
+  - Directive Control Center
+  - immutable Evidence Packet
+  - Captain’s Quarters / Awareness Network
+  - Captain’s Log continuity
+  - Expert Reads
+  - Quartermaster / Fleet Scribe boundaries
+- Current readiness decision:
+  - `ready_for_model_gateway: true`
+  - this is permission to design the Model Provider Gateway next, not to connect real GPT yet
+- Confirmed boundaries:
+  - no real GPT provider integration
+  - no autonomous behavior
+  - no report publishing
+  - no memory promotion workflow
+  - no Data Pond mutation from memory/runtime/Expert Reads
+  - no PIB/reporting coupling
+  - no Fleet Scribe or Quartermaster bypass
+  - no self notes as evidence
+  - no Expert Reads as reports
+  - no raw regional/private memory exposure in the tested summary surface
+
+### 2026-05-11 - Model Provider Gateway foundation
+
+- Added the governed **Model Provider Gateway** foundation under:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/model-gateway`
+- Core modules now exist for:
+  - domain types
+  - config and kill switch
+  - payload minimization / redaction
+  - structured response validation
+  - governance post-check
+  - immutable audit lineage
+  - adapters:
+    - deterministic
+    - noop
+    - Cloudflare AI Gateway
+    - shadow mode
+- Captain Runtime and Expert Reads now call the gateway abstraction while preserving deterministic accepted behavior by default.
+- Live provider calls remain disabled by default.
+- Cloudflare AI Gateway is implemented as an infrastructure adapter only, not as an authority layer.
+- Added gateway docs:
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_ARCHITECTURE_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_CLOUDFLARE_ADAPTER_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_SECURITY_AND_REDACTION_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_SHADOW_MODE_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_OPERATING_GUIDE_2026-05-10.md`
+- Added persistence foundation:
+  - `/Users/mark/Property_Analytics/apps/api/migrations/0052_create_model_provider_gateway.sql`
+  - `/Users/mark/Property_Analytics/infra/migrations/0039_create_model_provider_gateway.sql`
+- 2026-05-11 hardening audit:
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_AUDIT_HARDENING_2026-05-10.md`
+  - corrected the infra migration filename from the sequence-inconsistent `034_create_model_provider_gateway.sql` to `0039_create_model_provider_gateway.sql`
+  - aligned the infra migration with the app migration's checks, indexes, foreign keys, and immutable/no-delete audit protections
+  - added unsafe-config validation so ambiguous booleans, invalid adapters/source systems/runtime modes, raw payload storage, raw provider logging, cache enablement, and unauthenticated Cloudflare posture fail closed
+  - hardened redaction for relationship context, private/restricted memory, sensitive context, and raw details in pattern-only summaries
+  - hardened validators/governance checks against promoted memory candidates, self notes as evidence, relationship/people scoring, Quartermaster/Fleet Scribe bypass, external communication, directive/authorization edits, and provider self-routing
+  - shadow-mode provider output now receives source-specific validation/governance checks without replacing deterministic accepted output
+- Current readiness decision:
+  - `ready_for_shadow_mode_provider_config: true`
+  - `ready_for_live_provider_calls: false`
+  - `live_provider_calls_enabled: false`
+  - `deterministic_default_preserved: true`
+  - `cloudflare_adapter_live_enabled: false`
+- Boundaries preserved:
+  - no Data Pond mutation
+  - no memory promotion
+  - no report publication
+  - no PropertyAccessControl bypass
+  - no Directive Control Center bypass
+  - no Quartermaster bypass
+  - no Fleet Scribe bypass
+  - no PIB/reporting coupling
+
+### 2026-05-11 - Cloudflare shadow-mode provider configuration
+
+- Added controlled Cloudflare shadow-provider configuration for the Model Provider Gateway.
+- New implementation paths:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/model-gateway/evaluation.ts`
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/model-gateway/smoke.ts`
+  - `/Users/mark/Property_Analytics/apps/api/scripts/smoke_cloudflare_shadow_model_gateway.ts`
+- New docs:
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_SHADOW_PROVIDER_CONFIG_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_CLOUDFLARE_SHADOW_SMOKE_TEST_2026-05-10.md`
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_GOLDEN_CASE_EVALUATION_2026-05-10.md`
+- Configuration model now distinguishes:
+  - `provider_shadow_enabled`
+  - `provider_live_enabled`
+  - `accepted_output_adapter`
+  - `shadow_provider_adapter`
+  - `kill_switch_active`
+  - `dry_run_enabled`
+- Shadow provider calls require explicit shadow mode, explicit provider-shadow enablement, Cloudflare enablement, kill switch off, dry run off, and live accepted calls still disabled.
+- Deterministic output remains accepted behavior.
+- Cloudflare output is validated, governance-checked, compared, and stored only as shadow observability metadata.
+- Added immutable `model_gateway_shadow_results` persistence for shadow hashes, validation/governance status, deviation summary, token/cost/latency metadata, provider request id, and safe error fields.
+- Added opt-in synthetic smoke test command:
+  - `cd /Users/mark/Property_Analytics/apps/api && npm run smoke:cloudflare-shadow`
+  - real provider attempt requires `RUN_CLOUDFLARE_SHADOW_SMOKE=true` plus explicit shadow configuration
+- Added golden-case evaluation fixtures for unverified claims, self notes, stale evidence, unsupported public copy/publishability, relationship judgment risk, and regional summary redaction.
+- Current readiness decision:
+  - `ready_for_shadow_provider_smoke_test: true`
+  - `ready_for_semantic_shadow_evaluation: true`
+  - `ready_for_live_provider_calls: false`
+  - `live_provider_calls_enabled: false`
+  - `deterministic_default_preserved: true`
+  - `cloudflare_adapter_live_enabled: false`
+- Preserved boundaries:
+  - no live accepted model behavior
+  - no Cloudflare authority transfer
+  - no provider-driven Captain Runtime or Expert Reads behavior
+  - no provider-driven memory, routing, report, publication, Data Pond, or PIB/reporting side effects
+
+### 2026-05-11 - Cloudflare shadow smoke and semantic evaluation pass
+
+- Ran the first controlled Cloudflare shadow smoke and golden-case semantic evaluation pass.
+- Evaluation record:
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_SHADOW_EVALUATION_RESULTS_2026-05-10.md`
+- Added metadata-only evaluation runner:
+  - `/Users/mark/Property_Analytics/apps/api/scripts/run_model_gateway_shadow_evaluation.ts`
+  - command: `cd /Users/mark/Property_Analytics/apps/api && npm run eval:gateway-shadow`
+- Added deterministic semantic safety scoring across:
+  - structure compliance
+  - governance compliance
+  - evidence discipline
+  - memory care
+  - publishability restraint
+  - operational usefulness
+- First controlled result:
+  - synthetic smoke attempted with explicit shadow flags
+  - Cloudflare provider transit skipped because backend Cloudflare base URL/model/token are absent
+  - deterministic accepted output remained unchanged
+  - one smoke shadow result was recorded
+  - seven golden-case deterministic baselines passed
+  - seven golden-case shadow attempts were skipped/fail-closed with audit lineage
+- Current readiness decision:
+  - `ready_for_limited_shadow_expansion: true`
+  - `ready_for_live_candidate_mode_design: true`
+  - `ready_for_live_provider_calls: false`
+  - `live_provider_calls_enabled: false`
+  - `deterministic_default_preserved: true`
+  - `cloudflare_adapter_live_enabled: false`
+  - `shadow_provider_observed: false`
+- Important limitation:
+  - no real Cloudflare/provider output was observed yet; provider semantic quality, latency, token usage, request id capture, and cost estimate remain unmeasured until backend Cloudflare provider config is supplied through the approved secret path
+- Boundaries preserved:
+  - provider output remains shadow-only
+  - no live accepted model behavior
+  - no memory/routing/report/publication/Data Pond side effects
+  - no frontend provider access
+  - no raw prompts or secrets printed
+  - no PIB/reporting coupling
+
+### 2026-05-11 - Real Cloudflare shadow observation preflight
+
+- Attempted the **Cloudflare Shadow Provider Configuration + Real Shadow Observation** pass.
+- Real provider transit did not occur because approved backend Cloudflare AI Gateway config is absent in the current shell and checked backend config files.
+- New results record:
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_REAL_SHADOW_OBSERVATION_RESULTS_2026-05-10.md`
+- Missing required config for real shadow provider transit:
+  - `CLOUDFLARE_AI_GATEWAY_BASE_URL`
+  - `CLOUDFLARE_AI_GATEWAY_AUTH_TOKEN`
+  - `CLOUDFLARE_AI_GATEWAY_MODEL` or `CLOUDFLARE_AI_GATEWAY_DYNAMIC_ROUTE_NAME`
+- Safe run results:
+  - synthetic smoke attempted
+  - `calledCloudflare=false`
+  - deterministic accepted output preserved
+  - one smoke shadow result recorded
+  - seven golden-case deterministic baselines passed
+  - seven golden-case shadow attempts skipped/fail-closed before provider transit
+  - redaction compliance remained 7/7
+- Readiness decision:
+  - `ready_for_limited_shadow_expansion: false`
+  - `ready_for_live_candidate_mode_design: false`
+  - `ready_for_live_provider_calls: false`
+  - `live_provider_calls_enabled: false`
+  - `deterministic_default_preserved: true`
+  - `cloudflare_adapter_live_enabled: false`
+  - `shadow_provider_observed: false`
+  - `synthetic_smoke_called_cloudflare: false`
+  - `golden_fixtures_called_cloudflare: false`
+- Boundary preserved:
+  - no real provider output was observed or trusted
+
+### 2026-05-11 - Cloudflare AI Gateway backend shadow config path
+
+- Prepared the backend-only Cloudflare AI Gateway shadow configuration path for the internal Model Provider Gateway.
+- Added safe config checker implementation and command:
+  - `/Users/mark/Property_Analytics/apps/api/src/platform/model-gateway/cloudflare-shadow-config.ts`
+  - `/Users/mark/Property_Analytics/apps/api/scripts/check_cloudflare_shadow_config.ts`
+  - `cd /Users/mark/Property_Analytics/apps/api && npm run model-gateway:check-cloudflare-shadow-config`
+- The checker reports only key presence and safe booleans; it does not print, log, persist, or expose secret values.
+- It verifies:
+  - deterministic accepted output remains configured
+  - live provider calls remain disabled
+  - Cloudflare live accepted behavior remains disabled
+  - shadow provider eligibility requires explicit shadow flags, kill switch off, dry run off, Cloudflare enabled, backend base URL, backend auth token, model or dynamic route, raw payload storage off, raw provider logging off, and cache off
+  - frontend exposure is absent for Cloudflare provider keys
+- Added setup documentation:
+  - `/Users/mark/Property_Analytics/docs/MODEL_PROVIDER_GATEWAY_CLOUDFLARE_SHADOW_CONFIG_SETUP_2026-05-10.md`
+- Smoke output now includes a sanitized `skipReason` so missing-config and opt-in skips are explicit without exposing secrets.
+- Current expected readiness if backend Cloudflare values are absent:
+  - `cloudflare_config_path_ready: true`
+  - `cloudflare_backend_config_present: false`
+  - `shadow_provider_observed: false`
+  - `ready_to_run_real_shadow_when_secrets_provided: true`
+  - `ready_for_live_provider_calls: false`
+  - no raw prompts/secrets printed or persisted
+  - no memory/routing/report/publication/Data Pond/PIB side effects

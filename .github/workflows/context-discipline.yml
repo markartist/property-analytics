@@ -1,0 +1,20 @@
+name: Context Discipline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  context-discipline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Context Discipline Check
+        run: |
+          bash scripts/check_context_discipline.sh

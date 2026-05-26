@@ -1,5 +1,10 @@
 # Property Analytics
 
+> Historical document only.
+> Current secret-management standard is Keeper Secrets Manager via the local `marketingops` profile.
+> Prefer `/Users/mark/Property_Analytics/README.md` and `/Users/mark/Property_Analytics/docs/KSM_MARKETINGOPS_RECORD_MANIFEST.md`.
+> File-based credential paths in this document should be treated as legacy fallback, not default setup.
+
 Comprehensive analytics and monitoring systems for 91 Venterra real estate properties.
 
 ## Overview
@@ -9,11 +14,11 @@ This repository contains two independent but complementary systems:
 ### 1. **Spotlight Properties Report** (`Spotlight_Properties_Report/`)
 Weekly reporting system for spotlight properties with comprehensive performance analysis.
 
-**Purpose**: Deep-dive weekly reports for key properties  
-**Frequency**: Weekly (typically Wednesday)  
-**Properties**: 39 spotlight properties  
-**Output**: CSV reports with recommendations  
-**Data Sources**: GA4, GTMetrix, PageSpeed Insights, SEMRush  
+**Purpose**: Deep-dive weekly reports for key properties
+**Frequency**: Weekly (typically Wednesday)
+**Properties**: 39 spotlight properties
+**Output**: CSV reports with recommendations
+**Data Sources**: GA4, GTMetrix, PageSpeed Insights, SEMRush
 **Repository**: https://github.com/markartist/spotlight-properties-report
 
 **Key Features:**
@@ -26,11 +31,11 @@ Weekly reporting system for spotlight properties with comprehensive performance 
 ### 2. **Portfolio Monitoring** (`Portfolio_Monitoring/`)
 Daily monitoring and alerting system for the entire portfolio.
 
-**Purpose**: Daily health monitoring and alerts  
-**Frequency**: Daily (runs at 6 AM)  
-**Properties**: All 91 properties  
-**Output**: Email alerts, SQLite database  
-**Data Sources**: GA4, historical trends  
+**Purpose**: Daily health monitoring and alerts
+**Frequency**: Daily (runs at 6 AM)
+**Properties**: All 91 properties
+**Output**: Email alerts, SQLite database
+**Data Sources**: GA4, historical trends
 **Repository**: https://github.com/markartist/portfolio-monitoring
 
 **Key Features:**

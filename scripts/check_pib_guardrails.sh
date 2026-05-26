@@ -33,6 +33,9 @@ LOCKED_FILES=(
   "Property_Intelligence_Brief/generate_property_intelligence_brief.py"
   "Property_Intelligence_Brief/templates/executive_email_template.py"
   "Property_Intelligence_Brief/send_property_intelligence_brief_email.py"
+  "Property_Intelligence_Brief/generate_property_intelligence_brief_v2_2_0.py"
+  "Property_Intelligence_Brief/templates/executive_email_template_v2_2_0.py"
+  "Property_Intelligence_Brief/send_property_intelligence_brief_email_v2_2_0.py"
 )
 
 violations=0

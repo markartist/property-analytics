@@ -1,8 +1,8 @@
 # Platform System Catalog
 
-Status: Draft v1  
-Date: 2026-04-09  
-Owner: MarketingOps / Property Analytics  
+Status: Draft v1
+Date: 2026-04-09
+Owner: MarketingOps / Property Analytics
 Scope: Canonical capability catalog for the interconnected Venterra property operations platform
 
 ## 1. Purpose
@@ -390,10 +390,11 @@ Current maturity:
 
 Role:
 
-- governed content generation and refinement system
+- governed narrative synthesis, content generation, and refinement system
 
 Primary responsibilities:
 
+- Property Narrative Canon generation and refresh
 - content briefs
 - blog generation
 - refinement and humanization
@@ -405,22 +406,29 @@ Primary inputs:
 - Data Pond property context
 - governed memory context from Captain's Log, Fleet Brief, and The Ledger
 - Intelligence Office rules and guidance
+- Property Narrative Canon source contract
+- DataForSEO search, OnPage, business, and AI visibility evidence
+- future Ahrefs authority, backlink, and content-gap evidence after governed onboarding
 - support/advocate signals
 
 Primary outputs:
 
+- Property Narrative Canon artifacts
 - governed blog drafts
 - property-aware content artifacts
+- channel derivative briefs for Content Office
 
 Current maturity:
 
 - live governed API surface
-- strongest current path: one strong blog per property
+- strongest current path: one strong Property Narrative Canon for one property, then one long-form artifact and one channel derivative package from that canon
 - `vacs.venterradev.com` remains the intended canonical product surface in architecture, while the current repo-verified implementation is the protected API route family at `api.venterradev.com/v1/vacs/*`
 
 Relationship note:
 
 VACS should remain a distinct execution workspace within `Content Operations`, sharing Data Pond, Intelligence Office, Specs, and advocate context with Site Content Creator instead of duplicating them.
+
+The Property Narrative Canon v1 is now the governing core artifact for VACS strategy. It is the durable narrative layer from which Site Content Creator recommendations, VACS drafts, Content Office channel packages, and future publishing artifacts should be derived. See `/Users/mark/Property_Analytics/docs/PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md`.
 
 ## 5. Capability Matrix
 
@@ -443,10 +451,12 @@ The intended integration pattern is:
 1. `Data Pond` supplies property and portfolio truth
 2. `Intelligence Office` interprets that truth into content and search guidance
 3. `Captain's Log`, `Fleet Brief`, and `The Ledger` preserve governed memory without redefining truth
-4. `Specs` defines how the site is structurally organized
-5. `Site Content Creator` uses truth, memory, and guidance in separate lanes to inventory and rewrite section-level site content
-6. `VACS` uses the same governed inputs to generate longer-form property content without flattening them into one context blob
-7. `PIB`, `Watchtower`, `Dock`, `Fishing Hole`, and `Pilot Tracker` consume the same shared platform state for reporting and operations
+4. The `Property Narrative Canon` organizes those facts, memory, search signals, and directives into one durable property narrative contract
+5. `Specs` defines how the site is structurally organized
+6. `Site Content Creator` uses truth, memory, guidance, Specs, and the canon in separate lanes to inventory and rewrite section-level site content
+7. `VACS` uses the same governed inputs and canon to generate longer-form property content without flattening them into one context blob
+8. `Content Office` derives channel packages from the canon and preserves approval/publication proof
+9. `PIB`, `Watchtower`, `Dock`, `Fishing Hole`, and `Pilot Tracker` consume the same shared platform state for reporting and operations
 
 ## 7. Current Gaps
 

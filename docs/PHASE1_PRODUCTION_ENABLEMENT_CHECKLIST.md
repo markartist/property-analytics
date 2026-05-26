@@ -5,21 +5,23 @@ Enable the governed Phase 1 runtime in the real local job chain without changing
 
 ## 1. D1 Schema
 - [ ] Apply [`0021_create_phase1_platform_tables.sql`](/Users/mark/Property_Analytics/apps/api/migrations/0021_create_phase1_platform_tables.sql) to the real `pop-brief-db`
+- [ ] Apply [`0023_seed_phase1_platform_control_plane.sql`](/Users/mark/Property_Analytics/apps/api/migrations/0023_seed_phase1_platform_control_plane.sql) to the real `pop-brief-db`
 - [ ] Confirm all Phase 1 tables exist in D1
 - [ ] Confirm the migration was applied exactly once
 
 ## 2. Control-Plane Seed Data
-- [ ] Seed `mirror_domains` for `ga4` and `psi`
-- [ ] Seed `contract_bundles`
-- [ ] Seed `contract_bundle_resolution_policies`
-- [ ] Seed `pipeline_health_policies`
-- [ ] Seed `execution_snapshot_policies`
-- [ ] Seed `agent_noise_budget_policies`
-- [ ] Seed `agent_evaluation_profiles`
-- [ ] Seed `agent_contracts`
-- [ ] Seed `agent_identities`
-- [ ] Seed `issue_family_registry`
-- [ ] Seed `issue_lifecycle_policies`
+- [ ] Confirm `0023_seed_phase1_platform_control_plane.sql` inserted:
+  - `mirror_domains` for `ga4` and `psi`
+  - `contract_bundles`
+  - `contract_bundle_resolution_policies`
+  - `pipeline_health_policies`
+  - `execution_snapshot_policies`
+  - `agent_noise_budget_policies`
+  - `agent_evaluation_profiles`
+  - `agent_contracts`
+  - `agent_identities`
+  - `issue_family_registry`
+  - `issue_lifecycle_policies`
 - [ ] Confirm seed rows match the expected Phase 1 ids:
   - `cb_phase1_v1`
   - `exec_policy_property_advocate`
@@ -30,7 +32,9 @@ Enable the governed Phase 1 runtime in the real local job chain without changing
 
 ## 3. Environment Variables
 - [ ] Set `PLATFORM_BASE_URL` on the local Mac job environment
-- [ ] Set `PLATFORM_SHARED_TOKEN` on the local Mac job environment
+- [ ] Preferred: set `PLATFORM_ACCESS_CLIENT_ID` on the local Mac job environment
+- [ ] Preferred: set `PLATFORM_ACCESS_CLIENT_SECRET` on the local Mac job environment
+- [ ] Transitional fallback only: set `PLATFORM_SHARED_TOKEN` on the local Mac job environment if Access credentials are not live yet
 - [ ] Set `ENABLE_PHASE1_PLATFORM_SYNC=true`
 - [ ] Set `ENABLE_PHASE1_PROPERTY_ADVOCATE_RUN=true` only when ready to enable the governed advocate path
 - [ ] Optionally set:
@@ -44,9 +48,14 @@ Enable the governed Phase 1 runtime in the real local job chain without changing
 
 ## 4. Route Auth Expectations
 - [ ] Confirm `/v1/platform/*` is reachable at `PLATFORM_BASE_URL`
-- [ ] Confirm the shared bearer token matches `PLATFORM_SHARED_TOKEN`
-- [ ] Confirm the local job sends:
-  - `Authorization: Bearer <PLATFORM_SHARED_TOKEN>`
+- [ ] Preferred: confirm Cloudflare Access client credentials match:
+  - `PLATFORM_ACCESS_CLIENT_ID`
+  - `PLATFORM_ACCESS_CLIENT_SECRET`
+- [ ] Transitional fallback: confirm the shared bearer token matches `PLATFORM_SHARED_TOKEN` if still used
+- [ ] Confirm the local job sends one of:
+  - `CF-Access-Client-Id` plus `CF-Access-Client-Secret`
+  - or `Authorization: Bearer <PLATFORM_SHARED_TOKEN>` during transition
+- [ ] Confirm the local job also sends:
   - `X-Platform-Actor`
   - `X-Platform-Source`
 

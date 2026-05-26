@@ -31,7 +31,11 @@ All other working inputs should remain unchanged:
 
 - `CLOUDFLARE_API_TOKEN`
 - `PLATFORM_BASE_URL`
-- `PLATFORM_SHARED_TOKEN`
+- preferred:
+  - `PLATFORM_ACCESS_CLIENT_ID`
+  - `PLATFORM_ACCESS_CLIENT_SECRET`
+- fallback only if the Access credential path is not live yet:
+  - `PLATFORM_SHARED_TOKEN`
 - `ENABLE_PHASE1_PLATFORM_SYNC=true`
 
 ## Preconditions
@@ -39,7 +43,8 @@ All other working inputs should remain unchanged:
 Before enabling `property_advocate`, confirm:
 
 - governed platform surface is reachable
-- shared-token auth succeeds
+- preferred Access service-token auth succeeds
+- shared-token fallback succeeds only if still retained during transition
 - `agent_prop_1` is present and active
 - `cb_phase1_v1` remains active
 - `exec_policy_property_advocate` remains present

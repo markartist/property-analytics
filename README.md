@@ -14,17 +14,26 @@ This file contains:
 - Common commands
 - Operational patterns
 
+Also required before creating or extending systems:
+- Capability register: `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+- Full system audit: `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+
 **Session Start Protocol:**
 1. Read `ATLAS_WORKING_MEMORY.md` completely (5 min)
-2. Run `./atlas_session_start.sh` for quick health check
-3. Check "Current System State" section
-4. Review "Session Log" for recent changes
-5. Note critical issues before starting work
+2. Read `docs/CAPABILITY_REGISTER_2026-04-10.md`
+3. Read `docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+4. Run `./atlas_session_start.sh` for quick health check
+5. Check "Current System State" section
+6. Review "Session Log" for recent changes
+7. Note critical issues before starting work
 
 **After EVERY significant action:**
 - Update the session log in `ATLAS_WORKING_MEMORY.md`
+- Update `docs/CAPABILITY_REGISTER_2026-04-10.md` when capability inventory, status, owner, or disposition changes
+- Update `docs/FULL_SYSTEM_AUDIT_2026-04-10.md` when the narrative platform map materially changes
 - Document what changed, what works, what's broken
 - Verify with database queries, not assumptions
+- Run `bash scripts/check_context_discipline.sh`
 
 **Key Principle:** Verify first, assume never.
 
@@ -32,6 +41,26 @@ This file contains:
 
 ## System Purpose
 Automated daily data collection and weekly reporting for Venterra's 91 property portfolio, tracking GA4 analytics, Google Search Console, SEMRush, and PageSpeed metrics.
+
+## Secret Management
+
+Default secret source is now Keeper Secrets Manager via the local `marketingops` profile.
+
+Current Keeper-backed categories include:
+- OpenAI
+- PageSpeed / PSI
+- GTmetrix
+- SEMrush
+- Cloudflare
+- BrowserStack
+- Google Ads
+- GA4 service account
+- GSC OAuth client and token
+
+Canonical reference:
+- `/Users/mark/Property_Analytics/docs/KSM_MARKETINGOPS_RECORD_MANIFEST.md`
+
+Local files may still exist as compatibility fallbacks, but new setup should prefer Keeper-backed env vars and materialized temp files over long-lived credential files.
 
 ## Cloudflare Pilot Cache Work
 
@@ -49,6 +78,30 @@ Key implementation areas:
 - GraphQL analytics client: `/Users/mark/Property_Analytics/Data_Collection/queries/cloudflare_graphql_cache_metrics.py`
 - Rollout tooling: `/Users/mark/Property_Analytics/ops/cloudflare/`
 
+## Unified Foundation
+
+The platform now has an explicit foundation layer for capability awareness, security posture, repo boundaries, and migration planning.
+
+Start here:
+
+- `/Users/mark/Property_Analytics/docs/UNIFIED_SYSTEM_FOUNDATION_2026-04-17.md`
+- `/Users/mark/Property_Analytics/docs/CANONICAL_OUTCOME_MAP_2026-04-17.md`
+- `/Users/mark/Property_Analytics/docs/PLATFORM_CONSOLIDATION_PLAN_2026-04-17.md`
+- `/Users/mark/Property_Analytics/config/system_landscape_manifest.json`
+- `/Users/mark/Property_Analytics/config/platform_outcome_map.json`
+
+Use these together with:
+
+- `/Users/mark/Property_Analytics/docs/CAPABILITY_REGISTER_2026-04-10.md`
+- `/Users/mark/Property_Analytics/docs/FULL_SYSTEM_AUDIT_2026-04-10.md`
+- `/Users/mark/Property_Analytics/docs/PLATFORM_SYSTEM_CATALOG.md`
+
+Important repo note:
+
+- this workspace contains multiple nested Git repositories
+- treat nested repo boundaries as deliberate ownership boundaries during cleanup and migration work
+- do not assume the top-level repo is the only Git history in play
+
 ## Critical Information
 
 ### Single Source of Truth
@@ -65,12 +118,15 @@ Key implementation areas:
 
 ### Daily Automated Collection
 **When:** 5:00 AM daily via launchd
-**What:** GA4 (14 days + traffic sources), GSC (14 days), SEMRush (50 keywords)
-**Script:** `/Users/mark/Property_Analytics/Portfolio_Monitoring/collect_daily_data.py`
+**What:** Canonical daily collection and retry orchestration for GA4, GSC, GBP, Google Ads, PSI, GTMetrix, guest cards, BI workbooks, and related operational sources
+**Script:** `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
 **Launchd:** `~/Library/LaunchAgents/com.venterra.portfolio.collection.plist`
 
-PageSpeed runs separately at 5:10 AM:
-**Launchd:** `~/Library/LaunchAgents/com.venterra.portfolio.psi.plist`
+Retry/recovery now has its own canonical loop:
+**Script:** `/Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py`
+
+Legacy note:
+- `/Users/mark/Property_Analytics/Portfolio_Monitoring/collect_daily_data.py` is now a legacy-reusable local path, not the canonical scheduled collection entrypoint
 
 ### Weekly Manual Report
 **When:** User generates manually (typically Monday for Friday delivery)
@@ -93,7 +149,7 @@ Data Flow:
 2. Insights Engine → insights table
    - Analyzes data daily
    - Generates warnings/errors for anomalies
-   
+
 3. Report Generator reads:
    - ga4_daily_metrics (T7/T30 engaged sessions)
    - ga4_traffic_sources (T7/T30 organic traffic)
@@ -133,18 +189,24 @@ Data Flow:
 ### Issue: "Organic traffic columns empty in report"
 **Cause:** ga4_traffic_sources table missing data
 **Check:** `sqlite3 /Users/mark/Property_Analytics/data/portfolio_analytics.db "SELECT COUNT(*) FROM ga4_traffic_sources"`
-**Fix:** Run backfill script: `python3 Portfolio_Monitoring/backfill_traffic_sources.py`
+**Fix:** Prefer the canonical repair path first:
+- rerun `/Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+- then, if this is specifically a GA4 channel-user history gap, use `/Users/mark/Property_Analytics/Data_Collection/scripts/backfill_ga4_channel_new_users.py`
+- use `Portfolio_Monitoring/backfill_traffic_sources.py` only as a legacy targeted repair tool when no canonical path exists yet
 
 ### Issue: "Report shows stale data"
 **Cause:** Daily collection not running or reading wrong table
-**Check:** 
+**Check:**
 1. `launchctl list | grep venterra` (verify launchd jobs)
 2. `sqlite3 portfolio_analytics.db "SELECT MAX(metric_date) FROM ga4_daily_metrics"`
-**Fix:** Manually run: `python3 Portfolio_Monitoring/collect_daily_data.py`
+**Fix:** Manually run the canonical collection lane:
+- `python3 /Users/mark/Property_Analytics/Data_Collection/orchestration/daily_master_collection.py`
+- if the issue is morning closure debt rather than a full missed run, use `python3 /Users/mark/Property_Analytics/Data_Collection/orchestration/retry_incomplete_collections.py`
+- treat `Portfolio_Monitoring/collect_daily_data.py` as legacy-reusable, not the default operational entrypoint
 
 ### Issue: "Property not in Spotlight report"
 **Cause:** Not in monthly config
-**Fix:** 
+**Fix:**
 1. Add to text file: `config/January_26_Spotlight_Properties.txt`
 2. Regenerate: `python3 create_monthly_config.py config/January_26_Spotlight_Properties.txt 2026-01`
 

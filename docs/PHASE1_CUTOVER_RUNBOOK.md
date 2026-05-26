@@ -13,20 +13,25 @@ This runbook covers:
 Before cutover:
 1. Confirm the real D1 migration is applied:
    - [`0021_create_phase1_platform_tables.sql`](/Users/mark/Property_Analytics/apps/api/migrations/0021_create_phase1_platform_tables.sql)
-2. Confirm control-plane seed data exists in D1.
-3. Confirm the API is reachable at `PLATFORM_BASE_URL`.
-4. Confirm the shared bearer token is valid for `/v1/platform/*`.
-5. Confirm the local Mac environment includes:
+2. Confirm the Phase 1 seed migration is applied:
+   - [`0023_seed_phase1_platform_control_plane.sql`](/Users/mark/Property_Analytics/apps/api/migrations/0023_seed_phase1_platform_control_plane.sql)
+3. Confirm control-plane seed data exists in D1.
+4. Confirm the API is reachable at `PLATFORM_BASE_URL`.
+5. Preferred: confirm Cloudflare Access client credentials are valid for `/v1/platform/*`.
+6. Transitional fallback: confirm the shared bearer token is valid for `/v1/platform/*` only if still used.
+7. Confirm the local Mac environment includes:
    - `PLATFORM_BASE_URL`
-   - `PLATFORM_SHARED_TOKEN`
+   - preferred: `PLATFORM_ACCESS_CLIENT_ID`
+   - preferred: `PLATFORM_ACCESS_CLIENT_SECRET`
+   - fallback only if still needed: `PLATFORM_SHARED_TOKEN`
    - `ENABLE_PHASE1_PLATFORM_SYNC=true`
-6. Decide whether `property_advocate` is enabled on first cutover:
+8. Decide whether `property_advocate` is enabled on first cutover:
    - mirror-only rollout: keep `ENABLE_PHASE1_PROPERTY_ADVOCATE_RUN=false`
    - full Phase 1 rollout: set `ENABLE_PHASE1_PROPERTY_ADVOCATE_RUN=true`
 
 ## Enablement Sequence
 1. Apply D1 migration.
-2. Apply Phase 1 seed/control-plane rows.
+2. Apply [`0023_seed_phase1_platform_control_plane.sql`](/Users/mark/Property_Analytics/apps/api/migrations/0023_seed_phase1_platform_control_plane.sql).
 3. Export the required Phase 1 environment variables into the local job environment.
 4. Run the operational smoke verification script once manually.
 5. If smoke passes, run:
@@ -69,7 +74,7 @@ Cutover is successful when:
 
 ## Rollback Criteria
 Rollback immediately if any of the following occur:
-- missing or invalid `PLATFORM_SHARED_TOKEN`
+- missing or invalid platform route credentials
 - `/v1/platform/*` returns blocked or unauthorized unexpectedly
 - mirror intake/reconcile/activate fails for `ga4` or `psi`
 - Phase 1 activity artifact records an error

@@ -1,0 +1,266 @@
+{
+  "date": "2026-05-04",
+  "current_branch_observed": "codex/pilot-control-cwv-reporting",
+  "purpose": "Pathspec manifest for splitting the active dirty/untracked workspace into reviewable workstreams.",
+  "guardrails": [
+    "Do not stage locked canonical PIB generator/template/sender files without explicit approval.",
+    "Do not stage credentials, token pickles, local DB files, pycache, temporary Wrangler SQL uploads, or local build artifacts.",
+    "Run property identity governance when staging source ingestion, Captain reads, report inputs, or property-scoped automation.",
+    "Run PIB guardrails before branch or commit handoff."
+  ],
+  "lanes": [
+    {
+      "id": "property_identity_governance",
+      "branch": "codex/property-identity-governance",
+      "stage_after": [],
+      "include": [
+        "Data_Collection/utils/property_identity.py",
+        "config/property_identity_matrix.json",
+        "config/generated/remote_communities_snapshot.json",
+        "scripts/build_property_identity_matrix.py",
+        "scripts/check_property_identity_governance.py",
+        "scripts/check_property_identity_governance.sh",
+        "scripts/check_property_identity_matrix.py",
+        "scripts/enrich_property_locations.py",
+        "scripts/refresh_remote_communities_snapshot.py",
+        "docs/PROPERTY_IDENTITY_MATRIX_2026-04-28.md"
+      ],
+      "checks": [
+        "bash scripts/check_property_identity_governance.sh",
+        "bash scripts/check_context_discipline.sh"
+      ]
+    },
+    {
+      "id": "data_collection_closure",
+      "branch": "codex/data-collection-closure",
+      "stage_after": ["property_identity_governance"],
+      "include": [
+        "DATA_COLLECTION_README.md",
+        "Data_Collection/SYSTEM_BOUNDARY_AND_INTEGRATION_REPORT.md",
+        "Data_Collection/collectors/",
+        "Data_Collection/db/database_manager.py",
+        "Data_Collection/monitoring/",
+        "Data_Collection/orchestration/daily_master_collection.py",
+        "Data_Collection/orchestration/retry_incomplete_collections.py",
+        "Data_Collection/utils/daily_collection_closure.py",
+        "Data_Collection/utils/source_freshness_policy.py",
+        "run_collection_retry_cycle.sh"
+      ],
+      "checks": [
+        "bash scripts/check_context_discipline.sh"
+      ]
+    },
+    {
+      "id": "marketing_bi_source_routes",
+      "branch": "codex/marketing-bi-source-routes",
+      "stage_after": ["property_identity_governance"],
+      "include": [
+        "Data_Collection/utils/marketing_bi_conversion_ingest.py",
+        "Data_Collection/utils/marketing_bi_excel_export_ingest.py",
+        "Data_Collection/utils/marketing_bi_packet_ingest.py",
+        "Data_Collection/utils/marketing_ops_summary_ingest.py",
+        "apps/api/migrations/0030_create_marketing_bi_conversion_sources.sql",
+        "apps/api/migrations/0031_create_marketing_bi_daily_packets.sql",
+        "apps/api/migrations/0034_create_marketing_bi_conversion_summary.sql",
+        "apps/api/migrations/0035_create_marketing_bi_excel_exports.sql",
+        "apps/api/migrations/0036_create_marketing_bi_conversion_dashboard.sql",
+        "apps/api/migrations/0037_create_marketing_bi_recovery_sources.sql",
+        "apps/api/migrations/0038_create_marketing_bi_cost_per_conversion.sql",
+        "apps/api/migrations/0041_create_marketing_ops_summary.sql",
+        "infra/migrations/017_create_marketing_bi_conversion_sources.sql",
+        "infra/migrations/018_create_marketing_bi_daily_packets.sql",
+        "infra/migrations/021_create_marketing_bi_conversion_summary.sql",
+        "infra/migrations/022_create_marketing_bi_excel_exports.sql",
+        "infra/migrations/023_create_marketing_bi_conversion_dashboard.sql",
+        "infra/migrations/024_create_marketing_bi_recovery_sources.sql",
+        "infra/migrations/025_create_marketing_bi_cost_per_conversion.sql",
+        "infra/migrations/028_create_marketing_ops_summary.sql",
+        "docs/MARKETING_BI_CONVERSION_SOURCE_CONTRACT_2026-04-28.md",
+        "docs/MARKETING_BI_DAILY_PACKET_SOURCE_CONTRACT_2026-04-28.md",
+        "docs/MARKETING_OPERATIONS_CHARTER_2026-05-04.md",
+        "docs/MARKETING_OPS_SUMMARY_SOURCE_CONTRACT_2026-05-04.md"
+      ],
+      "checks": [
+        "bash scripts/check_property_identity_governance.sh",
+        "bash scripts/check_context_discipline.sh"
+      ]
+    },
+    {
+      "id": "reputation_com_source_route",
+      "branch": "codex/reputation-com-source-route",
+      "stage_after": ["property_identity_governance"],
+      "include": [
+        "Data_Collection/utils/reputation_com_ingest.py",
+        "apps/api/migrations/0040_create_reputation_com_tables.sql",
+        "infra/migrations/027_create_reputation_com_tables.sql",
+        "reports/reputation/generate_reputation_com_brief.py"
+      ],
+      "checks": [
+        "bash scripts/check_property_identity_governance.sh",
+        "bash scripts/check_pib_guardrails.sh"
+      ]
+    },
+    {
+      "id": "captain_runtime_and_briefs",
+      "branch": "codex/captain-runtime-and-briefs",
+      "stage_after": ["property_identity_governance", "marketing_bi_source_routes", "reputation_com_source_route"],
+      "include": [
+        "apps/api/src/platform/captain/",
+        "apps/api/src/routes/captain.ts",
+        "apps/api/scripts/captain_sources_to_d1.py",
+        "apps/api/scripts/dataforseo_captain_to_d1.py",
+        "apps/api/test/platform/captain-brief-read.test.ts",
+        "scripts/standup_captain_roster.py",
+        "scripts/audit_captain_readiness.py",
+        "scripts/captain_fleet_support.py",
+        "scripts/generate_captain_runtime_catchup_plan.py",
+        "scripts/run_captain_runtime_catchup.py",
+        "reports/captains_log/captain_brief_header.py",
+        "reports/captains_log/generate_captains_brief_vnext.py",
+        "reports/captains_log/generate_portfolio_commodore_read.py",
+        "reports/captains_log/generate_spotlight_captains_brief.py",
+        "docs/CAPTAIN_*.md",
+        "docs/CAPTAINS_*.md",
+        "docs/PORTFOLIO_CAPTAIN_ACTIVATION_STANDARD_2026-05-04.md"
+      ],
+      "checks": [
+        "cd apps/api && npm run typecheck",
+        "cd apps/api && ./node_modules/.bin/tsx --test test/platform/captain-brief-read.test.ts",
+        "bash scripts/check_captains_brief_header_lock.sh",
+        "bash scripts/check_pib_guardrails.sh"
+      ]
+    },
+    {
+      "id": "platform_auth_control_plane",
+      "branch": "codex/platform-auth-control-plane",
+      "stage_after": [],
+      "include": [
+        ".github/workflows/context-discipline.yml",
+        ".nvmrc",
+        "apps/api/package.json",
+        "apps/api/src/env.ts",
+        "apps/api/src/index.ts",
+        "apps/api/src/lib/",
+        "apps/api/src/middleware/auth.ts",
+        "apps/api/src/platform/agent-runtime/",
+        "apps/api/src/platform/lifecycle/",
+        "apps/api/src/routes/admin.ts",
+        "apps/api/src/routes/auth.ts",
+        "apps/api/src/routes/health.ts",
+        "apps/api/src/routes/platform.ts",
+        "apps/api/src/routes/pond.ts",
+        "apps/api/scripts/d1_mirror_sync.py",
+        "apps/api/scripts/wrangler_auth.py",
+        "apps/web/src/components/app-shell.tsx",
+        "apps/web/src/components/auth-provider.tsx",
+        "apps/web/src/components/shared/",
+        "apps/web/src/lib/",
+        "docs/CLOUDFLARE_ZERO_TRUST_*.md",
+        "docs/PHASE1_*.md"
+      ],
+      "checks": [
+        "cd apps/api && npm run typecheck",
+        "cd apps/api && npm run test:platform",
+        "bash scripts/check_context_discipline.sh"
+      ]
+    },
+    {
+      "id": "evs_browserstack",
+      "branch": "codex/evs-browserstack",
+      "stage_after": ["platform_auth_control_plane"],
+      "include": [
+        ".github/workflows/evs-browserstack-experiential.yml",
+        "apps/api/src/evs/",
+        "apps/api/src/routes/evs.ts",
+        "apps/api/test/platform/evs-auth.test.ts",
+        "apps/api/test/platform/evs-lifecycle.test.ts",
+        "apps/web/src/app/evs/",
+        "packages/shared/src/evs-schemas.ts",
+        "packages/shared/src/evs-types.ts",
+        "evs/",
+        "ops/browserstack/",
+        "run_pilot_browserstack_daily.sh",
+        "docs/WORKTREE_EVS_BROWSERSTACK_*.md"
+      ],
+      "checks": [
+        "cd apps/api && ./node_modules/.bin/tsx --test test/platform/evs-auth.test.ts test/platform/evs-lifecycle.test.ts",
+        "cd apps/api && npm run typecheck"
+      ]
+    },
+    {
+      "id": "edge_experimentation",
+      "branch": "codex/edge-experimentation",
+      "stage_after": ["platform_auth_control_plane"],
+      "include": [
+        "apps/api/migrations/0039_create_edge_experimentation_tables.sql",
+        "apps/api/src/routes/experiments.ts",
+        "apps/web/src/app/experiments/",
+        "infra/migrations/026_create_edge_experimentation_tables.sql",
+        "packages/shared/src/experiment-schemas.ts",
+        "packages/shared/src/experiment-types.ts",
+        "docs/EDGE_EXPERIMENTATION_*.md",
+        "docs/EXPERIMENT_LAB_ADMIN_UI_SPEC_2026-05-02.md"
+      ],
+      "checks": [
+        "cd apps/api && npm run typecheck",
+        "cd apps/web && npm run build"
+      ]
+    },
+    {
+      "id": "content_site_vacs_intelligence",
+      "branch": "codex/content-office-site-content-vacs",
+      "stage_after": ["platform_auth_control_plane"],
+      "include": [
+        "Venterra_AI_Content_Suite/",
+        "apps/api/src/routes/gbp-posts.ts",
+        "apps/api/src/routes/intelligence-memory.ts",
+        "apps/api/src/routes/search-intelligence.ts",
+        "apps/api/src/routes/vacs.ts",
+        "apps/web/src/app/content-office/",
+        "apps/web/src/app/gbp-posts/",
+        "apps/web/src/app/intelligence-office/",
+        "apps/web/src/app/site-content/",
+        "apps/web/src/app/vacs/",
+        "docs/INTELLIGENCE_OFFICE_MODEL.md",
+        "docs/SEARCH_INTELLIGENCE_REPORT_V1_0_0.md"
+      ],
+      "checks": [
+        "cd apps/api && npm run typecheck",
+        "cd apps/web && npm run build"
+      ]
+    },
+    {
+      "id": "pilot_cwv_tracker_roundup",
+      "branch": "codex/pilot-cwv-tracker-roundup",
+      "stage_after": ["data_collection_closure"],
+      "include": [
+        "SESSION_MEMORY_2026-04-08_PILOT_SITE_EVIDENCE_AND_HARMONIZATION.md",
+        "apps/pilot-tracker-standalone/",
+        "apps/web/src/app/tracker/",
+        "apps/web/src/components/tracker/",
+        "pilot_control_cwv/",
+        "pilot_roundup/",
+        "run_pilot_*.sh",
+        "docs/PILOT_*.md"
+      ],
+      "checks": [
+        "pilot report generation smoke",
+        "cd apps/web && npm run build"
+      ]
+    }
+  ],
+  "exclude_by_default": [
+    "apps/api/scripts/generated/",
+    "Data_Collection/logs/",
+    "logs/",
+    "credentials/",
+    "Portfolio_Monitoring/credentials/",
+    "*.pickle",
+    "*.pyc",
+    "__pycache__/",
+    "*.tsbuildinfo",
+    "*.db",
+    ".wrangler/",
+    "root-level browser screenshots unless explicitly required"
+  ]
+}
