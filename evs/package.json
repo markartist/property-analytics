@@ -5,7 +5,16 @@
   "type": "module",
   "scripts": {
     "validate": "node providers/browserstack/run-experiential-playwright.mjs",
-    "matrix": "node orchestration/build-run-matrix.mjs"
+    "matrix": "node orchestration/build-run-matrix.mjs",
+    "qa:plan": "node orchestration/build-portfolio-qa-plan.mjs",
+    "qa:run-batch": "node orchestration/run-portfolio-qa-batch.mjs",
+    "qa:dni-phone-probe": "node orchestration/run-dni-phone-probe.mjs",
+    "qa:validate-fill-only": "node orchestration/validate-workbook-fill-only.mjs",
+    "qa:audit-support": "node orchestration/build-round1-audit-support.mjs",
+    "qa:forms-validation": "QA_INCLUDE_OWNERS=forms_qa EVS_INCLUDE_FORMS=1 EVS_RUN_PROFILES=contact_form_checks node orchestration/run-portfolio-qa-batch.mjs",
+    "qa:sort-order": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs",
+    "qa:sightmap": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs",
+    "qa:availability": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs"
   },
   "dependencies": {
     "playwright": "^1.54.2"

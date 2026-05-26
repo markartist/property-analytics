@@ -1,0 +1,442 @@
+[
+  {
+    "property_id": "OK4AN",
+    "property_name": "Anatole at Norman",
+    "property_code": "OK4AN",
+    "target_url": "https://anatoleatnorman.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 1,
+      "input_name": "Anatole at Norman",
+      "official_workbook_sheet": "Anatole at Norman",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/anatole-at-norman/",
+      "property_code": "OK4AN",
+      "community_id": "c67986bf-61ab-45ca-a168-eaec8e4402ba"
+    }
+  },
+  {
+    "property_id": "GA4AX",
+    "property_name": "Apex West Midtown",
+    "property_code": "GA4AX",
+    "target_url": "https://apexwestmidtown.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 2,
+      "input_name": "Apex West Midtown",
+      "official_workbook_sheet": "Apex West Midtown",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/apex-west-midtown/",
+      "property_code": "GA4AX",
+      "community_id": "eed3da54-7b7a-4dae-984b-a203113fc2f3"
+    }
+  },
+  {
+    "property_id": "TX416",
+    "property_name": "Avasa at 1604",
+    "property_code": "TX416",
+    "target_url": "https://avasaat1604.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 3,
+      "input_name": "Avasa at 1604",
+      "official_workbook_sheet": "Avasa at 1604",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/avasa-at-1604/",
+      "property_code": "TX416",
+      "community_id": "e5a393b1-9bc0-4b99-b936-92ce80725dd0"
+    }
+  },
+  {
+    "property_id": "FL4HL",
+    "property_name": "Avasa Hammock Landing",
+    "property_code": "FL4HL",
+    "target_url": "https://avasahammocklanding.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 4,
+      "input_name": "Avasa Hammock Landing",
+      "official_workbook_sheet": "Avasa Hammock Landing",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/avasa-hammock-landing/",
+      "property_code": "FL4HL",
+      "community_id": "3f763b1c-b335-44dd-beda-c9c873455773"
+    }
+  },
+  {
+    "property_id": "FL4GW",
+    "property_name": "Avasa Grove West",
+    "property_code": "FL4GW",
+    "target_url": "https://avasagrovewest.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 5,
+      "input_name": "Avasa Grove West",
+      "official_workbook_sheet": "Avasa Grove West",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/avasa-grove-west/",
+      "property_code": "FL4GW",
+      "community_id": "a1e35a67-3040-4335-9cb9-d51219247b2e"
+    }
+  },
+  {
+    "property_id": "TX4BM",
+    "property_name": "Avasa Spring Branch",
+    "property_code": "TX4BM",
+    "target_url": "https://avasaspringbranch.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 6,
+      "input_name": "Avasa Spring Branch",
+      "official_workbook_sheet": "Avasa Spring Branch",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/avasa-spring-branch/",
+      "property_code": "TX4BM",
+      "community_id": "df6b7013-2781-4547-bb71-1dcd0f2f6831"
+    }
+  },
+  {
+    "property_id": "GA4AB",
+    "property_name": "Axial Buckhead",
+    "property_code": "GA4AB",
+    "target_url": "https://axialbuckhead.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 7,
+      "input_name": "Axial Buckhead",
+      "official_workbook_sheet": "Axial Buckhead",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/axial-buckhead/",
+      "property_code": "GA4AB",
+      "community_id": "db323675-1b02-47a0-8097-59677f548067"
+    }
+  },
+  {
+    "property_id": "GA4BV",
+    "property_name": "Balmoral Village",
+    "property_code": "GA4BV",
+    "target_url": "https://balmoralvillage.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 8,
+      "input_name": "Balmoral Village",
+      "official_workbook_sheet": "Balmoral Village",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/balmoral-village/",
+      "property_code": "GA4BV",
+      "community_id": "0a74a116-c69b-47d1-a0d6-d0185282859d"
+    }
+  },
+  {
+    "property_id": "TX4RU",
+    "property_name": "Bella Ruscello",
+    "property_code": "TX4RU",
+    "target_url": "https://bellaruscello.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 9,
+      "input_name": "Bella Ruscello",
+      "official_workbook_sheet": "Bella Ruscello",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/bella-ruscello/",
+      "property_code": "TX4RU",
+      "community_id": "8be733c9-e5eb-44d1-8be3-6dcf1bac002d"
+    }
+  },
+  {
+    "property_id": "TX4BL",
+    "property_name": "Belterra",
+    "property_code": "TX4BL",
+    "target_url": "https://belterra.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 10,
+      "input_name": "Belterra",
+      "official_workbook_sheet": "Belterra",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/belterra/",
+      "property_code": "TX4BL",
+      "community_id": "3e1ccb7f-b2ac-4ab1-9afd-3867940ae245"
+    }
+  },
+  {
+    "property_id": "GA4BL",
+    "property_name": "Botanic Luxury",
+    "property_code": "GA4BL",
+    "target_url": "https://botanicapartments.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 11,
+      "input_name": "Botanic Apartments",
+      "official_workbook_sheet": "Botanic Apartments",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/botanic-apartments/",
+      "property_code": "GA4BL",
+      "community_id": "2c2b46f3-f107-4651-9045-ca911586d46f"
+    }
+  },
+  {
+    "property_id": "OK4BL",
+    "property_name": "Boulevard at Lakeside",
+    "property_code": "OK4BL",
+    "target_url": "https://boulevardatlakeside.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 12,
+      "input_name": "Boulevard at Lakeside",
+      "official_workbook_sheet": "Boulevard at Lakeside",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/boulevard-at-lakeside/",
+      "property_code": "OK4BL",
+      "community_id": "f5704709-a0da-43f5-948c-b5f27082184a"
+    }
+  },
+  {
+    "property_id": "KY4BM",
+    "property_name": "Bradford Mills Lofts",
+    "property_code": "KY4BM",
+    "target_url": "https://bradfordmillslofts.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 13,
+      "input_name": "Bradford Mills Lofts",
+      "official_workbook_sheet": "Bradford Mills Lofts",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/bradford-mills-lofts/",
+      "property_code": "KY4BM",
+      "community_id": "751998a4-9f00-420f-83a0-a9eb33b35514"
+    }
+  },
+  {
+    "property_id": "TX4CB",
+    "property_name": "Camber Ridge",
+    "property_code": "TX4CB",
+    "target_url": "https://camberridgeatcrosscreekranc.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 14,
+      "input_name": "Camber Ridge at Cross Creek Ranch",
+      "official_workbook_sheet": "Camber Ridge Cross Creek",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://camberridgeapartments.com/",
+      "property_code": "TX4CB",
+      "community_id": "f3e80364-e2f3-45d0-a267-edb87fdeeb86"
+    }
+  },
+  {
+    "property_id": "FL4CI",
+    "property_name": "Cane Island",
+    "property_code": "FL4CI",
+    "target_url": "https://caneisland.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 15,
+      "input_name": "Cane Island",
+      "official_workbook_sheet": "Cane Island",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/cane-island/",
+      "property_code": "FL4CI",
+      "community_id": "1d7a0f16-501e-4823-955e-9faa1dab91c3"
+    }
+  },
+  {
+    "property_id": "GA4CM",
+    "property_name": "Canton Mill Lofts",
+    "property_code": "GA4CM",
+    "target_url": "https://cantonmilllofts.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 16,
+      "input_name": "Canton Mill Lofts",
+      "official_workbook_sheet": "Canton Mill Lofts",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/canton-mill-lofts/",
+      "property_code": "GA4CM",
+      "community_id": "3c51a5be-3799-426e-b1d3-820008a2b5e0"
+    }
+  },
+  {
+    "property_id": "TX4CD",
+    "property_name": "Cendana District West",
+    "property_code": "TX4CD",
+    "target_url": "https://cendanadistrictwest.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 17,
+      "input_name": "Cendana District West",
+      "official_workbook_sheet": "Cendana District West",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://cendanalife.com/",
+      "property_code": "TX4CD",
+      "community_id": "d8433d1a-fdaf-4d4e-bf9a-3bfc443d1691"
+    }
+  },
+  {
+    "property_id": "KY4CW",
+    "property_name": "Clearwater Farm",
+    "property_code": "KY4CW",
+    "target_url": "https://clearwaterfarm.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 18,
+      "input_name": "Clearwater Farm",
+      "official_workbook_sheet": "Clearwater Farm",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/clearwater-farm/",
+      "property_code": "KY4CW",
+      "community_id": "7e7287d8-4953-48b4-ad09-f81f79d13073"
+    }
+  },
+  {
+    "property_id": "KY4CH",
+    "property_name": "Clearwater Heights",
+    "property_code": "KY4CH",
+    "target_url": "https://clearwaterheights.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 19,
+      "input_name": "Clearwater Heights",
+      "official_workbook_sheet": "Clearwater Heights",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/clearwater-heights/",
+      "property_code": "KY4CH",
+      "community_id": "93c2b605-4b39-4979-b927-b65d7104816a"
+    }
+  },
+  {
+    "property_id": "FL4CE",
+    "property_name": "Cobblestone at Eagle Harbor",
+    "property_code": "FL4CE",
+    "target_url": "http://cobblestoneateagleharbor.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 20,
+      "input_name": "Cobblestone at Eagle Harbor",
+      "official_workbook_sheet": "Cobblestone Eagle Harbor",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/cobblestone-at-eagle-harbor/",
+      "property_code": "FL4CE",
+      "community_id": "25a59a94-141f-4503-9266-1cc43faa4516"
+    }
+  },
+  {
+    "property_id": "GA4CH",
+    "property_name": "CoHo",
+    "property_code": "GA4CH",
+    "target_url": "https://cohoapartments.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 21,
+      "input_name": "CoHo Apartments",
+      "official_workbook_sheet": "CoHo Apartments",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": null,
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/coho/",
+      "property_code": "GA4CH",
+      "community_id": "98989258-c049-4fc8-a7da-955b5bbd6055"
+    }
+  },
+  {
+    "property_id": "TX4CP",
+    "property_name": "Carlyle Place",
+    "property_code": "TX4CP",
+    "target_url": "https://carlyleplaceapartments.kinsta.cloud/",
+    "environment": "round_1_kinsta",
+    "metadata": {
+      "batch_id": "round_1_property_websites",
+      "batch_order": 22,
+      "input_name": "Carlyle Place Apartments",
+      "official_workbook_sheet": "Carlyle Place Apartments",
+      "source_docx": "/Users/mark/Downloads/Round 1 QA.docx",
+      "source_extra_targets": "/Users/mark/Property_Analytics/evs/config/round-1-qa-confirmed-extra-targets.json",
+      "official_workbook": "/Users/mark/Downloads/_QA_Round 1_Property_Websites.xlsx",
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/carlyle-place-apartments/",
+      "property_code": "TX4CP",
+      "community_id": "1ec85f98-4a14-4415-ad13-d4e1af7ea627"
+    }
+  }
+]

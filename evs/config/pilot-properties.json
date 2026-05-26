@@ -5,6 +5,20 @@
     "legacy_url": "https://venterraliving.com/apartments/champions-green/",
     "staging_url": "https://championsgreen.kinsta.cloud/",
     "live_url": "https://championsgreen-ga.com/",
+    "site_type": "resi",
+    "known_page_paths": [
+      "/",
+      "/apartments/",
+      "/features/",
+      "/amenities/",
+      "/gallery/",
+      "/neighborhood/",
+      "/faqs/",
+      "/reviews/",
+      "/contact/",
+      "/specials",
+      "/about/"
+    ],
     "cohort": "pilot",
     "active": true
   },
@@ -14,6 +28,20 @@
     "legacy_url": "https://venterraliving.com/apartments/the-district-universal-boulevard/",
     "staging_url": "https://thedistrictuniversalboulevard.kinsta.cloud/",
     "live_url": "https://thedistrictuniversal.com/",
+    "site_type": "resi",
+    "known_page_paths": [
+      "/",
+      "/apartments/",
+      "/features/",
+      "/amenities/",
+      "/gallery/",
+      "/neighborhood/",
+      "/faqs/",
+      "/reviews/",
+      "/contact/",
+      "/specials",
+      "/about/"
+    ],
     "cohort": "pilot",
     "active": true
   },
@@ -23,6 +51,20 @@
     "legacy_url": "https://venterraliving.com/apartments/the-harrison/",
     "staging_url": "https://theharrison.kinsta.cloud/",
     "live_url": "https://theharrisonsandysprings.com/",
+    "site_type": "resi",
+    "known_page_paths": [
+      "/",
+      "/apartments/",
+      "/features/",
+      "/amenities/",
+      "/gallery/",
+      "/neighborhood/",
+      "/faqs/",
+      "/reviews/",
+      "/contact/",
+      "/specials",
+      "/about/"
+    ],
     "cohort": "pilot",
     "active": true
   },
@@ -32,6 +74,20 @@
     "legacy_url": "https://venterraliving.com/apartments/ventana/",
     "staging_url": "https://ventana.kinsta.cloud/",
     "live_url": "https://ventanaapts.com/",
+    "site_type": "resi",
+    "known_page_paths": [
+      "/",
+      "/apartments/",
+      "/features/",
+      "/amenities/",
+      "/gallery/",
+      "/neighborhood/",
+      "/faqs/",
+      "/reviews/",
+      "/contact/",
+      "/specials",
+      "/about/"
+    ],
     "cohort": "pilot",
     "active": true
   },
@@ -41,6 +97,20 @@
     "legacy_url": "https://venterraliving.com/apartments/calais-midtown/",
     "staging_url": "https://calaismidtown.kinsta.cloud/",
     "live_url": "https://calaismidtownapartments.com/",
+    "site_type": "resi",
+    "known_page_paths": [
+      "/",
+      "/apartments/",
+      "/features/",
+      "/amenities/",
+      "/gallery/",
+      "/neighborhood/",
+      "/faqs/",
+      "/reviews/",
+      "/contact/",
+      "/specials",
+      "/about/"
+    ],
     "cohort": "pilot",
     "active": true
   }

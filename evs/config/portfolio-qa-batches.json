@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "default_batch_id": "pilot_production_functionality",
+  "batches": [
+    {
+      "batch_id": "pilot_production_functionality",
+      "label": "Pilot Production Functionality QA",
+      "status": "active_seed",
+      "contract_id": "portfolio_functionality_qa_v1",
+      "target_source": "pilot_properties",
+      "environment": "production",
+      "target_url_field": "live_url",
+      "property_ids": [
+        "champions-green",
+        "the-district-universal",
+        "the-harrison",
+        "ventana",
+        "calais-midtown"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "include_owners": [
+        "evs"
+      ],
+      "notes": "Initial executable batch. Media, forms, and governed lead-attribution checks remain in the contract but are excluded from unattended EVS execution until their owner lanes are ready."
+    },
+    {
+      "batch_id": "round_1_property_websites",
+      "label": "Round 1 Property Websites QA",
+      "status": "active_round_1",
+      "contract_id": "portfolio_functionality_qa_v1",
+      "target_source": "url_list",
+      "target_url_list_path": "evs/config/round-1-qa-targets.json",
+      "environment": "round_1_kinsta",
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "include_owners": [
+        "evs"
+      ],
+      "notes": "Official first QA batch from Round 1 QA.docx. Functionality and Data Integrity rows are EVS-owned. Contact form and lead-attribution submissions are retained in the contract but run through the governed experimental form lane only when explicitly enabled."
+    },
+    {
+      "batch_id": "round_2_property_websites",
+      "label": "Round 2 Property Websites QA",
+      "status": "prepared_round_2",
+      "contract_id": "portfolio_functionality_qa_v1",
+      "target_source": "url_list",
+      "target_url_list_path": "evs/config/round-2-qa-targets.json",
+      "environment": "round_2_kinsta",
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "include_owners": [
+        "evs"
+      ],
+      "notes": "Official second QA batch from Round 2 Portfolio Rollout.docx. Staging/Kinsta URLs are test targets; Pastel links are preserved in the source doc but excluded from EVS testing. Monteverde is listed in the doc without a staging URL and remains pending until a target URL is supplied."
+    }
+  ],
+  "url_list_contract": {
+    "description": "Future launch batches can provide a JSON list of URLs without changing the QA contract.",
+    "required_fields": [
+      "target_url"
+    ],
+    "optional_fields": [
+      "property_id",
+      "property_name",
+      "property_code",
+      "environment",
+      "metadata"
+    ],
+    "example": [
+      {
+        "property_id": "example-property",
+        "property_name": "Example Property",
+        "target_url": "https://example-property.com/",
+        "environment": "production"
+      }
+    ]
+  }
+}

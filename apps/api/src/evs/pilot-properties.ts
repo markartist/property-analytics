@@ -1,0 +1,63 @@
+import type { EvsPropertyRecord } from "../../../../packages/shared/src/evs-schemas";
+
+export const EVS_PILOT_PROPERTIES: EvsPropertyRecord[] = [
+  {
+    property_id: "champions-green",
+    property_name: "Champion's Green",
+    legacy_url: "https://venterraliving.com/apartments/champions-green/",
+    staging_url: "https://championsgreen.kinsta.cloud/",
+    live_url: "https://championsgreen-ga.com/",
+    site_type: "resi",
+    known_page_paths: ["/", "/apartments/", "/features/", "/amenities/", "/gallery/", "/neighborhood/", "/faqs/", "/reviews/", "/contact/", "/specials", "/about/"],
+    cohort: "pilot",
+    active: true,
+  },
+  {
+    property_id: "the-district-universal",
+    property_name: "The District Universal",
+    legacy_url: "https://venterraliving.com/apartments/the-district-universal-boulevard/",
+    staging_url: "https://thedistrictuniversalboulevard.kinsta.cloud/",
+    live_url: "https://thedistrictuniversal.com/",
+    site_type: "resi",
+    known_page_paths: ["/", "/apartments/", "/features/", "/amenities/", "/gallery/", "/neighborhood/", "/faqs/", "/reviews/", "/contact/", "/specials", "/about/"],
+    cohort: "pilot",
+    active: true,
+  },
+  {
+    property_id: "the-harrison",
+    property_name: "The Harrison",
+    legacy_url: "https://venterraliving.com/apartments/the-harrison/",
+    staging_url: "https://theharrison.kinsta.cloud/",
+    live_url: "https://theharrisonsandysprings.com/",
+    site_type: "resi",
+    known_page_paths: ["/", "/apartments/", "/features/", "/amenities/", "/gallery/", "/neighborhood/", "/faqs/", "/reviews/", "/contact/", "/specials", "/about/"],
+    cohort: "pilot",
+    active: true,
+  },
+  {
+    property_id: "ventana",
+    property_name: "Ventana",
+    legacy_url: "https://venterraliving.com/apartments/ventana/",
+    staging_url: "https://ventana.kinsta.cloud/",
+    live_url: "https://ventanaapts.com/",
+    site_type: "resi",
+    known_page_paths: ["/", "/apartments/", "/features/", "/amenities/", "/gallery/", "/neighborhood/", "/faqs/", "/reviews/", "/contact/", "/specials", "/about/"],
+    cohort: "pilot",
+    active: true,
+  },
+  {
+    property_id: "calais-midtown",
+    property_name: "Calais Midtown",
+    legacy_url: "https://venterraliving.com/apartments/calais-midtown/",
+    staging_url: "https://calaismidtown.kinsta.cloud/",
+    live_url: "https://calaismidtownapartments.com/",
+    site_type: "resi",
+    known_page_paths: ["/", "/apartments/", "/features/", "/amenities/", "/gallery/", "/neighborhood/", "/faqs/", "/reviews/", "/contact/", "/specials", "/about/"],
+    cohort: "pilot",
+    active: true,
+  },
+];
+
+export function getPilotProperty(propertyId: string): EvsPropertyRecord | null {
+  return EVS_PILOT_PROPERTIES.find((property) => property.property_id === propertyId) ?? null;
+}

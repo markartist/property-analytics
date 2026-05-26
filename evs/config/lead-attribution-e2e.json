@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "profile": "lead_attribution_e2e",
+  "status": "dormant_until_approved",
+  "source_truth": {
+    "system": "thirtylines_feed_snapshots",
+    "property_field": "trackingCodes",
+    "tracking_id_field": "trackingId",
+    "marketing_source_field": "marketingSourceCd",
+    "expected_phone_field": "phoneNumber",
+    "expected_email_field": "email"
+  },
+  "url_generation": {
+    "default_query_param": "id",
+    "target_paths": ["/", "/contact/"]
+  },
+  "side_effect_policy": {
+    "default_mode": "no_submit",
+    "submit_requires_env": "EVS_ENABLE_SYNTHETIC_FORM_SUBMIT=1",
+    "submit_requires_email_domain_env": "EVS_SYNTHETIC_EMAIL_DOMAIN",
+    "submit_requires_run_label_env": "EVS_SYNTHETIC_RUN_LABEL"
+  },
+  "synthetic_identity": {
+    "first_name": "Venterra",
+    "last_name_pattern": "<Property><CTA>-<Source>",
+    "example_name": "Venterra ApexForm-Aptlist",
+    "email_pattern": "<property><cta>-<source>@venterradev.com",
+    "example_email": "apexform-aptlist@venterradev.com",
+    "default_phone": "5550109876"
+  },
+  "checks": [
+    "source truth exists for property trackingCodes",
+    "generated advertiser URL loads successfully",
+    "trackingId is observable in page/runtime state or URL",
+    "expected phone number is visible or exposed as a tel link",
+    "expected recipient email is observable before submit when template exposes it",
+    "lead form accepts synthetic identity fields without submit",
+    "optional governed submit can be enabled for downstream AH/EAI/email proof"
+  ]
+}

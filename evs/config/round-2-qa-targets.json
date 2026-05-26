@@ -1,0 +1,422 @@
+[
+  {
+    "property_id": "TX4CC",
+    "property_name": "Coles Crossing",
+    "property_code": "TX4CC",
+    "target_url": "https://colescrossing.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 1,
+      "input_name": "Coles Crossing",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/coles-crossing/",
+      "property_code": "TX4CC",
+      "community_id": "ca4b63d7-973a-4178-8244-9e42b7cdbf5f"
+    }
+  },
+  {
+    "property_id": "TX4CO",
+    "property_name": "College View",
+    "property_code": "TX4CO",
+    "target_url": "https://collegeviewapartments.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 2,
+      "input_name": "College View Apartments",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/college-view-apartments/",
+      "property_code": "TX4CO",
+      "community_id": "69f2e4f2-ff03-4dc7-a896-c22047d247ac"
+    }
+  },
+  {
+    "property_id": "OK4CS",
+    "property_name": "Creekside",
+    "property_code": "OK4CS",
+    "target_url": "https://creeksideapartmenthomes.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 3,
+      "input_name": "Creekside Apartment Homes",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/creekside/",
+      "property_code": "OK4CS",
+      "community_id": "1fb629e6-6430-47c2-ac61-b3c922807a7f"
+    }
+  },
+  {
+    "property_id": "TX4EG",
+    "property_name": "Elation at Grandway West",
+    "property_code": "TX4EG",
+    "target_url": "https://elationatgrandwaywest.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 4,
+      "input_name": "Elation at Grandway West",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/elation-at-grandway-west/",
+      "property_code": "TX4EG",
+      "community_id": "c7054051-2919-443f-82a2-cd3b845ce82d"
+    }
+  },
+  {
+    "property_id": "TX4ES",
+    "property_name": "Estancia at Morningstar",
+    "property_code": "TX4ES",
+    "target_url": "https://estanciaatmorningstar.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 5,
+      "input_name": "Estancia at Morningstar",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/estancia-at-morningstar/",
+      "property_code": "TX4ES",
+      "community_id": "e1011066-35dc-499d-85fd-b56390ba37e9"
+    }
+  },
+  {
+    "property_id": "TX4FA",
+    "property_name": "Fairways at South Shore",
+    "property_code": "TX4FA",
+    "target_url": "https://fairwaysatsouthshore.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 6,
+      "input_name": "Fairways at South Shore",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/fairways-at-south-shore/",
+      "property_code": "TX4FA",
+      "community_id": "9dd947ad-53e1-4f67-959d-c13b0f17eb58"
+    }
+  },
+  {
+    "property_id": "TX4FV",
+    "property_name": "Forest View",
+    "property_code": "TX4FV",
+    "target_url": "https://forestview.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 7,
+      "input_name": "Forest View",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/forest-view/",
+      "property_code": "TX4FV",
+      "community_id": "0f3894d1-7f3e-4d40-8a13-eae4666c3c61"
+    }
+  },
+  {
+    "property_id": "TX4FR",
+    "property_name": "French Place",
+    "property_code": "TX4FR",
+    "target_url": "https://frenchplaceapartments.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 8,
+      "input_name": "French Place Apartments",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/french-place-apartments/",
+      "property_code": "TX4FR",
+      "community_id": "f72c1cf3-2e82-4499-841d-78e9fa431236"
+    }
+  },
+  {
+    "property_id": "FL4GN",
+    "property_name": "Gateway North",
+    "property_code": "FL4GN",
+    "target_url": "https://gatewaynorth.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 9,
+      "input_name": "Gateway North",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/gateway-north/",
+      "property_code": "FL4GN",
+      "community_id": "a19985e7-1012-4aba-a738-5da8d3277899"
+    }
+  },
+  {
+    "property_id": "FL4GC",
+    "property_name": "The Grove at Clermont",
+    "property_code": "FL4GC",
+    "target_url": "https://thegroveatclermont.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 10,
+      "input_name": "The Grove at Clermont",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-grove-at-clermont/",
+      "property_code": "FL4GC",
+      "community_id": "c6baac02-f9c3-4d06-b248-690543ab1131"
+    }
+  },
+  {
+    "property_id": "TX4HP",
+    "property_name": "Highpark",
+    "property_code": "TX4HP",
+    "target_url": "https://highpark.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 11,
+      "input_name": "Highpark",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/highpark/",
+      "property_code": "TX4HP",
+      "community_id": "23c2676e-765a-428d-982c-88bab6c47298"
+    }
+  },
+  {
+    "property_id": "TX4KS",
+    "property_name": "Keystone",
+    "property_code": "TX4KS",
+    "target_url": "https://keystoneapartments.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 12,
+      "input_name": "Keystone Apartments",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/keystone/",
+      "property_code": "TX4KS",
+      "community_id": "82a34f88-24ca-432f-ba8d-de217a17af23"
+    }
+  },
+  {
+    "property_id": "FL4WP",
+    "property_name": "Links at Windsor Parke",
+    "property_code": "FL4WP",
+    "target_url": "https://linksatwindsorparke.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 13,
+      "input_name": "Links at Windsor Parke",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/links-at-windsor-parke/",
+      "property_code": "FL4WP",
+      "community_id": "bcce7d01-cd27-4111-9ef8-2385c31193ea"
+    }
+  },
+  {
+    "property_id": "FL4LH",
+    "property_name": "Luma Headwaters",
+    "property_code": "FL4LH",
+    "target_url": "https://lumaheadwaters.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 14,
+      "input_name": "Luma Headwaters",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/luma-headwaters/",
+      "property_code": "FL4LH",
+      "community_id": "70b83505-01dc-4899-abd5-70df936a8a0d"
+    }
+  },
+  {
+    "property_id": "FL4LM",
+    "property_name": "Luminary at 95",
+    "property_code": "FL4LM",
+    "target_url": "https://luminaryat95.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 15,
+      "input_name": "Luminary at 95",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-luminary-at-95/",
+      "property_code": "FL4LM",
+      "community_id": "d3edfb10-42e7-40a0-915a-a6d475403a9f"
+    }
+  },
+  {
+    "property_id": "TX4MF",
+    "property_name": "Mission Mayfield Downs",
+    "property_code": "TX4MF",
+    "target_url": "http://missionmayfielddowns.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 16,
+      "input_name": "Mission Mayfield Downs",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/mission-mayfield-downs/",
+      "property_code": "TX4MF",
+      "community_id": "4f443302-4b2d-4f83-afe1-aebb77790c57"
+    }
+  },
+  {
+    "property_id": "FL4NB",
+    "property_name": "Northbridge at Millenia Lake",
+    "property_code": "FL4NB",
+    "target_url": "https://northbridgeatmillenialake.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 17,
+      "input_name": "Northbridge at Millenia Lake",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/northbridge-at-millenia-lake/",
+      "property_code": "FL4NB",
+      "community_id": "b730d1ad-0f73-441c-8ce2-f2091315e5bb"
+    }
+  },
+  {
+    "property_id": "TX4WZ",
+    "property_name": "Park on Wurzbach",
+    "property_code": "TX4WZ",
+    "target_url": "https://parkonwurzbach.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 18,
+      "input_name": "Park on Wurzbach",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/park-on-wurzbach/",
+      "property_code": "TX4WZ",
+      "community_id": "16d7d2ca-abdd-4b2d-936e-4c210f90d69b"
+    }
+  },
+  {
+    "property_id": "TX4BA",
+    "property_name": "Preserve at Baywood",
+    "property_code": "TX4BA",
+    "target_url": "https://preserveatbaywood.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 19,
+      "input_name": "Preserve at Baywood",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/preserve-at-baywood/",
+      "property_code": "TX4BA",
+      "community_id": "a03ccabe-1b35-40b6-9d61-275fed4282ec"
+    }
+  },
+  {
+    "property_id": "TX4CL",
+    "property_name": "Preserve at Colony Lakes",
+    "property_code": "TX4CL",
+    "target_url": "https://preserveatcolonylakes.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 20,
+      "input_name": "Preserve at Colony Lakes",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/preserve-at-colony-lakes/",
+      "property_code": "TX4CL",
+      "community_id": "7b89fc39-2384-43dd-9e75-7f88c4901075"
+    }
+  },
+  {
+    "property_id": "TX4RV",
+    "property_name": "Republic Park Vista",
+    "property_code": "TX4RV",
+    "target_url": "http://republicparkvista.kinsta.cloud/",
+    "environment": "round_2_kinsta",
+    "metadata": {
+      "batch_id": "round_2_property_websites",
+      "batch_order": 21,
+      "input_name": "Republic Park Vista",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Downloads/Round 2 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/republic-park-vista/",
+      "property_code": "TX4RV",
+      "community_id": "5facb22d-2804-43bd-881e-83f30b45640a"
+    }
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "description": "Confirmed Round 1 QA targets that are present in the official workbook but were absent from the initial Round 1 Word doc.",
+  "targets": [
+    {
+      "input_name": "Carlyle Place Apartments",
+      "property_name": "Carlyle Place",
+      "property_code": "TX4CP",
+      "target_url": "https://carlyleplaceapartments.kinsta.cloud/",
+      "confirmed_by": "user",
+      "confirmed_at": "2026-05-19",
+      "note": "User confirmed this Kinsta URL as the Carlyle Place Round 1 QA target."
+    }
+  ]
+}

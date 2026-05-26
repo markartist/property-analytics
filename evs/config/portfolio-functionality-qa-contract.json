@@ -1,0 +1,1277 @@
+{
+  "schema_version": "1.0",
+  "contract_id": "portfolio_functionality_qa_v1",
+  "contract_version": "2026-05-13",
+  "name": "Portfolio Functionality and Data Integrity QA Contract",
+  "status": "active_round_1_seed",
+  "source": {
+    "workbook": "_QA_Round 1_Property_Websites.xlsx",
+    "sheet": "Website QA Checklist",
+    "imported_at": "2026-05-20",
+    "filter": "Element in (Functionality, Data Integrity)"
+  },
+  "default_devices": [
+    "desktop_chrome",
+    "iphone_safari"
+  ],
+  "default_batch": "pilot_production_functionality",
+  "ownership_model": {
+    "evs": "Browser-observable functionality, routing, CTAs, availability/pricing/unit-data comparison, map coordinate checks, and no-submit vendor handoffs.",
+    "media_qa": "Image, photo, virtual-tour, and media correctness checks retained in the contract but owned outside EVS.",
+    "forms_qa": "Contact form submission and validation checks retained in the contract but owned outside EVS.",
+    "lead_attribution_qa": "Guest-card proof in AH/EAI requires a governed synthetic-lead workflow before unattended automation."
+  },
+  "summary": {
+    "total_contract_checks": 45,
+    "element_counts": {
+      "Data Integrity": 2,
+      "Functionality": 43
+    },
+    "owner_counts": {
+      "evs": 39,
+      "forms_qa": 2,
+      "lead_attribution_qa": 4
+    }
+  },
+  "checks": [
+    {
+      "check_id": "qa_4_home_specials_bar_toggle_open_close",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 4
+      },
+      "page": "Home",
+      "section": "Specials Bar",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does the arrow open and close the Specials bar like it should?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "toggle_open_close",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_5_home_specials_bar_route_to_apartments_pricing",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 5
+      },
+      "page": "Home",
+      "section": "Specials Bar",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does See Availability go to Apartments and Pricing?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "route_to_apartments_pricing",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_6_home_specials_bar_route_to_contact",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 6
+      },
+      "page": "Home",
+      "section": "Specials Bar",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Contact Us go to the Contact page?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "route_to_contact",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_10_home_nav_bar_external_handoff_pipeline_application",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 10
+      },
+      "page": "Home",
+      "section": "Nav Bar",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Apply Now open a Pipeline App?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "external_handoff_pipeline_application",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_15_home_cta_browser_functionality",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 15
+      },
+      "page": "Home",
+      "section": "CTA",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Do primary CTAs (Apply, Schedule Tour) link and function correctly?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "browser_functionality",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_18_home_reviews_carousel_behavior",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 18
+      },
+      "page": "Home",
+      "section": "Reviews",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Do Reviews auto-scroll / carousel?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "carousel_behavior",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_77_apartments_pricing_filters_filter_behavior",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 77
+      },
+      "page": "Apartments & Pricing",
+      "section": "Filters",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Do filters (beds, move-in date, budget) function correctly?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "filter_behavior",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_78_apartments_pricing_filters_filter_behavior",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 78
+      },
+      "page": "Apartments & Pricing",
+      "section": "Filters",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When clicking the filter icon, do you see the options for Floor and Features?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "filter_behavior",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_79_apartments_pricing_floor_plans_unit_types_and_layouts_match_pond",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 79
+      },
+      "page": "Apartments & Pricing",
+      "section": "Floor Plans",
+      "element": "Data Integrity",
+      "platform": "Both",
+      "description": "Are unit types and layouts correct for this property?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "unit_types_and_layouts_match_pond",
+      "truth_sources": [
+        "rendered_dom",
+        "pond_unit_availability"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_80_apartments_pricing_pricing_pricing_matches_pond",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 80
+      },
+      "page": "Apartments & Pricing",
+      "section": "Pricing",
+      "element": "Data Integrity",
+      "platform": "Both",
+      "description": "Is pricing accurate?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "pricing_matches_pond",
+      "truth_sources": [
+        "rendered_dom",
+        "pond_unit_availability"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_81_apartments_pricing_availability_rendered_availability_matches_pond",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 81
+      },
+      "page": "Apartments & Pricing",
+      "section": "Availability",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Is unit availability displaying correctly?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "rendered_availability_matches_pond",
+      "truth_sources": [
+        "rendered_dom",
+        "pond_unit_availability"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_82_apartments_pricing_cta_browser_functionality",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 82
+      },
+      "page": "Apartments & Pricing",
+      "section": "CTA",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Do application and contact CTAs function properly?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "browser_functionality",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_83_apartments_pricing_list_view_sort_order",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 83
+      },
+      "page": "Apartments & Pricing",
+      "section": "List View",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are units sorted by size (smallest first), by move-in date (soonest first), and price (cheapest first)?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "sort_order",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_84_apartments_pricing_grid_view_sort_order",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 84
+      },
+      "page": "Apartments & Pricing",
+      "section": "Grid View",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are units sorted by size (smallest first), by move-in date (soonest first), and price (cheapest first)?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "sort_order",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_85_apartments_pricing_map_view_map_floor_unit_filter",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 85
+      },
+      "page": "Apartments & Pricing",
+      "section": "Map View",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When you change the floor, do the available units shown change?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "map_floor_unit_filter",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_86_apartments_pricing_unit_detail_page_unit_detail_context_continuity",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 86
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Is the unit number correct / match the same unit you clicked through?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "unit_detail_context_continuity",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_89_apartments_pricing_unit_detail_page_external_handoff_matterport",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 89
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Quick Links: does Virtual Tour open a Matterport tour?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable media interaction with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_matterport",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_90_apartments_pricing_unit_detail_page_external_handoff_sightmap_unit",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 90
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Apartment Location open SightMap and zoom into the unit?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_sightmap_unit",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_91_apartments_pricing_unit_detail_page_media_modal_or_correctness",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 91
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Apartment Features Photos open a modal with images?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable media interaction with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "media_modal_or_correctness",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_92_apartments_pricing_unit_detail_page_media_modal_or_correctness",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 92
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are the images correct?",
+      "owner": "evs",
+      "owner_reason": "EVS can verify image/modal presence and render integrity; property-specific media correctness remains a review item.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "media_modal_or_correctness",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_97_apartments_pricing_unit_detail_page_expanding_content_toggle",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 97
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When the button is clicked, does Renting Made Simple information open?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "expanding_content_toggle",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_98_apartments_pricing_unit_detail_page_external_handoff_pipeline_application",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 98
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When Get Approved is clicked, does it open a Pipeline app?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_pipeline_application",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_99_apartments_pricing_unit_detail_page_carousel_behavior",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 99
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are there Other Similar Homes listed and do they auto rotate to the left?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "carousel_behavior",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_100_apartments_pricing_unit_detail_page_external_handoff_pipeline_application",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 100
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are there three buttons at the bottom of the page - All-In Pricing, Apply Now, Schedule a Tour?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_pipeline_application",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_101_apartments_pricing_unit_detail_page_external_handoff_price_quote",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 101
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does All-In Pricing open Prospect Portal, Price Quote?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_price_quote",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_102_apartments_pricing_unit_detail_page_external_handoff_pipeline_application",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 102
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Apply Now open Prospect Portal with a unit-specific app?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_pipeline_application",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_103_apartments_pricing_unit_detail_page_external_handoff_schedule_tour",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 103
+      },
+      "page": "Apartments & Pricing",
+      "section": "Unit Detail Page",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Schedule a Tour open Prospect Portal, Schedule a Tour",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "external_handoff_schedule_tour",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_105_apartments_pricing_footer_browser_functionality",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 105
+      },
+      "page": "Apartments & Pricing",
+      "section": "Footer",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does the button say 'Contact Us'?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "browser_functionality",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_106_apartments_pricing_footer_route_to_contact",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 106
+      },
+      "page": "Apartments & Pricing",
+      "section": "Footer",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does the Contact Us button open the Contact page?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "route_to_contact",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_112_features_smart_living_spaces_route_to_apartments_pricing",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 112
+      },
+      "page": "Features",
+      "section": "Smart Living Spaces",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When you click the See Available Homes button, does Apartments and Pricing open?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "route_to_apartments_pricing",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_114_features_features_list_media_modal_or_correctness",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 114
+      },
+      "page": "Features",
+      "section": "Features List",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When the camera icon is clicked, does it open feature photos?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable media interaction with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "media_modal_or_correctness",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_124_amenities_amenities_list_media_modal_or_correctness",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 124
+      },
+      "page": "Amenities",
+      "section": "Amenities List",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "When the camera icon is clicked, does it open Amenity photos?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable media interaction with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "media_modal_or_correctness",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_141_location_map_map_pin_coordinate_match",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 141
+      },
+      "page": "Location",
+      "section": "Map",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does map pin reflect correct property location?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "map_pin_coordinate_match",
+      "truth_sources": [
+        "rendered_dom",
+        "thirtylines_feed_geo"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_155_reviews_reviews_sort_order",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 155
+      },
+      "page": "Reviews",
+      "section": "Reviews",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are reviews sorted with most current on top?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "apartments_pricing_deep_journey",
+      "assertion_type": "sort_order",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_162_contact_cta_external_handoff_schedule_tour",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 162
+      },
+      "page": "Contact",
+      "section": "CTA",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Schedule a Tour open Prospect Portal, Schedule a Tour",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "external_handoff_schedule_tour",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_163_contact_cta_external_handoff_pipeline_application",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 163
+      },
+      "page": "Contact",
+      "section": "CTA",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does Apply Now open Prospect Portal with a Pipeline app?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "external_handoff_pipeline_application",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_164_contact_form_form_submission",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 164
+      },
+      "page": "Contact",
+      "section": "Form",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Does contact form submit successfully?",
+      "owner": "forms_qa",
+      "owner_reason": "Form submission ownership is outside the default EVS functionality lane and requires governed synthetic-submit controls.",
+      "runner_profile": "contact_form_checks",
+      "assertion_type": "form_submission",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "form_submission_required",
+      "automation_status": "external_team",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_165_contact_validation_required_field_validation",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 165
+      },
+      "page": "Contact",
+      "section": "Validation",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Are required field validations working correctly?",
+      "owner": "forms_qa",
+      "owner_reason": "Required-field validation can be exercised without submitting a form.",
+      "runner_profile": "contact_form_checks",
+      "assertion_type": "required_field_validation",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit_validation_only",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_172_specials_cta_browser_functionality",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 172
+      },
+      "page": "Specials",
+      "section": "CTA",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Do specials CTAs function correctly?",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "browser_functionality",
+      "truth_sources": [
+        "rendered_dom"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "medium"
+    },
+    {
+      "check_id": "qa_173_lead_attribution_hamburger_menu_external_handoff_schedule_tour",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 173
+      },
+      "page": "Lead Attribution",
+      "section": "Hamburger Menu",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Home Page - click the Hamburger menu - click Schedule a Tour - opens Venterra Schedule a Tour page",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "external_handoff_schedule_tour",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_174_lead_attribution_hamburger_menu_external_handoff_pipeline_application",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 174
+      },
+      "page": "Lead Attribution",
+      "section": "Hamburger Menu",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Home Page - click the Hamburger menu - click Apply Now - opens a Pipeline Application for the property",
+      "owner": "evs",
+      "owner_reason": "Owned by EVS as browser-observable functionality with no intentional form submission.",
+      "runner_profile": "portfolio_functionality_regression",
+      "assertion_type": "external_handoff_pipeline_application",
+      "truth_sources": [
+        "rendered_dom",
+        "external_destination"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "no_submit",
+      "automation_status": "ready_for_runner_mapping",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_175_lead_attribution_home_lead_attribution_guest_card_proof",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 175
+      },
+      "page": "Lead Attribution",
+      "section": "Home",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Home Page - Schedule a Tour - schedule an in-person tour - Does the Guest Card appear in AH & EAI",
+      "owner": "lead_attribution_qa",
+      "owner_reason": "Downstream AH/EAI proof needs a governed synthetic-lead workflow before unattended automation.",
+      "runner_profile": "lead_attribution_e2e",
+      "assertion_type": "lead_attribution_guest_card_proof",
+      "truth_sources": [
+        "rendered_dom",
+        "synthetic_lead_identity",
+        "ah_eai_guest_card"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "synthetic_lead_required",
+      "automation_status": "blocked_governed_synthetic_lead",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_176_lead_attribution_home_lead_attribution_guest_card_proof",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 176
+      },
+      "page": "Lead Attribution",
+      "section": "Home",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Home Page - Footer - click 1 or 2 Bedrooms - select a unit - create a Price Quote - Does the Guest Card appear in AH & EAI",
+      "owner": "lead_attribution_qa",
+      "owner_reason": "Downstream AH/EAI proof needs a governed synthetic-lead workflow before unattended automation.",
+      "runner_profile": "lead_attribution_e2e",
+      "assertion_type": "lead_attribution_guest_card_proof",
+      "truth_sources": [
+        "rendered_dom",
+        "synthetic_lead_identity",
+        "ah_eai_guest_card"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "synthetic_lead_required",
+      "automation_status": "blocked_governed_synthetic_lead",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_177_lead_attribution_home_lead_attribution_guest_card_proof",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 177
+      },
+      "page": "Lead Attribution",
+      "section": "Home",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Home Page - See Amenities - scroll to the footer - Click on 1 or 2 Bedrooms - Select Grid View - Select an Apartment - Schedule a Tour - Does the Guest Card appear in AH & EAI",
+      "owner": "lead_attribution_qa",
+      "owner_reason": "Downstream AH/EAI proof needs a governed synthetic-lead workflow before unattended automation.",
+      "runner_profile": "lead_attribution_e2e",
+      "assertion_type": "lead_attribution_guest_card_proof",
+      "truth_sources": [
+        "rendered_dom",
+        "synthetic_lead_identity",
+        "ah_eai_guest_card"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "synthetic_lead_required",
+      "automation_status": "blocked_governed_synthetic_lead",
+      "severity": "high"
+    },
+    {
+      "check_id": "qa_178_lead_attribution_apartments_pricing_lead_attribution_guest_card_proof",
+      "source": {
+        "workbook": "_QA_Round 1_Property_Websites.xlsx",
+        "sheet": "Website QA Checklist",
+        "row": 178
+      },
+      "page": "Lead Attribution",
+      "section": "Apartments & Pricing",
+      "element": "Functionality",
+      "platform": "Both",
+      "description": "Apartments & Pricing - Select Map View - select and apartment - Select Get a Quote - Complete form - Does the Guest Card appear in AH & EAI",
+      "owner": "lead_attribution_qa",
+      "owner_reason": "Downstream AH/EAI proof needs a governed synthetic-lead workflow before unattended automation.",
+      "runner_profile": "lead_attribution_e2e",
+      "assertion_type": "lead_attribution_guest_card_proof",
+      "truth_sources": [
+        "rendered_dom",
+        "synthetic_lead_identity",
+        "ah_eai_guest_card"
+      ],
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "side_effect_policy": "synthetic_lead_required",
+      "automation_status": "blocked_governed_synthetic_lead",
+      "severity": "high"
+    }
+  ]
+}
