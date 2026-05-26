@@ -21,16 +21,19 @@ It is intentionally separate from the portfolio reporting pipeline.
 
 1. Collect PSI into dedicated history:
    - `python3 pilot_control_cwv/scripts/collect_pilot_control_psi.py`
-2. Generate the commissioned daily matrix:
+2. Collect GTMetrix into shared GTMetrix history:
+   - `python3 pilot_control_cwv/scripts/collect_pilot_control_gtmetrix.py`
+3. Generate the commissioned daily matrix:
    - `python3 pilot_control_cwv/scripts/generate_pilot_control_cwv_report.py`
-3. Email the artifacts:
+4. Email the artifacts:
    - `python3 pilot_control_cwv/scripts/send_pilot_control_cwv_report.py`
-4. Run the full daily routine:
+5. Run the full daily routine:
    - `python3 pilot_control_cwv/scripts/run_pilot_control_cwv_daily.py`
 
 ## Isolation Rules
 
 - Pilot vanity-domain history is stored in `pilot_control_psi_metrics`
+- GTMetrix history writes into the shared `gtmetrix_metrics` table keyed by the configured `property_id`
 - Pilot history does not write into portfolio `pagespeed_metrics`
 - Sister/control properties can later be configured to reference portfolio history
   without mixing pilot launch-day data into legacy baselines
@@ -53,3 +56,4 @@ The runtime config is intentionally not committed because the repo ignores neste
 - `report_start_date` can be set earlier than `launch_date` to support prelaunch monitoring
 - Daily validation now gates report generation/send on complete expected PSI rows
 - CSV export is generated in the commissioned matrix shape alongside the workbook
+- GTMetrix can now be collected just for the configured pilot/control cohort without re-enabling the full legacy pipeline

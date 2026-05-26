@@ -1,0 +1,230 @@
+{
+  "report_name": "Pilot vs Control CWV Daily",
+  "launch_date": "2026-03-24",
+  "report_start_date": "2026-03-20",
+  "db_path": "/Users/mark/Property_Analytics/data/portfolio_analytics.db",
+  "pagespeed_api_key_path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/pagespeed_api_key.txt",
+  "gtmetrix_api_key_path": "/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/GTMetrix_API_Key.txt",
+  "gtmetrix_preset_label": "default",
+  "gtmetrix_location": "4",
+  "gtmetrix_browser": "3",
+  "report_recipients": [
+    "mlaufhutte@venterraliving.com"
+  ],
+  "main_pilot_reference": {
+    "label": "Main Pilot Reference",
+    "property_id": "main_pilot_reference",
+    "requested_url": "https://pilot.venterrradev.com/",
+    "site_url": "https://pilot.venterradev.com/"
+  },
+  "twin_groups": {
+    "pilot_district_universal": [
+      {
+        "key": "twin_gateway_north",
+        "display_name": "Gateway North",
+        "property_id": "378703470",
+        "site_url": "https://venterraliving.com/apartments/gateway-north/"
+      },
+      {
+        "key": "twin_oakleaf",
+        "display_name": "The Villages at Oakleaf",
+        "property_id": "378702944",
+        "site_url": "https://venterraliving.com/apartments/the-villages-at-oakleaf/"
+      },
+      {
+        "key": "twin_luma_headwaters",
+        "display_name": "Luma Headwaters",
+        "property_id": "383898543",
+        "site_url": "https://venterraliving.com/apartments/luma-headwaters/"
+      }
+    ],
+    "pilot_champions_green": [
+      {
+        "key": "twin_tree_park",
+        "display_name": "Tree Park",
+        "property_id": "378726133",
+        "site_url": "https://venterraliving.com/apartments/tree-park/"
+      },
+      {
+        "key": "twin_maddox",
+        "display_name": "The Maddox",
+        "property_id": "378707080",
+        "site_url": "https://venterraliving.com/apartments/the-maddox/"
+      },
+      {
+        "key": "twin_newnan",
+        "display_name": "Villas at Newnan Crossing",
+        "property_id": "378710933",
+        "site_url": "https://venterraliving.com/apartments/villas-at-newnan-crossing/"
+      }
+    ],
+    "pilot_the_harrison": [
+      {
+        "key": "twin_tree_park",
+        "display_name": "Tree Park",
+        "property_id": "378726133",
+        "site_url": "https://venterraliving.com/apartments/tree-park/"
+      },
+      {
+        "key": "twin_apex_west_midtown",
+        "display_name": "Apex West Midtown",
+        "property_id": "378403365",
+        "site_url": "https://venterraliving.com/apartments/apex-west-midtown/"
+      },
+      {
+        "key": "twin_tuscany",
+        "display_name": "Tuscany at Lindbergh",
+        "property_id": "378703985",
+        "site_url": "https://venterraliving.com/apartments/tuscany-at-lindbergh/"
+      }
+    ],
+    "pilot_calais_midtown": [
+      {
+        "key": "twin_delta",
+        "display_name": "Coles Crossing",
+        "property_id": "378384243",
+        "site_url": "https://venterraliving.com/apartments/coles-crossing/"
+      },
+      {
+        "key": "twin_fairways",
+        "display_name": "Fairways at South Shore",
+        "property_id": "378444042",
+        "site_url": "https://venterraliving.com/apartments/fairways-at-south-shore/"
+      },
+      {
+        "key": "twin_highpark",
+        "display_name": "Highpark",
+        "property_id": "383911599",
+        "site_url": "https://venterraliving.com/apartments/highpark/"
+      }
+    ],
+    "pilot_ventana": [
+      {
+        "key": "twin_1604",
+        "display_name": "Avasa at 1604",
+        "property_id": "426692912",
+        "site_url": "https://venterraliving.com/apartments/avasa-at-1604/"
+      },
+      {
+        "key": "twin_wurzbach",
+        "display_name": "Park on Wurzbach",
+        "property_id": "378700447",
+        "site_url": "https://venterraliving.com/apartments/park-on-wurzbach/"
+      },
+      {
+        "key": "twin_westover",
+        "display_name": "Westover Oaks",
+        "property_id": "378389543",
+        "site_url": "https://venterraliving.com/apartments/westover-oaks/"
+      }
+    ]
+  },
+  "cohorts": [
+    {
+      "key": "pilot_calais_midtown",
+      "display_name": "Calais Midtown",
+      "role": "pilot",
+      "property_id": "378381499",
+      "site_url": "https://calaismidtownapartments.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_avasa_spring_branch",
+      "active": true
+    },
+    {
+      "key": "pilot_champions_green",
+      "display_name": "Champions Green",
+      "role": "pilot",
+      "property_id": "378404769",
+      "site_url": "https://championsgreen-ga.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_axial_buckhead",
+      "active": true
+    },
+    {
+      "key": "pilot_district_universal",
+      "display_name": "The District Universal Boulevard",
+      "role": "pilot",
+      "property_id": "378644585",
+      "site_url": "https://thedistrictuniversal.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_northbridge_millenia_lake",
+      "active": true
+    },
+    {
+      "key": "pilot_the_harrison",
+      "display_name": "The Harrison",
+      "role": "pilot",
+      "property_id": "378702475",
+      "site_url": "https://theharrisonsandysprings.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_the_whitney",
+      "active": true
+    },
+    {
+      "key": "pilot_ventana",
+      "display_name": "Ventana",
+      "role": "pilot",
+      "property_id": "378380644",
+      "site_url": "https://ventanaapts.com/",
+      "history_source": "dedicated",
+      "sister_key": "control_park_on_wurzbach",
+      "active": true
+    },
+    {
+      "key": "control_avasa_spring_branch",
+      "display_name": "Avasa Spring Branch",
+      "role": "control",
+      "property_id": "403700195",
+      "site_url": "https://venterraliving.com/apartments/avasa-spring-branch/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_axial_buckhead",
+      "display_name": "Axial Buckhead",
+      "role": "control",
+      "property_id": "378379349",
+      "site_url": "https://venterraliving.com/apartments/axial-buckhead/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_northbridge_millenia_lake",
+      "display_name": "Northbridge at Millenia Lake",
+      "role": "control",
+      "property_id": "378701160",
+      "site_url": "https://venterraliving.com/apartments/northbridge-at-millenia-lake/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_the_whitney",
+      "display_name": "The Whitney",
+      "role": "control",
+      "property_id": "378701831",
+      "site_url": "https://venterraliving.com/apartments/the-whitney/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    },
+    {
+      "key": "control_park_on_wurzbach",
+      "display_name": "Park on Wurzbach",
+      "role": "control",
+      "property_id": "378700447",
+      "site_url": "https://venterraliving.com/apartments/park-on-wurzbach/",
+      "history_source": "portfolio_property",
+      "sister_key": null,
+      "active": true
+    }
+  ],
+  "notes": [
+    "Sister/control properties are configured from /Users/mark/Downloads/2026_Pilot_Properties.xlsx.",
+    "Use history_source=portfolio_property for sister/control properties whose legacy PSI history should come from pagespeed_metrics.",
+    "Keep history_source=dedicated for pilot vanity domains so legacy URL history does not contaminate T30/T90/YoY.",
+    "GTmetrix is configured with its default collection settings; PSI mobile remains the score of record."
+  ]
+}
