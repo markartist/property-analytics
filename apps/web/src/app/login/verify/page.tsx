@@ -3,8 +3,8 @@
 import React, { Suspense } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { apiFetch } from "@/lib/api";
 import { AlertCircle, Loader2, LogIn, Waves } from "lucide-react";
+import { clearCloudflareLoggedOutFlag } from "@/lib/api";
 
 export default function VerifyPage() {
   return (
@@ -30,19 +30,11 @@ function VerifyContent() {
     setError("");
     setLoading(true);
     try {
-      const res = await apiFetch("/v1/auth/verify", {
-        method: "POST",
-        body: JSON.stringify({ token }),
-      });
-      if (res.ok) {
-        window.location.href = "/";
-      } else {
-        const data = await res.json();
-        setError(data.error?.message ?? "Verification failed. Request a new magic link.");
-      }
+      clearCloudflareLoggedOutFlag();
+      const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
+      window.location.href = `${apiBase}/v1/auth/verify?token=${encodeURIComponent(token)}&complete=1`;
     } catch {
       setError("Unable to connect to the server.");
-    } finally {
       setLoading(false);
     }
   }
@@ -87,7 +79,7 @@ function VerifyContent() {
             </h1>
           </div>
           <p className="text-sm text-white/50">
-            Venterra WebOps Analytics
+            MarketingOps Analytics
           </p>
         </div>
 
@@ -127,7 +119,7 @@ function VerifyContent() {
         <div className="mt-8 flex items-center justify-center gap-2">
           <Image src="/velo.svg" alt="" width={12} height={7} className="opacity-30" />
           <p className="text-xs text-white/30">
-            Venterra WebOps &middot; Internal Use Only
+            MarketingOps &middot; Internal Use Only
           </p>
         </div>
       </div>

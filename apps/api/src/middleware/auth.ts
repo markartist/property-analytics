@@ -17,6 +17,20 @@ interface SessionRow {
   revoked_at: string | null;
 }
 
+type SessionIdentity = {
+  id: string;
+  email: string;
+  role: AuthUser["role"];
+};
+
+export type SessionResolution =
+  | { status: "ok"; user: SessionIdentity }
+  | { status: "missing" }
+  | { status: "unknown" }
+  | { status: "revoked" }
+  | { status: "expired" }
+  | { status: "inactive"; user: SessionIdentity };
+
 /**
  * Require a valid session cookie. Returns 401 if absent or invalid.
  * Injects AuthUser into context for downstream handlers.
@@ -24,19 +38,37 @@ interface SessionRow {
 export async function requireAuth(c: Context<{ Bindings: Env; Variables: AuthVariables }>, next: Next) {
   const sessionToken = getCookie(c, "pop_session");
   if (!sessionToken) {
-    return c.json({ error: { code: "UNAUTHORIZED", message: "Authentication required", details: [] } }, 401);
+    return c.json({ error: { code: "NO_SESSION", message: "Authentication required", details: [] } }, 401);
   }
 
-  const user = await resolveSession(c.env.POP_BRIEF_DB, sessionToken);
-  if (!user) {
-    return c.json({ error: { code: "UNAUTHORIZED", message: "Invalid or expired session", details: [] } }, 401);
+  const resolution = await resolveSession(c.env.POP_BRIEF_DB, sessionToken);
+  if (resolution.status === "ok") {
+    c.set("user", { id: resolution.user.id, email: resolution.user.email, role: resolution.user.role });
+    await next();
+    return;
   }
-  if (!user.isActive) {
+
+  if (resolution.status === "inactive") {
     return c.json({ error: { code: "USER_INACTIVE", message: "Account is inactive", details: [] } }, 403);
   }
 
-  c.set("user", { id: user.id, email: user.email, role: user.role });
-  await next();
+  const errorCodeByStatus: Record<Exclude<SessionResolution["status"], "ok" | "inactive">, string> = {
+    missing: "NO_SESSION",
+    unknown: "SESSION_UNKNOWN",
+    revoked: "SESSION_REVOKED",
+    expired: "SESSION_EXPIRED",
+  };
+
+  return c.json(
+    {
+      error: {
+        code: errorCodeByStatus[resolution.status],
+        message: "Authentication required",
+        details: [],
+      },
+    },
+    401
+  );
 }
 
 /**
@@ -65,18 +97,22 @@ export function requireRole(...roles: AuthUser["role"][]) {
   };
 }
 
-function getCookie(c: Context, name: string): string | undefined {
+export function getCookie(c: Context, name: string): string | undefined {
   const header = c.req.header("cookie") ?? "";
   const match = header.split(";").map((s) => s.trim()).find((s) => s.startsWith(`${name}=`));
   return match ? match.slice(name.length + 1) : undefined;
 }
 
 /** Hash the raw session token and look up against sessions + users via D1. */
-async function resolveSession(
+export async function resolveSession(
   db: D1Database,
   rawToken: string
-): Promise<{ id: string; email: string; role: AuthUser["role"]; isActive: boolean } | null> {
+): Promise<SessionResolution> {
+  if (!rawToken) return { status: "missing" };
   const tokenHash = await hashToken(rawToken);
+  if (tokenHash === "__invalid_token__") {
+    return { status: "unknown" };
+  }
   const row = await queryFirst<SessionRow>(
     db,
     `SELECT s.user_id, s.expires_at, s.revoked_at, u.email, u.full_name, u.role, u.is_active
@@ -84,8 +120,10 @@ async function resolveSession(
      WHERE s.session_token_hash = ?`,
     [tokenHash]
   );
-  if (!row) return null;
-  if (row.revoked_at) return null;
-  if (new Date(row.expires_at) <= new Date()) return null;
-  return { id: row.user_id, email: row.email, role: row.role, isActive: row.is_active === 1 };
+  if (!row) return { status: "unknown" };
+  const user = { id: row.user_id, email: row.email, role: row.role };
+  if (row.revoked_at) return { status: "revoked" };
+  if (new Date(row.expires_at) <= new Date()) return { status: "expired" };
+  if (row.is_active !== 1) return { status: "inactive", user };
+  return { status: "ok", user };
 }
