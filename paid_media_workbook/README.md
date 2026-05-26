@@ -8,9 +8,9 @@
 
 Provides community managers with a clear view of paid media (Google Ads) performance across all Venterra properties. The workbook shows spend distribution, floor plan targeting, and inventory alignment in an easy-to-filter Excel format.
 
-**Target Audience:** Community Managers, Regional Managers, Marketing Operations  
-**Format:** Excel (.xlsx)  
-**Time Window:** Rolling 30 days  
+**Target Audience:** Community Managers, Regional Managers, Marketing Operations
+**Format:** Excel (.xlsx)
+**Time Window:** Rolling 30 days
 **Update Frequency:** Manual (on-demand)
 
 ---
@@ -24,7 +24,7 @@ cd /Users/mark/Property_Analytics/paid_media_workbook/scripts
 python3 generate_paid_media_workbook.py
 ```
 
-**Output Location:**  
+**Output Location:**
 `/Users/mark/Property_Analytics/paid_media_workbook/outputs/paid_media_workbook_YYYY-MM-DD.xlsx`
 
 **Runtime:** ~30-60 seconds
@@ -129,8 +129,8 @@ See full definitions in `/Users/mark/Property_Analytics/paid_media_workbook/docs
 
 ### Key Columns Explained
 
-**Classified Spend (%)** = Percent of budget spent on floor plan keywords (Studio, 1BR, 2BR)  
-**Generic Spend (%)** = Percent of budget spent on non-floor plan keywords  
+**Classified Spend (%)** = Percent of budget spent on floor plan keywords (Studio, 1BR, 2BR)
+**Generic Spend (%)** = Percent of budget spent on non-floor plan keywords
 **Targeting Status** = Alignment between targeting and availability:
 - **Aligned:** Classified spend ≥15% AND floor plan distribution matches availability (within 15%)
 - **Partially Aligned:** Classified spend ≥15% BUT distribution doesn't match availability
@@ -169,7 +169,8 @@ pip install google-ads openpyxl requests
 ```
 
 ### Configuration Files
-- `google-ads.yaml` - Google Ads API credentials (already configured)
+- Default: Keeper-backed Google Ads config via `KSM_GOOGLE_ADS_CONFIG_UID`
+- Fallback: local `google-ads.yaml` if Keeper env is unavailable
 - Property registry (already in place)
 
 ---
@@ -224,7 +225,10 @@ paid_media_workbook/
 
 ### Script Fails
 ```bash
-# Check Google Ads API credentials
+# Check Keeper-backed Google Ads config UID
+echo $KSM_GOOGLE_ADS_CONFIG_UID
+
+# Fallback: local Google Ads API credentials
 ls -la /Users/mark/Property_Analytics/Portfolio_Monitoring/google-ads.yaml
 
 # Verify property registry exists
@@ -257,7 +261,7 @@ Before using any generated workbook:
 
 ## Support
 
-**Owner:** Mark Laufhutte (mlaufhutte@venterraliving.com)  
+**Owner:** Mark Laufhutte (mlaufhutte@venterraliving.com)
 **Google Ads Partner:** Annus Rehman (arehman@venterraliving.com)
 
 For questions about:
