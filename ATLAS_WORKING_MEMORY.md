@@ -1,5 +1,5 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 2026-04-17 17:38 UTC  
+**Last Updated:** 2026-05-26 15:25 UTC
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
@@ -3903,6 +3903,18 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Watchtower can now show the current dirty-tree split by workstream lane
   - the first clean release-shaped slice is now explicit inside the control plane: `platform_app + data_collection_hardening`
   - the platform can quantify how much of the current tree is still non-primary release work instead of only describing the release problem narratively
+
+### 2026-05-26 - Stabilization branch narrowed to release reconciliation tooling
+
+- Created `/Users/mark/Property_Analytics` branch `codex/stabilization-foundation-2026-05-26` from `codex/release-reconcile`.
+- Brought forward the May 25 release-reconcile snapshot classifier and preserved the runtime-state publishing bridge from the release branch.
+- Pushed the broader organized checkpoint branch `codex/pilot-control-cwv-reporting` before narrowing the stabilization lane.
+- Quarantined new local dirty work and generated artifacts in named stashes instead of mixing them into the stabilization branch.
+- Attempted the broader data/platform cherry-pick lane and stopped when it proved too broad and conflicted with canonical daily collection/reporting paths; those initiatives should remain on the organized branch until reviewed as separate promotion slices.
+- Current effect:
+  - the stabilization branch is intentionally small and release-governance-focused
+  - large data, platform, pilot, EVS, content, auth, and model-gateway initiatives remain preserved but are not promoted by default
+  - the next release decision can be made from explicit lane inventory instead of a mixed dirty worktree
 
 ### 2026-04-19 01:35 UTC - Release branch deployment is now blocked explicitly by Cloudflare auth health
 
