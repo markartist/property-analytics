@@ -143,6 +143,22 @@ const WebsiteSeoImportBody = z.object({
   rows: z.array(WebsiteSeoRow).min(1),
 });
 
+function normalizeCommunityLookupKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^the\s+/, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const COMMUNITY_IMPORT_ALIASES: Record<string, string[]> = {
+  "avasa at 1604": ["1604", "avasa 1604"],
+  "villages at oakleaf": ["oakleaf", "the villages at oakleaf"],
+  "whitney": ["the whitney"],
+};
+
 // ── Text fields that need HTML validation ──
 
 const TEXT_FIELDS = [
@@ -265,13 +281,26 @@ marketingData.post("/import/website-seo", async (c) => {
   const actor = c.get("user");
   const now = nowISO();
 
-  // Build community name → id lookup
-  const communities = await queryAll<{ id: string; name: string }>(db,
-    "SELECT id, name FROM communities"
+  // Build community alias → id lookup
+  const communities = await queryAll<{ id: string; name: string; external_key: string | null; encasa_short_name: string | null }>(db,
+    "SELECT id, name, external_key, encasa_short_name FROM communities WHERE deleted_at IS NULL AND status = 'active'"
   );
   const communityMap = new Map<string, string>();
-  for (const c of communities) {
-    communityMap.set(c.name.toLowerCase(), c.id);
+  for (const community of communities) {
+    const candidateKeys = new Set<string>([
+      community.name,
+      community.external_key ?? "",
+      community.encasa_short_name ?? "",
+    ].map((value) => normalizeCommunityLookupKey(value)).filter(Boolean));
+
+    const knownAliases = COMMUNITY_IMPORT_ALIASES[normalizeCommunityLookupKey(community.name)] ?? [];
+    for (const alias of knownAliases) {
+      candidateKeys.add(normalizeCommunityLookupKey(alias));
+    }
+
+    for (const key of candidateKeys) {
+      communityMap.set(key, community.id);
+    }
   }
 
   const results = { successful: 0, failed: 0, errors: [] as { row: number; error: string }[] };
@@ -279,7 +308,7 @@ marketingData.post("/import/website-seo", async (c) => {
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     try {
-      const communityId = communityMap.get(row.property_name.toLowerCase());
+      const communityId = communityMap.get(normalizeCommunityLookupKey(row.property_name));
       if (!communityId) {
         results.errors.push({ row: i, error: `Community "${row.property_name}" not found` });
         results.failed++;

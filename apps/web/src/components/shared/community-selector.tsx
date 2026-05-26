@@ -8,17 +8,25 @@ interface CommunitySelectorProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
+  communities?: Community[];
 }
 
 export function CommunitySelector({
   value,
   onValueChange,
   placeholder = "Select a community",
+  communities: providedCommunities,
 }: CommunitySelectorProps) {
   const [communities, setCommunities] = React.useState<Community[]>([]);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (providedCommunities) {
+      setCommunities(providedCommunities);
+      setError(null);
+      return;
+    }
+
     getCommunities()
       .then((data) => {
         const sorted = data.sort((a, b) =>
@@ -30,7 +38,7 @@ export function CommunitySelector({
         console.error("Error loading communities:", err);
         setError("Could not load communities");
       });
-  }, []);
+  }, [providedCommunities]);
 
   return (
     <div className="flex items-center gap-2">

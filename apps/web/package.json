@@ -2,11 +2,15 @@
   "name": "@pop-brief/web",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "guardrails:context": "bash ../../scripts/check_context_discipline.sh",
     "guardrails:pib": "bash ../../scripts/check_pib_guardrails.sh"
   },
   "dependencies": {

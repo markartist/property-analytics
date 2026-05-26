@@ -4,6 +4,7 @@ import type { MiddlewareHandler } from "hono";
 import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
 import { requireAuth } from "../middleware/auth";
+import { hasServiceAuthConfig, resolveServiceAccessMode } from "../lib/service-auth";
 import { AppError, errJson } from "../lib/validate";
 import { createNoiseBudgetSummaryService } from "../platform/agent-runtime/noise-budget-summary";
 import { createMirrorIntakeService } from "../platform/mirror/intake-service";
@@ -19,7 +20,7 @@ type PlatformVariables = AuthVariables & {
   platformRequestId: string;
   platformActorTag: string;
   platformSourceTag: string;
-  platformAccessMode: "shared_token" | "session";
+  platformAccessMode: "access_service_token" | "shared_token" | "session";
   platformStartTime: number;
 };
 
@@ -27,9 +28,15 @@ type PlatformContext = Context<{ Bindings: Env; Variables: PlatformVariables }>;
 
 const platform = new Hono<{ Bindings: Env; Variables: PlatformVariables }>();
 
-function platformActorTagFromHeaders(actorHeader: string | undefined, accessMode: "shared_token" | "session") {
+function platformActorTagFromHeaders(
+  actorHeader: string | undefined,
+  accessMode: "access_service_token" | "shared_token" | "session"
+) {
   if (actorHeader?.trim()) {
     return actorHeader.trim();
+  }
+  if (accessMode === "access_service_token") {
+    return "access_service_token";
   }
   return accessMode === "shared_token" ? "shared_token" : "session_user";
 }
@@ -100,12 +107,16 @@ const requirePlatformAccess: MiddlewareHandler<{ Bindings: Env; Variables: Platf
   c,
   next
 ) => {
-  const sharedToken = c.env.PLATFORM_SHARED_TOKEN?.trim();
-  const authHeader = c.req.header("authorization") ?? "";
-  const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (sharedToken && bearer === sharedToken) {
-    c.set("platformAccessMode", "shared_token");
-    c.set("platformActorTag", platformActorTagFromHeaders(c.req.header("x-platform-actor"), "shared_token"));
+  const configuredServiceAuth = {
+    sharedToken: c.env.PLATFORM_SHARED_TOKEN,
+    accessClientId: c.env.PLATFORM_ACCESS_CLIENT_ID,
+    accessClientSecret: c.env.PLATFORM_ACCESS_CLIENT_SECRET,
+    accessTeamDomain: c.env.CLOUDFLARE_ACCESS_TEAM_DOMAIN,
+  };
+  const serviceAccessMode = await resolveServiceAccessMode(c.req.raw.headers, configuredServiceAuth);
+  if (serviceAccessMode) {
+    c.set("platformAccessMode", serviceAccessMode);
+    c.set("platformActorTag", platformActorTagFromHeaders(c.req.header("x-platform-actor"), serviceAccessMode));
     await next();
     return;
   }
@@ -113,7 +124,13 @@ const requirePlatformAccess: MiddlewareHandler<{ Bindings: Env; Variables: Platf
   if (authResponse) {
     return c.json(
       {
-        ...errJson("UNAUTHORIZED", "Authentication required", []),
+        ...errJson(
+          "UNAUTHORIZED",
+          hasServiceAuthConfig(configuredServiceAuth)
+            ? "Authentication required or valid service credentials required"
+            : "Authentication required",
+          []
+        ),
         meta: responseMeta(c),
       },
       401

@@ -175,8 +175,8 @@ export async function listNoiseBudgetUsageSummary(
         COUNT(*) AS count
      FROM watch_states
      WHERE source_actor_id = ?
-       AND created_at >= ?
-       AND created_at < ?
+       AND COALESCE(last_observed_at, created_at) >= ?
+       AND COALESCE(last_observed_at, created_at) < ?
      GROUP BY issue_family_key, status`,
     [input.agentId, input.dayStartIso, input.dayEndIso]
   );
@@ -190,8 +190,8 @@ export async function listNoiseBudgetUsageSummary(
         COUNT(*) AS count
      FROM escalation_candidates
      WHERE source_actor_id = ?
-       AND created_at >= ?
-       AND created_at < ?
+       AND COALESCE(last_observed_at, created_at) >= ?
+       AND COALESCE(last_observed_at, created_at) < ?
      GROUP BY issue_family_key, status`,
     [input.agentId, input.dayStartIso, input.dayEndIso]
   );

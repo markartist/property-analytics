@@ -341,8 +341,8 @@ export async function countWatchStatesForActorOnDay(
     `SELECT COUNT(*) AS count
      FROM watch_states
      WHERE source_actor_id = ?
-       AND created_at >= ?
-       AND created_at < ?`,
+       AND COALESCE(last_observed_at, created_at) >= ?
+       AND COALESCE(last_observed_at, created_at) < ?`,
     [sourceActorId, dayStartIso, dayEndIso]
   );
   return row?.count ?? 0;
@@ -359,8 +359,8 @@ export async function countEscalationCandidatesForActorOnDay(
     `SELECT COUNT(*) AS count
      FROM escalation_candidates
      WHERE source_actor_id = ?
-       AND created_at >= ?
-       AND created_at < ?`,
+       AND COALESCE(last_observed_at, created_at) >= ?
+       AND COALESCE(last_observed_at, created_at) < ?`,
     [sourceActorId, dayStartIso, dayEndIso]
   );
   return row?.count ?? 0;
@@ -379,8 +379,8 @@ export async function countEscalationCandidatesForActorIssueFamilyOnDay(
      FROM escalation_candidates
      WHERE source_actor_id = ?
        AND issue_family_key = ?
-       AND created_at >= ?
-       AND created_at < ?`,
+       AND COALESCE(last_observed_at, created_at) >= ?
+       AND COALESCE(last_observed_at, created_at) < ?`,
     [sourceActorId, issueFamilyKey, dayStartIso, dayEndIso]
   );
   return row?.count ?? 0;

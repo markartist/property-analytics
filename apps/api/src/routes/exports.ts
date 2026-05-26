@@ -6,7 +6,16 @@ import { queryAll } from "../lib/db";
 import { errJson, escapeCsvCell } from "../lib/validate";
 import { writeAuditLog } from "../lib/audit";
 
-const ALLOWED_ENTITIES = ["communities", "weekly_metrics", "marketing_weekly", "import_runs", "notification_events"] as const;
+const ALLOWED_ENTITIES = [
+  "communities",
+  "weekly_metrics",
+  "marketing_weekly",
+  "import_runs",
+  "notification_events",
+  "t7_metrics",
+  "t30_metrics",
+  "marketing_data",
+] as const;
 type ExportEntity = (typeof ALLOWED_ENTITIES)[number];
 
 const exports_ = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
@@ -53,9 +62,50 @@ exports_.get("/csv", async (c) => {
   });
 });
 
-/** POST /v1/exports/backup — R2 backup (not yet implemented) */
+/** POST /v1/exports/backup — create backup artifact in R2 and return object key */
 exports_.post("/backup", async (c) => {
-  return c.json(errJson("NOT_IMPLEMENTED", "R2 backup export not yet implemented"), 501);
+  const body = await c.req.json().catch(() => ({} as { entities?: string[] }));
+  const requested = Array.isArray(body.entities) && body.entities.length > 0 ? body.entities : [...ALLOWED_ENTITIES];
+  const invalid = requested.filter((entity: string) => !ALLOWED_ENTITIES.includes(entity as ExportEntity));
+
+  if (invalid.length > 0) {
+    return c.json(
+      errJson("VALIDATION_ERROR", `entities must be drawn from: ${ALLOWED_ENTITIES.join(", ")}`, invalid),
+      400
+    );
+  }
+
+  const entities = requested as ExportEntity[];
+  const backup: Record<string, unknown> = {
+    generated_at: new Date().toISOString(),
+    entities: {} as Record<string, unknown>,
+  };
+  const counts: Record<string, number> = {};
+
+  for (const entity of entities) {
+    const rows = await queryAll<Record<string, unknown>>(c.env.POP_BRIEF_DB, `SELECT * FROM ${entity}`);
+    (backup.entities as Record<string, unknown>)[entity] = rows;
+    counts[entity] = rows.length;
+  }
+
+  const actor = c.get("user");
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const key = `backups/${stamp}-${actor.id}.json`;
+  await c.env.POP_BRIEF_UPLOADS.put(key, JSON.stringify(backup, null, 2), {
+    httpMetadata: {
+      contentType: "application/json",
+    },
+  });
+
+  await writeAuditLog(c.env.POP_BRIEF_DB, {
+    actorUserId: actor.id,
+    action: "export.backup",
+    entityType: "backup_artifact",
+    entityId: key,
+    after: { entities, counts },
+  });
+
+  return c.json({ ok: true, key, entities, counts });
 });
 
 export { exports_ };

@@ -6,7 +6,11 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
+    "model-gateway:check-cloudflare-shadow-config": "tsx scripts/check_cloudflare_shadow_config.ts",
+    "smoke:cloudflare-shadow": "tsx scripts/smoke_cloudflare_shadow_model_gateway.ts",
+    "eval:gateway-shadow": "tsx scripts/run_model_gateway_shadow_evaluation.ts",
     "test:platform": "tsx --test test/platform/**/*.test.ts",
+    "guardrails:context": "bash ../../scripts/check_context_discipline.sh",
     "guardrails:pib": "bash ../../scripts/check_pib_guardrails.sh"
   },
   "dependencies": {

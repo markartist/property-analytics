@@ -367,7 +367,7 @@ export default function FishingHolePage() {
       {/* Header */}
       <div className="shrink-0 border-b border-slate-200 bg-[#15803D] px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center gap-4">
-          <Link href="/" className="text-white/60 hover:text-white transition-colors">
+          <Link href="/pond" className="text-white/60 hover:text-white transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <button

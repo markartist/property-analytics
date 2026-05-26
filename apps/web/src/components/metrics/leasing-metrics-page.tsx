@@ -2,20 +2,19 @@
 
 import React from "react";
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CommunitySelector } from "@/components/shared/community-selector";
-import { WeekDatePicker } from "@/components/shared/week-date-picker";
+import { PopBriefPageHeader } from "@/components/shared/pop-brief-page-header";
 import { MetricCard } from "@/components/shared/metric-card";
 import { PasteMetricsData } from "@/components/metrics/paste-metrics-data";
 import { CSVUpload } from "@/components/metrics/csv-upload";
 import { ManualMetricsForm } from "@/components/metrics/manual-metrics-form";
 import type { LeasingMetric, Community } from "@/lib/api";
+import { getSpotlightCommunities, getUpcomingFriday } from "@/lib/spotlight-properties";
 import {
   BarChart3, Users, FileText, TrendingUp, Target,
-  Upload, Edit, ClipboardPaste, Calendar as CalendarIcon, RefreshCw,
+  Upload, Edit, ClipboardPaste, Calendar as CalendarIcon,
 } from "lucide-react";
 
 interface Props {
@@ -34,10 +33,31 @@ export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, de
   const [communityId, setCommunityId] = React.useState("");
   const [communityData, setCommunityData] = React.useState<Community | null>(null);
   const [weekDate, setWeekDate] = React.useState<Date | null>(null);
+  const [spotlightCommunities, setSpotlightCommunities] = React.useState<Community[]>([]);
   const [metrics, setMetrics] = React.useState<LeasingMetric | null>(null);
   const [portfolio, setPortfolio] = React.useState<LeasingMetric | null>(null);
   const [processing, setProcessing] = React.useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
+
+  React.useEffect(() => {
+    setWeekDate((current) => current ?? getUpcomingFriday());
+  }, []);
+
+  React.useEffect(() => {
+    getCommunities()
+      .then((communities) => {
+        const filtered = getSpotlightCommunities(communities);
+        setSpotlightCommunities(filtered);
+      })
+      .catch((err) => {
+        console.error("Error loading spotlight communities:", err);
+        setSpotlightCommunities([]);
+      });
+  }, [getCommunities]);
+
+  React.useEffect(() => {
+    if (communityId || spotlightCommunities.length === 0) return;
+    setCommunityId(spotlightCommunities[0].id);
+  }, [communityId, spotlightCommunities]);
 
   const load = React.useCallback(async () => {
     if (!communityId || !weekDate) {
@@ -47,20 +67,19 @@ export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, de
     }
     const dateStr = format(weekDate, "yyyy-MM-dd");
     try {
-      const [commResults, portResults, communities] = await Promise.all([
+      const [commResults, portResults] = await Promise.all([
         getMetrics({ community_id: communityId, week_date: dateStr, type: "community" }),
         getMetrics({ community_id: communityId, week_date: dateStr, type: "portfolio" }),
-        getCommunities(),
       ]);
       setMetrics(commResults[0] ?? null);
       setPortfolio(portResults[0] ?? null);
-      setCommunityData(communities.find((c) => c.id === communityId) ?? null);
+      setCommunityData(spotlightCommunities.find((c) => c.id === communityId) ?? null);
     } catch (err) {
       console.error("Error loading metrics:", err);
       setMetrics(null);
       setPortfolio(null);
     }
-  }, [communityId, weekDate, getMetrics, getCommunities]);
+  }, [communityId, weekDate, getMetrics, spotlightCommunities]);
 
   React.useEffect(() => { load(); }, [load]);
 
@@ -89,54 +108,20 @@ export function LeasingMetricsPage({ period, days, getMetrics, upsertMetrics, de
     }
   };
 
-  const handleClear = async () => {
-    if (!communityId || !weekDate) return;
-    if (!confirm(`Clear all ${period} data for this community and date? This cannot be undone.`)) return;
-    setProcessing(true);
-    try {
-      await deleteMetrics(communityId, format(weekDate, "yyyy-MM-dd"));
-      setMetrics(null);
-      setPortfolio(null);
-    } catch (err) {
-      console.error("Error clearing:", err);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-8">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-[#15284B]">{period} Metrics</h1>
-            <p className="mt-2 text-slate-600">{days}-day performance analytics and trends</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <WeekDatePicker value={weekDate} onChange={setWeekDate} />
-            <CommunitySelector
-              value={communityId}
-              onValueChange={setCommunityId}
-              placeholder={`Select community for ${period} analysis`}
-            />
-            <Button onClick={handleRefresh} disabled={refreshing || processing} variant="outline" size="sm">
-              <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              {refreshing ? "Updating…" : "Update"}
-            </Button>
-            {communityId && weekDate && (
-              <Button onClick={handleClear} disabled={processing} variant="destructive" size="sm">
-                Clear Data
-              </Button>
-            )}
-          </div>
-        </div>
+        <PopBriefPageHeader
+          title={`${period} Metrics`}
+          titleIcon={BarChart3}
+          subtitle={`${days}-day performance analytics and trends with the same upcoming-Friday and Spotlight defaults used across POP Brief.`}
+          weekDate={weekDate}
+          onWeekDateChange={setWeekDate}
+          communityId={communityId}
+          onCommunityIdChange={setCommunityId}
+          communities={spotlightCommunities}
+          communityPlaceholder={`Select community for ${period} analysis`}
+        />
 
         {/* Empty states */}
         {!communityId ? (

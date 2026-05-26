@@ -177,6 +177,11 @@ test("platform_phase1_client smoke-tests the live HTTP mirror and advocate paths
         PLATFORM_BASE_URL: server.baseUrl,
         PLATFORM_SHARED_TOKEN: env.PLATFORM_SHARED_TOKEN ?? "",
       };
+      const accessEnv = {
+        PLATFORM_BASE_URL: server.baseUrl,
+        PLATFORM_ACCESS_CLIENT_ID: env.PLATFORM_ACCESS_CLIENT_ID ?? "",
+        PLATFORM_ACCESS_CLIENT_SECRET: env.PLATFORM_ACCESS_CLIENT_SECRET ?? "",
+      };
 
       const ga4Result = await runClient(
         [
@@ -225,6 +230,21 @@ test("platform_phase1_client smoke-tests the live HTTP mirror and advocate paths
       );
       assert.equal(advocateResult.result.runtime.agentId, "agent_prop_1");
       assert.equal(advocateResult.result.pipelineHealth.length, 2);
+
+      const accessResult = await runClient(
+        [
+          "/Users/mark/Property_Analytics/apps/api/scripts/platform_phase1_client.py",
+          "property-advocate-run",
+          "--property-id",
+          "prop_1",
+          "--actor",
+          "smoke_client_access",
+          "--source",
+          "smoke_test_access",
+        ],
+        accessEnv
+      );
+      assert.equal(accessResult.result.runtime.agentId, "agent_prop_1");
     } finally {
       await server.close();
     }

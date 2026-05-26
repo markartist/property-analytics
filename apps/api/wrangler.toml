@@ -5,6 +5,15 @@ compatibility_date = "2024-12-01"
 # Custom domain (ADR-0001: api.venterradev.com)
 # routes = [{ pattern = "api.venterradev.com", custom_domain = true }]
 
+[triggers]
+crons = [
+  "0 12 * * *",
+  "20 12 * * *",
+  "40 12 * * *",
+  "0 13 * * *",
+  "30 13 * * 1"
+]
+
 # D1 Database binding
 [[d1_databases]]
 binding = "POP_BRIEF_DB"
@@ -19,8 +28,19 @@ bucket_name = "pop-brief-uploads"
 # Environment variables
 [vars]
 ENABLE_EMAIL_SEND = "true"
+CLOUDFLARE_ACCESS_TEAM_DOMAIN = "https://macxs.cloudflareaccess.com"
+# CLOUDFLARE_ACCESS_AUD = "set-comma-separated-browser-and-api-bootstrap-access-auds"
+CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED = "true"
+CLOUDFLARE_ACCESS_DEFAULT_ROLE = "viewer"
 
 # Secrets (set via `wrangler secret put <NAME>`)
 # RESEND_API_KEY
 # EMAIL_FROM
+# SEMRUSH_API_KEY
 # SESSION_SIGNING_SECRET
+# PLATFORM_ACCESS_CLIENT_ID
+# PLATFORM_ACCESS_CLIENT_SECRET
+# VACS_ACCESS_CLIENT_ID
+# VACS_ACCESS_CLIENT_SECRET
+# EVS_ACCESS_CLIENT_ID
+# EVS_ACCESS_CLIENT_SECRET

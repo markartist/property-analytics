@@ -7,6 +7,7 @@ import { stableHash } from "../../src/platform/shared/stable-hash";
 import { createTestD1Database } from "../helpers/sqlite-d1";
 import { seedPhase1PlatformBasics } from "../helpers/platform-seeds";
 import { createPlatformRouteEnv } from "../helpers/platform-route-env";
+import { buildCloudflareAccessJwt } from "../helpers/cloudflare-access-jwt";
 
 function buildGa4Input() {
   const records = [
@@ -141,17 +142,26 @@ async function requestPlatform(
     method?: string;
     body?: unknown;
     headers?: Record<string, string>;
+    useAccessServiceToken?: boolean;
   } = {}
 ) {
+  const authHeaders = init.useAccessServiceToken
+    ? {
+        "CF-Access-Client-Id": env.PLATFORM_ACCESS_CLIENT_ID ?? "",
+        "CF-Access-Client-Secret": env.PLATFORM_ACCESS_CLIENT_SECRET ?? "",
+      }
+    : {
+        Authorization: `Bearer ${env.PLATFORM_SHARED_TOKEN}`,
+      };
   return app.request(
     `http://localhost${path}`,
     {
       method: init.method ?? "GET",
       headers: {
-        Authorization: `Bearer ${env.PLATFORM_SHARED_TOKEN}`,
         "Content-Type": "application/json",
         "X-Platform-Actor": "local_mac_runner",
         "X-Platform-Source": "platform_route_test",
+        ...authHeaders,
         ...init.headers,
       },
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
@@ -257,6 +267,65 @@ test("platform routes cover mirror through execution snapshot and include reques
     assert.equal(snapshotJson.result.bindings.length, 2);
     assert.ok(snapshotResponse.headers.get("x-request-id"));
   } finally {
+    close();
+  }
+});
+
+test("platform routes accept Cloudflare Access service-token headers", async () => {
+  const { db, close } = await createTestD1Database();
+  try {
+    await seedPhase1PlatformBasics(db);
+    const env = createPlatformRouteEnv(db);
+
+    const intakeResponse = await requestPlatform(env, "/v1/platform/mirror/intake", {
+      method: "POST",
+      body: buildGa4Input(),
+      useAccessServiceToken: true,
+      headers: { "X-Platform-Actor": "access_service_client" },
+    });
+    assert.equal(intakeResponse.status, 201);
+    const intakeJson = await intakeResponse.json();
+    assert.equal(intakeJson.meta.actorTag, "access_service_client");
+  } finally {
+    close();
+  }
+});
+
+test("platform routes accept Cloudflare Access JWT assertions minted for the configured service token", async () => {
+  const { db, close } = await createTestD1Database();
+  const originalFetch = globalThis.fetch;
+  try {
+    await seedPhase1PlatformBasics(db);
+    const env = createPlatformRouteEnv(db);
+    const { token, jwk } = buildCloudflareAccessJwt({
+      teamDomain: env.CLOUDFLARE_ACCESS_TEAM_DOMAIN ?? "https://macxs.cloudflareaccess.com",
+      clientId: env.PLATFORM_ACCESS_CLIENT_ID ?? "",
+    });
+
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/cdn-cgi/access/certs")) {
+        return new Response(JSON.stringify({ keys: [jwk] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return originalFetch(input);
+    }) as typeof fetch;
+
+    const intakeResponse = await requestPlatform(env, "/v1/platform/mirror/intake", {
+      method: "POST",
+      body: buildGa4Input(),
+      headers: {
+        "CF-Access-Jwt-Assertion": token,
+        "X-Platform-Actor": "access_jwt_client",
+      },
+    });
+    assert.equal(intakeResponse.status, 201);
+    const intakeJson = await intakeResponse.json();
+    assert.equal(intakeJson.meta.actorTag, "access_jwt_client");
+  } finally {
+    globalThis.fetch = originalFetch;
     close();
   }
 });

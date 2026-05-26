@@ -2,13 +2,15 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../env";
 import type { AuthVariables } from "../middleware/auth";
-import { requireAuth, requireAdmin } from "../middleware/auth";
+import { requireAuth } from "../middleware/auth";
 import { queryFirst, queryAll, run } from "../lib/db";
 import { generateToken, hashToken } from "../lib/crypto";
 import { sendEmail } from "../email/resend";
+import { adminFrontendUrl } from "../lib/frontend-origin";
 import { newId } from "../lib/id";
 import { nowISO, errJson } from "../lib/validate";
 import { writeAuditLog } from "../lib/audit";
+import { requireOfferingAction } from "../lib/permissions";
 
 const MAGIC_LINK_TTL_MINUTES = 15;
 
@@ -25,10 +27,10 @@ const PatchUserBody = z.object({
 });
 
 const admin = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
-admin.use("*", requireAuth, requireAdmin);
+admin.use("*", requireAuth);
 
 /** POST /v1/admin/users — create user and send magic link */
-admin.post("/users", async (c) => {
+admin.post("/users", requireOfferingAction("adminUsers", "administer"), async (c) => {
   const parse = CreateUserBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
   const { email, full_name, role } = parse.data;
@@ -62,7 +64,7 @@ admin.post("/users", async (c) => {
 });
 
 /** GET /v1/admin/users — list users */
-admin.get("/users", async (c) => {
+admin.get("/users", requireOfferingAction("adminUsers", "view"), async (c) => {
   const users = await queryAll(c.env.POP_BRIEF_DB,
     "SELECT id, email, full_name, role, is_active, last_login_at, created_at FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC"
   );
@@ -70,7 +72,7 @@ admin.get("/users", async (c) => {
 });
 
 /** PATCH /v1/admin/users/:id — update role, active state, or name */
-admin.patch("/users/:id", async (c) => {
+admin.patch("/users/:id", requireOfferingAction("adminUsers", "administer"), async (c) => {
   const id = c.req.param("id");
   const parse = PatchUserBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
@@ -108,7 +110,7 @@ admin.patch("/users/:id", async (c) => {
 });
 
 /** POST /v1/admin/users/:id/send-magic-link — (re)send a login link */
-admin.post("/users/:id/send-magic-link", async (c) => {
+admin.post("/users/:id/send-magic-link", requireOfferingAction("adminUsers", "administer"), async (c) => {
   const id = c.req.param("id");
   const user = await queryFirst<{ id: string; email: string; is_active: number }>(c.env.POP_BRIEF_DB,
     "SELECT id, email, is_active FROM users WHERE id = ? AND deleted_at IS NULL", [id]
@@ -128,7 +130,7 @@ admin.post("/users/:id/send-magic-link", async (c) => {
 });
 
 /** DELETE /v1/admin/users/:id/sessions — revoke all sessions for a user */
-admin.delete("/users/:id/sessions", async (c) => {
+admin.delete("/users/:id/sessions", requireOfferingAction("adminUsers", "administer"), async (c) => {
   const id = c.req.param("id");
   const user = await queryFirst<{ id: string }>(c.env.POP_BRIEF_DB,
     "SELECT id FROM users WHERE id = ? AND deleted_at IS NULL", [id]
@@ -150,7 +152,7 @@ admin.delete("/users/:id/sessions", async (c) => {
 });
 
 /** GET /v1/admin/audit-log — paginated audit log */
-admin.get("/audit-log", async (c) => {
+admin.get("/audit-log", requireOfferingAction("adminUsers", "view"), async (c) => {
   const limit = Math.min(parseInt(c.req.query("limit") ?? "50", 10), 200);
   const offset = parseInt(c.req.query("offset") ?? "0", 10);
   const action = c.req.query("action"); // optional filter
@@ -175,7 +177,7 @@ admin.get("/audit-log", async (c) => {
 // --- Helper: generate magic token and send email ---
 
 async function sendMagicLinkForUser(
-  c: { env: Env; req: { url: string } },
+  c: { env: Env; req: { url: string; header: (name: string) => string | undefined } },
   email: string
 ): Promise<string | null> {
   const { raw, hash } = await generateToken();
@@ -198,7 +200,7 @@ async function sendMagicLinkForUser(
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
           <div style="text-align: center; margin-bottom: 32px;">
             <h1 style="color: #15284B; font-size: 24px; margin: 0;">The Data Pond</h1>
-            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Venterra WebOps</p>
+            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">MarketingOps</p>
           </div>
           <p style="color: #334155; font-size: 16px; line-height: 1.5;">Click the button below to sign in. This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
           <div style="text-align: center; margin: 32px 0;">
@@ -218,13 +220,6 @@ async function sendMagicLinkForUser(
     console.log(`[DEV] Magic link for ${email}: ${verifyUrl}`);
     return verifyUrl;
   }
-}
-
-/** Derive frontend URL from the API request for email links. */
-function adminFrontendUrl(c: { req: { url: string } }): string {
-  const url = new URL(c.req.url);
-  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return "http://localhost:3000";
-  return "https://app.venterradev.com";
 }
 
 export { admin };

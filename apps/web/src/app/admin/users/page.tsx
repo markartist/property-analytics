@@ -7,6 +7,8 @@ import {
   type AdminUser, type AuditLogEntry,
 } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { canPerformOfferingAction } from "@/lib/permissions";
+import { RestrictedSurfaceCard } from "@/components/shared/restricted-surface-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +29,20 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
+
+  if (!canPerformOfferingAction(currentUser?.role, "adminUsers", "view")) {
+    return (
+      <RestrictedSurfaceCard
+        title="Admin Console is steward-only"
+        description="User administration, access changes, magic-link controls, and audit review are reserved for stewards. Operators should use their assigned governed workspaces and reports instead."
+      />
+    );
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">

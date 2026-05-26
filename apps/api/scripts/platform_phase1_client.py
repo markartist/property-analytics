@@ -17,27 +17,98 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from utils.ksm import KsmResolutionError, resolve_secret
+
 
 def _base_url(value: str | None) -> str:
     return (value or os.environ.get("PLATFORM_BASE_URL") or "http://127.0.0.1:8787").rstrip("/")
 
 
-def _shared_token(value: str | None) -> str:
-    token = value or os.environ.get("PLATFORM_SHARED_TOKEN")
-    if not token:
-      raise SystemExit("PLATFORM_SHARED_TOKEN is required via --shared-token or environment")
-    return token
+def _resolve_platform_access_client_id(value: str | None) -> str:
+    explicit = (value or "").strip()
+    if explicit:
+        return explicit
+    try:
+        return resolve_secret(
+            description="Platform Access client id",
+            notation_env_var="KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_ID_NOTATION",
+            direct_env_var="PLATFORM_ACCESS_CLIENT_ID",
+            default_profile="marketingops",
+        )
+    except KsmResolutionError:
+        return ""
 
 
-def _post_json(base_url: str, shared_token: str, path: str, payload: dict[str, Any], actor: str, source: str) -> dict[str, Any]:
+def _resolve_platform_access_client_secret(value: str | None) -> str:
+    explicit = (value or "").strip()
+    if explicit:
+        return explicit
+    try:
+        return resolve_secret(
+            description="Platform Access client secret",
+            notation_env_var="KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_SECRET_NOTATION",
+            direct_env_var="PLATFORM_ACCESS_CLIENT_SECRET",
+            default_profile="marketingops",
+        )
+    except KsmResolutionError:
+        return ""
+
+
+def _resolve_platform_shared_token(value: str | None) -> str:
+    explicit = (value or "").strip()
+    if explicit:
+        return explicit
+    try:
+        return resolve_secret(
+            description="Platform shared token",
+            notation_env_var="KSM_PLATFORM_SHARED_TOKEN_NOTATION",
+            direct_env_var="PLATFORM_SHARED_TOKEN",
+            default_profile="marketingops",
+        )
+    except KsmResolutionError:
+        return ""
+
+
+def _auth_headers(shared_token: str | None, access_client_id: str | None, access_client_secret: str | None) -> dict[str, str]:
+    client_id = _resolve_platform_access_client_id(access_client_id)
+    client_secret = _resolve_platform_access_client_secret(access_client_secret)
+    if client_id and client_secret:
+        return {
+            "CF-Access-Client-Id": client_id,
+            "CF-Access-Client-Secret": client_secret,
+        }
+
+    token = _resolve_platform_shared_token(shared_token)
+    if token:
+        return {"Authorization": f"Bearer {token}"}
+
+    raise SystemExit(
+        "Either PLATFORM_SHARED_TOKEN or PLATFORM_ACCESS_CLIENT_ID plus PLATFORM_ACCESS_CLIENT_SECRET "
+        "is required via args or environment"
+    )
+
+
+def _post_json(
+    base_url: str,
+    auth_headers: dict[str, str],
+    path: str,
+    payload: dict[str, Any],
+    actor: str,
+    source: str,
+) -> dict[str, Any]:
     request = urllib.request.Request(
         f"{base_url}{path}",
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "Authorization": f"Bearer {shared_token}",
             "Content-Type": "application/json",
+            "User-Agent": "PropertyAnalytics-Phase1Client/1.0",
             "X-Platform-Actor": actor,
             "X-Platform-Source": source,
+            **auth_headers,
         },
         method="POST",
     )
@@ -55,13 +126,13 @@ def _load_json(path: str) -> dict[str, Any]:
 
 def command_mirror_batch(args: argparse.Namespace) -> int:
     base_url = _base_url(args.base_url)
-    shared_token = _shared_token(args.shared_token)
+    auth_headers = _auth_headers(args.shared_token, args.access_client_id, args.access_client_secret)
     payload = _load_json(args.input)
 
-    intake = _post_json(base_url, shared_token, "/v1/platform/mirror/intake", payload, args.actor, args.source)
+    intake = _post_json(base_url, auth_headers, "/v1/platform/mirror/intake", payload, args.actor, args.source)
     reconcile = _post_json(
         base_url,
-        shared_token,
+        auth_headers,
         "/v1/platform/mirror/reconcile",
         {
             "domainKey": payload["domainKey"],
@@ -79,7 +150,7 @@ def command_mirror_batch(args: argparse.Namespace) -> int:
         )
     activate = _post_json(
         base_url,
-        shared_token,
+        auth_headers,
         "/v1/platform/mirror/activate",
         {
             "domainKey": payload["domainKey"],
@@ -106,7 +177,7 @@ def command_mirror_batch(args: argparse.Namespace) -> int:
 
 def command_property_advocate_run(args: argparse.Namespace) -> int:
     base_url = _base_url(args.base_url)
-    shared_token = _shared_token(args.shared_token)
+    auth_headers = _auth_headers(args.shared_token, args.access_client_id, args.access_client_secret)
     payload = {
         "propertyId": args.property_id,
         "agentId": args.agent_id,
@@ -120,7 +191,7 @@ def command_property_advocate_run(args: argparse.Namespace) -> int:
     }
     response = _post_json(
         base_url,
-        shared_token,
+        auth_headers,
         "/v1/platform/property-advocate/run",
         payload,
         args.actor,
@@ -137,6 +208,8 @@ def build_parser() -> argparse.ArgumentParser:
     shared = argparse.ArgumentParser(add_help=False)
     shared.add_argument("--base-url", help="Platform API base URL (defaults to PLATFORM_BASE_URL or http://127.0.0.1:8787)")
     shared.add_argument("--shared-token", help="Platform shared bearer token (defaults to PLATFORM_SHARED_TOKEN)")
+    shared.add_argument("--access-client-id", help="Cloudflare Access service-token client id (defaults to PLATFORM_ACCESS_CLIENT_ID)")
+    shared.add_argument("--access-client-secret", help="Cloudflare Access service-token client secret (defaults to PLATFORM_ACCESS_CLIENT_SECRET)")
     shared.add_argument("--actor", default="local_mac_runner", help="X-Platform-Actor header value")
     shared.add_argument("--source", default="local_mac", help="X-Platform-Source header value")
 

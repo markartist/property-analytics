@@ -10,8 +10,27 @@ interface PopoverContextValue {
 
 const PopoverContext = React.createContext<PopoverContextValue>({ open: false, setOpen: () => {} });
 
-function Popover({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = React.useState(false);
+function Popover({
+  children,
+  open: controlledOpen,
+  onOpenChange,
+}: {
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = React.useCallback(
+    (nextOpen: boolean) => {
+      if (controlledOpen === undefined) {
+        setUncontrolledOpen(nextOpen);
+      }
+      onOpenChange?.(nextOpen);
+    },
+    [controlledOpen, onOpenChange]
+  );
+
   return (
     <PopoverContext.Provider value={{ open, setOpen }}>
       <div className="relative inline-block">{children}</div>
@@ -34,11 +53,12 @@ const PopoverTrigger = React.forwardRef<
     return React.cloneElement(children as React.ReactElement<any>, {
       onClick: handleClick,
       ref,
+      "data-popover-trigger": true,
     });
   }
 
   return (
-    <button ref={ref} onClick={handleClick} {...props}>
+    <button ref={ref} onClick={handleClick} data-popover-trigger {...props}>
       {children}
     </button>
   );

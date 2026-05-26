@@ -81,7 +81,12 @@ export async function generateToken(): Promise<{ raw: string; hash: string }> {
 
 /** Hash a raw token string to its stored form. */
 export async function hashToken(raw: string): Promise<string> {
-  const bytes = fromBase64url(raw);
+  let bytes: Uint8Array;
+  try {
+    bytes = fromBase64url(raw);
+  } catch {
+    return "__invalid_token__";
+  }
   const hashBuf = await crypto.subtle.digest("SHA-256", bytes);
   return toBase64(hashBuf);
 }

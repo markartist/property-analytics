@@ -7,14 +7,131 @@ SCRIPT_DIR="$API_DIR/scripts"
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/phase1-cutover-XXXXXX")"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+required_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "ERROR: required command not found: $1" >&2
+    exit 1
+  fi
+}
+
+clean_value() {
+  local raw="$1"
+  raw="${raw#"${raw%%[![:space:]]*}"}"
+  raw="${raw%"${raw##*[![:space:]]}"}"
+  raw="${raw%\"}"
+  raw="${raw#\"}"
+  raw="${raw%\'}"
+  raw="${raw#\'}"
+  printf '%s' "$raw"
+}
+
+read_keeper_notation() {
+  local notation="$1"
+  local description="$2"
+  local profile="${KSM_PROFILE:-default}"
+
+  required_cmd ksm
+  local value
+  local err_file
+  err_file="$(mktemp "${TMPDIR:-/tmp}/phase1-cutover-ksm-XXXXXX")"
+  if ! value="$(ksm -p "$profile" secret notation "$notation" 2>"$err_file")"; then
+    local err
+    err="$(cat "$err_file")"
+    rm -f "$err_file"
+    echo "ERROR: Keeper lookup failed for $description. profile=$profile notation=$notation stderr=$err" >&2
+    exit 1
+  fi
+  rm -f "$err_file"
+  clean_value "$value"
+}
+
+resolve_secret_value() {
+  local direct_var="$1"
+  local notation_var="$2"
+  local description="$3"
+  local direct_value="${!direct_var:-}"
+  local notation="${!notation_var:-}"
+
+  if [[ -n "$notation" ]]; then
+    read_keeper_notation "$notation" "$description"
+    return 0
+  fi
+
+  if [[ -n "$direct_value" ]]; then
+    clean_value "$direct_value"
+    return 0
+  fi
+
+  return 1
+}
+
+resolve_source_label() {
+  local direct_var="$1"
+  local notation_var="$2"
+  if [[ -n "${!notation_var:-}" ]]; then
+    printf 'keeper:%s' "${KSM_PROFILE:-default}"
+    return 0
+  fi
+  if [[ -n "${!direct_var:-}" ]]; then
+    printf 'env:%s' "$direct_var"
+    return 0
+  fi
+  printf 'unset'
+}
+
 if [[ -z "${PLATFORM_BASE_URL:-}" ]]; then
   echo "PLATFORM_BASE_URL is required"
   exit 1
 fi
 
-if [[ -z "${PLATFORM_SHARED_TOKEN:-}" ]]; then
-  echo "PLATFORM_SHARED_TOKEN is required"
+PLATFORM_ACCESS_CLIENT_ID_RESOLVED=""
+if PLATFORM_ACCESS_CLIENT_ID_RESOLVED="$(resolve_secret_value "PLATFORM_ACCESS_CLIENT_ID" "KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_ID_NOTATION" "PLATFORM_ACCESS_CLIENT_ID" 2>/dev/null)"; then
+  :
+else
+  PLATFORM_ACCESS_CLIENT_ID_RESOLVED=""
+fi
+
+PLATFORM_ACCESS_CLIENT_SECRET_RESOLVED=""
+if PLATFORM_ACCESS_CLIENT_SECRET_RESOLVED="$(resolve_secret_value "PLATFORM_ACCESS_CLIENT_SECRET" "KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_SECRET_NOTATION" "PLATFORM_ACCESS_CLIENT_SECRET" 2>/dev/null)"; then
+  :
+else
+  PLATFORM_ACCESS_CLIENT_SECRET_RESOLVED=""
+fi
+
+PLATFORM_SHARED_TOKEN_RESOLVED=""
+if PLATFORM_SHARED_TOKEN_RESOLVED="$(resolve_secret_value "PLATFORM_SHARED_TOKEN" "KSM_PLATFORM_SHARED_TOKEN_NOTATION" "PLATFORM_SHARED_TOKEN" 2>/dev/null)"; then
+  :
+else
+  PLATFORM_SHARED_TOKEN_RESOLVED=""
+fi
+
+HAS_SHARED_AUTH="false"
+if [[ -n "$PLATFORM_SHARED_TOKEN_RESOLVED" ]]; then
+  HAS_SHARED_AUTH="true"
+fi
+
+HAS_ACCESS_AUTH="false"
+if [[ -n "$PLATFORM_ACCESS_CLIENT_ID_RESOLVED" && -n "$PLATFORM_ACCESS_CLIENT_SECRET_RESOLVED" ]]; then
+  HAS_ACCESS_AUTH="true"
+fi
+
+if [[ "$HAS_SHARED_AUTH" != "true" && "$HAS_ACCESS_AUTH" != "true" ]]; then
+  echo "Either PLATFORM_SHARED_TOKEN or PLATFORM_ACCESS_CLIENT_ID plus PLATFORM_ACCESS_CLIENT_SECRET is required via env vars or Keeper notation"
   exit 1
+fi
+
+CLIENT_ARGS=()
+CURL_AUTH_ARGS=()
+if [[ "$HAS_ACCESS_AUTH" == "true" ]]; then
+  CLIENT_ARGS+=(--access-client-id "$PLATFORM_ACCESS_CLIENT_ID_RESOLVED" --access-client-secret "$PLATFORM_ACCESS_CLIENT_SECRET_RESOLVED")
+  CURL_AUTH_ARGS+=(-H "CF-Access-Client-Id: $PLATFORM_ACCESS_CLIENT_ID_RESOLVED" -H "CF-Access-Client-Secret: $PLATFORM_ACCESS_CLIENT_SECRET_RESOLVED")
+  echo "Auth mode: Cloudflare Access service token"
+  echo "Credential sources: id=$(resolve_source_label "PLATFORM_ACCESS_CLIENT_ID" "KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_ID_NOTATION") secret=$(resolve_source_label "PLATFORM_ACCESS_CLIENT_SECRET" "KSM_CLOUDFLARE_PLATFORM_ACCESS_CLIENT_SECRET_NOTATION")"
+else
+  CLIENT_ARGS+=(--shared-token "$PLATFORM_SHARED_TOKEN_RESOLVED")
+  CURL_AUTH_ARGS+=(-H "Authorization: Bearer $PLATFORM_SHARED_TOKEN_RESOLVED")
+  echo "Auth mode: legacy shared bearer token"
+  echo "Credential source: $(resolve_source_label "PLATFORM_SHARED_TOKEN" "KSM_PLATFORM_SHARED_TOKEN_NOTATION")"
 fi
 
 python3 - <<'PY' "$TMP_DIR"
@@ -207,20 +324,20 @@ node "$SCRIPT_DIR/stamp_phase1_payload_checksums.js" \
 
 python3 "$SCRIPT_DIR/platform_phase1_client.py" mirror-batch \
   --base-url "$PLATFORM_BASE_URL" \
-  --shared-token "$PLATFORM_SHARED_TOKEN" \
+  "${CLIENT_ARGS[@]}" \
   --actor "phase1_cutover_check" \
   --source "phase1_cutover_check" \
   --input "$TMP_DIR/ga4_payload.json"
 
 python3 "$SCRIPT_DIR/platform_phase1_client.py" mirror-batch \
   --base-url "$PLATFORM_BASE_URL" \
-  --shared-token "$PLATFORM_SHARED_TOKEN" \
+  "${CLIENT_ARGS[@]}" \
   --actor "phase1_cutover_check" \
   --source "phase1_cutover_check" \
   --input "$TMP_DIR/psi_payload.json"
 
 curl -fsS \
-  -H "Authorization: Bearer $PLATFORM_SHARED_TOKEN" \
+  "${CURL_AUTH_ARGS[@]}" \
   -H "X-Platform-Actor: phase1_cutover_check" \
   -H "X-Platform-Source: phase1_cutover_check" \
   -H "Content-Type: application/json" \
@@ -228,7 +345,7 @@ curl -fsS \
   "$PLATFORM_BASE_URL/v1/platform/pipeline-health/build" >/dev/null
 
 curl -fsS \
-  -H "Authorization: Bearer $PLATFORM_SHARED_TOKEN" \
+  "${CURL_AUTH_ARGS[@]}" \
   -H "X-Platform-Actor: phase1_cutover_check" \
   -H "X-Platform-Source: phase1_cutover_check" \
   -H "Content-Type: application/json" \
@@ -238,7 +355,7 @@ curl -fsS \
 if [[ "${ENABLE_PHASE1_PROPERTY_ADVOCATE_RUN:-false}" == "true" ]]; then
   python3 "$SCRIPT_DIR/platform_phase1_client.py" property-advocate-run \
     --base-url "$PLATFORM_BASE_URL" \
-    --shared-token "$PLATFORM_SHARED_TOKEN" \
+    "${CLIENT_ARGS[@]}" \
     --actor "phase1_cutover_check" \
     --source "phase1_cutover_check" \
     --property-id "${PHASE1_PROPERTY_ADVOCATE_PROPERTY_ID:-prop_1}" \
