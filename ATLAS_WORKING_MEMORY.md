@@ -4315,3 +4315,6 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
   - Shell syntax for pilot daily wrappers passed.
   - GTMetrix pilot/control and twin validation passed for `2026-05-27`.
   - Pilot roundup, Spotlight roundup, and pilot data-export email dry-runs passed without sending live mail.
+- Follow-up reliability hardening:
+  - `--missing-only-for-date` GTMetrix collector no-op paths now exit before Keeper/API credential resolution, so already-complete daily jobs do not fail just because no live collection is needed.
+  - Duplicate-send guards now accept both the corrected `MM/DD/YYYY` customer-facing subject and the prior dash-form subject for the same daily email log.

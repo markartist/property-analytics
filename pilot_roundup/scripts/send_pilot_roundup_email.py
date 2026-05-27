@@ -56,6 +56,7 @@ def send_pilot_roundup_email(
     attachments = build_csv_attachments()
 
     subject = f"Pilot Performance Roundup - {subject_date}"
+    legacy_subject = f"Pilot Performance Roundup - {subject_date.replace('/', '-')}"
     log_path = DELIVERY_LOG_DIR / f"email_delivery_{report_date}.jsonl"
 
     if dry_run:
@@ -70,7 +71,7 @@ def send_pilot_roundup_email(
         print(f"Report: {html_file}")
         return True
 
-    if not force and successful_delivery_exists(log_path, subject):
+    if not force and successful_delivery_exists(log_path, subject, alternate_subjects=[legacy_subject]):
         print("Pilot roundup email already delivered successfully for this date; skipping duplicate send")
         print(f"Subject: {subject}")
         print(f"Log: {log_path}")

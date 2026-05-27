@@ -255,6 +255,10 @@ def main() -> int:
     if args.limit > 0:
         targets = targets[: args.limit]
 
+    if not targets:
+        print(f"No GTMetrix targets require collection for {args.date}.")
+        return 0
+
     db = DatabaseManager(db_path)
     collector = GTMetrixCollector(
         GTMetrixSettings(
@@ -280,10 +284,6 @@ def main() -> int:
     error_messages: List[str] = []
     output_rows: List[Dict[str, object]] = []
     stop_reason: Optional[str] = None
-
-    if not targets:
-        print(f"No GTMetrix targets require collection for {args.date}.")
-        return 0
 
     print(
         f"Collecting GTMetrix for {len(targets)} pilot/control properties on {args.date} "

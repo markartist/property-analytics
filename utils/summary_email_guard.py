@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Iterable
 
 
 def load_delivery_entries(path: Path) -> list[dict]:
@@ -24,8 +25,9 @@ def load_delivery_entries(path: Path) -> list[dict]:
     return rows
 
 
-def successful_delivery_exists(path: Path, subject: str) -> bool:
+def successful_delivery_exists(path: Path, subject: str, alternate_subjects: Iterable[str] = ()) -> bool:
+    accepted_subjects = {subject, *alternate_subjects}
     return any(
-        row.get("success") is True and row.get("subject") == subject
+        row.get("success") is True and row.get("subject") in accepted_subjects
         for row in load_delivery_entries(path)
     )

@@ -81,6 +81,7 @@ def send_pilot_data_exports(
     psi_display_date = display_date(psi_date) or "date unavailable"
     gt_display_date = display_date(gt_date) or "date unavailable"
     subject = f"Pilot Data Exports - {report_display_date}"
+    legacy_subject = f"Pilot Data Exports - {report_display_date.replace('/', '-')}"
     log_date = log_date_key(report_date)
     log_path = DELIVERY_LOG_DIR / f"email_delivery_{log_date}.jsonl"
     html_body = f"""
@@ -113,7 +114,7 @@ def send_pilot_data_exports(
         print(f"Expected GTMetrix date: {gt_display_date}")
         return True
 
-    if not force and successful_delivery_exists(log_path, subject):
+    if not force and successful_delivery_exists(log_path, subject, alternate_subjects=[legacy_subject]):
         print("Pilot data exports email already delivered successfully for this date; skipping duplicate send")
         print(f"Subject: {subject}")
         print(f"Log: {log_path}")

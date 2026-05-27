@@ -63,7 +63,8 @@ def send_spotlight_roundup(
 
     report_display_date = display_date(report_date)
     base_subject = f"Spotlight PageSpeed Insights Performance - {report_display_date}"
-    already_sent = successful_delivery_exists(log_path, base_subject)
+    legacy_subject = f"Spotlight PageSpeed Insights Performance - {report_display_date.replace('/', '-')}"
+    already_sent = successful_delivery_exists(log_path, base_subject, alternate_subjects=[legacy_subject])
     subject = base_subject
     correction_note = ""
     if force and already_sent:
