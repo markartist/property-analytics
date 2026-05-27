@@ -5,6 +5,8 @@ config/*
 !config/cloudflare_analytics.yaml
 !config/captain_active_routine_manifest.json
 !config/captain_signal_flow_manifest.json
+!config/data_warehouse_property_code_resolution.json
+!config/manual_source_replacement_manifest.json
 !config/property_identity_matrix.json
 !config/release_reconcile_snapshot.json
 !evs/config/

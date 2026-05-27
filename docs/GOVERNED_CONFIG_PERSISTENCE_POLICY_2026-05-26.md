@@ -16,6 +16,8 @@ These files are non-secret governance artifacts and should be persisted:
 
 - `/Users/mark/Property_Analytics/config/captain_active_routine_manifest.json`
 - `/Users/mark/Property_Analytics/config/captain_signal_flow_manifest.json`
+- `/Users/mark/Property_Analytics/config/data_warehouse_property_code_resolution.json`
+- `/Users/mark/Property_Analytics/config/manual_source_replacement_manifest.json`
 - `/Users/mark/Property_Analytics/config/property_identity_matrix.json`
 - `/Users/mark/Property_Analytics/config/release_reconcile_snapshot.json`
 
@@ -63,5 +65,7 @@ On 2026-05-26, the following were allowlisted because they are required for the 
 - `config/property_identity_matrix.json`
 - `config/captain_active_routine_manifest.json`
 - `config/captain_signal_flow_manifest.json`
+- `config/manual_source_replacement_manifest.json`
+- `config/data_warehouse_property_code_resolution.json`
 
 The broad `config/*` ignore remains in place.

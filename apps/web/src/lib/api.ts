@@ -1101,6 +1101,54 @@ export interface HealthStatusResponse {
     };
     sources: DailyCollectionSourceStatus[];
   };
+  data_warehouse_replacements: {
+    trust_posture: "validation_first" | string;
+    guest_card_direct: {
+      latest_date: string | null;
+      row_count: number;
+      property_count: number;
+      guest_cards: number;
+      online_apps: number;
+      advisory_quotes: number;
+      advisory_pipeline_apps: number;
+      advisory_tours: number;
+      canonical_apply_mode: string;
+      advisory_fields: string[];
+    };
+    property_operating_metrics: {
+      latest_date: string | null;
+      row_count: number;
+      property_count: number;
+      occupied_units: number;
+      total_units: number;
+      avg_occupancy_rate: number | null;
+      avg_leased_rate: number | null;
+      leases_count: number;
+      move_ins_count: number;
+      move_outs_count: number;
+      cancellations_count: number;
+      denials_count: number;
+      source_system: string;
+      governed_exclusion_count: number;
+      governed_exclusion_codes: string[];
+      collection: {
+        collection_date: string | null;
+        status: string | null;
+        properties_total: number | null;
+        properties_success: number | null;
+        properties_failed: number | null;
+        notes: string | null;
+        completed_at: string | null;
+      };
+    };
+    property_metadata_direct: {
+      row_count: number;
+      property_count: number;
+      latest_supplied_at: string | null;
+      source_system: string;
+      latest_matrix_delta_count: number;
+    };
+  };
   telemetry: {
     collection_history: WatchtowerCollectionHistoryPoint[];
     source_coverage_history: WatchtowerSourceCoverageHistory[];

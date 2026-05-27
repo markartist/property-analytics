@@ -1,0 +1,67 @@
+{
+  "updated_at": "2026-05-26",
+  "purpose": "Classify Data Warehouse property codes that appear in source-specific feeds but cannot be resolved through the governed property identity matrix.",
+  "integrity_standard": "Do not map a source code to a canonical property unless an exact governed identifier or source-owner-approved equivalence exists.",
+  "expected_property_lifecycle_gaps": [
+    {
+      "property_code": "TX4EK",
+      "property_name": "The Vine Kyle Parkway",
+      "lifecycle_status": "pre_live",
+      "expectation": "not_expected_in_dw_operating_metrics_until_live",
+      "expected_in_metadata_feed": true,
+      "expected_in_operating_metrics": false,
+      "source_context": "property_metadata_dw_direct to property_operating_metrics",
+      "reason": "User confirmed on 2026-05-26 that The Vine Kyle Parkway is not live yet and should not be expected in Data Warehouse operating metrics.",
+      "review_status": "user_confirmed_pre_live"
+    },
+    {
+      "property_code": "TX4CY",
+      "property_name": "Sundara at Spring Cypress",
+      "lifecycle_status": "pre_live",
+      "expectation": "not_expected_in_dw_metadata_or_operating_metrics_until_live",
+      "expected_in_metadata_feed": false,
+      "expected_in_operating_metrics": false,
+      "source_context": "property_identity_matrix to Data Warehouse property and operating feeds",
+      "reason": "User confirmed on 2026-05-26 that Sundara at Spring Cypress is not live yet and should not be expected in Data Warehouse feeds.",
+      "review_status": "user_confirmed_pre_live"
+    }
+  ],
+  "resolutions": [
+    {
+      "property_code": "FL4CA",
+      "resolution": "exclude_from_canonical_property_operating_metrics",
+      "source_context": "dw_read.leasingstatistics_daily_bv",
+      "latest_observed_source_date": "2026-05-25",
+      "latest_observed_total_units": 261,
+      "reason": "Code appears in leasing statistics but has no row in dw_read.property_bv, dbo.dw_property, dw_read.TO_DELETE_rentlytics_property_list_v, dw_read.dw_Property_Revenue_And_Expense_src, or dw_read.prov_user_report_property_access_including_sold_bv. No exact identity match exists in config/property_identity_matrix.json.",
+      "review_status": "source_owner_review_recommended"
+    },
+    {
+      "property_code": "FL4P9",
+      "resolution": "exclude_from_canonical_property_operating_metrics",
+      "source_context": "dw_read.leasingstatistics_daily_bv",
+      "latest_observed_source_date": "2026-05-25",
+      "latest_observed_total_units": 356,
+      "reason": "Code appears in leasing statistics but has no row in dw_read.property_bv, dbo.dw_property, dw_read.TO_DELETE_rentlytics_property_list_v, dw_read.dw_Property_Revenue_And_Expense_src, or dw_read.prov_user_report_property_access_including_sold_bv. No exact identity match exists in config/property_identity_matrix.json.",
+      "review_status": "source_owner_review_recommended"
+    },
+    {
+      "property_code": "TX4FP",
+      "resolution": "exclude_from_canonical_property_operating_metrics",
+      "source_context": "dw_read.leasingstatistics_daily_bv",
+      "latest_observed_source_date": "2026-05-25",
+      "latest_observed_total_units": 84,
+      "reason": "Code appears in leasing statistics but has no row in dw_read.property_bv, dbo.dw_property, dw_read.TO_DELETE_rentlytics_property_list_v, dw_read.dw_Property_Revenue_And_Expense_src, or dw_read.prov_user_report_property_access_including_sold_bv. No exact identity match exists in config/property_identity_matrix.json.",
+      "review_status": "source_owner_review_recommended"
+    },
+    {
+      "property_code": "TX4PW",
+      "resolution": "exclude_from_canonical_property_operating_metrics",
+      "source_context": "dw_read.leasingstatistics_daily_bv",
+      "latest_observed_source_date": "2026-05-25",
+      "latest_observed_total_units": 200,
+      "reason": "Code appears in leasing statistics but has no row in dw_read.property_bv, dbo.dw_property, dw_read.TO_DELETE_rentlytics_property_list_v, dw_read.dw_Property_Revenue_And_Expense_src, or dw_read.prov_user_report_property_access_including_sold_bv. No exact identity match exists in config/property_identity_matrix.json.",
+      "review_status": "source_owner_review_recommended"
+    }
+  ]
+}

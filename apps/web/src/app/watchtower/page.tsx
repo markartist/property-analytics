@@ -190,7 +190,7 @@ function formatTimestamp(value: string | null): string {
 
 function formatYmdLabel(value: string): string {
   try {
-    return format(parseISO(value), "MMM d");
+    return format(parseISO(value), "MM/dd/yyyy");
   } catch {
     return value;
   }
@@ -199,10 +199,20 @@ function formatYmdLabel(value: string): string {
 function formatDateTimeLabel(value: string | null): string {
   if (!value) return "Not scheduled";
   try {
-    return format(parseISO(value), "MMM d h:mm a");
+    return format(parseISO(value), "MM/dd/yyyy h:mm a");
   } catch {
     return value;
   }
+}
+
+function formatNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  return value.toLocaleString();
+}
+
+function formatRate(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "—";
+  return `${Number(value).toFixed(1)}%`;
 }
 
 function formatSourceName(value: string): string {
@@ -506,7 +516,7 @@ function SourceSignalCard({ src }: { src: SourceFreshness }) {
           <div>
             <p className="text-sm font-semibold text-slate-900">{src.source_label}</p>
             <p className="mt-1 text-xs text-slate-500">
-              {src.latest_date ? format(parseISO(src.latest_date), "MMM d, yyyy") : "No data yet"}
+              {src.latest_date ? format(parseISO(src.latest_date), "MM/dd/yyyy") : "No data yet"}
             </p>
           </div>
           <Badge className={`${info.bg} ${info.color} border-0 font-bold`}>
@@ -533,7 +543,7 @@ function SourceSignalCard({ src }: { src: SourceFreshness }) {
         </div>
         {src.expected_latest_date && src.expected_latest_date !== src.latest_date && (
           <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            Expected through {format(parseISO(src.expected_latest_date), "MMM d")} based on source timing policy
+            Expected through {format(parseISO(src.expected_latest_date), "MM/dd/yyyy")} based on source timing policy
           </p>
         )}
       </CardContent>
@@ -2270,6 +2280,111 @@ export default function WatchtowerPage() {
               </section>
             )}
 
+            <section className="grid gap-4 xl:grid-cols-3">
+              <Card className="border-[#7DCAC2]/50 bg-white shadow-sm">
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#294782]">DW Guest Cards</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {data.data_warehouse_replacements.guest_card_direct.latest_date
+                          ? `Latest ${formatYmdLabel(data.data_warehouse_replacements.guest_card_direct.latest_date)}`
+                          : "Direct table not mirrored"}
+                      </p>
+                    </div>
+                    <Badge className="border-0 bg-[#7DCAC2]/20 text-[#294782]">
+                      {data.data_warehouse_replacements.guest_card_direct.canonical_apply_mode.replace(/_/g, " ")}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Rows</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatNumber(data.data_warehouse_replacements.guest_card_direct.row_count)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">GC</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatNumber(data.data_warehouse_replacements.guest_card_direct.guest_cards)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Apps</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatNumber(data.data_warehouse_replacements.guest_card_direct.online_apps)}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-slate-500">
+                    Advisory fields: {data.data_warehouse_replacements.guest_card_direct.advisory_fields.join(", ")}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[#3D66B9]/30 bg-white shadow-sm">
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#294782]">DW Operating Metrics</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {data.data_warehouse_replacements.property_operating_metrics.latest_date
+                          ? `Effective ${formatYmdLabel(data.data_warehouse_replacements.property_operating_metrics.latest_date)}`
+                          : data.data_warehouse_replacements.property_operating_metrics.collection.collection_date
+                            ? `Collection ${formatYmdLabel(data.data_warehouse_replacements.property_operating_metrics.collection.collection_date)}`
+                            : "Operating table not mirrored"}
+                      </p>
+                    </div>
+                    <Badge className="border-0 bg-[#3D66B9]/10 text-[#294782]">
+                      {data.data_warehouse_replacements.property_operating_metrics.governed_exclusion_count} exclusions
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Props</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatNumber(data.data_warehouse_replacements.property_operating_metrics.property_count)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Occ</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatRate(data.data_warehouse_replacements.property_operating_metrics.avg_occupancy_rate)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Leased</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatRate(data.data_warehouse_replacements.property_operating_metrics.avg_leased_rate)}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-slate-500">
+                    Excluded codes: {data.data_warehouse_replacements.property_operating_metrics.governed_exclusion_codes.join(", ")}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-[#D6D6D2] bg-white shadow-sm">
+                <CardContent className="p-5">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-[#294782]">DW Property Metadata</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {data.data_warehouse_replacements.property_metadata_direct.latest_supplied_at
+                          ? `Supplied ${formatDateTimeLabel(data.data_warehouse_replacements.property_metadata_direct.latest_supplied_at)}`
+                          : "Metadata table not mirrored"}
+                      </p>
+                    </div>
+                    <Badge className="border-0 bg-[#E02472]/10 text-[#E02472]">
+                      {data.data_warehouse_replacements.property_metadata_direct.latest_matrix_delta_count} deltas
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Rows</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatNumber(data.data_warehouse_replacements.property_metadata_direct.row_count)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-[#F6F6F5] p-3">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Props</p>
+                      <p className="mt-1 text-2xl font-bold text-[#15284B]">{formatNumber(data.data_warehouse_replacements.property_metadata_direct.property_count)}</p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-slate-500">
+                    Trust posture: {data.data_warehouse_replacements.trust_posture.replace(/_/g, " ")}
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
+
             <section className="overflow-hidden rounded-[36px] border border-[#123846] bg-[#071924] text-white shadow-[0_40px_140px_rgba(7,25,36,0.38)]">
               <div className="grid xl:grid-cols-[1.18fr_0.82fr]">
                 <div className="border-b border-white/10 p-6 md:p-8 xl:border-b-0 xl:border-r">
@@ -2447,7 +2562,7 @@ export default function WatchtowerPage() {
                                   <div>
                                     <p className="text-sm font-semibold text-white">{src.source_label}</p>
                                     <p className="mt-1 text-xs text-slate-400">
-                                      {src.latest_date ? format(parseISO(src.latest_date), "MMM d, yyyy") : "No data yet"}
+                                      {src.latest_date ? format(parseISO(src.latest_date), "MM/dd/yyyy") : "No data yet"}
                                     </p>
                                   </div>
                                   <Badge className={`${info.bg} ${info.color} border-0`}>{info.label}</Badge>
@@ -2539,7 +2654,7 @@ export default function WatchtowerPage() {
                                   </Badge>
                                 </div>
                                 {issue.timestamp && (
-                                  <p className="mt-3 text-xs text-slate-500">{format(parseISO(issue.timestamp), "MMM d, yyyy h:mm a")}</p>
+                                  <p className="mt-3 text-xs text-slate-500">{format(parseISO(issue.timestamp), "MM/dd/yyyy h:mm a")}</p>
                                 )}
                               </div>
                             ))
@@ -3777,7 +3892,7 @@ export default function WatchtowerPage() {
                             <div className="mb-3 flex items-start justify-between gap-3">
                               <div>
                                 <p className="text-sm font-semibold text-slate-900">{stat.label}</p>
-                                <p className="mt-1 text-xs text-slate-500">{stat.latest_date ? format(parseISO(stat.latest_date), "MMM d, yyyy") : "No data yet"}</p>
+                                <p className="mt-1 text-xs text-slate-500">{stat.latest_date ? format(parseISO(stat.latest_date), "MM/dd/yyyy") : "No data yet"}</p>
                               </div>
                               <Badge className={`${info.bg} ${info.color} border-0`}>{info.label}</Badge>
                             </div>

@@ -7,7 +7,9 @@ aggregates them into T7 and T30 windows aligned to Fridays, and pushes
 the results to the POP Brief D1 database (t7_metrics and t30_metrics tables).
 
 Data flow:
-  canonical DB (guest_card_metrics, daily, per property_code)
+  canonical DB unified read model:
+    guest_card_metrics_dw_direct for dates supplied directly from Data Warehouse
+    guest_card_metrics for dates not covered by the direct lane
     → aggregate into T7 window (Friday−6 → Friday)
     → aggregate into T30 window (Friday−29 → Friday)
     → compute conversion rates (v/gc, a/gc)
@@ -56,6 +58,60 @@ REPO_ROOT = API_DIR.parent.parent  # ~/Property_Analytics
 CANONICAL_DB = REPO_ROOT / "data" / "portfolio_analytics.db"
 
 ACTOR = "guest-card-sync"
+GUEST_CARD_DIRECT_TABLE = "guest_card_metrics_dw_direct"
+GUEST_CARD_CANONICAL_TABLE = "guest_card_metrics"
+
+
+def _table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table_name,),
+    ).fetchone()
+    return row is not None
+
+
+def _guest_card_source_sql(conn: sqlite3.Connection) -> str:
+    """Return a source SQL fragment that prefers verified DW direct rows by date.
+
+    The direct table only carries the trusted core as canonical-quality. Tour
+    fields remain advisory in the DW proof set, but the legacy D1 T7/T30 sync
+    already treats visits as best-effort and leaves lease/C&D/move-in metrics
+    null when the source cannot support them.
+    """
+    if not _table_exists(conn, GUEST_CARD_DIRECT_TABLE):
+        return GUEST_CARD_CANONICAL_TABLE
+
+    return f"""
+        (
+            SELECT
+                run_date,
+                property_code,
+                gc_this_period,
+                ipt_appt_this_period,
+                sgt_appt_this_period,
+                init_cont_tour,
+                apps_this_period,
+                'dw_direct' AS source_system
+            FROM {GUEST_CARD_DIRECT_TABLE}
+            UNION ALL
+            SELECT
+                c.run_date,
+                c.property_code,
+                c.gc_this_period,
+                c.ipt_appt_this_period,
+                c.sgt_appt_this_period,
+                c.init_cont_tour,
+                c.apps_this_period,
+                'csv_canonical' AS source_system
+            FROM {GUEST_CARD_CANONICAL_TABLE} c
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM {GUEST_CARD_DIRECT_TABLE} d
+                WHERE d.run_date = c.run_date
+                  AND d.property_code = c.property_code
+            )
+        )
+    """
 
 # ---------------------------------------------------------------------------
 # D1 community mapping
@@ -108,7 +164,7 @@ def _connect_canonical() -> sqlite3.Connection:
 def get_available_fridays(conn: sqlite3.Connection) -> List[str]:
     """Return all Fridays that fall within the guest card data date range."""
     row = conn.execute(
-        "SELECT MIN(run_date) as min_d, MAX(run_date) as max_d FROM guest_card_metrics"
+        f"SELECT MIN(run_date) as min_d, MAX(run_date) as max_d FROM {_guest_card_source_sql(conn)}"
     ).fetchone()
     if not row or not row["min_d"]:
         return []
@@ -139,14 +195,14 @@ def aggregate_window(
 
     Returns: { property_code: { g_cards, visits, first_tours, apps } }
     """
-    query = """
+    query = f"""
         SELECT
             property_code,
             SUM(gc_this_period)                                AS g_cards,
             SUM(ipt_appt_this_period + sgt_appt_this_period)  AS visits,
             SUM(init_cont_tour)                                AS first_tours,
             SUM(apps_this_period)                              AS apps
-        FROM guest_card_metrics
+        FROM {_guest_card_source_sql(conn)}
         WHERE run_date BETWEEN ? AND ?
         GROUP BY property_code
     """

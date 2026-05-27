@@ -31,13 +31,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "OK",
       "status": "active",
       "unit_count": 230,
       "url_slug": "anatole-at-norman",
-      "website_url": "https://venterraliving.com/apartments/anatole-at-norman/"
+      "website_url": "https://venterraliving.com/apartments/anatole-at-norman/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Oklahoma",
+        "market": "Oklahoma City, OK",
+        "submarket": "Norman/Moore",
+        "units": 230,
+        "count_apts": 230,
+        "count_apts_ex_down": 230
+      }
     },
     {
       "aliases": [
@@ -62,13 +73,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 347,
       "url_slug": "apex-west-midtown",
-      "website_url": "https://venterraliving.com/apartments/apex-west-midtown/"
+      "website_url": "https://venterraliving.com/apartments/apex-west-midtown/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "West Atlanta",
+        "units": 347,
+        "count_apts": 340,
+        "count_apts_ex_down": 340
+      }
     },
     {
       "aliases": [
@@ -93,13 +115,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 330,
       "url_slug": "avasa-grove-west",
-      "website_url": "https://venterraliving.com/apartments/avasa-grove-west/"
+      "website_url": "https://venterraliving.com/apartments/avasa-grove-west/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Tampa-St. Petersburg-Clearwater",
+        "submarket": "Pasco County",
+        "units": 330,
+        "count_apts": 330,
+        "count_apts_ex_down": 330
+      }
     },
     {
       "aliases": [
@@ -124,13 +157,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 300,
       "url_slug": "avasa-hammock-landing",
-      "website_url": "https://venterraliving.com/apartments/avasa-hammock-landing/"
+      "website_url": "https://venterraliving.com/apartments/avasa-hammock-landing/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Palm Bay- Melbourne-Titusville, FL",
+        "submarket": "Melbourne",
+        "units": 300,
+        "count_apts": 300,
+        "count_apts_ex_down": 300
+      }
     },
     {
       "aliases": [
@@ -155,13 +199,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 361,
       "url_slug": "avasa-spring-branch",
-      "website_url": "https://venterraliving.com/apartments/avasa-spring-branch/"
+      "website_url": "https://venterraliving.com/apartments/avasa-spring-branch/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston MSA",
+        "submarket": "Spring Branch",
+        "units": 361,
+        "count_apts": 361,
+        "count_apts_ex_down": 361
+      }
     },
     {
       "aliases": [
@@ -186,13 +241,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 424,
       "url_slug": "avasa-at-1604",
-      "website_url": "https://venterraliving.com/apartments/avasa-at-1604/"
+      "website_url": "https://venterraliving.com/apartments/avasa-at-1604/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels, TX",
+        "submarket": "North Central San Antonio",
+        "units": 424,
+        "count_apts": 424,
+        "count_apts_ex_down": 424
+      }
     },
     {
       "aliases": [
@@ -216,13 +282,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 169,
       "url_slug": "axial-buckhead",
-      "website_url": "https://venterraliving.com/apartments/axial-buckhead/"
+      "website_url": "https://venterraliving.com/apartments/axial-buckhead/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Buckhead",
+        "units": 169,
+        "count_apts": 169,
+        "count_apts_ex_down": 169
+      }
     },
     {
       "aliases": [
@@ -247,13 +324,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 312,
       "url_slug": "balmoral-village",
-      "website_url": "https://venterraliving.com/apartments/balmoral-village/"
+      "website_url": "https://venterraliving.com/apartments/balmoral-village/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Far South Atlanta Suburbs",
+        "units": 312,
+        "count_apts": 312,
+        "count_apts_ex_down": 312
+      }
     },
     {
       "aliases": [
@@ -278,13 +366,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 216,
       "url_slug": "bella-ruscello",
-      "website_url": "https://venterraliving.com/apartments/bella-ruscello/"
+      "website_url": "https://venterraliving.com/apartments/bella-ruscello/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Dallas-Plano-Irving, TX",
+        "submarket": "Southern Dallas County",
+        "units": 216,
+        "count_apts": 216,
+        "count_apts_ex_down": 216
+      }
     },
     {
       "aliases": [
@@ -308,13 +407,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 288,
       "url_slug": "belterra",
-      "website_url": "https://venterraliving.com/apartments/belterra/"
+      "website_url": "https://venterraliving.com/apartments/belterra/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Fort Worth-Arlington, TX",
+        "submarket": "Northeast Fort Worth/North Richland Hills",
+        "units": 288,
+        "count_apts": 288,
+        "count_apts_ex_down": 288
+      }
     },
     {
       "aliases": [
@@ -339,13 +449,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 391,
       "url_slug": "botanic-apartments",
-      "website_url": "https://venterraliving.com/apartments/botanic-apartments/"
+      "website_url": "https://venterraliving.com/apartments/botanic-apartments/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Savannah, GA",
+        "market": "Savannah",
+        "submarket": "Pooler",
+        "units": 391,
+        "count_apts": 391,
+        "count_apts_ex_down": 391
+      }
     },
     {
       "aliases": [
@@ -370,13 +491,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "OK",
       "status": "active",
       "unit_count": 216,
       "url_slug": "boulevard-at-lakeside",
-      "website_url": "https://venterraliving.com/apartments/boulevard-at-lakeside/"
+      "website_url": "https://venterraliving.com/apartments/boulevard-at-lakeside/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Oklahoma",
+        "market": "Oklahoma City, OK",
+        "submarket": "East Oklahoma City",
+        "units": 216,
+        "count_apts": 216,
+        "count_apts_ex_down": 216
+      }
     },
     {
       "aliases": [
@@ -401,13 +533,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "KY",
       "status": "active",
       "unit_count": 146,
       "url_slug": "bradford-mills-lofts",
-      "website_url": "https://venterraliving.com/apartments/bradford-mills-lofts/"
+      "website_url": "https://venterraliving.com/apartments/bradford-mills-lofts/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kentucky",
+        "market": "Louisville/Jefferson County, KY-IN",
+        "submarket": "Central Louisville",
+        "units": 146,
+        "count_apts": 146,
+        "count_apts_ex_down": 146
+      }
     },
     {
       "aliases": [
@@ -431,13 +574,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 357,
       "url_slug": "calais-midtown",
-      "website_url": "https://venterraliving.com/apartments/calais-midtown/"
+      "website_url": "https://venterraliving.com/apartments/calais-midtown/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Downtown/Montrose/River Oaks",
+        "units": 357,
+        "count_apts": 356,
+        "count_apts_ex_down": 356
+      }
     },
     {
       "aliases": [
@@ -462,13 +616,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 312,
       "url_slug": "",
-      "website_url": "https://camberridgeapartments.com/"
+      "website_url": "https://camberridgeapartments.com/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston",
+        "submarket": "Rosenberg",
+        "units": 312,
+        "count_apts": 312,
+        "count_apts_ex_down": 312
+      }
     },
     {
       "aliases": [
@@ -492,13 +657,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 210,
       "url_slug": "cane-island",
-      "website_url": "https://venterraliving.com/apartments/cane-island/"
+      "website_url": "https://venterraliving.com/apartments/cane-island/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Orlando-Kissimmee-Sanford, FL",
+        "submarket": "Kissimmee/Osceola County",
+        "units": 210,
+        "count_apts": 210,
+        "count_apts_ex_down": 210
+      }
     },
     {
       "aliases": [
@@ -523,13 +699,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 315,
       "url_slug": "canton-mill-lofts",
-      "website_url": "https://venterraliving.com/apartments/canton-mill-lofts/"
+      "website_url": "https://venterraliving.com/apartments/canton-mill-lofts/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Far North Atlanta Suburbs",
+        "units": 315,
+        "count_apts": 315,
+        "count_apts_ex_down": 315
+      }
     },
     {
       "aliases": [
@@ -553,13 +740,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 184,
       "url_slug": "carlyle-place-apartments",
-      "website_url": "https://venterraliving.com/apartments/carlyle-place-apartments/"
+      "website_url": "https://venterraliving.com/apartments/carlyle-place-apartments/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels, TX",
+        "submarket": "Medical Center",
+        "units": 184,
+        "count_apts": 184,
+        "count_apts_ex_down": 184
+      }
     },
     {
       "aliases": [
@@ -583,13 +781,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 349,
       "url_slug": "",
-      "website_url": "https://cendanalife.com/"
+      "website_url": "https://cendanalife.com/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston MSA",
+        "submarket": "Rosenberg/Richmond",
+        "units": 349,
+        "count_apts": 349,
+        "count_apts_ex_down": 349
+      }
     },
     {
       "aliases": [
@@ -613,13 +822,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 426,
       "url_slug": "champions-green",
-      "website_url": "https://venterraliving.com/apartments/champions-green/"
+      "website_url": "https://venterraliving.com/apartments/champions-green/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Alpharetta/Cumming",
+        "units": 426,
+        "count_apts": 426,
+        "count_apts_ex_down": 425
+      }
     },
     {
       "aliases": [
@@ -644,13 +864,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "KY",
       "status": "active",
       "unit_count": 472,
       "url_slug": "clearwater-farm",
-      "website_url": "https://venterraliving.com/apartments/clearwater-farm/"
+      "website_url": "https://venterraliving.com/apartments/clearwater-farm/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kentucky",
+        "market": "Louisville/Jefferson County, KY-IN",
+        "submarket": "South Central Louisville",
+        "units": 472,
+        "count_apts": 472,
+        "count_apts_ex_down": 472
+      }
     },
     {
       "aliases": [
@@ -674,13 +905,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "KY",
       "status": "active",
       "unit_count": 40,
       "url_slug": "clearwater-heights",
-      "website_url": "https://venterraliving.com/apartments/clearwater-heights/"
+      "website_url": "https://venterraliving.com/apartments/clearwater-heights/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kentucky",
+        "market": "Louisville/Jefferson County, KY-IN",
+        "submarket": "South Central Louisville",
+        "units": 40,
+        "count_apts": 40,
+        "count_apts_ex_down": 40
+      }
     },
     {
       "aliases": [
@@ -704,13 +946,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 128,
       "url_slug": "coho",
-      "website_url": "https://venterraliving.com/apartments/coho/"
+      "website_url": "https://venterraliving.com/apartments/coho/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Midtown Atlanta",
+        "units": 128,
+        "count_apts": 128,
+        "count_apts_ex_down": 128
+      }
     },
     {
       "aliases": [
@@ -735,13 +988,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 291,
       "url_slug": "cobblestone-at-eagle-harbor",
-      "website_url": "https://venterraliving.com/apartments/cobblestone-at-eagle-harbor/"
+      "website_url": "https://venterraliving.com/apartments/cobblestone-at-eagle-harbor/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Jacksonville, FL",
+        "submarket": "Orange Park/Clay County",
+        "units": 291,
+        "count_apts": 291,
+        "count_apts_ex_down": 290
+      }
     },
     {
       "aliases": [
@@ -765,13 +1029,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 395,
       "url_slug": "coles-crossing",
-      "website_url": "https://venterraliving.com/apartments/coles-crossing/"
+      "website_url": "https://venterraliving.com/apartments/coles-crossing/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Cypress/Waller",
+        "units": 395,
+        "count_apts": 395,
+        "count_apts_ex_down": 395
+      }
     },
     {
       "aliases": [
@@ -795,13 +1070,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 104,
       "url_slug": "college-view-apartments",
-      "website_url": "https://venterraliving.com/apartments/college-view-apartments/"
+      "website_url": "https://venterraliving.com/apartments/college-view-apartments/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Clear Lake",
+        "units": 104,
+        "count_apts": 104,
+        "count_apts_ex_down": 104
+      }
     },
     {
       "aliases": [
@@ -826,13 +1112,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "OK",
       "status": "active",
       "unit_count": 380,
       "url_slug": "creekside",
-      "website_url": "https://venterraliving.com/apartments/creekside/"
+      "website_url": "https://venterraliving.com/apartments/creekside/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Oklahoma",
+        "market": "Tulsa, OK",
+        "submarket": "South Tulsa/Broken Arrow",
+        "units": 380,
+        "count_apts": 380,
+        "count_apts_ex_down": 378
+      }
     },
     {
       "aliases": [
@@ -857,13 +1154,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 325,
       "url_slug": "elation-at-grandway-west",
-      "website_url": "https://venterraliving.com/apartments/elation-at-grandway-west/"
+      "website_url": "https://venterraliving.com/apartments/elation-at-grandway-west/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Katy",
+        "units": 324,
+        "count_apts": 324,
+        "count_apts_ex_down": 324
+      }
     },
     {
       "aliases": [
@@ -888,13 +1196,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 300,
       "url_slug": "estancia-at-morningstar",
-      "website_url": "https://venterraliving.com/apartments/estancia-at-morningstar/"
+      "website_url": "https://venterraliving.com/apartments/estancia-at-morningstar/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Dallas-Plano-Irving, TX",
+        "submarket": "The Colony/Far North Carrollton",
+        "units": 300,
+        "count_apts": 300,
+        "count_apts_ex_down": 300
+      }
     },
     {
       "aliases": [
@@ -919,13 +1238,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 411,
       "url_slug": "fairways-at-south-shore",
-      "website_url": "https://venterraliving.com/apartments/fairways-at-south-shore/"
+      "website_url": "https://venterraliving.com/apartments/fairways-at-south-shore/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Clear Lake",
+        "units": 411,
+        "count_apts": 411,
+        "count_apts_ex_down": 411
+      }
     },
     {
       "aliases": [
@@ -949,13 +1279,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 256,
       "url_slug": "forest-view",
-      "website_url": "https://venterraliving.com/apartments/forest-view/"
+      "website_url": "https://venterraliving.com/apartments/forest-view/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "The Woodlands",
+        "units": 256,
+        "count_apts": 256,
+        "count_apts_ex_down": 256
+      }
     },
     {
       "aliases": [
@@ -979,13 +1320,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 84,
       "url_slug": "french-place-apartments",
-      "website_url": "https://venterraliving.com/apartments/french-place-apartments/"
+      "website_url": "https://venterraliving.com/apartments/french-place-apartments/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels, TX",
+        "submarket": "Central San Antonio",
+        "units": 84,
+        "count_apts": 84,
+        "count_apts_ex_down": 84
+      }
     },
     {
       "aliases": [
@@ -1009,13 +1361,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 342,
       "url_slug": "gateway-north",
-      "website_url": "https://venterraliving.com/apartments/gateway-north/"
+      "website_url": "https://venterraliving.com/apartments/gateway-north/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Tampa-St. Petersburg-Clearwater, FL",
+        "submarket": "Clearwater",
+        "units": 342,
+        "count_apts": 342,
+        "count_apts_ex_down": 342
+      }
     },
     {
       "aliases": [
@@ -1039,13 +1402,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 336,
       "url_slug": "highpark",
-      "website_url": "https://venterraliving.com/apartments/highpark/"
+      "website_url": "https://venterraliving.com/apartments/highpark/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Cypress/Waller",
+        "units": 336,
+        "count_apts": 336,
+        "count_apts_ex_down": 336
+      }
     },
     {
       "aliases": [
@@ -1069,13 +1443,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 212,
       "url_slug": "keystone",
-      "website_url": "https://venterraliving.com/apartments/keystone/"
+      "website_url": "https://venterraliving.com/apartments/keystone/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Killeen",
+        "market": "Killeen-Temple, TX",
+        "submarket": "Killeen/Fort Hood",
+        "units": 212,
+        "count_apts": 212,
+        "count_apts_ex_down": 212
+      }
     },
     {
       "aliases": [
@@ -1100,13 +1485,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 280,
       "url_slug": "links-at-windsor-parke",
-      "website_url": "https://venterraliving.com/apartments/links-at-windsor-parke/"
+      "website_url": "https://venterraliving.com/apartments/links-at-windsor-parke/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Jacksonville, FL",
+        "submarket": "Upper Southside",
+        "units": 280,
+        "count_apts": 280,
+        "count_apts_ex_down": 280
+      }
     },
     {
       "aliases": [
@@ -1130,13 +1526,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 328,
       "url_slug": "luma-headwaters",
-      "website_url": "https://venterraliving.com/apartments/luma-headwaters/"
+      "website_url": "https://venterraliving.com/apartments/luma-headwaters/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Orlando-Kissimmee-Sanford, FL",
+        "submarket": "South Orange County",
+        "units": 328,
+        "count_apts": 328,
+        "count_apts_ex_down": 328
+      }
     },
     {
       "aliases": [
@@ -1161,13 +1568,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 300,
       "url_slug": "the-luminary-at-95",
-      "website_url": "https://venterraliving.com/apartments/the-luminary-at-95/"
+      "website_url": "https://venterraliving.com/apartments/the-luminary-at-95/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Palm Bay-Melbourne-Titusville, FL",
+        "submarket": "Melbourne",
+        "units": 300,
+        "count_apts": 300,
+        "count_apts_ex_down": 300
+      }
     },
     {
       "aliases": [
@@ -1192,13 +1610,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 258,
       "url_slug": "mission-mayfield-downs",
-      "website_url": "https://venterraliving.com/apartments/mission-mayfield-downs/"
+      "website_url": "https://venterraliving.com/apartments/mission-mayfield-downs/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Dallas-Plano-Irving, TX",
+        "submarket": "Grand Prairie",
+        "units": 258,
+        "count_apts": 258,
+        "count_apts_ex_down": 258
+      }
     },
     {
       "aliases": [
@@ -1222,13 +1651,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 272,
       "url_slug": "",
-      "website_url": "https://monteverdesatx.com/"
+      "website_url": "https://monteverdesatx.com/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels",
+        "submarket": "Far West San Antonio",
+        "units": 272,
+        "count_apts": 272,
+        "count_apts_ex_down": 153
+      }
     },
     {
       "aliases": [
@@ -1255,13 +1695,24 @@
         "apartmentiq_identity_links": true,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 622,
       "url_slug": "northbridge-at-millenia-lake",
-      "website_url": "https://venterraliving.com/apartments/northbridge-at-millenia-lake/"
+      "website_url": "https://venterraliving.com/apartments/northbridge-at-millenia-lake/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Orlando-Kissimmee-Sanford, FL",
+        "submarket": "Southwest Orlando",
+        "units": 622,
+        "count_apts": 607,
+        "count_apts_ex_down": 607
+      }
     },
     {
       "aliases": [
@@ -1286,13 +1737,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 265,
       "url_slug": "park-on-wurzbach",
-      "website_url": "https://venterraliving.com/apartments/park-on-wurzbach/"
+      "website_url": "https://venterraliving.com/apartments/park-on-wurzbach/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels, TX",
+        "submarket": "West San Antonio",
+        "units": 264,
+        "count_apts": 264,
+        "count_apts_ex_down": 264
+      }
     },
     {
       "aliases": [
@@ -1317,13 +1779,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 530,
       "url_slug": "preserve-at-baywood",
-      "website_url": "https://venterraliving.com/apartments/preserve-at-baywood/"
+      "website_url": "https://venterraliving.com/apartments/preserve-at-baywood/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Clear Lake",
+        "units": 528,
+        "count_apts": 528,
+        "count_apts_ex_down": 528
+      }
     },
     {
       "aliases": [
@@ -1348,13 +1821,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 420,
       "url_slug": "preserve-at-colony-lakes",
-      "website_url": "https://venterraliving.com/apartments/preserve-at-colony-lakes/"
+      "website_url": "https://venterraliving.com/apartments/preserve-at-colony-lakes/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Sugar Land/Stafford",
+        "units": 420,
+        "count_apts": 420,
+        "count_apts_ex_down": 420
+      }
     },
     {
       "aliases": [
@@ -1379,13 +1863,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 308,
       "url_slug": "republic-park-vista",
-      "website_url": "https://venterraliving.com/apartments/republic-park-vista/"
+      "website_url": "https://venterraliving.com/apartments/republic-park-vista/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Fort Worth-Arlington, TX",
+        "submarket": "North Fort Worth/Keller",
+        "units": 308,
+        "count_apts": 308,
+        "count_apts_ex_down": 308
+      }
     },
     {
       "aliases": [
@@ -1410,13 +1905,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 216,
       "url_slug": "the-retreat-at-kedron-village",
-      "website_url": "https://venterraliving.com/apartments/the-retreat-at-kedron-village/"
+      "website_url": "https://venterraliving.com/apartments/the-retreat-at-kedron-village/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Far South Atlanta Suburbs",
+        "units": 216,
+        "count_apts": 216,
+        "count_apts_ex_down": 216
+      }
     },
     {
       "aliases": [
@@ -1440,13 +1946,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 192,
       "url_slug": "riverbend",
-      "website_url": "https://venterraliving.com/apartments/riverbend/"
+      "website_url": "https://venterraliving.com/apartments/riverbend/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Clear Lake",
+        "units": 192,
+        "count_apts": 192,
+        "count_apts_ex_down": 192
+      }
     },
     {
       "aliases": [
@@ -1470,13 +1987,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 347,
       "url_slug": "san-palmilla",
-      "website_url": "https://venterraliving.com/apartments/san-palmilla/"
+      "website_url": "https://venterraliving.com/apartments/san-palmilla/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Clear Lake",
+        "units": 347,
+        "count_apts": 347,
+        "count_apts_ex_down": 347
+      }
     },
     {
       "aliases": [
@@ -1500,13 +2028,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 240,
       "url_slug": "shadowbrooke",
-      "website_url": "https://venterraliving.com/apartments/shadowbrooke/"
+      "website_url": "https://venterraliving.com/apartments/shadowbrooke/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Sugar Land/Stafford",
+        "units": 240,
+        "count_apts": 240,
+        "count_apts_ex_down": 240
+      }
     },
     {
       "aliases": [
@@ -1530,13 +2069,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 360,
       "url_slug": "silverbrooke",
-      "website_url": "https://venterraliving.com/apartments/silverbrooke/"
+      "website_url": "https://venterraliving.com/apartments/silverbrooke/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Sugar Land/Stafford",
+        "units": 362,
+        "count_apts": 362,
+        "count_apts_ex_down": 361
+      }
     },
     {
       "aliases": [
@@ -1561,13 +2111,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 328,
       "url_slug": "south-shore-lakes",
-      "website_url": "https://venterraliving.com/apartments/south-shore-lakes/"
+      "website_url": "https://venterraliving.com/apartments/south-shore-lakes/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Clear Lake",
+        "units": 328,
+        "count_apts": 328,
+        "count_apts_ex_down": 328
+      }
     },
     {
       "aliases": [
@@ -1591,13 +2152,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 472,
       "url_slug": "st-andrews",
-      "website_url": "https://venterraliving.com/apartments/st-andrews/"
+      "website_url": "https://venterraliving.com/apartments/st-andrews/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Friendswood/Pearland",
+        "units": 472,
+        "count_apts": 472,
+        "count_apts_ex_down": 472
+      }
     },
     {
       "aliases": [
@@ -1621,13 +2193,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "KY",
       "status": "active",
       "unit_count": 280,
       "url_slug": "steeplechase",
-      "website_url": "https://venterraliving.com/apartments/steeplechase/"
+      "website_url": "https://venterraliving.com/apartments/steeplechase/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kentucky",
+        "market": "Lexington-Fayette",
+        "submarket": "South Lexington",
+        "units": 280,
+        "count_apts": 280,
+        "count_apts_ex_down": 280
+      }
     },
     {
       "aliases": [
@@ -1652,13 +2235,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 198,
       "url_slug": "stonecreek-ranch",
-      "website_url": "https://venterraliving.com/apartments/stonecreek-ranch/"
+      "website_url": "https://venterraliving.com/apartments/stonecreek-ranch/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Austin, TX",
+        "market": "Austin-Round Rock, TX",
+        "submarket": "Southeast Austin",
+        "units": 198,
+        "count_apts": 198,
+        "count_apts_ex_down": 198
+      }
     },
     {
       "aliases": [
@@ -1683,13 +2277,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 480,
       "url_slug": "stoneridge-on-the-8",
-      "website_url": "https://venterraliving.com/apartments/stoneridge-on-the-8/"
+      "website_url": "https://venterraliving.com/apartments/stoneridge-on-the-8/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Northeast Houston",
+        "units": 480,
+        "count_apts": 480,
+        "count_apts_ex_down": 480
+      }
     },
     {
       "aliases": [
@@ -1714,11 +2319,18 @@
         "communities_seed": true,
         "official_registry": true,
         "property_metadata": true,
-        "data_warehouse_property_bv": true
+        "data_warehouse_property_bv": false
       },
       "state": "TX",
       "status": "active",
       "unit_count": null,
+      "data_warehouse_operating_expectation": {
+        "expected_in_metadata_feed": false,
+        "expected_in_operating_metrics": false,
+        "lifecycle_status": "pre_live",
+        "last_confirmed_date": "2026-05-26",
+        "reason": "User confirmed Sundara at Spring Cypress is not live yet and should not be expected in Data Warehouse feeds."
+      },
       "url_slug": "",
       "website_url": "https://whatscomingtocypress.com/"
     },
@@ -1746,13 +2358,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 208,
       "url_slug": "the-anatole",
-      "website_url": "https://venterraliving.com/apartments/the-anatole/"
+      "website_url": "https://venterraliving.com/apartments/the-anatole/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Deltona-Daytona Beach-Ormond Beach, FL",
+        "submarket": "Daytona Beach",
+        "units": 208,
+        "count_apts": 208,
+        "count_apts_ex_down": 208
+      }
     },
     {
       "aliases": [
@@ -1778,13 +2401,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 324,
       "url_slug": "the-cape-at-grand-harbor",
-      "website_url": "https://venterraliving.com/apartments/the-cape-at-grand-harbor/"
+      "website_url": "https://venterraliving.com/apartments/the-cape-at-grand-harbor/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Katy",
+        "units": 324,
+        "count_apts": 324,
+        "count_apts_ex_down": 324
+      }
     },
     {
       "aliases": [
@@ -1810,13 +2444,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 358,
       "url_slug": "",
-      "website_url": "https://thedeltapearland.com/"
+      "website_url": "https://thedeltapearland.com/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston",
+        "submarket": "Pearland",
+        "units": 358,
+        "count_apts": 358,
+        "count_apts_ex_down": 358
+      }
     },
     {
       "aliases": [
@@ -1842,13 +2487,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 436,
       "url_slug": "the-district-universal-boulevard",
-      "website_url": "https://venterraliving.com/apartments/the-district-universal-boulevard/"
+      "website_url": "https://venterraliving.com/apartments/the-district-universal-boulevard/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Orlando-Kissimmee-Sanford, FL",
+        "submarket": "South Orange County",
+        "units": 433,
+        "count_apts": 425,
+        "count_apts_ex_down": 425
+      }
     },
     {
       "aliases": [
@@ -1874,13 +2530,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 288,
       "url_slug": "the-grove-at-clermont",
-      "website_url": "https://venterraliving.com/apartments/the-grove-at-clermont/"
+      "website_url": "https://venterraliving.com/apartments/the-grove-at-clermont/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Orlando-Kissimmee-Sanford",
+        "submarket": "Ocoee/Winter Garden/Clermont",
+        "units": 288,
+        "count_apts": 288,
+        "count_apts_ex_down": 288
+      }
     },
     {
       "aliases": [
@@ -1905,13 +2572,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 505,
       "url_slug": "the-harrison",
-      "website_url": "https://venterraliving.com/apartments/the-harrison/"
+      "website_url": "https://venterraliving.com/apartments/the-harrison/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Buckhead",
+        "units": 505,
+        "count_apts": 505,
+        "count_apts_ex_down": 504
+      }
     },
     {
       "aliases": [
@@ -1936,13 +2614,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 373,
       "url_slug": "the-maddox",
-      "website_url": "https://venterraliving.com/apartments/the-maddox/"
+      "website_url": "https://venterraliving.com/apartments/the-maddox/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Duluth",
+        "units": 373,
+        "count_apts": 373,
+        "count_apts_ex_down": 373
+      }
     },
     {
       "aliases": [
@@ -1967,13 +2656,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "KY",
       "status": "active",
       "unit_count": 180,
       "url_slug": "the-metropolitan",
-      "website_url": "https://venterraliving.com/apartments/the-metropolitan/"
+      "website_url": "https://venterraliving.com/apartments/the-metropolitan/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kentucky",
+        "market": "Louisville/Jefferson County, KY-IN",
+        "submarket": "Southeast Louisville",
+        "units": 180,
+        "count_apts": 180,
+        "count_apts_ex_down": 180
+      }
     },
     {
       "aliases": [
@@ -1998,13 +2698,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "OK",
       "status": "active",
       "unit_count": 456,
       "url_slug": "the-parker",
-      "website_url": "https://venterraliving.com/apartments/the-parker/"
+      "website_url": "https://venterraliving.com/apartments/the-parker/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Oklahoma",
+        "market": "Oklahoma City, OK",
+        "submarket": "Edmond/Logan County",
+        "units": 220,
+        "count_apts": 220,
+        "count_apts_ex_down": 218
+      }
     },
     {
       "aliases": [
@@ -2029,13 +2740,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 170,
       "url_slug": "the-phoenix",
-      "website_url": "https://venterraliving.com/apartments/the-phoenix/"
+      "website_url": "https://venterraliving.com/apartments/the-phoenix/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Fort Worth-Arlington, TX",
+        "submarket": "Intown Fort Worth/University",
+        "units": 170,
+        "count_apts": 170,
+        "count_apts_ex_down": 170
+      }
     },
     {
       "aliases": [
@@ -2064,13 +2786,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "AR",
       "status": "active",
       "unit_count": 452,
       "url_slug": "the-pointe-bentonville",
-      "website_url": "https://venterraliving.com/apartments/the-pointe-bentonville/"
+      "website_url": "https://venterraliving.com/apartments/the-pointe-bentonville/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Arkansas",
+        "market": "Arkansas",
+        "submarket": "Northwest Arkansas",
+        "units": 452,
+        "count_apts": 452,
+        "count_apts_ex_down": 452
+      }
     },
     {
       "aliases": [
@@ -2096,13 +2829,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "KY",
       "status": "active",
       "unit_count": 192,
       "url_slug": "reserves-of-thomas-glen",
-      "website_url": "https://venterraliving.com/apartments/reserves-of-thomas-glen/"
+      "website_url": "https://venterraliving.com/apartments/reserves-of-thomas-glen/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kentucky",
+        "market": "Shepherdsville",
+        "submarket": "Shepherdsville",
+        "units": 192,
+        "count_apts": 192,
+        "count_apts_ex_down": 192
+      }
     },
     {
       "aliases": [
@@ -2127,13 +2871,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 240,
       "url_slug": "the-retreat",
-      "website_url": "https://venterraliving.com/apartments/the-retreat/"
+      "website_url": "https://venterraliving.com/apartments/the-retreat/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Rosenberg/Richmond",
+        "units": 240,
+        "count_apts": 240,
+        "count_apts_ex_down": 240
+      }
     },
     {
       "aliases": [
@@ -2159,13 +2914,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 464,
       "url_slug": "the-retreat-at-lakeland",
-      "website_url": "https://venterraliving.com/apartments/the-retreat-at-lakeland/"
+      "website_url": "https://venterraliving.com/apartments/the-retreat-at-lakeland/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Lakeland-Winter Haven, FL",
+        "submarket": "Lakeland",
+        "units": 464,
+        "count_apts": 464,
+        "count_apts_ex_down": 464
+      }
     },
     {
       "aliases": [
@@ -2191,13 +2957,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 512,
       "url_slug": "the-villages-at-oakleaf",
-      "website_url": "https://venterraliving.com/apartments/the-villages-at-oakleaf/"
+      "website_url": "https://venterraliving.com/apartments/the-villages-at-oakleaf/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Jacksonville, FL",
+        "submarket": "Orange Park/Clay County",
+        "units": 512,
+        "count_apts": 512,
+        "count_apts_ex_down": 511
+      }
     },
     {
       "aliases": [
@@ -2228,8 +3005,25 @@
       "state": "TX",
       "status": "active",
       "unit_count": null,
+      "data_warehouse_operating_expectation": {
+        "expected_in_metadata_feed": true,
+        "expected_in_operating_metrics": false,
+        "lifecycle_status": "pre_live",
+        "last_confirmed_date": "2026-05-26",
+        "reason": "User confirmed The Vine Kyle Parkway is not live yet and should not be expected in Data Warehouse operating metrics."
+      },
       "url_slug": "",
-      "website_url": "https://whatscomingtokyle.com/"
+      "website_url": "https://whatscomingtokyle.com/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Austin, TX",
+        "market": "Austin",
+        "submarket": "Austin",
+        "units": 386,
+        "count_apts": 386,
+        "count_apts_ex_down": 1
+      }
     },
     {
       "aliases": [
@@ -2254,13 +3048,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 311,
       "url_slug": "the-whitney",
-      "website_url": "https://venterraliving.com/apartments/the-whitney/"
+      "website_url": "https://venterraliving.com/apartments/the-whitney/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Buckhead",
+        "units": 310,
+        "count_apts": 310,
+        "count_apts_ex_down": 310
+      }
     },
     {
       "aliases": [
@@ -2284,13 +3089,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 216,
       "url_slug": "timber-mill",
-      "website_url": "https://venterraliving.com/apartments/timber-mill/"
+      "website_url": "https://venterraliving.com/apartments/timber-mill/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "The Woodlands",
+        "units": 216,
+        "count_apts": 216,
+        "count_apts_ex_down": 216
+      }
     },
     {
       "aliases": [
@@ -2315,13 +3131,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "MO",
       "status": "active",
       "unit_count": 456,
       "url_slug": "timberlane-village",
-      "website_url": "https://venterraliving.com/apartments/timberlane-village/"
+      "website_url": "https://venterraliving.com/apartments/timberlane-village/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Kansas City",
+        "market": "Kansas City",
+        "submarket": "Inner Jackson County MO",
+        "units": 456,
+        "count_apts": 456,
+        "count_apts_ex_down": 455
+      }
     },
     {
       "aliases": [
@@ -2346,13 +3173,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 276,
       "url_slug": "tomoka-pointe",
-      "website_url": "https://venterraliving.com/apartments/tomoka-pointe/"
+      "website_url": "https://venterraliving.com/apartments/tomoka-pointe/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Deltona-Daytona Beach-Ormond Beach, FL",
+        "submarket": "Daytona Beach",
+        "units": 276,
+        "count_apts": 276,
+        "count_apts_ex_down": 276
+      }
     },
     {
       "aliases": [
@@ -2376,13 +3214,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "NC",
       "status": "active",
       "unit_count": 196,
       "url_slug": "town-station",
-      "website_url": "https://venterraliving.com/apartments/town-station/"
+      "website_url": "https://venterraliving.com/apartments/town-station/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Raleigh, NC",
+        "market": "Raleigh/Durham, NC",
+        "submarket": "North Cary/Morrisville",
+        "units": 196,
+        "count_apts": 196,
+        "count_apts_ex_down": 196
+      }
     },
     {
       "aliases": [
@@ -2406,13 +3255,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "NC",
       "status": "active",
       "unit_count": 64,
       "url_slug": "town-station-lofts",
-      "website_url": "https://venterraliving.com/apartments/town-station-lofts/"
+      "website_url": "https://venterraliving.com/apartments/town-station-lofts/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Raleigh, NC",
+        "market": "Raleigh/Durham, NC",
+        "submarket": "North Cary/Morrisville",
+        "units": 64,
+        "count_apts": 59,
+        "count_apts_ex_down": 58
+      }
     },
     {
       "aliases": [
@@ -2437,13 +3297,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 247,
       "url_slug": "townhomes-at-lake-park",
-      "website_url": "https://venterraliving.com/apartments/townhomes-at-lake-park/"
+      "website_url": "https://venterraliving.com/apartments/townhomes-at-lake-park/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston",
+        "submarket": "Friendswood/Pearland",
+        "units": 247,
+        "count_apts": 247,
+        "count_apts_ex_down": 247
+      }
     },
     {
       "aliases": [
@@ -2467,13 +3338,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 456,
       "url_slug": "tree-park",
-      "website_url": "https://venterraliving.com/apartments/tree-park/"
+      "website_url": "https://venterraliving.com/apartments/tree-park/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Gainesville, GA",
+        "submarket": "Gainesville, GA",
+        "units": 456,
+        "count_apts": 456,
+        "count_apts_ex_down": 456
+      }
     },
     {
       "aliases": [
@@ -2498,13 +3380,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 256,
       "url_slug": "trevesta-place",
-      "website_url": "https://venterraliving.com/apartments/trevesta-place/"
+      "website_url": "https://venterraliving.com/apartments/trevesta-place/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Sarasota",
+        "submarket": "Palmetto",
+        "units": 256,
+        "count_apts": 256,
+        "count_apts_ex_down": 256
+      }
     },
     {
       "aliases": [
@@ -2529,13 +3422,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 324,
       "url_slug": "tuscany-at-lindbergh",
-      "website_url": "https://venterraliving.com/apartments/tuscany-at-lindbergh/"
+      "website_url": "https://venterraliving.com/apartments/tuscany-at-lindbergh/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Northeast Atlanta",
+        "units": 324,
+        "count_apts": 324,
+        "count_apts_ex_down": 324
+      }
     },
     {
       "aliases": [
@@ -2560,13 +3464,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 312,
       "url_slug": "valencia-at-westchase",
-      "website_url": "https://venterraliving.com/apartments/valencia-at-westchase/"
+      "website_url": "https://venterraliving.com/apartments/valencia-at-westchase/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Tampa-St. Petersburg-Clearwater, FL",
+        "submarket": "Town and Country/Westchase",
+        "units": 312,
+        "count_apts": 312,
+        "count_apts_ex_down": 309
+      }
     },
     {
       "aliases": [
@@ -2590,13 +3505,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 390,
       "url_slug": "ventana",
-      "website_url": "https://venterraliving.com/apartments/ventana/"
+      "website_url": "https://venterraliving.com/apartments/ventana/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels, TX",
+        "submarket": "Northwest San Antonio",
+        "units": 390,
+        "count_apts": 390,
+        "count_apts_ex_down": 390
+      }
     },
     {
       "aliases": [
@@ -2621,13 +3547,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 220,
       "url_slug": "venue-at-hometown",
-      "website_url": "https://venterraliving.com/apartments/venue-at-hometown/"
+      "website_url": "https://venterraliving.com/apartments/venue-at-hometown/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Fort Worth-Arlington, TX",
+        "submarket": "Northeast Fort Worth/North Richland Hills",
+        "units": 220,
+        "count_apts": 209,
+        "count_apts_ex_down": 207
+      }
     },
     {
       "aliases": [
@@ -2651,13 +3588,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 204,
       "url_slug": "villa-lago",
-      "website_url": "https://venterraliving.com/apartments/villa-lago/"
+      "website_url": "https://venterraliving.com/apartments/villa-lago/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Fort Worth-Arlington, TX",
+        "submarket": "North Fort Worth/Keller",
+        "units": 204,
+        "count_apts": 204,
+        "count_apts_ex_down": 204
+      }
     },
     {
       "aliases": [
@@ -2681,13 +3629,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 240,
       "url_slug": "village-walk",
-      "website_url": "https://venterraliving.com/apartments/village-walk/"
+      "website_url": "https://venterraliving.com/apartments/village-walk/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Jacksonville, FL",
+        "submarket": "Baymeadows",
+        "units": 240,
+        "count_apts": 240,
+        "count_apts_ex_down": 240
+      }
     },
     {
       "aliases": [
@@ -2712,13 +3671,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "FL",
       "status": "active",
       "unit_count": 98,
       "url_slug": "villas-continental",
-      "website_url": "https://venterraliving.com/apartments/villas-continental/"
+      "website_url": "https://venterraliving.com/apartments/villas-continental/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Florida",
+        "market": "Jacksonville, FL",
+        "submarket": "Orange Park/Clay County",
+        "units": 100,
+        "count_apts": 100,
+        "count_apts_ex_down": 97
+      }
     },
     {
       "aliases": [
@@ -2743,13 +3713,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "GA",
       "status": "active",
       "unit_count": 356,
       "url_slug": "villas-at-newnan-crossing",
-      "website_url": "https://venterraliving.com/apartments/villas-at-newnan-crossing/"
+      "website_url": "https://venterraliving.com/apartments/villas-at-newnan-crossing/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Atlanta, GA",
+        "market": "Atlanta-Sandy Springs-Roswell, GA",
+        "submarket": "Far South Atlanta Suburbs",
+        "units": 356,
+        "count_apts": 356,
+        "count_apts_ex_down": 356
+      }
     },
     {
       "aliases": [
@@ -2773,13 +3754,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 240,
       "url_slug": "vinings",
-      "website_url": "https://venterraliving.com/apartments/vinings/"
+      "website_url": "https://venterraliving.com/apartments/vinings/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Houston, TX",
+        "market": "Houston-The Woodlands-Sugar Land, TX",
+        "submarket": "Sugar Land/Stafford",
+        "units": 240,
+        "count_apts": 240,
+        "count_apts_ex_down": 240
+      }
     },
     {
       "aliases": [
@@ -2803,13 +3795,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TN",
       "status": "active",
       "unit_count": 171,
       "url_slug": "west-46th",
-      "website_url": "https://venterraliving.com/apartments/west-46th/"
+      "website_url": "https://venterraliving.com/apartments/west-46th/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Nashville, TN",
+        "market": "Nashville-Davidson--Murfreesboro--Franklin, TN",
+        "submarket": "West Nashville",
+        "units": 171,
+        "count_apts": 171,
+        "count_apts_ex_down": 170
+      }
     },
     {
       "aliases": [
@@ -2834,13 +3837,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 256,
       "url_slug": "westover-oaks",
-      "website_url": "https://venterraliving.com/apartments/westover-oaks/"
+      "website_url": "https://venterraliving.com/apartments/westover-oaks/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "San Antonio, TX",
+        "market": "San Antonio-New Braunfels, TX",
+        "submarket": "Far West San Antonio",
+        "units": 256,
+        "count_apts": 256,
+        "count_apts_ex_down": 256
+      }
     },
     {
       "aliases": [
@@ -2865,13 +3879,24 @@
         "apartmentiq_identity_links": false,
         "communities_seed": true,
         "official_registry": true,
-        "property_metadata": true
+        "property_metadata": true,
+        "data_warehouse_property_bv": true
       },
       "state": "TX",
       "status": "active",
       "unit_count": 260,
       "url_slug": "zang-triangle",
-      "website_url": "https://venterraliving.com/apartments/zang-triangle/"
+      "website_url": "https://venterraliving.com/apartments/zang-triangle/",
+      "data_warehouse_property_bv": {
+        "last_verified_date": "2026-05-27",
+        "status_cd": "ACTIVE",
+        "region_desc": "Dallas, TX",
+        "market": "Dallas-Plano-Irving, TX",
+        "submarket": "Zang Triangle/Cedars/Fair Park",
+        "units": 260,
+        "count_apts": 260,
+        "count_apts_ex_down": 260
+      }
     }
   ],
   "version": "2026-04-28"

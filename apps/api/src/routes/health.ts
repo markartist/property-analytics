@@ -827,6 +827,129 @@ health.get("/status", async (c) => {
     }))
     .sort((a, b) => a.source.localeCompare(b.source));
 
+  const guestCardDirect = await safeQueryFirstValue<{
+    latest_date: string | null;
+    row_count: number;
+    property_count: number;
+    guest_cards: number;
+    online_apps: number;
+    advisory_quotes: number;
+    advisory_pipeline_apps: number;
+    advisory_tours: number;
+  }>(
+    db,
+    `SELECT
+        MAX(run_date) AS latest_date,
+        COUNT(*) AS row_count,
+        COUNT(DISTINCT property_code) AS property_count,
+        SUM(COALESCE(gc_this_period, 0)) AS guest_cards,
+        SUM(COALESCE(apps_this_period, 0)) AS online_apps,
+        SUM(COALESCE(quotes_this_period, 0)) AS advisory_quotes,
+        SUM(COALESCE(pipe_apps_this_period, 0)) AS advisory_pipeline_apps,
+        SUM(COALESCE(ipt_appt_this_period, 0) + COALESCE(sgt_appt_this_period, 0)) AS advisory_tours
+      FROM guest_card_metrics_dw_direct`,
+    [],
+    {
+      latest_date: null,
+      row_count: 0,
+      property_count: 0,
+      guest_cards: 0,
+      online_apps: 0,
+      advisory_quotes: 0,
+      advisory_pipeline_apps: 0,
+      advisory_tours: 0,
+    }
+  );
+
+  const operatingMetrics = await safeQueryFirstValue<{
+    latest_date: string | null;
+    row_count: number;
+    property_count: number;
+    occupied_units: number;
+    total_units: number;
+    avg_occupancy_rate: number | null;
+    avg_leased_rate: number | null;
+    leases_count: number;
+    move_ins_count: number;
+    move_outs_count: number;
+    cancellations_count: number;
+    denials_count: number;
+  }>(
+    db,
+    `SELECT
+        MAX(metric_date) AS latest_date,
+        COUNT(*) AS row_count,
+        COUNT(DISTINCT property_id) AS property_count,
+        SUM(COALESCE(occupied_units, 0)) AS occupied_units,
+        SUM(COALESCE(total_units, 0)) AS total_units,
+        AVG(occupancy_rate) AS avg_occupancy_rate,
+        AVG(leased_rate) AS avg_leased_rate,
+        SUM(COALESCE(leases_count, 0)) AS leases_count,
+        SUM(COALESCE(move_ins_count, 0)) AS move_ins_count,
+        SUM(COALESCE(move_outs_count, 0)) AS move_outs_count,
+        SUM(COALESCE(cancellations_count, 0)) AS cancellations_count,
+        SUM(COALESCE(denials_count, 0)) AS denials_count
+      FROM property_operating_metrics
+      WHERE source_system = 'data_warehouse.leasingstatistics_daily_bv'`,
+    [],
+    {
+      latest_date: null,
+      row_count: 0,
+      property_count: 0,
+      occupied_units: 0,
+      total_units: 0,
+      avg_occupancy_rate: null,
+      avg_leased_rate: null,
+      leases_count: 0,
+      move_ins_count: 0,
+      move_outs_count: 0,
+      cancellations_count: 0,
+      denials_count: 0,
+    }
+  );
+
+  const propertyMetadataDirect = await safeQueryFirstValue<{
+    row_count: number;
+    property_count: number;
+    latest_supplied_at: string | null;
+  }>(
+    db,
+    `SELECT
+        COUNT(*) AS row_count,
+        COUNT(DISTINCT property_code) AS property_count,
+        MAX(supplied_at) AS latest_supplied_at
+      FROM property_metadata_dw_direct`,
+    [],
+    { row_count: 0, property_count: 0, latest_supplied_at: null }
+  );
+
+  const operatingCollection = await safeQueryFirstValue<{
+    collection_date: string | null;
+    status: string | null;
+    properties_total: number | null;
+    properties_success: number | null;
+    properties_failed: number | null;
+    notes: string | null;
+    completed_at: string | null;
+  }>(
+    db,
+    `SELECT collection_date, status, properties_total, properties_success, properties_failed, notes, completed_at
+     FROM data_collections
+     WHERE data_source = 'property_operating_metrics'
+     ORDER BY collection_date DESC, completed_at DESC
+     LIMIT 1`,
+    [],
+    {
+      collection_date: null,
+      status: null,
+      properties_total: null,
+      properties_success: null,
+      properties_failed: null,
+      notes: null,
+      completed_at: null,
+    }
+  );
+
   return c.json({
     community_count: communityCount,
     health_score: healthScore,
@@ -847,6 +970,26 @@ health.get("/status", async (c) => {
       summary: dailyCollectionSummary,
       closure: dailyCollectionClosure,
       sources: dailyCollections,
+    },
+    data_warehouse_replacements: {
+      trust_posture: "validation_first",
+      guest_card_direct: {
+        ...guestCardDirect,
+        canonical_apply_mode: "explicit_trusted_core_only",
+        advisory_fields: ["quotes", "pipeline_apps", "tours"],
+      },
+      property_operating_metrics: {
+        ...operatingMetrics,
+        collection: operatingCollection,
+        source_system: "data_warehouse.leasingstatistics_daily_bv",
+        governed_exclusion_count: 4,
+        governed_exclusion_codes: ["FL4CA", "FL4P9", "TX4FP", "TX4PW"],
+      },
+      property_metadata_direct: {
+        ...propertyMetadataDirect,
+        source_system: "data_warehouse.property_bv",
+        latest_matrix_delta_count: 10,
+      },
     },
     telemetry: {
       collection_history: collectionHistory,

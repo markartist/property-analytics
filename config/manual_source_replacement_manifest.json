@@ -1,0 +1,77 @@
+{
+  "updated_at": "2026-05-26",
+  "integrity_standard": "Manual/file-drop replacements must prove source lineage, identity resolution, and contract parity before canonical promotion.",
+  "replacement_candidates": [
+    {
+      "id": "guest_card_csv_drop",
+      "current_dependency": "OneDrive Guest_Card_Reports Website Data CSV file drop",
+      "current_paths": [
+        "Data_Collection/collectors/guest_card_collector.py",
+        "Data_Collection/orchestration/daily_master_collection.py",
+        "Data_Collection/orchestration/retry_incomplete_collections.py"
+      ],
+      "replacement_path": "scripts/supply_guest_card_metrics_from_data_warehouse.mjs",
+      "replacement_source": "data_warehouse guest card query",
+      "status": "direct_shadow_active",
+      "promotion_gate": "Canonical apply remains explicit and trusted-core-only until quote, pipeline-app, and tour drift is resolved."
+    },
+    {
+      "id": "property_operating_metrics_manual_gap",
+      "current_dependency": "Empty local property_operating_metrics table with incomplete collection rows",
+      "current_paths": [
+        "data/portfolio_analytics.db:property_operating_metrics"
+      ],
+      "replacement_path": "scripts/supply_property_operating_metrics_from_data_warehouse.mjs",
+      "replacement_source": "dw_read.leasingstatistics_daily_bv",
+      "status": "direct_supply_active",
+      "promotion_gate": "Only direct source fields are promoted; unavailable or ambiguous fields remain null with source evidence retained."
+    },
+    {
+      "id": "property_region_identity_workbook",
+      "current_dependency": "regions.xlsx / property region helper source referenced by generated release map",
+      "current_paths": [
+        "config/property_identity_matrix.json",
+        "Data_Collection/utils/property_identity.py"
+      ],
+      "replacement_path": "scripts/supply_property_metadata_from_data_warehouse.mjs",
+      "replacement_source": "dw_read.property_bv",
+      "status": "direct_shadow_active",
+      "promotion_gate": "Exact property_cd identity match required; matrix annotations are non-destructive and operator-controlled."
+    },
+    {
+      "id": "website_seo_base44_csv_seed",
+      "current_dependency": "Base44 Website & SEO CSV backup import",
+      "current_paths": [
+        "apps/api/scripts/seed_website_seo.py"
+      ],
+      "replacement_path": "apps/api/src/routes/marketing-data.ts",
+      "replacement_source": "Pond marketing_data API and canonical source-specific collectors",
+      "status": "legacy_seed_only",
+      "promotion_gate": "Keep as historical seed tool only; new recurring updates should use the API route or source-native collectors."
+    },
+    {
+      "id": "spotlight_csv_to_d1",
+      "current_dependency": "Spotlight Properties CSV bridge",
+      "current_paths": [
+        "apps/api/scripts/spotlight_to_d1.py"
+      ],
+      "replacement_path": "apps/api/scripts/marketing_data_to_d1.py",
+      "replacement_source": "canonical local DB marketing/Spotlight rows",
+      "status": "legacy_bridge_review",
+      "promotion_gate": "Retire standalone CSV mode after confirming current Spotlight pipeline calls direct push_to_d1 or canonical marketing_data sync."
+    },
+    {
+      "id": "web_metrics_csv_upload_ui",
+      "current_dependency": "Frontend CSV upload component for metric imports",
+      "current_paths": [
+        "apps/web/src/components/metrics/csv-upload.tsx",
+        "apps/api/src/routes/metrics.ts"
+      ],
+      "replacement_path": "source-native Data Collection and Pond APIs",
+      "replacement_path_note": "Primary recurring path is Data_Collection/orchestration/daily_master_collection.py plus typed Pond APIs; this is a policy replacement rather than a single import script.",
+      "replacement_source": "canonical collectors, Data Warehouse suppliers, and typed API writes",
+      "status": "not_implemented_do_not_expand",
+      "promotion_gate": "Do not turn this into a recurring manual data path unless an approved source contract requires a human upload lane."
+    }
+  ]
+}
