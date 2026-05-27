@@ -71,6 +71,7 @@ reports/
 exports/
 *.docx
 outputs/
+docs/archive/**/rendered/
 apps/web/public/pilot-kpi/
 *.xlsx
 *_desktop_chrome.png

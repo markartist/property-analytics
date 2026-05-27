@@ -98,6 +98,12 @@ Data Warehouse source note added on 2026-05-26:
 - Captain Signal Flow now moves new source evidence into Captain-visible advisory packets without skipping trust posture: `/Users/mark/Property_Analytics/config/captain_signal_flow_manifest.json`, `/Users/mark/Property_Analytics/docs/CAPTAIN_SIGNAL_FLOW_2026-05-26.md`, and `/Users/mark/Property_Analytics/scripts/generate_data_warehouse_captain_advisory.mjs`; the first Data Warehouse Captain packet is `/Users/mark/Property_Analytics/outputs/captain_signal_flow/data_warehouse/2026-05-26_20260526_154651` and binds to Source Readiness, Funnel Watch, Channel Efficiency Watch, and Action And Proof Loop as `degraded_advisory`
 - governed config persistence is now explicit in `/Users/mark/Property_Analytics/docs/GOVERNED_CONFIG_PERSISTENCE_POLICY_2026-05-26.md`; `.gitignore` continues to ignore `config/*` by default but allowlists the non-secret Captain/Data Warehouse governance files needed for cross-branch persistence, while credential and local-token files remain ignored
 
+Public web platform technical documentation note added on 05/27/2026:
+
+- recovered the parked technical documentation bundle as an archived research packet at `/Users/mark/Property_Analytics/docs/archive/research/andrew_web_platform_architecture_2026-05-26/`, rather than treating it as live platform documentation
+- `/Users/mark/Property_Analytics/docs/archive/research/andrew_web_platform_architecture_2026-05-26/build_andrew_web_architecture_docx.py` remains the local renderer for the Andrew-facing architecture DOCX, while generated DOCX/PDF/page-render output is ignored as reproducible archive output
+- visible dates inside the recovered docs and renderer metadata now use `MM/DD/YYYY`; repository filenames and internal path references remain unchanged
+
 Operational note added on 2026-04-14:
 
 - the current dirty worktree is best understood as several coherent workstreams stacked together rather than random churn
