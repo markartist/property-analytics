@@ -107,6 +107,12 @@ Closeout note added on 2026-05-26:
 - the ledger is the current working map for deciding whether each preserved lane should be promoted, split, parked, archived, or deleted/ignored
 - this gives the repository a project-closeout control surface between broad system audit documentation and individual release PRs
 
+Pilot reporting ops note added on 2026-05-27:
+
+- the Pilot CWV daily GTMetrix/PSI export and roundup email lane is now split from tracker/product work on `codex/closeout-pilot-reporting-2026-05-27`
+- the moved-report/export failure path is fixed by preserving the latest CSV export contract under `/Users/mark/Downloads`, keeping generated report artifacts ignored, and validating the sender scripts in dry-run mode
+- GTMetrix collection now resolves credentials through the shared Keeper-first helper while retaining the existing launchd-compatible fallback behavior used elsewhere in Data Collection
+
 ## 4. Canonical Foundations
 
 ### 4.1 Master Database

@@ -4300,3 +4300,18 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Current effect:
   - Watchtower’s three main enterprise ops boards now share one consistent truth model: runtime D1 state first, bundled config second
   - the reconcile branch is in a cleaner handoff state for the next program phase because service, deployment, release pedigree, and reconcile posture are all aligned under the same runtime-state bridge
+## 2026-05-27 - Pilot Reporting Ops Closeout
+
+- Split the Pilot CWV daily export / roundup reporting lane onto `codex/closeout-pilot-reporting-2026-05-27` without mixing in the quarantined Data Warehouse replacement-track stash.
+- Preserved the fixed moved-report contract: `PSI_Day_Over_Day_Scores_latest.csv` and `GTMetrix_Daily_Scores_latest.csv` remain the latest attachment targets in `/Users/mark/Downloads`, while generated HTML/Markdown reports stay ignored under `pilot_roundup/reports/`.
+- Added/reviewed pilot reporting operations around:
+  - `/Users/mark/Property_Analytics/Data_Collection/collectors/gtmetrix_collector.py`
+  - `/Users/mark/Property_Analytics/pilot_control_cwv/scripts/export_psi_day_over_day_scores.py`
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/send_pilot_roundup_email.py`
+  - `/Users/mark/Property_Analytics/pilot_roundup/scripts/send_spotlight_performance_roundup_email.py`
+- Credential posture: the new reusable GTMetrix collector now resolves through the shared Keeper-first helper before local fallback; the pilot PSI live-reference lookup uses the same Keeper-first pattern.
+- Validation checkpoint:
+  - Python compile for new pilot/roundup/email scripts passed.
+  - Shell syntax for pilot daily wrappers passed.
+  - GTMetrix pilot/control and twin validation passed for `2026-05-27`.
+  - Pilot roundup, Spotlight roundup, and pilot data-export email dry-runs passed without sending live mail.

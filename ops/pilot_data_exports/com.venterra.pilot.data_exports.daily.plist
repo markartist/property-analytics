@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.venterra.pilot.data_exports.daily</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/mark/Property_Analytics/run_pilot_data_exports_daily.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/mark/Property_Analytics</string>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>6</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PILOT_SUMMARY_EMAILS_ENABLED</key>
+    <string>1</string>
+    <key>PATH</key>
+    <string>/Users/mark/.nvm/versions/node/v22.22.1/bin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/mark/Library/Logs/Venterra/pilot_data_exports_daily_stdout.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/mark/Library/Logs/Venterra/pilot_data_exports_daily_stderr.log</string>
+</dict>
+</plist>

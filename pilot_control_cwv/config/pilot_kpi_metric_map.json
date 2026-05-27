@@ -1,0 +1,194 @@
+{
+  "report_name": "Pilot KPI Tracker",
+  "as_of_date": "2026-03-31",
+  "sections": [
+    {
+      "key": "cwv_psi",
+      "title": "Core Web Vitals - PSI",
+      "status": "ready",
+      "source": "database",
+      "source_table": "pilot_control_psi_metrics",
+      "metric_field": "performance_score",
+      "date_field": "metric_date",
+      "window_rule": "use complete shared daily window for pilot and sister comparison",
+      "chart_type": "daily_lines",
+      "pairing": "pilot_vs_sister",
+      "notes": [
+        "Mobile PSI score is the headline PSI metric.",
+        "Current prototype uses the complete shared window 2026-03-26 through 2026-03-31."
+      ]
+    },
+    {
+      "key": "cwv_gtmetrix",
+      "title": "Core Web Vitals - GTMetrix",
+      "status": "ready",
+      "source": "database",
+      "source_table": "gtmetrix_metrics",
+      "metric_field": "pagespeed_score",
+      "date_field": "metric_date",
+      "window_rule": "use complete shared daily window for pilot and sister comparison",
+      "chart_type": "daily_lines",
+      "pairing": "pilot_vs_sister",
+      "notes": [
+        "GTMetrix PageSpeed score is the headline GTMetrix metric.",
+        "Do not show incomplete earlier dates when sister or pilot values are missing."
+      ]
+    },
+    {
+      "key": "organic_pct_unique_users",
+      "title": "Organic Traffic as a % of Unique Users",
+      "status": "ready",
+      "source": "database",
+      "source_tables": [
+        "ga4_traffic_sources",
+        "ga4_daily_metrics"
+      ],
+      "numerator": "Organic Search sessions",
+      "denominator": "total_users",
+      "formula": "organic_search_sessions / total_users",
+      "channel_group_filter": "Organic Search",
+      "chart_type": "daily_lines",
+      "pairing": "pilot_vs_sister",
+      "notes": [
+        "Use channel_group = Organic Search only.",
+        "Treat this as a traffic mix ratio rather than a raw visit count."
+      ]
+    },
+    {
+      "key": "high_intent_user_rate",
+      "title": "High Intent User Rate",
+      "status": "pending",
+      "source": "heap",
+      "chart_type": "daily_lines",
+      "pairing": "pilot_vs_sister",
+      "pending_reason": "Awaiting Heap export and final event definition.",
+      "notes": [
+        "Leave as Pending until Heap file shape and numerator event bundle are confirmed."
+      ]
+    },
+    {
+      "key": "lead_to_available_unit_rate",
+      "title": "Lead (Guest Card) to Available Unit Rate",
+      "status": "ready",
+      "source": "spreadsheet",
+      "source_file_type": "bi_export",
+      "row_filter": "Conv Src (website vs other) = Website Conversion",
+      "metric_code": "GC/AU",
+      "time_windows_available": [
+        "Yesterday",
+        "T7D",
+        "T15D",
+        "T30D",
+        "T60D",
+        "T90D"
+      ],
+      "chart_type": "daily_snapshot_trend",
+      "pairing": "pilot_vs_sister",
+      "notes": [
+        "Follow the stakeholder template literally: use Website Conversion for GC/AU as well.",
+        "Daily chart trend is driven from T7D values retained from each daily BI spreadsheet drop."
+      ]
+    },
+    {
+      "key": "website_sales_funnel_price_quote",
+      "title": "Website Sales Funnel - Price Quote",
+      "status": "ready",
+      "source": "spreadsheet",
+      "source_file_type": "bi_export",
+      "row_filter": "Conv Src (website vs other) = Website Conversion",
+      "metric_code": "PQ/GC",
+      "time_windows_available": [
+        "Yesterday",
+        "T7D",
+        "T15D",
+        "T30D",
+        "T60D",
+        "T90D"
+      ],
+      "chart_type": "daily_snapshot_trend",
+      "pairing": "pilot_vs_sister"
+    },
+    {
+      "key": "website_sales_funnel_visits_schedule_tour",
+      "title": "Website Sales Funnel - Visits (Schedule a Tour)",
+      "status": "ready",
+      "source": "spreadsheet",
+      "source_file_type": "bi_export",
+      "row_filter": "Conv Src (website vs other) = Website Conversion",
+      "metric_code": "ST/GC",
+      "time_windows_available": [
+        "Yesterday",
+        "T7D",
+        "T15D",
+        "T30D",
+        "T60D",
+        "T90D"
+      ],
+      "chart_type": "daily_snapshot_trend",
+      "pairing": "pilot_vs_sister",
+      "notes": [
+        "This section currently maps to Schedule Tour rather than completed onsite Visit.",
+        "If business preference changes, swap metric_code to V/GC."
+      ]
+    },
+    {
+      "key": "website_sales_funnel_completed_applications",
+      "title": "Website Sales Funnel - Completed Applications",
+      "status": "ready",
+      "source": "spreadsheet",
+      "source_file_type": "bi_export",
+      "row_filter": "Conv Src (website vs other) = Website Conversion",
+      "metric_code": "A/GC",
+      "time_windows_available": [
+        "Yesterday",
+        "T7D",
+        "T30D",
+        "T60D",
+        "T90D"
+      ],
+      "chart_type": "daily_snapshot_trend",
+      "pairing": "pilot_vs_sister"
+    },
+    {
+      "key": "website_funnel_conversions_click_to_call",
+      "title": "Website Funnel Conversions - Click to Call / Phone",
+      "status": "ready",
+      "source": "spreadsheet",
+      "source_file_type": "bi_export",
+      "row_filter": "Conv Src (website vs other) = Website Conversion",
+      "metric_code": "C2C/GC",
+      "time_windows_available": [
+        "Yesterday",
+        "T7D",
+        "T15D",
+        "T30D",
+        "T60D",
+        "T90D"
+      ],
+      "chart_type": "daily_snapshot_trend",
+      "pairing": "pilot_vs_sister"
+    },
+    {
+      "key": "website_funnel_conversions_contact_form",
+      "title": "Website Funnel Conversions - Contact Form",
+      "status": "ready",
+      "source": "spreadsheet",
+      "source_file_type": "bi_export",
+      "row_filter": "Conv Src (website vs other) = Website Conversion",
+      "metric_code": "CFrm/GC",
+      "time_windows_available": [
+        "Yesterday",
+        "T7D",
+        "T30D",
+        "T60D",
+        "T90D"
+      ],
+      "chart_type": "daily_snapshot_trend",
+      "pairing": "pilot_vs_sister",
+      "notes": [
+        "The BI export appears to skip a visible CFrm/GC T15D header in this sample file.",
+        "Use the windows present in each delivered export rather than assuming every interval exists."
+      ]
+    }
+  ]
+}
