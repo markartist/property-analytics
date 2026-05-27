@@ -21,7 +21,6 @@ import {
   Fish,
   LineChart,
   MessageSquare,
-  Gauge,
   BookOpenText,
   FileSearch,
 } from "lucide-react";
@@ -33,7 +32,6 @@ const NAV_ITEMS: { href: string; label: string; icon: React.ElementType; minRole
   { href: "/watchtower", label: "Watchtower", icon: Eye },
   { href: "/dock", label: "The Dock", icon: Anchor },
   { href: "/fish", label: "Fishing Hole", icon: Fish },
-  { href: "/tracker", label: "Pilot Tracker", icon: Gauge },
 
   // Reports
   { href: "/analysis", label: "POP Brief", icon: FileText, section: "Reports", minRole: "editor" },

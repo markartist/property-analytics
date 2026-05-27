@@ -4318,3 +4318,10 @@ The Data Pond is a resort-themed analytics dashboard deployed on Cloudflare:
 - Follow-up reliability hardening:
   - `--missing-only-for-date` GTMetrix collector no-op paths now exit before Keeper/API credential resolution, so already-complete daily jobs do not fail just because no live collection is needed.
   - Duplicate-send guards now accept both the corrected `MM/DD/YYYY` customer-facing subject and the prior dash-form subject for the same daily email log.
+
+## 2026-05-27 - Pilot Tracker Product Lane Parked
+
+- Created `codex/closeout-pilot-tracker-2026-05-27` to review the tracker/product side separately from reporting ops.
+- Finding: the clean parent app does not currently have `/Users/mark/Property_Analytics/apps/web/src/app/tracker/`, but the sidebar/permissions model still advertised `/tracker`.
+- Stabilization action: hide the broken parent `/tracker` navigation and remove it from visible offering order until there is an explicit product migration.
+- The standalone tracker remains an ignored nested Git repo at `/Users/mark/Property_Analytics/apps/pilot-tracker-standalone/`; do not absorb its generated `out/`, `.wrangler`, or `public/pilot-kpi` state into the parent repo by accident.

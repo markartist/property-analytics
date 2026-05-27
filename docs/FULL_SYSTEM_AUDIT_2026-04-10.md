@@ -113,6 +113,11 @@ Pilot reporting ops note added on 2026-05-27:
 - the moved-report/export failure path is fixed by preserving the latest CSV export contract under `/Users/mark/Downloads`, keeping generated report artifacts ignored, and validating the sender scripts in dry-run mode
 - GTMetrix collection now resolves credentials through the shared Keeper-first helper while retaining the existing launchd-compatible fallback behavior used elsewhere in Data Collection
 
+Pilot tracker product note added on 2026-05-27:
+
+- the clean parent repo branch does not contain a main-app `/tracker` route, so parent navigation now hides the broken Pilot Tracker entry instead of sending users to a missing surface
+- the standalone tracker remains an ignored nested Git repo under `/Users/mark/Property_Analytics/apps/pilot-tracker-standalone/` and should be migrated intentionally if it becomes the chosen product path
+
 ## 4. Canonical Foundations
 
 ### 4.1 Master Database

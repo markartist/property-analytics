@@ -255,7 +255,6 @@ export const OFFERING_ORDER: SurfaceId[] = [
   "watchtower",
   "dock",
   "fish",
-  "tracker",
   "popBrief",
   "pibBuilder",
   "searchIntelligence",

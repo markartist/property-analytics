@@ -70,6 +70,7 @@ exports/
 *.docx
 outputs/
 apps/web/public/pilot-kpi/
+apps/pilot-tracker-standalone/
 *.xlsx
 *_desktop_chrome.png
 *_iphone_safari.png
