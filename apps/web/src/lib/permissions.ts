@@ -18,6 +18,7 @@ export type SurfaceId =
   | "intelligenceOffice"
   | "directiveControlCenter"
   | "siteContent"
+  | "routingOps"
   | "experiments"
   | "vacs"
   | "evs"
@@ -30,6 +31,7 @@ export type SurfaceCategory =
   | "Briefing"
   | "Search & Local"
   | "Content Ops"
+  | "Routing Ops"
   | "Validation"
   | "Toolbox"
   | "Utilities";
@@ -242,11 +244,31 @@ export const OFFERING_ACCESS: Record<SurfaceId, SurfaceAccessDefinition> = {
     audience: "steward",
     summary: "Governed crawl, mapping, assessment, and rewrite workflow.",
   },
+  routingOps: {
+    id: "routingOps",
+    href: "/routing-ops/portfolio-launch",
+    label: "Portfolio Launch",
+    category: "Routing Ops",
+    minRole: "admin",
+    actionRole: "admin",
+    actions: {
+      view: "admin",
+      draft: "admin",
+      approve: "admin",
+      schedule: "admin",
+      pause: "admin",
+      rollback: "admin",
+      decide: "admin",
+      administer: "admin",
+    },
+    audience: "steward",
+    summary: "Portfolio routing readiness, origin status, launch gates, and route-control posture.",
+  },
   experiments: {
     id: "experiments",
     href: "/experiments",
     label: "Experiment Lab",
-    category: "Validation",
+    category: "Content Ops",
     minRole: "admin",
     actionRole: "admin",
     actions: {
@@ -335,9 +357,10 @@ export const OFFERING_ORDER: SurfaceId[] = [
   "contentOffice",
   "intelligenceOffice",
   "siteContent",
+  "experiments",
   "vacs",
   "evs",
-  "experiments",
+  "routingOps",
   "controlPlane",
   "backup",
   "adminUsers",
