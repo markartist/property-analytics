@@ -115,6 +115,13 @@ ADVISORY_SOURCE_POLICIES: dict[str, AdvisorySourcePolicy] = {
         latest_data_table="dataforseo_serp_runs",
         latest_data_column="run_date",
     ),
+    "ahrefs": AdvisorySourcePolicy(
+        "ahrefs",
+        "daily_automated",
+        "Daily automated SEO and website intelligence",
+        latest_data_table="ahrefs_site_audit_project_health",
+        latest_data_column="snapshot_date",
+    ),
     "gbp_reviews": AdvisorySourcePolicy(
         "gbp_reviews",
         "weekly_automated",

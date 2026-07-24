@@ -17,10 +17,11 @@ DEFAULT_REMOTE_COMMUNITIES = ROOT / "config" / "generated" / "remote_communities
 DEFAULT_OUTPUT = ROOT / "config" / "property_identity_matrix.json"
 
 GOVERNED_SOURCE_ALIASES = {
-    "Bella Ruscello": ("Bella Rucello",),
+    "Bella Ruscello": ("Bella Rucello", "bella-apartmentlife.com"),
     "Camber Ridge": ("Camber Ridge at Cross Creek Ranch",),
     "Canton Mill Lofts": ("Canton Mills Loft",),
     "Creekside": ("Creekside Apartment Homes",),
+    "The Parker": ("The Parker Apartment Homes",),
     "The Pointe Bentonville": ("Point At Bentonville",),
     "Villas Continental": ("Villas Continentals",),
 }

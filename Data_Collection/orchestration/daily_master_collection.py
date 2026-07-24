@@ -44,6 +44,7 @@ from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollecto
 from Data_Collection.collectors.cloudflare_cache_audit import CloudflareCacheAuditCollector
 from Data_Collection.collectors.cloudflare_analytics_collector import CloudflareAnalyticsCollector
 from Data_Collection.collectors.apartmentiq_collector import ApartmentIqCollector
+from Data_Collection.collectors.ahrefs_collector import AhrefsCollector
 from Data_Collection.monitoring.alert_sender import DataAlertEmailer
 from Data_Collection.utils.bi_manual_ingest import ingest_bi_workbooks
 from Data_Collection.utils.marketing_bi_packet_ingest import ingest_marketing_bi_packets
@@ -123,6 +124,7 @@ class PortfolioDataCollector:
             'property_operating_metrics': {'success': 0, 'failed': 0, 'skipped': 0},
             'unit_availability': {'success': 0, 'failed': 0, 'skipped': 0},
             'apartmentiq': {'success': 0, 'failed': 0, 'skipped': 0},
+            'ahrefs': {'success': 0, 'failed': 0, 'skipped': 0},
             'cloudflare_cache_audit': {'success': 0, 'failed': 0, 'skipped': 0},
             'cloudflare_edge_analytics': {'success': 0, 'failed': 0, 'skipped': 0},
             'd1_mirror': {'success': 0, 'failed': 0, 'skipped': 0},
@@ -452,7 +454,7 @@ class PortfolioDataCollector:
                         print('\n   🔐 Starting OAuth authentication for main GSC access...')
                         flow = InstalledAppFlow.from_client_secrets_file(
                             str(self.main_gsc_creds_path),
-                            ['https://www.googleapis.com/auth/webmasters.readonly']
+                            ['https://www.googleapis.com/auth/webmasters']
                         )
                         creds = flow.run_local_server(port=0)
                         print('   ✅ OAuth authentication completed')
@@ -1909,20 +1911,36 @@ class PortfolioDataCollector:
             print()
 
             total_properties = len(matched_properties)
+            review_success = self.results['gbp_reviews']['success']
+            review_skipped = self.results['gbp_reviews']['skipped']
+            review_failed = self.results['gbp_reviews']['failed']
+            if review_failed > 0:
+                review_status = 'partial'
+                review_notes = 'GBP review collection completed with property-level errors.'
+            elif total_properties > 0 and review_success == 0 and review_skipped == total_properties:
+                review_status = 'source_limited'
+                review_notes = (
+                    'GBP review collection reached matched property/location mappings, '
+                    'but the Google reviews endpoint returned no review rows for any property.'
+                )
+            else:
+                review_status = 'completed'
+                review_notes = 'GBP review collection completed from matched property/location mappings.'
+
             self.db.complete_data_collection(
                 collection_id=collection_id,
-                properties_collected=self.results['gbp_reviews']['success'],
-                properties_failed=self.results['gbp_reviews']['failed'],
+                properties_collected=review_success,
+                properties_failed=review_failed,
                 properties_total=total_properties,
-                properties_success=self.results['gbp_reviews']['success'],
-                properties_skipped=self.results['gbp_reviews']['skipped'],
-                status='partial' if self.results['gbp_reviews']['failed'] > 0 else 'completed',
+                properties_success=review_success,
+                properties_skipped=review_skipped,
+                status=review_status,
                 error_message='; '.join(
                     f"{err['property']}: {err['error']}"
                     for err in self.results['errors']
                     if err.get('collector') == 'GBP Reviews'
                 )[:400] or None,
-                notes='GBP review collection completed from matched property/location mappings.'
+                notes=review_notes
             )
 
         except Exception as e:
@@ -1999,12 +2017,14 @@ class PortfolioDataCollector:
             print(f'Properties with GBP locations: {len(matched_properties)}')
             print()
 
-            # Calculate date range (GBP has 2-day lag like GSC)
+            # GBP often fills performance values later than the nominal API date.
+            # Refresh a small mature window so blank early reads are corrected on
+            # later runs instead of being frozen as real zeroes.
             from datetime import date, timedelta
-            end_date = date.today() - timedelta(days=2)
-            start_date = end_date  # Collect only yesterday
+            end_date = date.today() - timedelta(days=3)
+            start_date = end_date - timedelta(days=13)
 
-            print(f'📅 Collecting data for: {start_date}')
+            print(f'📅 Collecting data for: {start_date} to {end_date}')
             print()
 
             # All core GBP metrics
@@ -2055,18 +2075,24 @@ class PortfolioDataCollector:
                     if response.status_code == 200:
                         data = response.json()
 
-                        # Parse metrics
-                        metrics = {
-                            'maps_views_desktop': 0,
-                            'maps_views_mobile': 0,
-                            'search_views_desktop': 0,
-                            'search_views_mobile': 0,
-                            'website_clicks': 0,
-                            'phone_calls': 0,
-                            'direction_requests': 0,
-                            'food_orders': 0,
-                            'food_menu_clicks': 0,
-                        }
+                        def blank_metrics():
+                            return {
+                                'maps_views_desktop': 0,
+                                'maps_views_mobile': 0,
+                                'search_views_desktop': 0,
+                                'search_views_mobile': 0,
+                                'website_clicks': 0,
+                                'phone_calls': 0,
+                                'direction_requests': 0,
+                                'food_orders': 0,
+                                'food_menu_clicks': 0,
+                            }
+
+                        metrics_by_date = {}
+                        current_date = start_date
+                        while current_date <= end_date:
+                            metrics_by_date[str(current_date)] = blank_metrics()
+                            current_date += timedelta(days=1)
 
                         multi_series = data.get('multiDailyMetricTimeSeries', [])
                         for series_group in multi_series:
@@ -2078,6 +2104,13 @@ class PortfolioDataCollector:
 
                                 for dv in dated_values:
                                     value = int(dv.get('value', 0)) if dv.get('value') else 0
+                                    date_obj = dv.get('date') or {}
+                                    metric_date = (
+                                        f"{date_obj.get('year'):04d}-"
+                                        f"{date_obj.get('month'):02d}-"
+                                        f"{date_obj.get('day'):02d}"
+                                    )
+                                    metrics = metrics_by_date.setdefault(metric_date, blank_metrics())
 
                                     # Map metric to schema
                                     if metric_type == "BUSINESS_IMPRESSIONS_DESKTOP_MAPS":
@@ -2099,50 +2132,93 @@ class PortfolioDataCollector:
                                     elif metric_type == "BUSINESS_FOOD_MENU_CLICKS":
                                         metrics['food_menu_clicks'] += value
 
-                        # Calculate totals
-                        total_views = (metrics['maps_views_desktop'] + metrics['maps_views_mobile'] +
-                                       metrics['search_views_desktop'] + metrics['search_views_mobile'])
-                        total_actions = (metrics['website_clicks'] + metrics['phone_calls'] +
-                                         metrics['direction_requests'])
-                        action_rate = (total_actions / total_views) if total_views > 0 else 0
-
                         # Store in database
                         conn = sqlite3.connect(self.db_path)
                         cursor = conn.cursor()
+                        rows_written = 0
+                        window_views = 0
+                        window_actions = 0
 
-                        cursor.execute("""
-                            INSERT OR REPLACE INTO gbp_daily_insights (
-                                property_id, gbp_location_id, account_id, metric_date,
-                                maps_views_desktop, maps_views_mobile,
-                                search_views_desktop, search_views_mobile, total_profile_views,
-                                website_clicks, phone_calls, direction_requests, total_actions, action_rate,
-                                food_orders, food_menu_clicks,
-                                collected_at
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
-                            property_id,
-                            location_id,
-                            account_id,
-                            str(start_date),
-                            metrics['maps_views_desktop'],
-                            metrics['maps_views_mobile'],
-                            metrics['search_views_desktop'],
-                            metrics['search_views_mobile'],
-                            total_views,
-                            metrics['website_clicks'],
-                            metrics['phone_calls'],
-                            metrics['direction_requests'],
-                            total_actions,
-                            action_rate,
-                            metrics['food_orders'],
-                            metrics['food_menu_clicks'],
-                            datetime.now().isoformat()
-                        ))
+                        for metric_date, metrics in sorted(metrics_by_date.items()):
+                            # Calculate totals
+                            total_views = (metrics['maps_views_desktop'] + metrics['maps_views_mobile'] +
+                                           metrics['search_views_desktop'] + metrics['search_views_mobile'])
+                            total_actions = (metrics['website_clicks'] + metrics['phone_calls'] +
+                                             metrics['direction_requests'])
+                            action_rate = (total_actions / total_views) if total_views > 0 else 0
+
+                            cursor.execute("""
+                                INSERT OR REPLACE INTO gbp_daily_insights (
+                                    property_id, gbp_location_id, account_id, metric_date,
+                                    maps_views_desktop, maps_views_mobile,
+                                    search_views_desktop, search_views_mobile, total_profile_views,
+                                    website_clicks, phone_calls, direction_requests, total_actions, action_rate,
+                                    food_orders, food_menu_clicks,
+                                    collected_at
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                property_id,
+                                location_id,
+                                account_id,
+                                metric_date,
+                                metrics['maps_views_desktop'],
+                                metrics['maps_views_mobile'],
+                                metrics['search_views_desktop'],
+                                metrics['search_views_mobile'],
+                                total_views,
+                                metrics['website_clicks'],
+                                metrics['phone_calls'],
+                                metrics['direction_requests'],
+                                total_actions,
+                                action_rate,
+                                metrics['food_orders'],
+                                metrics['food_menu_clicks'],
+                                datetime.now().isoformat()
+                            ))
+                            cursor.execute("""
+                                INSERT INTO gbp_daily_metrics (
+                                    property_id, gbp_location_id, metric_date, collection_id,
+                                    business_impressions_desktop_maps, business_impressions_desktop_search,
+                                    business_impressions_mobile_maps, business_impressions_mobile_search,
+                                    business_direction_requests, call_clicks, website_clicks,
+                                    business_food_orders, business_food_menu_clicks
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ON CONFLICT(property_id, metric_date) DO UPDATE SET
+                                    gbp_location_id = excluded.gbp_location_id,
+                                    collection_id = excluded.collection_id,
+                                    business_impressions_desktop_maps = excluded.business_impressions_desktop_maps,
+                                    business_impressions_desktop_search = excluded.business_impressions_desktop_search,
+                                    business_impressions_mobile_maps = excluded.business_impressions_mobile_maps,
+                                    business_impressions_mobile_search = excluded.business_impressions_mobile_search,
+                                    business_direction_requests = excluded.business_direction_requests,
+                                    call_clicks = excluded.call_clicks,
+                                    website_clicks = excluded.website_clicks,
+                                    business_food_orders = excluded.business_food_orders,
+                                    business_food_menu_clicks = excluded.business_food_menu_clicks,
+                                    collected_at = CURRENT_TIMESTAMP
+                            """, (
+                                property_id,
+                                location_id,
+                                metric_date,
+                                collection_id,
+                                metrics['maps_views_desktop'],
+                                metrics['search_views_desktop'],
+                                metrics['maps_views_mobile'],
+                                metrics['search_views_mobile'],
+                                metrics['direction_requests'],
+                                metrics['phone_calls'],
+                                metrics['website_clicks'],
+                                metrics['food_orders'],
+                                metrics['food_menu_clicks'],
+                            ))
+                            rows_written += 1
+                            window_views += total_views
+                            window_actions += total_actions
 
                         conn.commit()
                         conn.close()
 
-                        print(f'   ✅ {total_views} views, {total_actions} actions ({action_rate*100:.1f}%)')
+                        print(f'   ✅ {rows_written} days, {window_views} views, {window_actions} actions')
                         self.results['gbp_insights']['success'] += 1
 
                     elif response.status_code == 403:
@@ -3063,6 +3139,108 @@ class PortfolioDataCollector:
                     pass
             print()
 
+    def collect_ahrefs_data(self):
+        """Collect Ahrefs advisory SEO, site-audit, and web analytics facts."""
+        print('=' * 80)
+        print('🔎 COLLECTING AHREFS WEBSITE INTELLIGENCE')
+        print('=' * 80)
+        print()
+
+        collection_id = None
+        try:
+            config_path = self.base_dir / 'config' / 'ahrefs.yaml'
+            collector = AhrefsCollector(db_path=self.db_path, config_path=config_path)
+            if not collector.enabled():
+                print('   ⚠️  Ahrefs collector disabled in config')
+                self.results['ahrefs']['skipped'] = 1
+                print()
+                return
+
+            metric_date = (datetime.utcnow() - timedelta(days=1)).date()
+            collection_id = self.db.start_data_collection(
+                collection_date=metric_date,
+                collection_type='daily',
+                data_source='ahrefs'
+            )
+            result = collector.collect(collection_date=metric_date, collection_id=collection_id)
+
+            if result.skipped:
+                self.results['ahrefs']['skipped'] = 1
+                self.db.complete_data_collection(
+                    collection_id=collection_id,
+                    properties_collected=0,
+                    properties_failed=0,
+                    properties_total=0,
+                    properties_skipped=1,
+                    status='completed',
+                    notes='Ahrefs collector skipped by configuration.'
+                )
+                print('   ⚠️  Ahrefs collector skipped')
+                print()
+                return
+
+            rows_written = result.rows_written
+            self.results['ahrefs']['success'] = rows_written
+            self.results['ahrefs']['failed'] = len(result.errors)
+            self.results['ahrefs']['skipped'] = 0
+
+            for message in result.errors[:5]:
+                self.results['errors'].append({
+                    'property': 'Ahrefs',
+                    'collector': 'Ahrefs',
+                    'error': str(message)[:100]
+                })
+
+            self.db.complete_data_collection(
+                collection_id=collection_id,
+                properties_collected=rows_written,
+                properties_failed=len(result.errors),
+                properties_total=result.projects_seen,
+                properties_success=rows_written,
+                status='partial' if result.errors else 'completed',
+                error_message='; '.join(result.errors[:3]) if result.errors else None,
+                notes=(
+                    f'Ahrefs collected free-endpoint source facts: {result.projects_seen} projects, '
+                    f'{result.requests_made} API requests, {rows_written} rows upserted.'
+                )
+            )
+
+            print(f'   Projects seen: {result.projects_seen}')
+            print(f'   API requests: {result.requests_made}')
+            print(f'   Site audit rows: {result.site_audit_rows_upserted}')
+            print(f'   Web analytics rows: {result.web_analytics_rows_upserted}')
+            print(f'   GSC rows: {result.gsc_rows_upserted}')
+            print(f'   Domain Rating rows: {result.domain_rating_rows_upserted}')
+            print(
+                f"Ahrefs Summary: ✅ {self.results['ahrefs']['success']} rows | "
+                f"⚠️  {self.results['ahrefs']['skipped']} | "
+                f"❌ {self.results['ahrefs']['failed']} errors"
+            )
+            print()
+
+        except Exception as e:
+            print(f'   ⚠️  Ahrefs unavailable: {e}')
+            self.results['ahrefs']['failed'] = 1
+            self.results['errors'].append({
+                'property': 'Ahrefs',
+                'collector': 'Ahrefs',
+                'error': str(e)[:100]
+            })
+            if collection_id is not None:
+                try:
+                    self.db.complete_data_collection(
+                        collection_id=collection_id,
+                        properties_collected=0,
+                        properties_failed=1,
+                        properties_total=1,
+                        status='partial',
+                        error_message=str(e)[:500],
+                        notes='Ahrefs failed gracefully; daily collection continues.'
+                    )
+                except Exception:
+                    pass
+            print()
+
     def collect_cloudflare_cache_audit(self):
         """Collect daily Cloudflare cache diagnostics for pilot domains."""
         print('=' * 80)
@@ -3237,6 +3415,7 @@ class PortfolioDataCollector:
         print(f'  Op Metrics:   ✅ {self.results["property_operating_metrics"]["success"]} | ⚠️  {self.results["property_operating_metrics"]["skipped"]} | ❌ {self.results["property_operating_metrics"]["failed"]}')
         print(f'  Availability: ✅ {self.results["unit_availability"]["success"]} | ⚠️  {self.results["unit_availability"]["skipped"]} | ❌ {self.results["unit_availability"]["failed"]}')
         print(f'  ApartmentIQ:  ✅ {self.results["apartmentiq"]["success"]} | ⚠️  {self.results["apartmentiq"]["skipped"]} | ❌ {self.results["apartmentiq"]["failed"]}')
+        print(f'  Ahrefs:       ✅ {self.results["ahrefs"]["success"]} | ⚠️  {self.results["ahrefs"]["skipped"]} | ❌ {self.results["ahrefs"]["failed"]}')
         print(f'  CF Cache:     ✅ {self.results["cloudflare_cache_audit"]["success"]} | ⚠️  {self.results["cloudflare_cache_audit"]["skipped"]} | ❌ {self.results["cloudflare_cache_audit"]["failed"]}')
         print(f'  CF Edge:      ✅ {self.results["cloudflare_edge_analytics"]["success"]} | ⚠️  {self.results["cloudflare_edge_analytics"]["skipped"]} | ❌ {self.results["cloudflare_edge_analytics"]["failed"]}')
         print(f'  D1 Mirror:    ✅ {self.results["d1_mirror"]["success"]} | ⚠️  {self.results["d1_mirror"]["skipped"]} | ❌ {self.results["d1_mirror"]["failed"]}')
@@ -3260,6 +3439,7 @@ class PortfolioDataCollector:
                 'property_operating_metrics',
                 'unit_availability',
                 'apartmentiq',
+                'ahrefs',
                 'cloudflare_cache_audit',
                 'cloudflare_edge_analytics',
                 'd1_mirror'
@@ -3475,6 +3655,12 @@ class PortfolioDataCollector:
 
             # Collect ApartmentIQ advisory market/comps facts
             self.collect_apartmentiq_data()
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect Ahrefs advisory SEO and website intelligence facts
+            self.collect_ahrefs_data()
 
             # Small pause
             time.sleep(2)

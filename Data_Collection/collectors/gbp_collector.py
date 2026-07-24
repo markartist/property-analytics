@@ -24,6 +24,7 @@ import pickle
 import logging
 import requests
 import sys
+import time
 import types
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -434,6 +435,9 @@ class GoogleBusinessProfileCollector:
             List of review dictionaries with full details
         """
         try:
+            if not self.creds:
+                raise RuntimeError("GBP OAuth credentials are not initialized")
+
             # Reviews are on the v4 API endpoint
             url = f"https://mybusiness.googleapis.com/v4/accounts/{account_id}/locations/{location_id}/reviews"
 
@@ -442,13 +446,23 @@ class GoogleBusinessProfileCollector:
                 'orderBy': order_by
             }
 
-            headers = {
-                'Authorization': f'Bearer {self.creds.token}',
-                'Content-Type': 'application/json'
-            }
+            def refresh_headers() -> Dict[str, str]:
+                if not self.creds.valid or self.creds.expired:
+                    if not self.creds.refresh_token:
+                        raise RuntimeError("GBP OAuth token is invalid and has no refresh token")
+                    self.creds.refresh(Request())
+                    self.token_path = self.save_credentials(self.token_path, self.creds)
+                    logger.info("Refreshed GBP OAuth token before reviews request")
+                return {
+                    'Authorization': f'Bearer {self.creds.token}',
+                    'Content-Type': 'application/json'
+                }
+
+            headers = refresh_headers()
 
             all_reviews = []
             page_token = None
+            transient_statuses = {429, 500, 502, 503, 504}
 
             logger.info(f"Fetching reviews for account {account_id}, location {location_id}")
 
@@ -456,11 +470,34 @@ class GoogleBusinessProfileCollector:
                 if page_token:
                     params['pageToken'] = page_token
 
-                response = requests.get(url, headers=headers, params=params)
+                response = None
+                for attempt in range(1, 4):
+                    response = requests.get(url, headers=headers, params=params)
+
+                    if response.status_code == 401 and attempt == 1:
+                        logger.warning("GBP reviews request returned 401; refreshing token and retrying once")
+                        self.creds.refresh(Request())
+                        self.token_path = self.save_credentials(self.token_path, self.creds)
+                        headers = refresh_headers()
+                        continue
+
+                    if response.status_code in transient_statuses and attempt < 3:
+                        wait_seconds = attempt * 2
+                        logger.warning(
+                            f"GBP reviews request returned {response.status_code}; "
+                            f"retrying in {wait_seconds}s"
+                        )
+                        time.sleep(wait_seconds)
+                        continue
+
+                    break
 
                 if response.status_code != 200:
                     logger.error(f"Error fetching reviews: {response.status_code} - {response.text}")
-                    break
+                    raise RuntimeError(
+                        f"GBP reviews API returned {response.status_code} "
+                        f"for account {account_id}, location {location_id}"
+                    )
 
                 data = response.json()
 
@@ -480,7 +517,7 @@ class GoogleBusinessProfileCollector:
 
         except Exception as e:
             logger.error(f"Error fetching reviews: {e}")
-            return []
+            raise
 
     @staticmethod
     def parse_review(review: Dict) -> Dict:

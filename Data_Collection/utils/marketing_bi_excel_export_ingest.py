@@ -812,6 +812,8 @@ def parse_source_performance(path: Path) -> list[dict[str, Any]]:
             property_name = source_identity.property_name
         if property_name == "Total":
             property_name = None
+        if not property_name:
+            continue
         mapped = map_property(str(property_name)) if property_name else {"property_id": None, "community_id": None}
         kind = source_kind_for_row(row)
         source_group = (

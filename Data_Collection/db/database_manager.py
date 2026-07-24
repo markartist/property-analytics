@@ -400,6 +400,121 @@ class DatabaseManager:
                     cursor.execute(
                         f"ALTER TABLE cloudflare_cache_synthetic_checks ADD COLUMN {column_name} {column_type}"
                     )
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS godaddy_domain_snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    snapshot_date DATE NOT NULL,
+                    collection_id INTEGER,
+                    domain TEXT NOT NULL,
+                    domain_id TEXT,
+                    property_id TEXT,
+                    property_name TEXT,
+                    identity_match_source TEXT,
+                    detail_http_status INTEGER,
+                    dns_http_status INTEGER,
+                    domain_status TEXT,
+                    expires TEXT,
+                    renew_auto INTEGER,
+                    locked INTEGER,
+                    privacy INTEGER,
+                    renewable INTEGER,
+                    redeemable INTEGER,
+                    transfer_protected INTEGER,
+                    expiration_protected INTEGER,
+                    hold_registrar INTEGER,
+                    expose_whois INTEGER,
+                    nameservers_json TEXT,
+                    dns_record_count INTEGER DEFAULT 0,
+                    dns_record_type_counts_json TEXT,
+                    list_domain_json TEXT,
+                    detail_domain_json TEXT,
+                    dns_records_json TEXT,
+                    collection_status TEXT NOT NULL DEFAULT 'ok',
+                    error_message TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(snapshot_date, domain),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_domain_snapshots_date
+                ON godaddy_domain_snapshots(snapshot_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_domain_snapshots_domain
+                ON godaddy_domain_snapshots(domain)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_domain_snapshots_property_date
+                ON godaddy_domain_snapshots(property_id, snapshot_date DESC)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS godaddy_dns_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    snapshot_date DATE NOT NULL,
+                    collection_id INTEGER,
+                    domain TEXT NOT NULL,
+                    record_hash TEXT NOT NULL,
+                    record_type TEXT,
+                    record_name TEXT,
+                    record_data TEXT,
+                    ttl INTEGER,
+                    priority INTEGER,
+                    service TEXT,
+                    protocol TEXT,
+                    port INTEGER,
+                    weight INTEGER,
+                    raw_record_json TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(snapshot_date, domain, record_hash),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_dns_records_domain_date
+                ON godaddy_dns_records(domain, snapshot_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_dns_records_type
+                ON godaddy_dns_records(record_type)
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS godaddy_forwarding_snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    snapshot_date DATE NOT NULL,
+                    collection_id INTEGER,
+                    requested_domain TEXT NOT NULL,
+                    fqdn TEXT NOT NULL,
+                    customer_id_source TEXT,
+                    forwarding_http_status INTEGER,
+                    forwarding_status TEXT NOT NULL,
+                    forwarding_count INTEGER DEFAULT 0,
+                    forwarding_type TEXT,
+                    forwarding_url TEXT,
+                    mask_json TEXT,
+                    raw_forwarding_json TEXT,
+                    error_code TEXT,
+                    error_message TEXT,
+                    collected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(snapshot_date, requested_domain, fqdn),
+                    FOREIGN KEY (collection_id) REFERENCES data_collections(collection_id)
+                )
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_forwarding_snapshots_date
+                ON godaddy_forwarding_snapshots(snapshot_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_forwarding_snapshots_domain
+                ON godaddy_forwarding_snapshots(requested_domain)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_godaddy_forwarding_snapshots_url
+                ON godaddy_forwarding_snapshots(forwarding_url)
+            """)
             data_collection_columns = {
                 row["name"] for row in cursor.execute("PRAGMA table_info(data_collections)").fetchall()
             }

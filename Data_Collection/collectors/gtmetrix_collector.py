@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import os
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,13 +15,28 @@ from typing import Dict, List, Optional
 
 import requests
 
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from utils.ksm import resolve_secret, resolve_secret_from_multiple_notations
+
 
 DEFAULT_API_KEY_PATH = Path("/Users/mark/Property_Analytics/Spotlight_Properties_Report/config/GTMetrix_API_Key.txt")
+DEFAULT_API_KEY_NOTATION = "keeper://lkluImtpQHpBWcldViKfiQ/field/password"
+DEFAULT_API_KEY_NOTATION_ENV_VARS = (
+    "KSM_GTMETRIX_API_KEY_NOTATION",
+    "KSM_GTMETRIX_API_KEY_FILE_NOTATION",
+)
 
 
 @dataclass
 class GTMetrixSettings:
     api_key_path: Path = DEFAULT_API_KEY_PATH
+    default_api_key_notation: str = DEFAULT_API_KEY_NOTATION
+    api_key_notation_env_vars: tuple[str, ...] = DEFAULT_API_KEY_NOTATION_ENV_VARS
+    api_key_env_var: str = "GTMETRIX_API_KEY"
+    ksm_profile: str = "marketingops"
     location: str = "4"  # San Antonio, TX, USA
     browser: str = "3"   # Chrome Desktop (Lighthouse-capable)
     simulate_device: Optional[str] = None
@@ -41,17 +57,25 @@ class GTMetrixCollector:
 
     def _load_api_key(self) -> str:
         env_path = os.getenv("GTMETRIX_API_KEY_PATH")
-        candidate_paths = [Path(env_path)] if env_path else []
-        candidate_paths.append(self.settings.api_key_path)
+        fallback_path = Path(env_path) if env_path else self.settings.api_key_path
 
-        for path in candidate_paths:
-            if not path:
-                continue
-            if path.exists():
-                value = path.read_text(encoding="utf-8").strip()
-                if value:
-                    return value
-        raise FileNotFoundError("GTMetrix API key not found in configured locations")
+        if not any(os.getenv(var) for var in self.settings.api_key_notation_env_vars):
+            return resolve_secret(
+                description="GTMetrix API key",
+                notation_env_var=self.settings.api_key_notation_env_vars[0],
+                default_notation=self.settings.default_api_key_notation,
+                direct_env_var=self.settings.api_key_env_var,
+                file_path=fallback_path,
+                default_profile=self.settings.ksm_profile,
+            )
+
+        return resolve_secret_from_multiple_notations(
+            description="GTMetrix API key",
+            notation_env_vars=list(self.settings.api_key_notation_env_vars),
+            direct_env_var=self.settings.api_key_env_var,
+            file_path=fallback_path,
+            default_profile=self.settings.ksm_profile,
+        )
 
     def _headers(self) -> Dict[str, str]:
         return {"Content-Type": "application/vnd.api+json"}

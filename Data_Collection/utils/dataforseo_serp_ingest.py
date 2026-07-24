@@ -453,7 +453,7 @@ def main() -> None:
 
     with sqlite3.connect(args.db) as conn:
         apply_schema(conn, args.schema)
-        for index, (request, task) in enumerate(zip(requests, tasks, strict=True)):
+        for index, (request, task) in enumerate(zip(requests, tasks)):
             response_payload = responses[index]
             store_task(
                 conn,
@@ -470,7 +470,7 @@ def main() -> None:
     total_cost = sum(float(task.get("cost") or 0) for task in tasks)
     target_found = sum(
         1
-        for request, task in zip(requests, tasks, strict=True)
+        for request, task in zip(requests, tasks)
         if summarize_target(flatten_items(task), request.identity)["target_found"]
     )
     print(

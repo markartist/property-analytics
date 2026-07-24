@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import logging
+import os
 import sqlite3
 import tempfile
 import sys
@@ -73,6 +74,16 @@ def api_data(payload: Any) -> Any:
     return payload
 
 
+def env_int(name: str, default: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 def attributes(row: dict[str, Any]) -> dict[str, Any]:
     attrs = row.get("attributes")
     return attrs if isinstance(attrs, dict) else row
@@ -112,8 +123,13 @@ class ApartmentIqCollector:
         self.base_url = str(self.config.get("api_base_url") or API_BASE_URL).rstrip("/")
         collection = self.config.get("collection") or {}
         self.timeout_seconds = int(collection.get("request_timeout_seconds", 45))
-        self.rate_limit_sleep_seconds = float(collection.get("rate_limit_sleep_seconds", 1.0))
-        self.max_retries = int(collection.get("max_retries", 2))
+        self.rate_limit_sleep_seconds = float(
+            os.getenv("APARTMENTIQ_RATE_LIMIT_SLEEP_SECONDS", collection.get("rate_limit_sleep_seconds", 1.0))
+        )
+        self.max_retries = int(os.getenv("APARTMENTIQ_MAX_RETRIES", collection.get("max_retries", 2)))
+        self.rate_limit_retry_after_fallback_seconds = float(
+            os.getenv("APARTMENTIQ_RETRY_AFTER_FALLBACK_SECONDS", 330.0)
+        )
         self.session: requests.Session | None = None
         self.logger = logger or self._build_logger()
 
@@ -170,7 +186,10 @@ class ApartmentIqCollector:
                 response = self.session.request(method, url, timeout=self.timeout_seconds, **kwargs)
                 if response.status_code == 429 and attempt < self.max_retries:
                     retry_after = response.headers.get("retry-after")
-                    delay = float(retry_after) if retry_after and retry_after.isdigit() else 330.0
+                    try:
+                        delay = float(retry_after) if retry_after else self.rate_limit_retry_after_fallback_seconds
+                    except ValueError:
+                        delay = self.rate_limit_retry_after_fallback_seconds
                     self.logger.warning("ApartmentIQ rate limited on %s %s; sleeping %.0fs", method, path, delay)
                     time.sleep(delay)
                     continue
@@ -204,8 +223,10 @@ class ApartmentIqCollector:
             page += 1
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.db_path))
+        timeout_seconds = max(env_int("APARTMENTIQ_SQLITE_BUSY_TIMEOUT_SECONDS", 120), 1)
+        conn = sqlite3.connect(str(self.db_path), timeout=timeout_seconds)
         conn.row_factory = sqlite3.Row
+        conn.execute(f"PRAGMA busy_timeout = {timeout_seconds * 1000}")
         conn.executescript(MIGRATION_SQL.read_text(encoding="utf-8"))
         return conn
 

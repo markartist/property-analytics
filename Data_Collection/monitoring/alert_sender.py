@@ -345,7 +345,7 @@ class DataAlertEmailer:
                 FROM ranked_runs
                 WHERE row_rank = 1
                   AND (
-                    status IN ('failed', 'blocked', 'retry_scheduled')
+                    status IN ('failed', 'blocked', 'retry_scheduled', 'source_limited')
                     OR properties_failed > properties_total * 0.2
                   )
                 ORDER BY started_at DESC

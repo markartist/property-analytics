@@ -120,7 +120,7 @@ class GoogleSearchConsoleCollector:
                     # Load service account credentials
                     credentials = service_account.Credentials.from_service_account_file(
                         credentials_file,
-                        scopes=['https://www.googleapis.com/auth/webmasters.readonly']
+                        scopes=['https://www.googleapis.com/auth/webmasters']
                     )
                     self.logger.info("✅ Using service account credentials for GSC API")
 
@@ -141,7 +141,7 @@ class GoogleSearchConsoleCollector:
     def _get_oauth_credentials(self, credentials_path: str, token_path: str):
         """Get OAuth credentials with automatic refresh"""
 
-        SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
+        SCOPES = ['https://www.googleapis.com/auth/webmasters']
 
         creds = None
 

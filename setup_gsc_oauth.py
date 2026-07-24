@@ -20,7 +20,7 @@ from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
 # OAuth scope for Search Console
-SCOPES = ['https://www.googleapis.com/auth/webmasters.readonly']
+SCOPES = ['https://www.googleapis.com/auth/webmasters']
 
 # Paths
 PARENT_DIR = Path(__file__).parent
