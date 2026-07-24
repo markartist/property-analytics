@@ -270,6 +270,138 @@ sqlite3 /Users/mark/Property_Analytics/data/portfolio_analytics.db \
 
 **See also:** `PROPERTY_ASSESSMENT_REPORTS.md` for Property Assessment details
 
+## Keeper Marketing Ops Credential Migration
+
+This controlled one-time migration utility converts a local `.csv` or `.xlsx` credential spreadsheet into Keeper Commander JSON and, when explicitly confirmed, imports it into Keeper.
+
+It is not a spreadsheet-to-Keeper sync. Do not put real passwords in prompts, comments, examples, issues, or logs.
+
+Official Keeper references:
+
+- [Commander JSON import](https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/import-and-export-commands/json-import)
+- [Commander import command](https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/import-and-export-commands)
+- [Commander sharing commands](https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/sharing-commands)
+- [Keeper Commander sample JSON files](https://github.com/Keeper-Security/Commander/tree/master/sample_data)
+
+Keeper documents JSON imports with top-level `records` and `shared_folders` arrays. The shared-folder permission fields used here are the documented `can_edit`, `can_share`, `manage_users`, and `manage_records` fields.
+
+Prerequisites:
+
+1. Install Python dependencies:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+2. Install Keeper Commander using Keeper's official instructions.
+
+3. Authenticate Commander separately before running `--execute`. This utility does not accept, store, or request Keeper credentials.
+
+```bash
+keeper shell
+```
+
+Confirm you can access the vault and that the Keeper Team named `Marketing Ops` already exists.
+
+Dry-run validation:
+
+```bash
+python keeper_marketing_ops_import.py --input credentials.xlsx --config config.yaml --dry-run
+```
+
+Legacy Venterra Marketing Logins workbook dry-run:
+
+```bash
+python keeper_marketing_ops_import.py \
+  --input "/Users/mark/Downloads/Venterra Marketing Log ins.xlsx" \
+  --venterra-marketing-logins-workbook \
+  --allow-blank-passwords \
+  --dry-run
+```
+
+The legacy workbook mode reads the known multi-sheet workbook layout instead of
+only the active sheet. It maps the credential-bearing tabs, preserves source
+sheet/row provenance as Keeper custom fields, and can include URL-only YouTube,
+Facebook, and Yelp reference tabs when `--include-reference-records` is passed.
+Use `--allow-blank-passwords` only for a complete legacy archive; rows with
+missing source passwords are marked with a `Password Status` custom field.
+
+Generate Keeper JSON:
+
+```bash
+python keeper_marketing_ops_import.py --input credentials.xlsx --config config.yaml --output keeper_import.json
+```
+
+The generated JSON contains plaintext credential data by design because Keeper Commander needs it for import. Treat it as highly sensitive, keep it local, and remove it after the migration.
+
+Execute import:
+
+```bash
+python keeper_marketing_ops_import.py --input credentials.xlsx --config config.yaml --execute
+```
+
+Execute the legacy Venterra Marketing Logins import without a persistent output
+file:
+
+```bash
+python keeper_marketing_ops_import.py \
+  --input "/Users/mark/Downloads/Venterra Marketing Log ins.xlsx" \
+  --venterra-marketing-logins-workbook \
+  --allow-blank-passwords \
+  --execute
+```
+
+Add `--include-reference-records` to also import URL-only reference records.
+
+Execution only proceeds after validation passes, a safe dry-run summary is shown, and you type `IMPORT` at the confirmation prompt.
+
+The utility runs:
+
+```bash
+keeper import --format=json <generated-json>
+keeper import --format=json --users <generated-json>
+```
+
+The second command applies shared-folder user/team permissions from the JSON, per Keeper's Commander JSON import documentation. If your Commander version behaves differently, run `keeper help import` and execute those two steps manually from the generated JSON rather than guessing.
+
+The import creates one shared folder, `Marketing Ops Shared Credentials`, and shares it with the Keeper Team `Marketing Ops`.
+
+Default permissions are least privilege:
+
+- Team can view/use imported records.
+- Team cannot re-share records.
+- Team cannot manage users.
+- Team cannot manage records unless `manage_records: true` is set in config.
+- Team cannot edit records unless `can_edit: true` is set in config.
+
+The spreadsheet `folder` column is preserved as a `Source Folder` custom field. The tool does not create nested shared-folder structures because the Keeper JSON examples verify the shared-folder root shape, and this migration is intentionally conservative.
+
+Supported input columns:
+
+- `title` or `name`
+- `username`, `login`, or `email`
+- `password`
+- `url` or `website`
+- `notes`
+- `folder`
+- any other columns become Keeper custom fields
+
+Required columns are `title`/`name` and `password`.
+
+Post-migration cleanup checklist:
+
+- Verify the `Marketing Ops` team can access the shared folder.
+- Rotate high-risk shared passwords after import.
+- Delete or securely archive the source spreadsheet.
+- Remove generated Keeper JSON files.
+- Confirm audit/reporting visibility in Keeper.
+
+Tests:
+
+```bash
+python -m unittest discover -s tests
+```
+
 ---
 
 ## Last Updated
