@@ -1,0 +1,370 @@
+{
+  "schemaVersion": "2026-07-09.draft",
+  "status": "active_query_gated_preview",
+  "property": {
+    "propertyCode": "GA4CG",
+    "communityId": "18ec38d1-b4ec-4cf4-aba8-23ee58c99d8c",
+    "ga4PropertyId": "378404769",
+    "name": "Champions Green",
+    "city": "Alpharetta",
+    "state": "GA",
+    "unitCount": 426
+  },
+  "hostnames": [
+    "championsgreen-ga.com"
+  ],
+  "identityNotes": [
+    "Property identity resolves through the governed matrix by propertyCode GA4CG.",
+    "The standalone hostname championsgreen-ga.com was observed live but is not currently the matrix website_url, which still points to the legacy venterraliving.com path."
+  ],
+  "template": {
+    "class": "resi-original-yootheme-v1",
+    "archetype": "property_marketing_v1",
+    "sitePageTemplate": "homepage-apartments-apartment_details-features-amenities-gallery-neighborhood-contact-specials-reviews-faqs-about",
+    "heroPattern": "uk-background-cover",
+    "desktopHeroPatchRequired": false
+  },
+  "routes": {
+    "homepage": "/",
+    "apartments": "/apartments/",
+    "features": "/features/",
+    "reviews": "/reviews/",
+    "contact": "/contact/"
+  },
+  "runtimeModes": {
+    "mobile": "edge-shell-preview",
+    "desktop": "edge-shell-preview"
+  },
+  "r2": {
+    "bucket": "resi-edge-assets",
+    "publicBaseUrl": "https://assets.venterradev.com/resi-edge-assets/GA4CG/",
+    "keyPrefix": "resi-edge-assets/GA4CG/"
+  },
+  "hero": {
+    "source": "https://dam.getresi.co/10397/conversions/Champions-Green-Home-Hero_WEB-full.jpg",
+    "sourceFromMarkup": "data-src on uk-background-cover hero wrapper",
+    "mobileCrop": {
+      "strategy": "center-out",
+      "targetWidth": 750,
+      "targetHeight": 1000,
+      "aspectRatio": "3:4",
+      "reviewRequired": false,
+      "overrideAllowed": true
+    },
+    "plannedAssets": {
+      "mobileAvif": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/hero-mobile-750x1000.avif",
+      "mobileWebp": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/hero-mobile-750x1000.webp",
+      "desktopAvif": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/hero-desktop-1600.avif",
+      "desktopWebp": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/hero-desktop-1600.webp"
+    },
+    "text": {
+      "tagline": "Live Better. Live Easy.\u2122",
+      "headline": "1, 2, and 3 Bedroom Apartments in Alpharetta, GA",
+      "primaryCtaLabel": "Find Your Home",
+      "primaryCtaHref": "/apartments/"
+    }
+  },
+  "promo": {
+    "observed": true,
+    "sourceOwner": "native_builder",
+    "previewOwner": "edge",
+    "text": "$1,000 off for a limited time!",
+    "detailText": "*Select Homes \u2013 Limited Time Offer",
+    "primaryCtaLabel": "See Availability",
+    "primaryCtaHref": "/apartments/",
+    "secondaryCtaLabel": "Contact us",
+    "secondaryCtaHref": "/contact/"
+  },
+  "ctas": {
+    "phone": "tel:(470) 999-7208",
+    "tour": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/GA4CG",
+    "apply": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/GA4CG",
+    "findHome": "/apartments/"
+  },
+  "imageRewrites": [
+    {
+      "role": "home.welcome",
+      "source": "https://dam.getresi.co/10398/conversions/Champions-Green-Home-Welcome_WEB-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/welcome-640.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/welcome-640.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.features",
+      "source": "https://dam.getresi.co/10395/conversions/Champions-Green-Home-Features_WEB-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/features-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/features-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.amenities",
+      "source": "https://dam.getresi.co/10396/conversions/Champions-Green-Home-Amenities_WEB-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/amenities-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/GA4CG/home/amenities-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.benefits.pets",
+      "source": "https://dam.getresi.co/3022/conversions/Venterra-Benefits_Pets-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-pets-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-pets-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.benefits.tech",
+      "source": "https://dam.getresi.co/3021/conversions/Venterra-Benefits_Tech-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-tech-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-tech-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.benefits.perks",
+      "source": "https://dam.getresi.co/3023/conversions/Venterra-Benefits_Perks-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-perks-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-perks-900.webp",
+      "loading": "lazy"
+    }
+  ],
+  "observedBaseline": {
+    "date": "2026-07-09",
+    "htmlCache": {
+      "cfCacheStatus": "DYNAMIC",
+      "kiCfCacheStatus": "BYPASS",
+      "xKinstaCache": "MISS"
+    },
+    "domCounts": {
+      "dataPageSection": 47,
+      "ukHeightViewport": 1,
+      "ukScrollspy": 75,
+      "ukSticky": 4,
+      "popupElement": 2,
+      "damGetresiReferences": 22,
+      "slideshowReferences": 7
+    },
+    "playwrightRenderedCounts": {
+      "hero": 1,
+      "popup": 1,
+      "drop": 1,
+      "sticky": 2,
+      "scrollspy": 58,
+      "damImages": 17,
+      "slideshows": 3
+    },
+    "psi": {
+      "mobile": {
+        "score": 66,
+        "fcpMs": 2582,
+        "lcpMs": 11016,
+        "tbtMs": 137,
+        "cls": 0.066691371549129,
+        "speedIndexMs": 5112
+      },
+      "desktop": {
+        "score": 89,
+        "fcpMs": 559,
+        "lcpMs": 1109,
+        "tbtMs": 229,
+        "cls": 0.03445692883895131,
+        "speedIndexMs": 1326
+      }
+    }
+  },
+  "validationArtifacts": {
+    "psiMobile": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-09/championsgreen-baseline/psi-mobile-1783627338.json",
+    "psiDesktop": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-09/championsgreen-baseline/psi-desktop-1783627360.json",
+    "desktopScreenshot": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-09-championsgreen-desktop-baseline.png",
+    "mobileScreenshot": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-09-championsgreen-mobile-baseline.png"
+  },
+  "analytics": {
+    "mode": "queue-and-replay-preview",
+    "requiredEvents": [
+      "page_view",
+      "find_your_home_click",
+      "schedule_tour_click",
+      "apply_now_click",
+      "promo_open",
+      "promo_cta_click",
+      "menu_open"
+    ],
+    "duplicatePageviewProtection": true
+  },
+  "promotion": {
+    "currentPhase": "active_query_gated",
+    "liveTrafficChangeApproved": false,
+    "queryGatedRouteActive": true,
+    "previewRequired": true,
+    "rollbackRequired": true,
+    "r2Upload": {
+      "status": "complete",
+      "bucket": "resi-edge-assets",
+      "objectCount": 16,
+      "uploadedAt": "2026-07-09",
+      "keeperNotationForWrangler": "keeper://3eLgyrNIvR_N_Bl809aAcg/custom_field/Token Value",
+      "verification": "Remote R2 downloads matched local bytes and SHA for sampled hero, amenities, and shared benefit objects."
+    },
+    "prototypeWorker": {
+      "path": "/Users/mark/Property_Analytics/ops/cloudflare/portfolio-resi-edge-prototype/",
+      "mode": "workers_dev_preview",
+      "liveTrafficChanged": false,
+      "localUrl": "http://127.0.0.1:8797/",
+      "workersDevUrl": "https://portfolio-resi-edge-prototype.mlaufhutte.workers.dev/",
+      "deployedVersionId": "696f22a2-1507-4ce5-8a71-3d0ebeb9b8ea",
+      "deployKeeperNotation": "keeper://1AXKAs86nwXHcyHvrI7nNg/field/password",
+      "screenshots": [
+        "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-09/championsgreen-edge-prototype-remote/mobile.png",
+        "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-09/championsgreen-edge-prototype-remote/desktop.png"
+      ],
+      "verification": "Remote workers.dev preview returned health ok, served HTML with noindex headers, served private R2 hero asset through Worker passthrough, and Playwright screenshots succeeded for mobile and desktop."
+    },
+    "validation": {
+      "date": "2026-07-10",
+      "readout": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-10/championsgreen-edge-validation/VALIDATION_READOUT.md",
+      "psiSummary": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-10/championsgreen-edge-validation/psi-summary.json",
+      "psiMobileMedianScore": 100,
+      "psiDesktopMedianScore": 100,
+      "psiMobileMedianLcpMs": 1658,
+      "psiDesktopMedianLcpMs": 526,
+      "tbtMs": 0,
+      "cls": 0.0,
+      "networkRequests": 5,
+      "ctasAllResolved": true,
+      "noindexConfirmed": true,
+      "r2AssetsServing": true,
+      "liveTrafficChanged": false,
+      "pendingBeforePromotion": [],
+      "step7PromoDate": "2026-07-10",
+      "step7WorkerVersion": "00458622-de84-4659-a4b4-403b2800d339",
+      "liveRoute": "championsgreen-ga.com/*",
+      "zoneId": "7edc3f2752106cc860528432a72e3d67",
+      "gateParam": "edge_preview",
+      "gateValue": "1",
+      "gateUrl": "https://championsgreen-ga.com/?edge_preview=1",
+      "rollback": "Set EDGE_SHELL_ENABLED=false in wrangler.toml [vars] and redeploy — no WordPress changes required. Or remove [[routes]] from wrangler.toml and redeploy to remove Worker from domain entirely.",
+      "deployTokenNotation": "keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password",
+      "analyticsValidation": {
+        "date": "2026-07-10",
+        "workerVersion": "ea080651-d7b7-462f-8b63-283a771e3b7c",
+        "pattern": "dataLayer + window.__vtrEdgeQueue, matches Edge Message Toolkit approach",
+        "eventsVerified": ["page_view","find_your_home_click","schedule_tour_click","apply_now_click","promo_open","promo_cta_click","menu_open"],
+        "duplicatePageviewProtection": true,
+        "dupKey": "vtr_edge_pv_GA4CG",
+        "configEmbedVerified": true
+      },
+      "polishedV8": {
+        "date": "2026-07-10",
+        "workerVersion": "1cd224d8-2e57-48b5-bdba-777e8f0763f0",
+        "readout": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-10/championsgreen-polished-v7/POLISHED_V8_READOUT.md",
+        "gateUrl": "https://championsgreen-ga.com/?edge_preview=1",
+        "mode": "query_gated_mobile_shell",
+        "templateVersion": "2026-07-10.mobile-shell-v1",
+        "cacheVersion": "2026-07-10-mobile-shell-v8-award",
+        "healthConfigOk": true,
+        "ungatedTrafficChanged": false,
+        "undefinedOutputCount": 0,
+        "kingsleyAwardRenderedPx": 80,
+        "featuresHref": "/features/",
+        "mobilePsiSmoke": {
+          "exactScore": 99,
+          "freshScore": 100,
+          "lcpMs": 1877,
+          "tbtMs": 0,
+          "cls": 0.0,
+          "networkRequests": 6
+        },
+        "desktopNativeGuards": {
+          "workerVersion": "33c1670b-d16b-4ab9-888e-d74861433a4d",
+          "mode": "native-desktop-guards-v1",
+          "heroRewrite": "R2 desktop hero data-src + preload",
+          "promoRewrite": "native UIkit promo/dropbar replaced with static edge details promo",
+          "markersVerified": ["x-resi-edge-mode: native-desktop-guards-v1","data-vtr-desktop-hero=\"r2\"","data-vtr-desktop-promo=\"static\""],
+          "ungatedTrafficChanged": false,
+          "psiSmoke": {
+            "exactScore": 97,
+            "exactLcpMs": 806,
+            "exactTbtMs": 60,
+            "exactCls": 0.03445692883895131,
+            "freshScore": 83,
+            "freshLcpMs": 1498,
+            "freshTbtMs": 211,
+            "freshCls": 0.0
+          },
+          "v2ScriptTrim": {
+            "workerVersion": "6db88f31-32ba-40f9-8b99-aaa94c705881",
+            "mode": "native-desktop-guards-v2",
+            "removedScripts": ["jquery-migrate.min.js","filters.js"],
+            "dedupedStylesheets": ["custom.css"],
+            "ungatedTrafficChanged": false,
+            "psiSmoke": {
+              "exactScore": 92,
+              "exactLcpMs": 1480,
+              "exactTbtMs": 31,
+              "exactCls": 0.0,
+              "freshScore": 92,
+              "freshLcpMs": 1337,
+              "freshTbtMs": 70,
+              "freshCls": 0.0,
+              "networkRequests": 46
+            }
+          }
+        },
+        "eventsVerified": ["page_view","find_your_home_click","schedule_tour_click","apply_now_click","promo_open","promo_cta_click","menu_open"],
+        "allDevicePilotShell": {
+          "date": "2026-07-10",
+          "workerVersion": "a6433f54-a0ac-4f3b-a9fe-7773800f35ea",
+          "readout": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-07-10/championsgreen-visual-v3-final/VISUAL_V3_READOUT.md",
+          "mode": "standalone-pilot-match",
+          "templateVersion": "2026-07-10.all-device-shell-v3",
+          "cacheVersion": "2026-07-10-all-device-shell-v3-layout",
+          "gateUrl": "https://championsgreen-ga.com/?edge_preview=1",
+          "ungatedTrafficChanged": false,
+          "healthConfigOk": true,
+          "desktopPsi": {
+            "runs": 2,
+            "medianScore": 100,
+            "minScore": 100,
+            "medianLcpMs": 704.5,
+            "tbtMs": 0,
+            "cls": 0.0,
+            "networkRequests": 11
+          },
+          "mobilePsiConfirmation": {
+            "runs": 2,
+            "medianScore": 100,
+            "medianLcpMs": 1885.5,
+            "tbtMs": 0,
+            "cls": 0.0,
+            "networkRequests": 7
+          }
+        },
+        "hybridNativeRestV2": {
+          "date": "2026-07-10",
+          "workerVersion": "d85f1236-cbeb-4e2d-9040-0b28d5a4ddba",
+          "mode": "hybrid-native-rest",
+          "templateVersion": "2026-07-10.hybrid-header-two-blocks-v2",
+          "cacheVersion": "2026-07-10-hybrid-header-two-blocks-v2",
+          "gateUrl": "https://championsgreen-ga.com/?edge_preview=1",
+          "ungatedTrafficChanged": false,
+          "originEdgeParamsStripped": ["edge_preview","edge_psi_fresh","edge_shell_rest"],
+          "nativeRestInSameDocument": true,
+          "hidesNativeSections": ["promo_bar","hero","welcome","apartment_features"],
+          "promo": {
+            "enabledField": "PROPERTY.promoEnabled",
+            "behavior": "overlay-popdown-no-layout-push",
+            "imageUrl": "https://dam.getresi.co/3489/conversions/Apex-West-Midtown-Amenities-Amenity-1-full.jpg",
+            "primaryCtaHref": "/apartments/?has_specials=true",
+            "secondaryCtaHref": "/contact/",
+            "verifiedHeroShiftPx": 0,
+            "verifiedBodyHeightShiftPx": 0
+          },
+          "verification": {
+            "status": 200,
+            "hybridShellPresent": true,
+            "nativeReviewsPresent": true,
+            "nativeAmenitiesPresent": true,
+            "firewallTextPresent": false
+          }
+        }
+      }
+    }
+  }
+}
