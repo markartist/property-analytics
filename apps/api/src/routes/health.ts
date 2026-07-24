@@ -42,7 +42,7 @@ const DATA_SOURCES = [
 
 const CORE_FAILURE_SOURCES = new Set(["ga4", "gsc", "google_ads", "guest_card", "unit_availability", "d1_mirror"]);
 const ACTIVE_COLLECTION_STATUSES = new Set(["in_progress", "partial", "retry_scheduled"]);
-const BLOCKED_COLLECTION_STATUSES = new Set(["blocked", "failed", "exhausted"]);
+const BLOCKED_COLLECTION_STATUSES = new Set(["blocked", "failed", "exhausted", "source_limited"]);
 type AdvisoryCadenceKey = "same_day_manual" | "daily_diagnostic" | "weekly_manual" | "weekly_automated" | "targeted_manual";
 type AdvisoryFreshnessStatus = "fresh" | "warning" | "stale" | "missing" | "idle";
 
@@ -255,6 +255,7 @@ function inferCollectionReason(status: string, row: { error_message: string | nu
   if (status === "retry_scheduled") return "retry_pending";
   if (status === "in_progress") return "still_running";
   if (status === "partial") return "partial_results";
+  if (status === "source_limited") return "source_limited";
   if (status === "failed" || status === "blocked") {
     if (detail.includes("auth") || detail.includes("credential") || detail.includes("token")) return "auth_issue";
     if (detail.includes("rate") || detail.includes("429")) return "rate_limited";
@@ -434,7 +435,10 @@ health.get("/status", async (c) => {
     property_count: number;
     updated_at: string;
   }>(db, `SELECT * FROM data_freshness ORDER BY latest_date DESC`);
-  const enrichedSourceFreshness = sourceFreshness.map((src) => ({
+  const activeSourceFreshness = sourceFreshness.filter(
+    (src) => !SUNSET_SOURCE_KEYS.has(String(src.source_key || "").toLowerCase())
+  );
+  const enrichedSourceFreshness = activeSourceFreshness.map((src) => ({
     ...src,
     ...evaluateSourceFreshness(src.source_key, src.latest_date),
   }));
@@ -745,7 +749,7 @@ health.get("/status", async (c) => {
         COUNT(*) as sources_total,
         SUM(CASE WHEN LOWER(COALESCE(status, 'unknown')) = 'completed' THEN 1 ELSE 0 END) as sources_completed,
         SUM(CASE WHEN LOWER(COALESCE(status, 'unknown')) IN ('in_progress', 'partial', 'retry_scheduled') THEN 1 ELSE 0 END) as sources_active,
-        SUM(CASE WHEN LOWER(COALESCE(status, 'unknown')) IN ('blocked', 'failed', 'exhausted') THEN 1 ELSE 0 END) as sources_blocked,
+        SUM(CASE WHEN LOWER(COALESCE(status, 'unknown')) IN ('blocked', 'failed', 'exhausted', 'source_limited') THEN 1 ELSE 0 END) as sources_blocked,
         SUM(COALESCE(properties_total, 0)) as properties_expected,
         SUM(COALESCE(properties_success, 0)) as properties_succeeded,
         SUM(COALESCE(properties_failed, 0)) as properties_failed,

@@ -63,7 +63,7 @@ function sourceLabel(key: string): string {
     gbp: "GBP",
     reputationCom: "Reputation.com",
     competitorMarketResearch: "Competitor Market",
-    marketingOpsSummary: "Marketing Ops Summary",
+    marketingOpsSummary: "Web Ops Summary",
     dataforseoRankings: "DataForSEO Rankings",
     dataforseoOnPage: "DataForSEO OnPage",
     dataforseoBusiness: "DataForSEO Business Profile",

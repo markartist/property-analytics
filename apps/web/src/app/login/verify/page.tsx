@@ -79,7 +79,7 @@ function VerifyContent() {
             </h1>
           </div>
           <p className="text-sm text-white/50">
-            MarketingOps Analytics
+            WebOps Analytics
           </p>
         </div>
 
@@ -119,7 +119,7 @@ function VerifyContent() {
         <div className="mt-8 flex items-center justify-center gap-2">
           <Image src="/velo.svg" alt="" width={12} height={7} className="opacity-30" />
           <p className="text-xs text-white/30">
-            MarketingOps &middot; Internal Use Only
+            WebOps &middot; Internal Use Only
           </p>
         </div>
       </div>

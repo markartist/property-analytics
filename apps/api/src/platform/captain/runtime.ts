@@ -779,7 +779,7 @@ async function sourceScout(db: D1Database, property: CommunityRow, propertyCode:
       currentState: `Missing: ${missing.join(", ") || "none"}; stale: ${stale.map((s) => `${s.source} ${s.latestDate}`).join(", ") || "none"}.`,
       evidence: { sources, missing, stale },
       nextMove: "Resolve source routing before the next Captain Brief.",
-      ownerRole: "Data Pond / MarketingOps",
+      ownerRole: "Data Pond / WebOps",
     });
   }
   return {
@@ -790,7 +790,7 @@ async function sourceScout(db: D1Database, property: CommunityRow, propertyCode:
     actions: missing.length ? [{
       actionKey: "resolve_source_routing",
       title: "Resolve missing Captain source routing",
-      ownerRole: "Data Pond / MarketingOps",
+      ownerRole: "Data Pond / WebOps",
       status: "open" as const,
       priority: designationPriority("high", designation),
       evidence: { missing, sources },
@@ -820,12 +820,12 @@ async function truthReconciler(db: D1Database, propertyCode: string, designation
       currentState: `${needsReview} claim(s) need review; ${conflicts} claim(s) are formal source conflicts or routing gaps.`,
       evidence: { claimStatusCounts: rows, needsReview, conflicts },
       nextMove: "Resolve open review items and route formal source conflicts to the owning source-of-record lane.",
-      ownerRole: "Data Pond / MarketingOps",
+      ownerRole: "Data Pond / WebOps",
     }] : [],
     actions: unresolved ? [{
       actionKey: "resolve_source_authority_claims",
       title: "Resolve Captain source-authority claim gaps",
-      ownerRole: "Data Pond / MarketingOps",
+      ownerRole: "Data Pond / WebOps",
       status: "open" as const,
       priority: designationPriority("high", designation),
       evidence: { claimStatusCounts: rows, needsReview, conflicts },
@@ -930,7 +930,7 @@ async function funnelWatch(db: D1Database, propertyCode: string) {
         currentState: "No guest-card metric row is available in D1 for this property.",
         evidence: { propertyCode },
         nextMove: "Route the guest-card daily export into D1.",
-        ownerRole: "Data Pond / MarketingOps",
+        ownerRole: "Data Pond / WebOps",
       }],
       actions: [],
     };
@@ -983,7 +983,7 @@ async function mediaWatch(db: D1Database, property: CommunityRow, propertyCode: 
       currentState: `Missing latest rows for: ${missing.join(", ")}.`,
       evidence: { missing },
       nextMove: "Confirm the missing media lanes are mirrored before the weekly Captain Brief.",
-      ownerRole: "MarketingOps",
+      ownerRole: "WebOps",
     }] : [],
     actions: [],
   };
@@ -1088,7 +1088,7 @@ async function reputationWatch(db: D1Database, property: CommunityRow, propertyC
       currentState: `Component scores need attention: listing completeness ${listingCompleteness ?? "n/a"}, review response ${reviewResponse ?? "n/a"}.`,
       evidence: insight,
       nextMove: "Use the component read to assign a specific listing or response cleanup task.",
-      ownerRole: "Reputation / MarketingOps",
+      ownerRole: "Reputation / WebOps",
     });
   }
   if (negativePct !== null && negativePct >= 20) {
@@ -2245,7 +2245,7 @@ async function getCaptainMarketingInsight(db: D1Database, property: CommunityRow
     [property.id, property.id]
   );
   const conversionRead = buildMarketingConversionRead(traffic, availableInterest);
-  const opsRead = buildMarketingOpsRead(opsSummary);
+  const opsRead = buildWebOpsRead(opsSummary);
   const friction = buildCancelDenialRead(cancelRows);
   const sourceSpendRead = buildSourceSpendRead(costRows, sourcePerformanceRows, adKeywordRows, spendRows, opsRead);
   const latestDates = [
@@ -2278,7 +2278,7 @@ async function getCaptainMarketingInsight(db: D1Database, property: CommunityRow
   };
 }
 
-function buildMarketingOpsRead(opsSummary: Record<string, unknown> | null) {
+function buildWebOpsRead(opsSummary: Record<string, unknown> | null) {
   if (!opsSummary) {
     return {
       status: "missing_source",
@@ -2553,7 +2553,7 @@ function buildSourceSpendRead(
   sourcePerformanceRows: Record<string, unknown>[],
   adKeywordRows: Record<string, unknown>[],
   spendRows: Record<string, unknown>[],
-  opsRead: ReturnType<typeof buildMarketingOpsRead>
+  opsRead: ReturnType<typeof buildWebOpsRead>
 ) {
   const latestCostDate = costRows[0]?.report_date ? String(costRows[0].report_date) : null;
   const latestSpendDate = spendRows[0]?.report_date ? String(spendRows[0].report_date) : null;
@@ -2749,7 +2749,7 @@ function buildMarketingNarrative(
   status: string,
   conversionRead: ReturnType<typeof buildMarketingConversionRead>,
   friction: ReturnType<typeof buildCancelDenialRead>,
-  opsRead: ReturnType<typeof buildMarketingOpsRead>
+  opsRead: ReturnType<typeof buildWebOpsRead>
 ): string {
   if (status === "missing_source") {
     return "Marketing BI daily packet is not yet available to the Captain runtime.";
@@ -2757,7 +2757,7 @@ function buildMarketingNarrative(
   const m = conversionRead.metrics;
   const opsMetrics = opsRead.metrics;
   const opsLeadRead = opsMetrics?.leadsT30 !== null && opsMetrics?.leadsT30 !== undefined
-    ? `Marketing Ops Summary shows ${opsMetrics.leadsT30} T30 leads (${formatPct(opsMetrics.leadsT30Var)} YoY)`
+    ? `Web Ops Summary shows ${opsMetrics.leadsT30} T30 leads (${formatPct(opsMetrics.leadsT30Var)} YoY)`
     : null;
   const demand = opsLeadRead ? opsLeadRead : conversionRead.posture === "demand_expanding"
     ? `Demand is expanding: T30 guest cards are ${formatPct(m.t30Yoy)} year over year`
@@ -2775,7 +2775,7 @@ function buildMarketingNarrative(
     ? ` The highest visible conversion friction is ${topReason.reason} (${topReason.count}).`
     : "";
   const opsPressure = opsRead.status === "grounded" && opsMetrics
-    ? ` Marketing Ops posture is ${opsRead.posture}; occupancy ${formatPctNoSign(opsMetrics.occupancy)}, ATR30 ${formatPctNoSign(opsMetrics.atr30)}, close ratio ${formatPctNoSign(opsMetrics.closeRatio)}.`
+    ? ` Web Ops posture is ${opsRead.posture}; occupancy ${formatPctNoSign(opsMetrics.occupancy)}, ATR30 ${formatPctNoSign(opsMetrics.atr30)}, close ratio ${formatPctNoSign(opsMetrics.closeRatio)}.`
     : "";
   return `${conversion}${opsPressure}${frictionRead}`;
 }
@@ -3008,7 +3008,7 @@ async function getCaptainPeerFamilyRead(
       status: "missing_source",
       peerSet: [],
       borrowableTactics: [],
-      message: "Peer-family read needs Marketing Ops Summary rows for the subject property.",
+      message: "Peer-family read needs Web Ops Summary rows for the subject property.",
     };
   }
   const region = String(subject.region ?? "").trim();
@@ -3152,7 +3152,7 @@ function buildDiagnosticRecommendations(input: Record<string, any>) {
       owner_role: "Marketing",
       expected_lift: input.guestCardsNeededAtCurrentClose ? `close a ${input.guestCardsNeededAtCurrentClose} guest-card requirement if conversion holds` : "improve qualified demand",
       evidence: {
-        source: "Marketing Ops Summary / Marketing BI traffic conversions / cost-per-conversion",
+        source: "Web Ops Summary / Marketing BI traffic conversions / cost-per-conversion",
         posture: input.marketingInsight?.opsRead?.posture ?? input.marketingInsight?.conversionRead?.posture ?? null,
         currentT30GuestCards: input.currentT30GuestCards,
         projectedTrafficGap: input.marketingInsight?.opsRead?.metrics?.projectedTrafficGap ?? null,
@@ -3170,7 +3170,7 @@ function buildDiagnosticRecommendations(input: Record<string, any>) {
       owner_role: "Sales / Property",
       expected_lift: "raise close ratio enough that current demand can convert",
       evidence: {
-        source: "Marketing Ops Summary close ratio and cancel/denial detail",
+        source: "Web Ops Summary close ratio and cancel/denial detail",
         closeRatio: input.closeRatio,
         topFrictionReasons: input.marketingInsight?.cancelDenial?.topReasons ?? [],
       },
@@ -3211,7 +3211,7 @@ function buildDiagnosticRecommendations(input: Record<string, any>) {
     add({
       constraint: "source_quality",
       action: "Resolve missing source lanes before publishing high-confidence pricing, staffing, or spend directives.",
-      owner_role: "Data Pond / MarketingOps",
+      owner_role: "Data Pond / WebOps",
       expected_lift: "raise diagnostic confidence",
       evidence: { sourceGaps: input.sourceGaps },
       proof_check: "Next brief shows source lanes current and recommendation confidence upgraded.",
@@ -3321,7 +3321,7 @@ async function groupedRows(
 async function getCaptainSourceCoverage(db: D1Database, propertyCode: string, ga4PropertyId?: string | null) {
   const sourceChecks = [
     { key: "aptiq", label: "AptIQ Watchlist", table: "aptiq_watchlist_summaries", dateColumn: "report_date", propertyColumn: "property_id", propertyValue: propertyCode, group: "market" },
-    { key: "marketingOps", label: "Marketing Ops Summary", table: "marketing_ops_summary_rows", dateColumn: "report_date", propertyColumn: "property_id", propertyValue: propertyCode, group: "operating" },
+    { key: "marketingOps", label: "Web Ops Summary", table: "marketing_ops_summary_rows", dateColumn: "report_date", propertyColumn: "property_id", propertyValue: propertyCode, group: "operating" },
     { key: "trafficConversions", label: "T30/T90 Funnel", table: "marketing_bi_traffic_conversions_full", dateColumn: "report_date", propertyColumn: "property_id", propertyValue: propertyCode, group: "funnel" },
     { key: "guestCards", label: "Guest Cards", table: "guest_card_metrics", dateColumn: "run_date", propertyColumn: "property_code", propertyValue: propertyCode, group: "funnel" },
     { key: "cancelDenial", label: "Cancel / Denial", table: "marketing_cancel_denial_by_source", dateColumn: "report_date", propertyColumn: "property_id", propertyValue: propertyCode, group: "funnel" },

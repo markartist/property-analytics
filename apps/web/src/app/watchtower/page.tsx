@@ -900,24 +900,25 @@ function CommandRailCard({
   icon: React.ComponentType<{ className?: string }>;
 }) {
   const classes =
-    tone === "emerald" ? "border-emerald-200 bg-emerald-50"
-      : tone === "amber" ? "border-amber-200 bg-amber-50"
-        : tone === "rose" ? "border-rose-200 bg-rose-50"
-          : "border-cyan-200 bg-cyan-50";
+    tone === "emerald" ? "border-[#7DCAC2]/24 bg-[#7DCAC2]/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_18px_50px_rgba(125,202,194,0.08)]"
+      : tone === "amber" ? "border-[#BD4830]/28 bg-[#BD4830]/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_18px_50px_rgba(189,72,48,0.08)]"
+        : tone === "rose" ? "border-[#E02472]/28 bg-[#E02472]/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_18px_50px_rgba(224,36,114,0.08)]"
+          : "border-[#5A81CF]/28 bg-[#5A81CF]/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_18px_50px_rgba(90,129,207,0.08)]";
   const iconTone =
-    tone === "emerald" ? "text-emerald-600"
-      : tone === "amber" ? "text-amber-600"
-        : tone === "rose" ? "text-rose-600"
-          : "text-cyan-600";
+    tone === "emerald" ? "text-[#7DCAC2]"
+      : tone === "amber" ? "text-[#BD4830]"
+        : tone === "rose" ? "text-[#E02472]"
+          : "text-[#5A81CF]";
 
   return (
-    <div className={`rounded-[26px] border p-4 ${classes}`}>
+    <div className={`watchtower-rail-card relative overflow-hidden rounded-[26px] p-4 text-white ${classes}`}>
+      <div className={`absolute inset-x-5 top-0 h-px ${tone === "emerald" ? "bg-[#7DCAC2]/70" : tone === "amber" ? "bg-[#BD4830]/70" : tone === "rose" ? "bg-[#E02472]/70" : "bg-[#5A81CF]/70"}`} aria-hidden="true" />
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+        <p className="text-[11px] uppercase tracking-[0.22em] text-white/52">{label}</p>
         <Icon className={`h-5 w-5 ${iconTone}`} />
       </div>
-      <p className="text-2xl font-semibold text-slate-900">{value}</p>
-      <p className="mt-2 text-sm text-slate-600">{detail}</p>
+      <p className="text-3xl font-semibold tracking-tight text-white">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-white/64">{detail}</p>
     </div>
   );
 }
@@ -2194,8 +2195,8 @@ export default function WatchtowerPage() {
   }, [data, landscape, now, retryFocusMode, retryScope, retrySearchQuery, selectedSource]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(12,74,110,0.12),_transparent_26%),radial-gradient(circle_at_20%_20%,_rgba(8,145,178,0.08),_transparent_24%),linear-gradient(180deg,_#f8fbfd_0%,_#edf4f8_45%,_#f8fafc_100%)]">
-      <div className="border-b border-slate-200/70 bg-[#061722] px-6 py-5 shadow-[0_20px_80px_rgba(6,23,34,0.3)]">
+    <div className="watchtower-stage min-h-screen">
+      <div className="border-b border-white/10 bg-[#061722]/82 px-6 py-5 shadow-[0_20px_80px_rgba(6,23,34,0.3)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1480px] items-center gap-4">
           <Link href="/pond" className="text-white/50 transition-colors hover:text-white">
             <ArrowLeft className="h-5 w-5" />
@@ -2274,18 +2275,18 @@ export default function WatchtowerPage() {
             </section>
 
             {derived.effectiveSelectedSource && (
-              <section className="rounded-[26px] border border-cyan-200 bg-cyan-50 px-5 py-4">
+              <section className="watchtower-panel rounded-[26px] px-5 py-4 text-white">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-cyan-700">Source Focus</p>
-                    <p className="mt-1 text-sm font-medium text-slate-900">
+                    <p className="text-xs uppercase tracking-[0.22em] text-[#7DCAC2]">Source Focus</p>
+                    <p className="mt-1 text-sm font-medium text-white/86">
                       Watchtower is focused on {formatSourceName(derived.effectiveSelectedSource)} across queue, drift, issues, and timeline context.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setSelectedSource(null)}
-                    className="rounded-full border border-cyan-200 bg-white px-4 py-2 text-sm font-medium text-cyan-700 transition-colors hover:bg-cyan-100"
+                    className="rounded-full border border-white/16 bg-white/8 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/12 hover:text-white"
                   >
                     Clear Focus
                   </button>
@@ -2293,9 +2294,9 @@ export default function WatchtowerPage() {
               </section>
             )}
 
-            <section className="overflow-hidden rounded-[36px] border border-[#123846] bg-[#071924] text-white shadow-[0_40px_140px_rgba(7,25,36,0.38)]">
+            <section className="watchtower-signal-shell rounded-[36px] text-white">
               <div className="grid xl:grid-cols-[1.18fr_0.82fr]">
-                <div className="border-b border-white/10 p-6 md:p-8 xl:border-b-0 xl:border-r">
+                <div className="watchtower-horizon border-b border-white/10 p-6 md:p-8 xl:border-b-0 xl:border-r">
                   <div className="mb-5 flex flex-wrap items-center gap-3">
                     <Badge className={closureBadge(data.daily_collection_status.closure.state)}>
                       {data.daily_collection_status.closure.state === "complete"
@@ -2367,7 +2368,7 @@ export default function WatchtowerPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_center,_rgba(34,211,238,0.12),_transparent_48%),linear-gradient(180deg,_rgba(255,255,255,0.06),_rgba(255,255,255,0.02))] p-6">
+                    <div className="watchtower-panel rounded-[32px] p-6">
                       <div className="mb-5 flex items-center justify-between">
                         <div>
                           <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Operations Core</p>
@@ -2375,13 +2376,13 @@ export default function WatchtowerPage() {
                         </div>
                         <Sparkles className="h-5 w-5 text-cyan-200" />
                       </div>
-                      <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-5">
+                      <div className="rounded-[28px] border border-white/10 bg-[#061722]/58 p-5">
                         <div className="mb-4 flex items-center gap-3">
                           <div className={`h-3 w-3 rounded-full ${derived.coreSummaryTone === "emerald" ? "bg-emerald-400" : derived.coreSummaryTone === "amber" ? "bg-amber-400" : "bg-rose-400"} shadow-[0_0_20px_rgba(255,255,255,0.18)]`} />
                           <p className="text-sm font-medium text-white">{derived.nextAction}</p>
                         </div>
                         <div className="grid gap-3 text-sm text-slate-300">
-                          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <div className="watchtower-signal-node flex items-center justify-between rounded-2xl px-4 py-3">
                             <span className="text-slate-400">Unresolved sources</span>
                             <span className="font-semibold text-white">
                               {data.daily_collection_status.closure.unresolved_sources.length > 0
@@ -2389,20 +2390,20 @@ export default function WatchtowerPage() {
                                 : "0"}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <div className="watchtower-signal-node flex items-center justify-between rounded-2xl px-4 py-3">
                             <span className="text-slate-400">Fresh lanes</span>
                             <span className="font-semibold text-white">{derived.freshCount}</span>
                           </div>
-                          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <div className="watchtower-signal-node flex items-center justify-between rounded-2xl px-4 py-3">
                             <span className="text-slate-400">Warnings / stale</span>
                             <span className="font-semibold text-white">{derived.warningCount} / {derived.staleCount}</span>
                           </div>
-                          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <div className="watchtower-signal-node flex items-center justify-between rounded-2xl px-4 py-3">
                             <span className="text-slate-400">Advisory lanes</span>
                             <span className="font-semibold text-white">{derived.advisoryFreshCount}/{derived.advisoryTotalCount || 0}</span>
                           </div>
                         </div>
-                        <div className="mt-4 rounded-[24px] border border-white/10 bg-white/5 p-4">
+                        <div className="watchtower-signal-node mt-4 rounded-[24px] p-4">
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Seven-Day Collection Motion</p>
                             <Activity className="h-4 w-4 text-cyan-300" />
@@ -2440,7 +2441,7 @@ export default function WatchtowerPage() {
                     />
                   </div>
 
-                  <div className="mt-8 rounded-[30px] border border-white/10 bg-white/5 p-5 backdrop-blur">
+                  <div className="watchtower-panel mt-8 rounded-[30px] p-5">
                     <div className="mb-4 flex items-center justify-between gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Signal Rail</p>
@@ -2454,7 +2455,7 @@ export default function WatchtowerPage() {
 
                 <div className="p-6 md:p-8">
                   <div className="grid gap-4">
-                    <Card className="border-white/10 bg-white/5 text-white shadow-none backdrop-blur">
+                    <Card className="watchtower-panel border-white/10 text-white shadow-none">
                       <CardContent className="p-5">
                         <div className="mb-4 flex items-center justify-between">
                           <div>
@@ -2467,7 +2468,7 @@ export default function WatchtowerPage() {
                           {derived.focusHottestSources.map((src) => {
                             const info = freshnessInfo(src);
                             return (
-                              <div key={src.source_key} className="rounded-[24px] border border-white/10 bg-slate-950/35 p-4">
+                              <div key={src.source_key} className="watchtower-signal-node rounded-[24px] p-4">
                                 <div className="mb-2 flex items-start justify-between gap-3">
                                   <div>
                                     <p className="text-sm font-semibold text-white">{src.source_label}</p>
@@ -2485,7 +2486,7 @@ export default function WatchtowerPage() {
                       </CardContent>
                     </Card>
 
-                    <Card className="border-white/10 bg-white/5 text-white shadow-none backdrop-blur">
+                    <Card className="watchtower-panel border-white/10 text-white shadow-none">
                       <CardContent className="p-5">
                         <div className="mb-4 flex items-center justify-between">
                           <div>
@@ -2495,24 +2496,24 @@ export default function WatchtowerPage() {
                           <Binary className="h-5 w-5 text-cyan-200" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="rounded-[24px] border border-emerald-400/20 bg-emerald-500/10 p-4">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-200">Fresh</p>
+                          <div className="rounded-[24px] border border-[#7DCAC2]/22 bg-[#7DCAC2]/10 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-[#7DCAC2]">Fresh</p>
                             <p className="mt-2 text-3xl font-bold text-white">{derived.freshCount}</p>
                           </div>
-                          <div className="rounded-[24px] border border-amber-400/20 bg-amber-500/10 p-4">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-amber-200">Warnings</p>
+                          <div className="rounded-[24px] border border-[#BD4830]/24 bg-[#BD4830]/12 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-[#D6D6D2]">Warnings</p>
                             <p className="mt-2 text-3xl font-bold text-white">{derived.warningCount}</p>
                           </div>
-                          <div className="rounded-[24px] border border-rose-400/20 bg-rose-500/10 p-4">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-rose-200">Stale / Missing</p>
+                          <div className="rounded-[24px] border border-[#E02472]/24 bg-[#E02472]/12 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-[#F6F6F5]">Stale / Missing</p>
                             <p className="mt-2 text-3xl font-bold text-white">{derived.staleCount}</p>
                           </div>
-                          <div className="rounded-[24px] border border-cyan-400/20 bg-cyan-500/10 p-4">
-                            <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-200">Active Sources</p>
+                          <div className="rounded-[24px] border border-[#5A81CF]/24 bg-[#5A81CF]/12 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-[#D6D6D2]">Active Sources</p>
                             <p className="mt-2 text-3xl font-bold text-white">{data.daily_collection_status.summary.sources_active}</p>
                           </div>
                         </div>
-                        <div className="mt-4 rounded-[24px] border border-white/10 bg-slate-950/30 p-4">
+                        <div className="watchtower-signal-node mt-4 rounded-[24px] p-4">
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Source Coverage Pulse</p>
                             <Radar className="h-4 w-4 text-cyan-200" />
@@ -2522,7 +2523,7 @@ export default function WatchtowerPage() {
                       </CardContent>
                     </Card>
 
-                    <Card className="border-white/10 bg-white/5 text-white shadow-none backdrop-blur">
+                    <Card className="watchtower-panel border-white/10 text-white shadow-none">
                       <CardContent className="p-5">
                         <div className="mb-4 flex items-center justify-between">
                           <div>
@@ -2535,7 +2536,7 @@ export default function WatchtowerPage() {
                       </CardContent>
                     </Card>
 
-                    <Card className="border-white/10 bg-white/5 text-white shadow-none backdrop-blur">
+                    <Card className="watchtower-panel border-white/10 text-white shadow-none">
                       <CardContent className="p-5">
                         <div className="mb-4 flex items-center justify-between">
                           <div>

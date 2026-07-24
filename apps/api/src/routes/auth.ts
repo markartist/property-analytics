@@ -143,7 +143,7 @@ auth.post("/magic-link", async (c) => {
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
           <div style="text-align: center; margin-bottom: 32px;">
             <h1 style="color: #15284B; font-size: 24px; margin: 0;">The Data Pond</h1>
-            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">MarketingOps</p>
+            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">WebOps</p>
           </div>
           <p style="color: #334155; font-size: 16px; line-height: 1.5;">Click the button below to sign in. This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
           <div style="text-align: center; margin: 32px 0;">

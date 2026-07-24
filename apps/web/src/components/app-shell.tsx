@@ -7,12 +7,12 @@ import { RestrictedSurfaceCard } from "@/components/shared/restricted-surface-ca
 import { canAccessPath } from "@/lib/permissions";
 import { Loader2 } from "lucide-react";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/steps"];
 
 function ShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { loading, user } = useAuth();
-  const isPublic = PUBLIC_PATHS.includes(pathname ?? "");
+  const isPublic = PUBLIC_PATHS.some((path) => pathname === path || pathname?.startsWith(`${path}/`));
 
   // Public pages get no sidebar, no loading gate
   if (isPublic) return <>{children}</>;

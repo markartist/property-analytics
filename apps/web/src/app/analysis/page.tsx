@@ -365,7 +365,7 @@ export default function AnalysisPage() {
           title="POP Brief"
           titleIcon={BarChart2}
           subtitle="Property Operations Performance Brief"
-          byline="by MarketingOps"
+          byline="by WebOps"
           weekDate={weekDate}
           onWeekDateChange={setWeekDate}
           communityId={communityId}

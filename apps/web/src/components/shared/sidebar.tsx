@@ -110,7 +110,7 @@ export function Sidebar() {
               Data Pond
             </span>
             <span className="mt-3 block text-[11px] font-normal uppercase tracking-[0.34em] text-white/40">
-              By MarketingOps
+              By WebOps
             </span>
           </div>
         </div>
@@ -201,7 +201,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2">
             <Image src="/velo-current.svg" alt="" width={14} height={8} className="shrink-0 opacity-50" />
             <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
-              Produced by MarketingOps
+              Produced by WebOps
             </p>
           </div>
         </div>

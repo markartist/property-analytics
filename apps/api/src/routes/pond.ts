@@ -22,6 +22,8 @@ import releaseReconcileSnapshotConfig from "../../../../config/release_reconcile
 const pond = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 pond.use("*", requireAuth);
 
+const SUNSET_SOURCE_KEYS = new Set(["semrush"]);
+
 interface Insight {
   id: string;
   icon: "trending-up" | "trending-down" | "alert" | "trophy" | "zap" | "bar-chart";
@@ -1289,10 +1291,13 @@ pond.get("/insights", async (c) => {
   const sourceFreshness = await queryAll<{ source_key: string; latest_date: string }>(
     db, `SELECT source_key, latest_date FROM data_freshness`
   ).catch(() => [] as { source_key: string; latest_date: string }[]);
+  const activeSourceFreshness = sourceFreshness.filter(
+    (r) => !SUNSET_SOURCE_KEYS.has(String(r.source_key || "").toLowerCase())
+  );
 
   let freshness: Record<string, string | null>;
-  if (sourceFreshness.length > 0) {
-    freshness = Object.fromEntries(sourceFreshness.map((r) => [r.source_key, r.latest_date]));
+  if (activeSourceFreshness.length > 0) {
+    freshness = Object.fromEntries(activeSourceFreshness.map((r) => [r.source_key, r.latest_date]));
   } else {
     // Fallback to D1 table dates
     const tableFreshness = await queryAll<{ tbl: string; latest: string }>(
@@ -1305,8 +1310,8 @@ pond.get("/insights", async (c) => {
   }
 
   // Use the most recent date across all data sources for the "Latest" badge
-  const latestAcrossSources = sourceFreshness.length > 0
-    ? sourceFreshness.reduce((max, r) => (r.latest_date > max ? r.latest_date : max), "")
+  const latestAcrossSources = activeSourceFreshness.length > 0
+    ? activeSourceFreshness.reduce((max, r) => (r.latest_date > max ? r.latest_date : max), "")
     : weekDate;
 
   const surface = {

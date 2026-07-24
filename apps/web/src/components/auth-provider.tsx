@@ -36,7 +36,7 @@ export function useAuth() {
   return React.useContext(AuthContext);
 }
 
-const PUBLIC_PATHS = ["/login", "/login/verify"];
+const PUBLIC_PATHS = ["/login", "/login/verify", "/steps"];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null);
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     // Don't check auth on public paths
-    if (PUBLIC_PATHS.includes(pathname ?? "")) {
+    if (PUBLIC_PATHS.some((path) => pathname === path || pathname?.startsWith(`${path}/`))) {
       setLoading(false);
       return;
     }

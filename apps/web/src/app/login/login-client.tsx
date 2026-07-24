@@ -215,7 +215,7 @@ export default function LoginClient() {
             <Waves className="h-5 w-5 text-[#0D5E6D]/60" style={{ color: "rgba(255,255,255,0.5)" }} />
             <h1 className="text-3xl font-bold tracking-tight text-white">The Data Pond</h1>
           </div>
-          <p className="text-sm text-white/50">MarketingOps Analytics</p>
+          <p className="text-sm text-white/50">WebOps Analytics</p>
           <p className="mt-2 text-xs text-white/35">
             Styled like Data Pond. Secured at the edge by Cloudflare Access.
           </p>
@@ -420,7 +420,7 @@ export default function LoginClient() {
         </div>
 
         <div className="mt-8 text-center text-xs text-white/30">
-          <p>MarketingOps · Internal Use Only</p>
+          <p>WebOps · Internal Use Only</p>
         </div>
       </div>
     </div>

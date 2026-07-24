@@ -10,6 +10,7 @@ import { canAccessOffering, getRoleTitle, type AppRole, type SurfaceId } from "@
 import {
   Anchor, ArrowLeft, ArrowRight, Loader2,
   FileText, BarChart2, Megaphone, Calendar, TrendingUp, Download, Bot, Compass,
+  UserRoundCheck,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -47,11 +48,11 @@ const DOCK_CARDS: DockCard[] = [
   {
     key: "pib",
     surfaceId: "pibBuilder",
-    href: "/pib",
+    href: "/analysis/pib",
     icon: FileText,
-    title: "PIB Dashboard",
+    title: "PIB Builder",
     subtitle: "Portfolio Intelligence Brief",
-    description: "Full portfolio rollup with sortable property table — CIR, sessions, occupancy, PageSpeed, reviews, ad spend, and more.",
+    description: "Build, email, open, save, and schedule property PIB reports from the governed Builder.",
     accentColor: "border-l-[#15284B]",
     iconBg: "bg-[#15284B]",
     metrics: (d) => {
@@ -158,6 +159,18 @@ const DOCK_CARDS: DockCard[] = [
     description: "Bridge into EVS from The Pond — mixed human-and-machine validation posture, BrowserStack-adjacent workflow context, and governed next moves.",
     accentColor: "border-l-teal-500",
     iconBg: "bg-teal-600",
+    metrics: () => [],
+  },
+  {
+    key: "employee-photo-audit",
+    surfaceId: "evs",
+    href: "/evs/employee-photo-audit",
+    icon: UserRoundCheck,
+    title: "Employee Photo Audit",
+    subtitle: "Legacy team photo QA",
+    description: "Ad-hoc BrowserStack report for legacy #meet-the-team sections, listing missing employee photos by property and employee.",
+    accentColor: "border-l-[#3D66B9]",
+    iconBg: "bg-[#294782]",
     metrics: () => [],
   },
   {

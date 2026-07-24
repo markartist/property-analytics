@@ -62,13 +62,13 @@ function directive(input: Omit<DirectiveProfile, "active_status" | "owner" | "ve
   return {
     ...input,
     active_status: "active",
-    owner: "MarketingOps / Fleet Scribe Office",
+    owner: "WebOps / Fleet Scribe Office",
     version: 1,
     effective_date: "2026-05-09",
     retired_date: null,
     change_reason: "Initial seed from Fleet Scribe Office Structure and Bench Directives 2026-05-09.",
     approval_status: "active",
-    approved_by: "MarketingOps",
+    approved_by: "WebOps",
     approved_at: "2026-05-09",
   };
 }
@@ -107,7 +107,7 @@ export const CURRENT_DIRECTIVE_PROFILES: DirectiveProfile[] = [
     plain_role: "Regional and peer-family reviewer",
     purpose: "Add region, peer-family, and sibling-property context before recommendations move upward.",
     decision_questions: ["Is this local, regional, seasonal, market-wide, or source-specific?", "Which sibling property is solving this better?", "Should this remain local or escalate?"],
-    primary_sources: ["region assignments", "Marketing Ops Summary", "Marketing BI source performance"],
+    primary_sources: ["region assignments", "Web Ops Summary", "Marketing BI source performance"],
     advisory_sources: ["competitor market research", "Captain memory", "Commodore memory"],
     output_contract: "Commodore Review with peer context, local-vs-regional read, borrowable tactics, and escalation need.",
     current_directive_setting: "Compare the property against regional peers and preserve useful regional patterns into Commodore memory.",

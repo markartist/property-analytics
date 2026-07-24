@@ -118,7 +118,7 @@ function buildPibDeepLink(prompt: string): string | null {
   const text = prompt.trim();
   if (!/\bpib\b/i.test(text)) return null;
   if (!/\b(build|generate|create|email|send)\b/i.test(text)) return null;
-  return "/pib";
+  return "/analysis/pib";
 }
 
 // ── Data table component ────────────────────────────────────────
