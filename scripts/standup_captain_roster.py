@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,7 @@ from wrangler_auth import build_runtime_env, npx_wrangler_prefix  # noqa: E402
 
 OUT_DIR = ROOT / "reports" / "captains_log" / "activation"
 WRANGLER_TOML = API_DIR / "wrangler.toml"
-CURRENT_NOW = "2026-05-04T00:00:00Z"
+CURRENT_NOW = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 PILOT_PROPERTY_NAMES = [
     "Champions Green",
@@ -496,6 +497,7 @@ def support_agent_sql(scope: CaptainScope, now: str) -> list[str]:
     statements: list[str] = []
     for role in ROLES:
         agent_key = f"{token}_{role['suffix']}"
+        agent_name = f"{captain_name.replace('Captain ', '')} {role['display']}"
         scope_payload = {
             **role["scope"],
             "property_code": property_code,
@@ -509,7 +511,7 @@ def support_agent_sql(scope: CaptainScope, now: str) -> list[str]:
             "INSERT OR REPLACE INTO captain_support_agents "
             "(id, property_id, captain_memory_entry_id, agent_key, agent_name, role, responsibility, source_scope_json, cadence, status, created_at, updated_at) VALUES "
             f"({sql_literal(f'agent_{property_code.lower()}_{agent_key}')}, {sql_literal(property_code)}, {sql_literal(memory_id)}, "
-            f"{sql_literal(agent_key)}, {sql_literal(f'{captain_name.replace('Captain ', '')} {role['display']}')}, "
+            f"{sql_literal(agent_key)}, {sql_literal(agent_name)}, "
             f"{sql_literal(role['role'])}, {sql_literal(role['responsibility'])}, "
             f"{sql_literal(json.dumps(scope_payload, separators=(',', ':')))}, {sql_literal(role['cadence'])}, 'active', {sql_literal(now)}, {sql_literal(now)});"
         )
@@ -642,8 +644,6 @@ def main() -> None:
     parser.add_argument("--apply-remote", action="store_true", help="Apply the generated SQL to remote D1.")
     parser.add_argument("--output", type=Path, default=None)
     args = parser.parse_args()
-    global CURRENT_NOW
-    CURRENT_NOW = "2026-05-04T00:00:00Z"
 
     explicit_scope = args.portfolio or args.spotlight or args.pilot
     include_portfolio = args.portfolio

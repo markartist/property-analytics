@@ -35,6 +35,10 @@ from Data_Collection.utils.property_identity import (  # noqa: E402
 NS_WORD = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 NS_SHEET = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 URL_PATTERN = re.compile(r"https?://[^\s)]+", re.IGNORECASE)
+COMPACT_ROLLOUT_PATTERN = re.compile(
+    r"(?P<name>.+?)\s*Pastel:\s*.*?\s*Staging:\s*(?P<target_url>https?://[A-Za-z0-9.-]+\.kinsta\.cloud/?)",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 def slugify(value: str) -> str:
@@ -47,7 +51,9 @@ def normalize_url(value: str) -> str:
 
 
 def clean_docx_label(value: str) -> str:
-    return str(value or "").replace("\xa0", " ").strip(" -—\t: ")
+    text = str(value or "").replace("\xa0", " ")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip(" -—\t: ")
 
 
 def extract_docx_lines(docx_path: Path) -> list[str]:
@@ -70,9 +76,22 @@ def extract_docx_lines(docx_path: Path) -> list[str]:
 
 
 def parse_docx_targets(docx_path: Path) -> list[dict[str, str]]:
+    lines = extract_docx_lines(docx_path)
+    compact_text = "\n".join(lines)
+    compact_matches = list(COMPACT_ROLLOUT_PATTERN.finditer(compact_text))
+    if compact_matches:
+        targets: list[dict[str, str]] = []
+        for match in compact_matches:
+            name = clean_docx_label(match.group("name"))
+            url = normalize_url(match.group("target_url"))
+            if name and url:
+                targets.append({"input_name": name, "target_url": url})
+        if targets:
+            return targets
+
     targets: list[dict[str, str]] = []
     current_name = ""
-    for line in extract_docx_lines(docx_path):
+    for line in lines:
         match = URL_PATTERN.search(line)
         if not match:
             if not re.search(r"please see|julie's email|juli[e’']s email", line, re.IGNORECASE):

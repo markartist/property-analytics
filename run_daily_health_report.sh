@@ -9,12 +9,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-export HOME="${HOME:-/Users/mark}"
-export USER="${USER:-mark}"
-export LOGNAME="${LOGNAME:-mark}"
-export KSM_PROFILE="${KSM_PROFILE:-marketingops}"
-export KSM_CLOUDFLARE_TOKEN_NOTATION="${KSM_CLOUDFLARE_TOKEN_NOTATION:-keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password}"
-export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Frameworks/Python.framework/Versions/3.12/bin:${PATH:-}"
+# shellcheck source=/Users/mark/Property_Analytics/scripts/lib/keeper_runtime.sh
+source "/Users/mark/Property_Analytics/scripts/lib/keeper_runtime.sh"
+pa_load_marketingops_keeper_runtime
+pa_require_marketingops_keeper_ready
 
 LOG_DIR="$HOME/Library/Logs/Venterra"
 mkdir -p "$LOG_DIR"

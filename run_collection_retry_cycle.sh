@@ -10,11 +10,10 @@ set -euo pipefail
 ROOT="/Users/mark/Property_Analytics"
 cd "$ROOT"
 
-export HOME="/Users/mark"
-export USER="mark"
-export LOGNAME="mark"
-export KSM_PROFILE="${KSM_PROFILE:-marketingops}"
-export KSM_GOOGLE_ADS_CONFIG_UID="${KSM_GOOGLE_ADS_CONFIG_UID:-ulYC1ol6Wg_5U2xvpM6sUw}"
+# shellcheck source=/Users/mark/Property_Analytics/scripts/lib/keeper_runtime.sh
+source "$ROOT/scripts/lib/keeper_runtime.sh"
+pa_load_marketingops_keeper_runtime
+pa_require_marketingops_keeper_ready
 
 LOG_DIR="$HOME/Library/Logs/Venterra"
 mkdir -p "$LOG_DIR"
