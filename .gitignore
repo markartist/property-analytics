@@ -3,10 +3,28 @@ credentials/
 config/*
 !config/
 !config/cloudflare_analytics.yaml
+!config/portfolio_resi_edge_stabilization/
+!config/portfolio_resi_edge_stabilization/*.json
 !config/release_reconcile_snapshot.json
 !evs/config/
 !evs/config/portfolio-functionality-qa-contract.json
 !evs/config/portfolio-qa-batches.json
+
+# Keeper one-time credential migration artifacts
+.env
+keeper_import*.json
+keeper_*_import*.json
+*_keeper_import.json
+credentials*.csv
+credentials*.xlsx
+credential*.csv
+credential*.xlsx
+*credentials*.csv
+*credentials*.xlsx
+*credential*.csv
+*credential*.xlsx
+keeper-migration-*.tmp
+keeper-migration-*.log
 
 # Ad-hoc reports (may contain sensitive data)
 AdHoc_Reports/
@@ -64,6 +82,10 @@ data/*.db
 # Generated outputs
 reports/
 exports/
+output/
+tmp/
+.codex/visualizations/
+resi_archetype_site/
 *.docx
 outputs/
 apps/web/public/pilot-kpi/
