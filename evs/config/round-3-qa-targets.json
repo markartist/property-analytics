@@ -1,0 +1,402 @@
+[
+  {
+    "property_id": "GA4KV",
+    "property_name": "Retreat at Kedron Village",
+    "property_code": "GA4KV",
+    "target_url": "https://retreatatkedronvillage.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 1,
+      "input_name": "Retreat at Kedron Village",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-retreat-at-kedron-village/",
+      "property_code": "GA4KV",
+      "community_id": "b535df1b-ab66-53bc-9223-c748dd500acc"
+    }
+  },
+  {
+    "property_id": "TX4RB",
+    "property_name": "Riverbend",
+    "property_code": "TX4RB",
+    "target_url": "https://riverbendb.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 2,
+      "input_name": "Riverbend",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/riverbend/",
+      "property_code": "TX4RB",
+      "community_id": "22ed7e48-9ba1-4ba6-9774-ebb7702da551"
+    }
+  },
+  {
+    "property_id": "TX4SP",
+    "property_name": "San Palmilla",
+    "property_code": "TX4SP",
+    "target_url": "https://sanpalmilla.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 3,
+      "input_name": "San Palmilla",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/san-palmilla/",
+      "property_code": "TX4SP",
+      "community_id": "be012825-6321-4e32-bbc9-8ea6559477cd"
+    }
+  },
+  {
+    "property_id": "TX4SH",
+    "property_name": "Shadowbrooke",
+    "property_code": "TX4SH",
+    "target_url": "https://shadowbrooke.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 4,
+      "input_name": "Shadowbrooke",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/shadowbrooke/",
+      "property_code": "TX4SH",
+      "community_id": "ccb759c9-20cb-459c-b5da-316562a1b644"
+    }
+  },
+  {
+    "property_id": "TX4SL",
+    "property_name": "Silverbrooke",
+    "property_code": "TX4SL",
+    "target_url": "https://silverbrooke.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 5,
+      "input_name": "Silverbrooke",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/silverbrooke/",
+      "property_code": "TX4SL",
+      "community_id": "36224bee-fb29-4461-8e3b-28fe2c2da25b"
+    }
+  },
+  {
+    "property_id": "TX4SO",
+    "property_name": "South Shore Lakes",
+    "property_code": "TX4SO",
+    "target_url": "https://southshorelakes.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 6,
+      "input_name": "South Shore Lakes",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/south-shore-lakes/",
+      "property_code": "TX4SO",
+      "community_id": "a668f584-c2c2-402f-84c3-7405de40b3a9"
+    }
+  },
+  {
+    "property_id": "TX4AN",
+    "property_name": "St. Andrews",
+    "property_code": "TX4AN",
+    "target_url": "https://standrewso.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 7,
+      "input_name": "St. Andrews",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/st-andrews/",
+      "property_code": "TX4AN",
+      "community_id": "3db34d27-134b-4756-b154-bd9eeb0ffc5c"
+    }
+  },
+  {
+    "property_id": "KY4SC",
+    "property_name": "Steeplechase",
+    "property_code": "KY4SC",
+    "target_url": "https://steeplechaseapartments.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 8,
+      "input_name": "Steeplechase Apartments",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/steeplechase/",
+      "property_code": "KY4SC",
+      "community_id": "2bfc48bb-7a3c-45a0-8344-21ba26c96409"
+    }
+  },
+  {
+    "property_id": "TX4ST",
+    "property_name": "Stonecreek Ranch",
+    "property_code": "TX4ST",
+    "target_url": "https://stonecreekranch.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 9,
+      "input_name": "Stonecreek Ranch",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/stonecreek-ranch/",
+      "property_code": "TX4ST",
+      "community_id": "a49ec15b-71b0-419d-ae9a-624e73dbf51c"
+    }
+  },
+  {
+    "property_id": "TX4SK",
+    "property_name": "Stoneridge on the 8",
+    "property_code": "TX4SK",
+    "target_url": "https://stoneridgeonthe8.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 10,
+      "input_name": "Stoneridge on the 8",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/stoneridge-on-the-8/",
+      "property_code": "TX4SK",
+      "community_id": "b0a82414-77d6-49ed-8a31-39099821095a"
+    }
+  },
+  {
+    "property_id": "FL4TA",
+    "property_name": "The Anatole",
+    "property_code": "FL4TA",
+    "target_url": "https://theanatole.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 11,
+      "input_name": "The Anatole",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-anatole/",
+      "property_code": "FL4TA",
+      "community_id": "9c34af7c-1737-4ee5-9473-5a15de00c88b"
+    }
+  },
+  {
+    "property_id": "TX4GH",
+    "property_name": "The Cape at Grand Harbor",
+    "property_code": "TX4GH",
+    "target_url": "https://thecapeatgrandharbor.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 12,
+      "input_name": "The Cape at Grand Harbor",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-cape-at-grand-harbor/",
+      "property_code": "TX4GH",
+      "community_id": "e73c76b2-4a4b-44ba-883e-7b270a9be617"
+    }
+  },
+  {
+    "property_id": "GA4MX",
+    "property_name": "The Maddox",
+    "property_code": "GA4MX",
+    "target_url": "https://themaddox.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 13,
+      "input_name": "The Maddox",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-maddox/",
+      "property_code": "GA4MX",
+      "community_id": "f63b63c9-1ef4-4369-ab8d-44ce96e60b78"
+    }
+  },
+  {
+    "property_id": "KY4MP",
+    "property_name": "The Metropolitan",
+    "property_code": "KY4MP",
+    "target_url": "https://themetropolitan.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 14,
+      "input_name": "The Metropolitan",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-metropolitan/",
+      "property_code": "KY4MP",
+      "community_id": "11376862-a8e9-4c35-9997-8307130f0a7b"
+    }
+  },
+  {
+    "property_id": "OK4TP",
+    "property_name": "The Parker",
+    "property_code": "OK4TP",
+    "target_url": "https://theparkerapartmenthomes.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 15,
+      "input_name": "The Parker Apartment Homes",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-parker/",
+      "property_code": "OK4TP",
+      "community_id": "c3020a28-ee2f-4b02-8ae5-c709882a3db8"
+    }
+  },
+  {
+    "property_id": "TX4PX",
+    "property_name": "The Phoenix",
+    "property_code": "TX4PX",
+    "target_url": "https://thephoenix.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 16,
+      "input_name": "The Phoenix",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-phoenix/",
+      "property_code": "TX4PX",
+      "community_id": "10d9af5a-c54d-4137-a204-f995a15aebee"
+    }
+  },
+  {
+    "property_id": "AR4PB",
+    "property_name": "The Pointe Bentonville",
+    "property_code": "AR4PB",
+    "target_url": "https://thepointebentonville.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 17,
+      "input_name": "The Pointe Bentonville",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-pointe-bentonville/",
+      "property_code": "AR4PB",
+      "community_id": "5d2b4e24-d6cb-42ba-8aa2-adfd7c81d440"
+    }
+  },
+  {
+    "property_id": "TX4GM",
+    "property_name": "The Retreat",
+    "property_code": "TX4GM",
+    "target_url": "https://theretreat.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 18,
+      "input_name": "The Retreat",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-retreat/",
+      "property_code": "TX4GM",
+      "community_id": "d097c652-b7ff-4508-8816-44c565cabed2"
+    }
+  },
+  {
+    "property_id": "KY4TG",
+    "property_name": "The Reserves of Thomas Glen",
+    "property_code": "KY4TG",
+    "target_url": "https://thereservesofthomasglen.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 19,
+      "input_name": "The Reserves of Thomas Glen",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/reserves-of-thomas-glen/",
+      "property_code": "KY4TG",
+      "community_id": "c886943c-c675-4594-82d9-ce7e7017c208"
+    }
+  },
+  {
+    "property_id": "FL4RL",
+    "property_name": "The Retreat at Lakeland",
+    "property_code": "FL4RL",
+    "target_url": "https://theretreatatlakeland.kinsta.cloud/",
+    "environment": "round_3_kinsta",
+    "metadata": {
+      "batch_id": "round_3_property_websites",
+      "batch_order": 20,
+      "input_name": "The Retreat at Lakeland",
+      "official_workbook_sheet": null,
+      "source_docx": "/Users/mark/Library/CloudStorage/OneDrive-VenterraRealty(Canada)Inc/Resources/Round 3 Portfolio Rollout.docx",
+      "source_extra_targets": null,
+      "official_workbook": null,
+      "identity_match_source": "property_identity_matrix",
+      "canonical_website_url": "https://venterraliving.com/apartments/the-retreat-at-lakeland/",
+      "property_code": "FL4RL",
+      "community_id": "f2236f7e-cd81-4a44-9baf-925c66b6c4bf"
+    }
+  }
+]

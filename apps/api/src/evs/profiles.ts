@@ -101,6 +101,18 @@ export const EVS_PROFILE_REGISTRY: Record<EvsValidationProfile, EvsProfileDefini
     supported_device_profiles: ["iphone_safari", "desktop_chrome"],
     provider: "browserstack",
   },
+  employee_photo_integrity: {
+    id: "employee_photo_integrity",
+    name: "Employee Photo Integrity",
+    description: "Checks the legacy team section for visible employee headshots and likely silhouette placeholders.",
+    goals: [
+      "Find the rendered legacy team/experience-leader section",
+      "Inspect visible staff image URLs and rendered image characteristics",
+      "Flag default silhouettes, unresolved lazy placeholders, or missing staff images",
+    ],
+    supported_device_profiles: ["desktop_chrome"],
+    provider: "browserstack",
+  },
 };
 
 export function getProfileDefinition(profileId: EvsValidationProfile): EvsProfileDefinition {

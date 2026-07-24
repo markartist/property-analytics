@@ -62,6 +62,7 @@ export const EvsValidationProfile = z.enum([
   "apartments_pricing_mobile_journey",
   "contact_form_checks",
   "lead_attribution_e2e",
+  "employee_photo_integrity",
 ]);
 export type EvsValidationProfile = z.infer<typeof EvsValidationProfile>;
 

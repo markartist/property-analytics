@@ -65,6 +65,10 @@ const PROFILE_OPTIONS = [
     id: "lead_attribution_e2e",
     label: "Lead Attribution E2E",
   },
+  {
+    id: "employee_photo_integrity",
+    label: "Employee Photo Integrity",
+  },
 ] as const;
 
 const DEVICE_OPTIONS = [

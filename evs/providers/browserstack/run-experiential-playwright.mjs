@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import crypto from "node:crypto";
 import { _android as android, chromium, webkit } from "playwright";
 
 const TARGET_URL = process.env.TARGET_URL;
@@ -4444,39 +4445,154 @@ async function collectAttributionRuntimeEvidence(page, trackingId) {
     .evaluate((code) => {
       const cfg = window.resiPixelConfig || null;
       const selectedLeadSource =
-        cfg?.leadSources?.find?.((source) => source && source.code === code) || null;
+        cfg?.leadSources?.find?.(
+          (source) => source && (source.code === code || source.external_source_key === code)
+        ) || null;
+      const safeJson = (value) => {
+        if (!value) return null;
+        try {
+          return JSON.parse(value);
+        } catch {
+          return value;
+        }
+      };
       const storage = {};
       for (let index = 0; index < localStorage.length; index += 1) {
         const key = localStorage.key(index);
         if (!key || !/resi|attribution|lead|source|pixel/i.test(key)) continue;
         const value = localStorage.getItem(key);
-        try {
-          storage[key] = JSON.parse(value || "null");
-        } catch {
-          storage[key] = value;
-        }
+        storage[key] = safeJson(value || "null");
       }
+      const pixelAttribution =
+        window.ResiPixel && typeof window.ResiPixel.getAttribution === "function"
+          ? window.ResiPixel.getAttribution()
+          : null;
+      const formAttributionFields = Array.from(document.querySelectorAll("form")).map((form, formIndex) => {
+        const fields = Array.from(form.querySelectorAll("input[type='hidden']")).filter((input) =>
+          /^(marketing_source|resi_|source)/i.test(input.name || "")
+        );
+        return {
+          form_index: formIndex,
+          form_class: form.getAttribute("class") || "",
+          is_resi_ajax_lead: form.hasAttribute("data-ajax-lead"),
+          fields: fields.map((input) => ({
+            name: input.name || "",
+            value: input.value || "",
+          })),
+        };
+      });
       return {
         resi_pixel_config: cfg
           ? {
               external_source_field: cfg.externalSourceField || null,
               fallback_phone: cfg.fallbackPhone || null,
+              lead_source_count: Array.isArray(cfg.leadSources) ? cfg.leadSources.length : null,
               selected_lead_source: selectedLeadSource
                 ? {
                     name: selectedLeadSource.name || null,
                     code: selectedLeadSource.code || null,
+                    external_source_key: selectedLeadSource.external_source_key || null,
+                    source: selectedLeadSource.source || null,
                     phone: selectedLeadSource.phone || null,
                     email: selectedLeadSource.email || null,
                   }
                 : null,
             }
           : null,
+        pixel_attribution: pixelAttribution,
         local_storage: storage,
+        form_attribution_fields: formAttributionFields,
       };
     }, trackingId)
     .catch((error) => ({
       error: error instanceof Error ? error.message : String(error),
     }));
+}
+
+function firstAttributionMetadata(runtimeEvidence) {
+  return (
+    runtimeEvidence?.pixel_attribution ||
+    runtimeEvidence?.local_storage?.resi_attribution_metadata ||
+    null
+  );
+}
+
+function runtimeExternalSourceFieldMatches(runtimeEvidence, queryParam) {
+  return (
+    String(runtimeEvidence?.resi_pixel_config?.external_source_field || "").toLowerCase() ===
+    String(queryParam || "").toLowerCase()
+  );
+}
+
+function runtimeAttributionMatches(runtimeEvidence, scenario) {
+  const metadata = firstAttributionMetadata(runtimeEvidence);
+  const keyMatches =
+    Boolean(scenario.tracking_id) &&
+    String(metadata?.external_source_key || "").toUpperCase() ===
+      String(scenario.tracking_id || "").toUpperCase();
+  const methodMatches = String(metadata?.method || "").toLowerCase() === "query";
+  const queryContainsTracking =
+    Boolean(scenario.tracking_id) && String(metadata?.query || "").includes(String(scenario.tracking_id));
+  const phoneMatched =
+    !scenario.expected_phone || phoneMatches(metadata?.phone || "", scenario.expected_phone);
+  return {
+    matched: keyMatches && methodMatches && queryContainsTracking && phoneMatched,
+    external_source_key_matched: keyMatches,
+    method_matched: methodMatches,
+    query_contains_tracking_id: queryContainsTracking,
+    phone_matched: phoneMatched,
+    attribution_metadata: metadata,
+  };
+}
+
+function formAttributionHiddenFieldEvidence(runtimeEvidence, scenario, queryParam) {
+  const forms = runtimeEvidence?.form_attribution_fields || [];
+  const flattened = forms.flatMap((form) =>
+    (form.fields || []).map((field) => ({
+      ...field,
+      form_index: form.form_index,
+      form_class: form.form_class,
+      is_resi_ajax_lead: form.is_resi_ajax_lead,
+    }))
+  );
+  const valuesFor = (name) =>
+    flattened
+      .filter((field) => field.name === name)
+      .map((field) => field.value)
+      .filter(Boolean);
+  const sourceKeys = valuesFor("resi_source_key");
+  const sourceMethods = valuesFor("resi_source_method");
+  const externalSourceFields = valuesFor("resi_external_source_field");
+  const sourceQueries = valuesFor("resi_source_query");
+  const sourceNames = valuesFor("resi_source_name");
+  const trackingId = String(scenario.tracking_id || "").toUpperCase();
+  const keyMatched = sourceKeys.some((value) => String(value || "").toUpperCase() === trackingId);
+  const methodMatched = sourceMethods.some((value) => String(value || "").toLowerCase() === "query");
+  const fieldMatched = externalSourceFields.some(
+    (value) => String(value || "").toLowerCase() === String(queryParam || "").toLowerCase()
+  );
+  const queryMatched = sourceQueries.some((value) => String(value || "").includes(String(scenario.tracking_id || "")));
+  const sourceNameSelected = sourceNames.some((value) => {
+    const normalized = String(value || "").toLowerCase();
+    return normalized && normalized !== "default" && normalized !== "unknown";
+  });
+  const resiAjaxLeadForms = forms.filter((form) => form.is_resi_ajax_lead).length;
+  return {
+    matched: keyMatched && methodMatched && fieldMatched && queryMatched && sourceNameSelected,
+    form_count: forms.length,
+    resi_ajax_lead_form_count: resiAjaxLeadForms,
+    external_source_key_matched: keyMatched,
+    method_matched: methodMatched,
+    external_source_field_matched: fieldMatched,
+    query_contains_tracking_id: queryMatched,
+    source_name_selected: sourceNameSelected,
+    source_keys: sourceKeys.slice(0, 10),
+    source_methods: sourceMethods.slice(0, 10),
+    external_source_fields: externalSourceFields.slice(0, 10),
+    source_queries: sourceQueries.slice(0, 10),
+    source_names: sourceNames.slice(0, 10),
+    fields: flattened.slice(0, 60),
+  };
 }
 
 function attributionUrlForScenario(scenario) {
@@ -4676,6 +4792,7 @@ async function exerciseLeadFormDraft(page, scenario) {
     timeout: STEP_TIMEOUT_MS,
   });
   await page.waitForTimeout(1000);
+  const attributionRuntimeBeforeFill = await collectAttributionRuntimeEvidence(page, scenario.tracking_id);
 
   const formCount = await page.locator("form").count().catch(() => 0);
   const firstName = await fillFirstVisible(page, [
@@ -4735,6 +4852,7 @@ async function exerciseLeadFormDraft(page, scenario) {
 
   const nameFieldsFilled = firstName.filled || lastName.filled ? [firstName, lastName].filter((field) => field.filled).length : fullName.filled ? 2 : 0;
   const requiredFieldsFilled = nameFieldsFilled + [email, phone, bedrooms].filter((field) => field.filled).length;
+  const attributionRuntimeAfterFill = await collectAttributionRuntimeEvidence(page, scenario.tracking_id);
   const validationBeforeSubmit = await collectLeadFormValidationState(page);
   const submitEnabled = process.env.EVS_ENABLE_SYNTHETIC_FORM_SUBMIT === "1";
   let submitAttempt = null;
@@ -4778,6 +4896,8 @@ async function exerciseLeadFormDraft(page, scenario) {
   return {
     identity,
     form_count: formCount,
+    attribution_runtime_before_fill: attributionRuntimeBeforeFill,
+    attribution_runtime_after_fill: attributionRuntimeAfterFill,
     fields: { first_name: firstName, last_name: lastName, full_name: fullName, email, phone, bedrooms, max_rent: maxRent, message },
     required_fields_filled: requiredFieldsFilled,
     validation_before_submit: validationBeforeSubmit,
@@ -5033,6 +5153,9 @@ async function collectLeadAttributionE2E(page, findings, jsErrors, deviceProfile
     const trackingEvidence = trackingEvidenceFromHtml(html, loadedUrl, scenario.tracking_id);
     const emailEvidence = emailEvidenceFromHtml(html, scenario.expected_email);
     const runtimeEvidence = await collectAttributionRuntimeEvidence(page, scenario.tracking_id);
+    const expectedQueryParam = commonMetadata.query_param || "id";
+    const pixelConfigFieldMatched = runtimeExternalSourceFieldMatches(runtimeEvidence, expectedQueryParam);
+    const runtimeAttributionEvidence = runtimeAttributionMatches(runtimeEvidence, scenario);
     const selectedLeadSource = runtimeEvidence?.resi_pixel_config?.selected_lead_source || null;
     if (selectedLeadSource?.email) {
       emailEvidence.designated_recipient_email = selectedLeadSource.email;
@@ -5070,6 +5193,35 @@ async function collectLeadAttributionE2E(page, findings, jsErrors, deviceProfile
 
     findings.push(
       leadAttributionFinding(
+        `lead_attribution_pixel_config_${scenario.tracking_id}`,
+        `Pixel source-field config: ${label}`,
+        pixelConfigFieldMatched ? "pass" : "warn",
+        pixelConfigFieldMatched
+          ? `Resi Pixel is configured to resolve advertiser URLs from the expected '${expectedQueryParam}' query parameter.`
+          : `Resi Pixel is not configured to resolve advertiser URLs from the expected '${expectedQueryParam}' query parameter.`,
+        {
+          ...scenarioMetadata,
+          expected_external_source_field: expectedQueryParam,
+          actual_external_source_field: runtimeEvidence?.resi_pixel_config?.external_source_field || null,
+          runtime_evidence: runtimeEvidence,
+        }
+      )
+    );
+
+    findings.push(
+      leadAttributionFinding(
+        `lead_attribution_pixel_runtime_${scenario.tracking_id}`,
+        `Pixel runtime attribution: ${label}`,
+        runtimeAttributionEvidence.matched ? "pass" : "warn",
+        runtimeAttributionEvidence.matched
+          ? "Resi Pixel runtime attribution selected the expected tracking code from the query string."
+          : "Resi Pixel runtime attribution did not select the expected tracking code from the query string.",
+        { ...scenarioMetadata, pixel_runtime_attribution: runtimeAttributionEvidence, runtime_evidence: runtimeEvidence }
+      )
+    );
+
+    findings.push(
+      leadAttributionFinding(
         `lead_attribution_phone_swap_${scenario.tracking_id}`,
         `Phone swap: ${label}`,
         scenario.expected_phone ? (phoneEvidence.matched ? "pass" : "warn") : "skipped",
@@ -5097,6 +5249,27 @@ async function collectLeadAttributionE2E(page, findings, jsErrors, deviceProfile
     );
 
     const formDraft = await exerciseLeadFormDraft(page, scenario);
+    const formAttributionEvidence = formAttributionHiddenFieldEvidence(
+      formDraft.attribution_runtime_after_fill || formDraft.attribution_runtime_before_fill,
+      scenario,
+      expectedQueryParam
+    );
+    findings.push(
+      leadAttributionFinding(
+        `lead_attribution_form_hidden_fields_${scenario.tracking_id}`,
+        `Form hidden attribution fields: ${label}`,
+        formAttributionEvidence.matched ? "pass" : "warn",
+        formAttributionEvidence.matched
+          ? "Contact form hidden attribution fields contain the expected source key, source field, query, and query attribution method."
+          : "Contact form hidden attribution fields did not prove the expected source attribution before submit.",
+        {
+          ...scenarioMetadata,
+          form_attribution_evidence: formAttributionEvidence,
+          runtime_evidence:
+            formDraft.attribution_runtime_after_fill || formDraft.attribution_runtime_before_fill || null,
+        }
+      )
+    );
     findings.push(
       leadAttributionFinding(
         `lead_attribution_form_draft_${scenario.tracking_id}`,
@@ -5140,6 +5313,498 @@ async function collectLeadAttributionE2E(page, findings, jsErrors, deviceProfile
     }
   }
 
+  await pushJavascriptFinding(findings, jsErrors);
+  return findings;
+}
+
+const EMPLOYEE_PLACEHOLDER_IMAGE_URLS = new Set([
+  "https://online.venterraliving.com/encasa_content/user/images/external/dd4ccf8a-5854-4427-abb7-0fcccc94c721.jpg",
+]);
+const EMPLOYEE_PLACEHOLDER_IMAGE_ETAGS = new Set([
+  '"a2d-524ba0ab64a04"',
+  "a2d-524ba0ab64a04",
+  '"f0863ffcfa7639f756c3a4f5639aacc9"',
+  "f0863ffcfa7639f756c3a4f5639aacc9",
+  '"9890dba158b5e58068de5761fa76a36e"',
+  "9890dba158b5e58068de5761fa76a36e",
+]);
+const EMPLOYEE_PLACEHOLDER_IMAGE_SHA256 = new Set([
+  "9448f8a1159c9b14e3e1b9d8eab1a6ddf88d26e1f888a34cef430c756e4e6e1",
+  "77b5e0954e80c3d6c76d1c6a2685aca4d4a4ba8dc0ab66418eec6ab6718c3c95",
+  "d277002de30ac28a717463f4555b470edf3ab0b4fb08b8ac9a1848c6eb8ec3b4",
+  "0824284573c31d32e62ad00067e3afe75bdc7d47d27b6ad979381bb9adf15ff9",
+]);
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function inspectEmployeeImageSource(url) {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+  const normalizedUrl = url.split("#")[0];
+  const signature = {
+    url: normalizedUrl,
+    content_length: null,
+    content_type: null,
+    last_modified: null,
+    etag: null,
+    sha256: null,
+    source_placeholder_match: false,
+    source_placeholder_reasons: [],
+    source_inspection_error: null,
+  };
+
+  try {
+    const head = await fetchWithTimeout(normalizedUrl, { method: "HEAD", redirect: "follow" });
+    signature.content_length = Number(head.headers.get("content-length") || 0) || null;
+    signature.content_type = head.headers.get("content-type");
+    signature.last_modified = head.headers.get("last-modified");
+    signature.etag = head.headers.get("etag");
+  } catch (error) {
+    signature.source_inspection_error = error instanceof Error ? error.message : String(error);
+  }
+
+  const knownUrl = EMPLOYEE_PLACEHOLDER_IMAGE_URLS.has(normalizedUrl);
+  const knownEtag = signature.etag ? EMPLOYEE_PLACEHOLDER_IMAGE_ETAGS.has(signature.etag) : false;
+  if (knownUrl) signature.source_placeholder_reasons.push("known_placeholder_url");
+  if (knownEtag) signature.source_placeholder_reasons.push("known_placeholder_etag");
+
+  const shouldHash = signature.content_length == null || signature.content_length <= 150000 || knownUrl || knownEtag;
+  if (shouldHash) {
+    try {
+      const response = await fetchWithTimeout(normalizedUrl, { method: "GET", redirect: "follow" });
+      const buffer = Buffer.from(await response.arrayBuffer());
+      signature.sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+      if (EMPLOYEE_PLACEHOLDER_IMAGE_SHA256.has(signature.sha256)) {
+        signature.source_placeholder_reasons.push("known_placeholder_sha256");
+      }
+      if (!signature.content_length) signature.content_length = buffer.length;
+      if (!signature.content_type) signature.content_type = response.headers.get("content-type");
+      if (!signature.last_modified) signature.last_modified = response.headers.get("last-modified");
+      if (!signature.etag) signature.etag = response.headers.get("etag");
+    } catch (error) {
+      signature.source_inspection_error = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  signature.source_placeholder_match = signature.source_placeholder_reasons.length > 0;
+  return signature;
+}
+
+async function enrichEmployeePhotoSourceEvidence(evidence) {
+  const images = evidence?.images || [];
+  const urls = [...new Set(images.map((image) => image.url || image.src || image.lazy_src || image.background_src || "").filter(Boolean))];
+  const signatures = new Map();
+  for (const url of urls) {
+    signatures.set(url, await inspectEmployeeImageSource(url));
+  }
+  for (const image of images) {
+    const key = image.url || image.src || image.lazy_src || image.background_src || "";
+    const signature = signatures.get(key) || null;
+    image.source_signature = signature;
+    image.source_placeholder_match = Boolean(signature?.source_placeholder_match);
+    if (image.source_placeholder_match) image.silhouette_detected = true;
+  }
+  evidence.silhouette_count = images.filter((image) => image.silhouette_detected).length;
+  evidence.source_placeholder_count = images.filter((image) => image.source_placeholder_match).length;
+}
+
+async function openResiExperienceLeaders(page) {
+  const actions = [];
+  const clickText = async (pattern, label) => {
+    const locator = page.getByText(pattern).first();
+    if ((await locator.count().catch(() => 0)) === 0) return false;
+    await locator.scrollIntoViewIfNeeded({ timeout: 8000 }).catch(() => {});
+    await locator.click({ timeout: 8000 }).catch(async () => {
+      await locator.click({ timeout: 8000, force: true });
+    });
+    actions.push(label);
+    await page.waitForTimeout(900);
+    return true;
+  };
+
+  await clickText(/Live Easy Perks/i, "clicked_live_easy_perks");
+
+  const expanded = await page
+    .evaluate(() => {
+      const normalize = (value) => (value || "").trim().replace(/\s+/g, " ");
+      const visible = (node) => {
+        if (!node) return false;
+        const rect = node.getBoundingClientRect();
+        const style = window.getComputedStyle(node);
+        return rect.width > 10 && rect.height > 10 && style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || "1") > 0.05;
+      };
+      const links = [...document.querySelectorAll("a, button, [role='button'], .uk-accordion-title, [data-fs-switcher-nav-link]")];
+      const trigger = links.find((node) => /meet your experience leaders/i.test(normalize(node.textContent)));
+      if (!trigger) return { found: false, expanded: false };
+      trigger.scrollIntoView({ block: "center", inline: "nearest" });
+      const navItem = trigger.closest("[data-fs-switcher-nav] [data-index], .fs-switcher__nav-item, li, .uk-accordion") || trigger.parentElement;
+      const content =
+        navItem?.querySelector?.(".uk-accordion-content, .fs-switcher__nav-item-content") ||
+        navItem?.nextElementSibling ||
+        null;
+      const hasVisiblePeople = Boolean(
+        content?.querySelector?.("img, [style*='background-image' i], h3, [class*='title' i], [class*='meta' i]") && visible(content)
+      );
+      const ariaExpanded = trigger.getAttribute("aria-expanded");
+      if (ariaExpanded === "false" || !hasVisiblePeople) {
+        trigger.click();
+        return { found: true, expanded: false, clicked: true };
+      }
+      return { found: true, expanded: true, clicked: false };
+    })
+    .catch((error) => ({ found: false, expanded: false, error: error instanceof Error ? error.message : String(error) }));
+  if (expanded.clicked) actions.push("expanded_experience_leaders");
+  await page.waitForTimeout(1200);
+  return { actions, expanded };
+}
+
+async function collectEmployeePhotoIntegrity(page, findings, jsErrors) {
+  logProgress("Employee photo integrity start", { property_id: PROPERTY_ID, target_url: TARGET_URL });
+  await page.waitForLoadState("domcontentloaded", { timeout: STEP_TIMEOUT_MS }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const resiNavigation = await openResiExperienceLeaders(page);
+
+  const sectionInfo = await page
+    .evaluate(() => {
+      const normalize = (value) => (value || "").trim().replace(/\s+/g, " ");
+      const rolePattern = /\b(manager|regional|contact|leader|resident success|make ready|better living|experience maker)\b/i;
+      const resiHeading = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6, [class*='heading' i], [class*='title' i]")].find((node) =>
+        /experience leaders|property team/i.test(normalize(node.textContent))
+      );
+      const resiSection = (() => {
+        if (!resiHeading) return null;
+        let node = resiHeading;
+        while (node && node !== document.body) {
+          const text = normalize(node.textContent);
+          const imageCount = node.querySelectorAll("img, [style*='background-image' i]").length;
+          if (imageCount >= 2 && rolePattern.test(text)) return node;
+          node = node.parentElement;
+        }
+        return resiHeading.parentElement;
+      })();
+      const preferredSection =
+        document.querySelector("#meet-the-team, .meet-the-team, [id*='meet-the-team' i], [class*='meet-the-team' i]") || resiSection;
+      const candidates = [
+        ...(preferredSection ? [preferredSection] : []),
+        ...document.querySelectorAll(
+          ".meet-the-team, [class*='meet-the-team' i], [id*='meet-the-team' i], [class*='team' i], [id*='team' i], section, main > div, body > div"
+        ),
+      ];
+      const scored = candidates
+        .map((node) => {
+          const text = normalize(node.textContent).slice(0, 1200);
+          const rect = node.getBoundingClientRect();
+          let score = 0;
+          if (node === preferredSection) score += 12;
+          if (/world-class living experience/i.test(text)) score += 8;
+          if (/meet the team/i.test(text)) score += 5;
+          if (/meet your experience leaders/i.test(text)) score += 12;
+          if (/live easy perks/i.test(text)) score += 5;
+          if (/experience leader/i.test(text)) score += 4;
+          if (/community manager|maintenance manager|regional contact|resident success specialist|make ready/i.test(text)) score += 4;
+          if (/meet-the-team/i.test(`${node.id || ""} ${node.className || ""}`)) score += 5;
+          if (rect.height > 150 && rect.width > 250) score += 1;
+          return { node, text, rect, score };
+        })
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      const selected = scored[0]?.node || null;
+      if (!selected) {
+        return { found: false, reason: "No team/staff section matched expected legacy copy or class names." };
+      }
+      selected.setAttribute("data-evs-employee-photo-section", "true");
+      selected.scrollIntoView({ block: "center", inline: "nearest" });
+      const rect = selected.getBoundingClientRect();
+      const selectedText = normalize(selected.textContent);
+      const isLegacyTeamSection = /world-class living experience|meet the team/i.test(selectedText);
+      const isResiTeamSection = /experience leaders|property team/i.test(selectedText);
+      if (location.hostname !== "venterraliving.com" && !isResiTeamSection) {
+        return {
+          found: false,
+          reason: "Resi/Pilot team section was not detected; non-legacy pages require an Experience Leaders or Property Team section.",
+          text_sample: selectedText.slice(0, 500),
+        };
+      }
+      if (location.hostname === "venterraliving.com" && !isLegacyTeamSection && !isResiTeamSection) {
+        return {
+          found: false,
+          reason: "Legacy team section was not detected after scoring candidate sections.",
+          text_sample: selectedText.slice(0, 500),
+        };
+      }
+      return {
+        found: true,
+        section_mode: isResiTeamSection ? "resi_experience_leaders" : "legacy_meet_the_team",
+        text_sample: selectedText.slice(0, 500),
+        rect: {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        },
+      };
+    })
+    .catch((error) => ({
+      found: false,
+      reason: error instanceof Error ? error.message : String(error),
+    }));
+
+  await page.waitForTimeout(1800);
+
+  if (!sectionInfo.found) {
+    findings.push({
+      kind: "employee_photo_integrity",
+      label: "Employee photo integrity",
+      status: "warn",
+      message: "Legacy team section was not detected on the rendered property page.",
+      metadata: { section: sectionInfo, resi_navigation: resiNavigation },
+      evidence_refs: [],
+    });
+    await pushJavascriptFinding(findings, jsErrors);
+    return findings;
+  }
+
+  const evidence = await page
+    .evaluate(() => {
+      const normalize = (value) => (value || "").trim().replace(/\s+/g, " ");
+      const textLines = (node) =>
+        (node.innerText || node.textContent || "")
+          .split(/\n+/)
+          .map(normalize)
+          .filter(Boolean);
+      const rolePattern = /\b(manager|regional|contact|leader|director|specialist|consultant|leasing|maintenance|assistant|coordinator|associate|representative|make ready|certified|better living|experience maker)\b/i;
+      const genericLinePattern =
+        /world-class|our goal|core values|meet the team|live it|love it|experience possible|communities with people/i;
+      const isLikelyName = (line) =>
+        line.length >= 5 &&
+        line.length <= 55 &&
+        !rolePattern.test(line) &&
+        !genericLinePattern.test(line) &&
+        /^[A-Z][A-Za-z'.-]+(?:\s+(?:[A-Z][A-Za-z'.-]+|[A-Z]\.)){1,4}$/.test(line);
+      const inferPerson = (lines) => {
+        const employeeName = lines.find(isLikelyName) || "";
+        const employeeRole = lines.find((line) => line !== employeeName && rolePattern.test(line) && line.length <= 110) || "";
+        return { employee_name: employeeName, employee_role: employeeRole };
+      };
+      const section = document.querySelector("[data-evs-employee-photo-section='true']");
+      if (!section) return { images: [], unresolved_lazy_placeholders: [], section_missing_after_scroll: true };
+
+      const backgroundUrl = (node) => {
+        const style = window.getComputedStyle(node);
+        const match = /url\(["']?(.+?)["']?\)/.exec(style.backgroundImage || "");
+        return match ? match[1] : "";
+      };
+
+      const visibleRect = (node) => {
+        const rect = node.getBoundingClientRect();
+        const style = window.getComputedStyle(node);
+        const visible =
+          rect.width >= 70 &&
+          rect.height >= 70 &&
+          style.visibility !== "hidden" &&
+          style.display !== "none" &&
+          Number(style.opacity || "1") > 0.05;
+        return {
+          visible,
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        };
+      };
+
+      const imageMetrics = (img) => {
+        try {
+          if (!img.complete || !img.naturalWidth || !img.naturalHeight) return null;
+          const canvas = document.createElement("canvas");
+          canvas.width = 32;
+          canvas.height = 32;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let sampled = 0;
+          let saturationTotal = 0;
+          let lowSaturation = 0;
+          let colorful = 0;
+          let luminanceTotal = 0;
+          for (let index = 0; index < data.length; index += 4) {
+            const alpha = data[index + 3];
+            if (alpha < 20) continue;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const saturation = max === 0 ? 0 : (max - min) / max;
+            sampled += 1;
+            saturationTotal += saturation;
+            luminanceTotal += 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            if (saturation < 0.06) lowSaturation += 1;
+            if (saturation > 0.14) colorful += 1;
+          }
+          if (!sampled) return null;
+          return {
+            sampled_pixels: sampled,
+            average_saturation: Number((saturationTotal / sampled).toFixed(4)),
+            low_saturation_ratio: Number((lowSaturation / sampled).toFixed(4)),
+            colorful_pixel_ratio: Number((colorful / sampled).toFixed(4)),
+            average_luminance: Number((luminanceTotal / sampled).toFixed(1)),
+          };
+        } catch (error) {
+          return {
+            unavailable: true,
+            reason: error instanceof Error ? error.message : String(error),
+          };
+        }
+      };
+
+      const cardInfoFor = (node) => {
+        const candidates = [];
+        let cursor = node.parentElement;
+        while (cursor && cursor !== document.body && candidates.length < 10) {
+          const lines = textLines(cursor);
+          const text = lines.join(" ");
+          const classText = `${cursor.getAttribute("class") || ""} ${cursor.id || ""}`;
+          const headingCount = cursor.querySelectorAll("h1, h2, h3, h4, [class*='title' i]").length;
+          let score = 0;
+          if (/\b(staff|member|employee|person|profile|leader)\b/i.test(classText)) score += 5;
+          if (rolePattern.test(text)) score += 4;
+          if (lines.some(isLikelyName)) score += 4;
+          if (headingCount === 1) score += 10;
+          if (headingCount > 1) score -= 12;
+          if (text.length > 0 && text.length <= 260) score += 3;
+          if (text.length > 520) score -= 4;
+          if (cursor === section) score -= 8;
+          candidates.push({ node: cursor, lines, text, score, heading_count: headingCount });
+          if (cursor === section) break;
+          cursor = cursor.parentElement;
+        }
+        const selected =
+          candidates
+            .filter((candidate) => candidate.text.length > 0)
+            .sort((a, b) => b.score - a.score || a.text.length - b.text.length)[0] || { node: node.parentElement || node, lines: [], text: "" };
+        return {
+          node: selected.node,
+          lines: selected.lines,
+          text: normalize(selected.text).slice(0, 260),
+          ...inferPerson(selected.lines),
+        };
+      };
+
+      const rawNodes = [...section.querySelectorAll("img, [style*='background-image' i]")];
+      const images = [];
+      const unresolvedLazyPlaceholders = [];
+      for (const node of rawNodes) {
+        const rect = visibleRect(node);
+        if (!rect.visible) continue;
+        const isImage = node.tagName === "IMG";
+        const src = isImage ? node.currentSrc || node.getAttribute("src") || "" : "";
+        const lazySrc = isImage
+          ? node.getAttribute("data-lazy-src") || node.getAttribute("data-src") || node.getAttribute("data-original") || ""
+          : "";
+        const bgSrc = !isImage ? backgroundUrl(node) : "";
+        const bestUrl = [src, lazySrc, bgSrc].find((value) => value && !value.startsWith("data:image/svg+xml")) || src || lazySrc || bgSrc;
+        const card = cardInfoFor(node);
+        const text = card.text;
+        const classText = `${node.getAttribute("class") || ""} ${card.node.getAttribute?.("class") || ""}`;
+        const alt = isImage ? node.getAttribute("alt") || "" : "";
+        const metrics = isImage ? imageMetrics(node) : null;
+        const placeholderUrl = /placeholder|silhouette|no[-_ ]?photo|no[-_ ]?image|missing[-_ ]?photo|default[-_ ]?(staff|person|avatar|employee|profile)|avatar[-_ ]?default|generic[-_ ]?(staff|person|avatar)/i.test(
+          `${bestUrl} ${alt} ${classText}`
+        );
+        const unresolvedLazy =
+          isImage &&
+          src.startsWith("data:image/svg+xml") &&
+          lazySrc &&
+          rect.width >= 100 &&
+          rect.height >= 100;
+        const visualPlaceholder =
+          metrics &&
+          !metrics.unavailable &&
+          metrics.sampled_pixels > 500 &&
+          metrics.average_saturation < 0.045 &&
+          metrics.low_saturation_ratio > 0.88 &&
+          metrics.colorful_pixel_ratio < 0.08;
+        const silhouetteDetected = Boolean(placeholderUrl || visualPlaceholder);
+        const record = {
+          url: bestUrl,
+          src,
+          lazy_src: lazySrc,
+          background_src: bgSrc,
+          alt,
+          text,
+          employee_name: card.employee_name,
+          employee_role: card.employee_role,
+          card_text_lines: card.lines,
+          class_text: normalize(classText).slice(0, 180),
+          rect,
+          natural_width: isImage ? node.naturalWidth || 0 : null,
+          natural_height: isImage ? node.naturalHeight || 0 : null,
+          metrics,
+          placeholder_url_match: placeholderUrl,
+          visual_placeholder_match: visualPlaceholder,
+          unresolved_lazy_placeholder: unresolvedLazy,
+          silhouette_detected: silhouetteDetected,
+        };
+        images.push(record);
+        if (unresolvedLazy) unresolvedLazyPlaceholders.push(record);
+      }
+
+      return {
+        section_text: normalize(section.textContent).slice(0, 500),
+        image_count: images.length,
+        images,
+        silhouette_count: images.filter((image) => image.silhouette_detected).length,
+        unresolved_lazy_placeholder_count: unresolvedLazyPlaceholders.length,
+        unresolved_lazy_placeholders: unresolvedLazyPlaceholders,
+      };
+    })
+    .catch((error) => ({
+      images: [],
+      image_count: 0,
+      silhouette_count: 0,
+      unresolved_lazy_placeholder_count: 0,
+      error: error instanceof Error ? error.message : String(error),
+    }));
+
+  await enrichEmployeePhotoSourceEvidence(evidence);
+  const silhouetteImages = (evidence.images || []).filter((image) => image.silhouette_detected);
+  const status =
+    silhouetteImages.length > 0
+      ? "fail"
+      : evidence.image_count > 0 && evidence.unresolved_lazy_placeholder_count === 0
+        ? "pass"
+        : "warn";
+  const message =
+    status === "fail"
+      ? `${silhouetteImages.length} likely employee silhouette/placeholder image(s) were detected in the legacy team section.`
+      : status === "pass"
+        ? `${evidence.image_count} employee/team image(s) rendered without detected silhouettes.`
+        : evidence.image_count > 0
+          ? "Team images were found, but one or more lazy placeholder images did not resolve cleanly."
+          : "Team section was detected, but no visible employee/team images were found.";
+
+  findings.push({
+    kind: "employee_photo_integrity",
+    label: "Employee photo integrity",
+    status,
+    message,
+    metadata: {
+      section: sectionInfo,
+      resi_navigation: resiNavigation,
+      ...evidence,
+      silhouette_images: silhouetteImages,
+    },
+    evidence_refs: [],
+  });
   await pushJavascriptFinding(findings, jsErrors);
   return findings;
 }
@@ -5844,6 +6509,14 @@ async function collectFindings(page, deviceProfile) {
   if (PROFILE === "lead_attribution_e2e") {
     await appendRuntimeErrors(page, jsErrors);
     const profileFindings = await collectLeadAttributionE2E(page, findings, jsErrors, deviceProfile);
+    await pushNetworkFinding(profileFindings, requestFailures);
+    await pushImageFinding(page, profileFindings);
+    return profileFindings;
+  }
+
+  if (PROFILE === "employee_photo_integrity") {
+    await appendRuntimeErrors(page, jsErrors);
+    const profileFindings = await collectEmployeePhotoIntegrity(page, findings, jsErrors);
     await pushNetworkFinding(profileFindings, requestFailures);
     await pushImageFinding(page, profileFindings);
     return profileFindings;

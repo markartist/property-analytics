@@ -59,6 +59,40 @@
         "evs"
       ],
       "notes": "Official second QA batch from Round 2 Portfolio Rollout.docx. Staging/Kinsta URLs are test targets; Pastel links are preserved in the source doc but excluded from EVS testing. Monteverde is listed in the doc without a staging URL and remains pending until a target URL is supplied."
+    },
+    {
+      "batch_id": "round_3_property_websites",
+      "label": "Round 3 Property Websites QA",
+      "status": "prepared_round_3",
+      "contract_id": "portfolio_functionality_qa_v1",
+      "target_source": "url_list",
+      "target_url_list_path": "evs/config/round-3-qa-targets.json",
+      "environment": "round_3_kinsta",
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "include_owners": [
+        "evs"
+      ],
+      "notes": "Official third QA batch from Round 3 Portfolio Rollout.docx in OneDrive Resources. Staging/Kinsta URLs are test targets; Pastel links are preserved in the source doc but excluded from EVS testing."
+    },
+    {
+      "batch_id": "round_4_property_websites",
+      "label": "Round 4 Property Websites QA",
+      "status": "prepared_round_4",
+      "contract_id": "portfolio_functionality_qa_v1",
+      "target_source": "url_list",
+      "target_url_list_path": "evs/config/round-4-qa-targets.json",
+      "environment": "round_4_kinsta",
+      "device_profiles": [
+        "desktop_chrome",
+        "iphone_safari"
+      ],
+      "include_owners": [
+        "evs"
+      ],
+      "notes": "Official fourth QA batch from Round 4 Portfolio Rollout.docx in OneDrive Resources. Staging/Kinsta URLs are test targets; Pastel links are preserved in the source doc but excluded from EVS testing."
     }
   ],
   "url_list_contract": {

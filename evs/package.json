@@ -14,7 +14,8 @@
     "qa:forms-validation": "QA_INCLUDE_OWNERS=forms_qa EVS_INCLUDE_FORMS=1 EVS_RUN_PROFILES=contact_form_checks node orchestration/run-portfolio-qa-batch.mjs",
     "qa:sort-order": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs",
     "qa:sightmap": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs",
-    "qa:availability": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs"
+    "qa:availability": "EVS_RUN_PROFILES=apartments_pricing_deep_journey EVS_RUN_DEVICE_PROFILES=desktop_chrome,iphone_safari node orchestration/run-portfolio-qa-batch.mjs",
+    "qa:employee-photos": "node orchestration/run-legacy-employee-photo-audit.mjs"
   },
   "dependencies": {
     "playwright": "^1.54.2"

@@ -32,8 +32,11 @@
     "source truth exists for property trackingCodes",
     "generated advertiser URL loads successfully",
     "trackingId is observable in page/runtime state or URL",
+    "Resi Pixel externalSourceField is configured to the expected query parameter",
+    "Resi Pixel runtime attribution selects the expected tracking code from query state",
     "expected phone number is visible or exposed as a tel link",
     "expected recipient email is observable before submit when template exposes it",
+    "contact form hidden attribution fields carry the expected source key, source field, query, and method",
     "lead form accepts synthetic identity fields without submit",
     "optional governed submit can be enabled for downstream AH/EAI/email proof"
   ]
