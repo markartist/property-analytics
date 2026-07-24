@@ -1,0 +1,322 @@
+{
+  "snapshot_date": "2026-07-15",
+  "captured_at": "2026-07-15T00:00:00-05:00",
+  "property_id": "TX4GM",
+  "property_name": "The Retreat",
+  "market_name": "Richmond, TX",
+  "research_scope": "watchlist_competitor_run",
+  "source_author": "Codex competitor packet builder",
+  "notes": "Official-page competitor evidence packet. Confirmed rows can feed report copy; directional rows should be used as advisory prompts; source-gap rows should remain visible only in data integrity/source panels.",
+  "evidence": {
+    "integrity_standard": "Do not report a rent, special, USP, or package/media claim unless source_url and captured_date are present.",
+    "comp_set_basis": "Governed property_competitors records in the Data Pond.",
+    "builder": "Data_Collection/utils/build_competitor_market_packets.py"
+  },
+  "observations": [
+    {
+      "competitor_name": "The Retreat",
+      "competitor_url": "https://venterraliving.com/apartments/the-retreat/",
+      "source_name": "Venterra unit availability feed",
+      "source_url": "https://venterraliving.com/apartments/the-retreat/",
+      "source_type": "internal_unit_feed",
+      "evidence_category": "subject_position",
+      "captured_date": "2026-07-15",
+      "floorplan_name": "Current visible availability",
+      "rent_min": 1108.0,
+      "rent_max": 2008.0,
+      "availability_status": "30 available units in internal unit feed",
+      "special_text": "Move in by July 24th for up to 8 weeks free.\nMove in after for up to 4 weeks free.",
+      "raw_claim": "The latest unit feed shows The Retreat visible rents from $1,108 to $2,008 across 30 current available units.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "db_table": "unit_availability_units",
+        "db_snapshot_date": "2026-07-15"
+      }
+    },
+    {
+      "competitor_name": "Deseo at Grand Mission",
+      "competitor_url": "https://www.deseoatgrandmission.com/",
+      "source_name": "Deseo at Grand Mission official page",
+      "source_url": "https://www.deseoatgrandmission.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Our tranquil, park-like community offers a peaceful retreat with modern 1- and 2-bedroom apartments featuring open layouts, walk-in closets, and private patios or balconies.\u200b Enjoy a lifestyle surrounded by comfort and convenience, with resort-style amenities including a sparklin",
+      "raw_claim": "Deseo at Grand Mission's official page includes this visible offer/pricing language: Our tranquil, park-like community offers a peaceful retreat with modern 1- and 2-bedroom apartments featuring open layouts, walk-in closets, and private patios or balconies.\u200b Enjoy a lifestyle surrounded by comfort and convenience, with resort-style amenities including a sparklin",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Deseo at Grand Mission",
+      "competitor_url": "https://www.deseoatgrandmission.com/",
+      "source_name": "Deseo at Grand Mission official page",
+      "source_url": "https://www.deseoatgrandmission.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "OPEN THE DOOR TO EXTRAORDINARY LIVING NEIGHBORHOOD Located in vibrant Richmond, TX, our community offers easy access to schools, parks, shopping, and dining - everything you need just around the corner.",
+      "raw_claim": "Deseo at Grand Mission's official page includes this visible offer/pricing language: OPEN THE DOOR TO EXTRAORDINARY LIVING NEIGHBORHOOD Located in vibrant Richmond, TX, our community offers easy access to schools, parks, shopping, and dining - everything you need just around the corner.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Deseo at Grand Mission",
+      "competitor_url": "https://www.deseoatgrandmission.com/",
+      "source_name": "Deseo at Grand Mission official page",
+      "source_url": "https://www.deseoatgrandmission.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-07-15",
+      "usp_text": "Our tranquil, park-like community offers a peaceful retreat with modern 1- and 2-bedroom apartments featuring open layouts, walk-in closets, and private patios or balconies.\u200b Enjoy a lifestyle surrounded by comfort and convenience, with resort-style amenities including a sparklin View Gallery MODERN LIVING INFUSED WITH ENERGY View Amenties FITNESS CENTER \ufeff Stay active and energized with our fully equipped fitness center. Resort Style Pool Unwind by our luxurious pool, designed for relaxation and styled like a private retreat. PET FRIENDLY Pet-friendly living with a dedicated dog park for your furry friends to play and socialize.",
+      "raw_claim": "Deseo at Grand Mission's official page provides competitor positioning evidence around: Our tranquil, park-like community offers a peaceful retreat with modern 1- and 2-bedroom apartments featuring open layouts, walk-in closets, and private patios or balconies.\u200b Enjoy a lifestyle surrounded by comfort and convenience, with resort-style amenities including a sparklin View Gallery MODERN LIVING INFUSED WITH ENERGY View Amenties FITNESS CENTER \ufeff Stay active and energized with our fully equipped fitness center. Resort Style Pool Unwind by our luxurious pool, designed for relaxation and styled like a private retreat. PET FRIENDLY Pet-friendly living with a dedicated dog park for your furry friends to play and socialize.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments for Rent in Richmond, TX | Deseo at Grand Mission",
+        "meta_description": "See pet-friendly apartments in Richmond TX at Deseo at Grand Mission. Enjoy luxury living, modern finishes, and resort-style amenities. Schedule a tour!"
+      }
+    },
+    {
+      "competitor_name": "Echelon On 99",
+      "competitor_url": "https://www.echelon99.com/",
+      "source_name": "Echelon On 99 official page",
+      "source_url": "https://www.echelon99.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Modern Apartments in Richmond, TX | Echelon on 99 Skip to main content WIN FREE RENT FOR ONE YEAR Free Rent, Unlocked: Lease by Aug.",
+      "raw_claim": "Echelon On 99's official page includes this visible offer/pricing language: Modern Apartments in Richmond, TX | Echelon on 99 Skip to main content WIN FREE RENT FOR ONE YEAR Free Rent, Unlocked: Lease by Aug.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Echelon On 99",
+      "competitor_url": "https://www.echelon99.com/",
+      "source_name": "Echelon On 99 official page",
+      "source_url": "https://www.echelon99.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "5 for a chance to win free rent for one year.",
+      "raw_claim": "Echelon On 99's official page includes this visible offer/pricing language: 5 for a chance to win free rent for one year.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Echelon On 99",
+      "competitor_url": "https://www.echelon99.com/",
+      "source_name": "Echelon On 99 official page",
+      "source_url": "https://www.echelon99.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-07-15",
+      "usp_text": "Located just off the Grand Parkway in the heart of Waterside and Aliana, our apartments in Richmond, TX place you within easy reach of local shopping, dining, and entertainment while keeping everyday convenience close to home. Inside each apartment home, you\u2019ll find custom details designed to elevate your lifestyle, including granite countertops, stainless steel appliances, and wood-style flooring throughout. An array of community amenities complements your living experience, from a resort-style pool with fire pit and tanning ledge to Amazon package lockers with 24/7 access, private yards, and two fully equipped fitness centers offering cardio machines, free weights, and virtual class Come discover a new echelon of luxury, comfort, and everyday living at Echelon on 99.",
+      "raw_claim": "Echelon On 99's official page provides competitor positioning evidence around: Located just off the Grand Parkway in the heart of Waterside and Aliana, our apartments in Richmond, TX place you within easy reach of local shopping, dining, and entertainment while keeping everyday convenience close to home. Inside each apartment home, you\u2019ll find custom details designed to elevate your lifestyle, including granite countertops, stainless steel appliances, and wood-style flooring throughout. An array of community amenities complements your living experience, from a resort-style pool with fire pit and tanning ledge to Amazon package lockers with 24/7 access, private yards, and two fully equipped fitness centers offering cardio machines, free weights, and virtual class Come discover a new echelon of luxury, comfort, and everyday living at Echelon on 99.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Modern Apartments in Richmond, TX | Echelon on 99",
+        "meta_description": "Upgrade your everyday at Echelon on 99. Our luxury apartments in Richmond, TX offer upscale finishes, a resort-style pool and available private yards. Tour today!"
+      }
+    },
+    {
+      "competitor_name": "The Waterview",
+      "competitor_url": "https://www.thewaterviewapts.com/",
+      "source_name": "The Waterview official page",
+      "source_url": "https://www.thewaterviewapts.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Apartments in Richmond, TX | The Waterview Skip to content Summer Special: Up to 4 Weeks FREE Base Rent!",
+      "raw_claim": "The Waterview's official page includes this visible offer/pricing language: Apartments in Richmond, TX | The Waterview Skip to content Summer Special: Up to 4 Weeks FREE Base Rent!",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Waterview",
+      "competitor_url": "https://www.thewaterviewapts.com/",
+      "source_name": "The Waterview official page",
+      "source_url": "https://www.thewaterviewapts.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Contact the leasing office for details.",
+      "raw_claim": "The Waterview's official page includes this visible offer/pricing language: Contact the leasing office for details.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "The Waterview",
+      "competitor_url": "https://www.thewaterviewapts.com/",
+      "source_name": "The Waterview official page",
+      "source_url": "https://www.thewaterviewapts.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-07-15",
+      "usp_text": "EXPLORE RICHMOND Uniquely Modern Amenities Around Every Corner The Waterview was created with you in mind. Our amenities include a clubhouse, game room, fitness center with Wellbeats\u2122 virtual fitness, bike room, dog park and wash, sauna, massage room, and more! Resort Pool Leasing Lobby Arcade Fitness Center Wood-Style Flooring Sauna and Massage Room Upscale Kitchen Finishes Open Air Community Spaces Spin Room Dog Wash Resort Pool Leasing Lobby Arcade Fitness Center Wood-Style Flooring Sauna and Massage Room Upscale Kitchen Finishes Ope Than The greatest gift of all is mom's love \u2014 happy M Comfort meets convenience and smart meets stylish 19525 W Bellfort St.",
+      "raw_claim": "The Waterview's official page provides competitor positioning evidence around: EXPLORE RICHMOND Uniquely Modern Amenities Around Every Corner The Waterview was created with you in mind. Our amenities include a clubhouse, game room, fitness center with Wellbeats\u2122 virtual fitness, bike room, dog park and wash, sauna, massage room, and more! Resort Pool Leasing Lobby Arcade Fitness Center Wood-Style Flooring Sauna and Massage Room Upscale Kitchen Finishes Open Air Community Spaces Spin Room Dog Wash Resort Pool Leasing Lobby Arcade Fitness Center Wood-Style Flooring Sauna and Massage Room Upscale Kitchen Finishes Ope Than The greatest gift of all is mom's love \u2014 happy M Comfort meets convenience and smart meets stylish 19525 W Bellfort St.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments in Richmond, TX | The Waterview",
+        "meta_description": "Beautiful and Spacious Apartment Homes in Richmond, TX. Featuring modern design and innovative amenities. Visit Us Today!"
+      }
+    },
+    {
+      "competitor_name": "Cortland One Twenty One",
+      "competitor_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_name": "Cortland One Twenty One official page",
+      "source_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "rent",
+      "captured_date": "2026-07-15",
+      "rent_min": 1384,
+      "rent_max": 2366,
+      "availability_status": "visible_or_structured_pricing_on_public_page",
+      "raw_claim": "Cortland One Twenty One's official page exposes apartment-pricing context with visible dollar values from $1,384 to $2,366.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Cortland One Twenty One",
+      "competitor_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_name": "Cortland One Twenty One official page",
+      "source_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": ", Pearland, TX 77584 Pearland Apartments Cortland.com Search Results Pearland Apartments Cortland Avion Shadow Creek Contact Us Call Us at 281-957-8827 Send Us a Message Residents Applicants Contact Us Call Us at 281-957-8827 Send Us a Message Schedule a Tour Menu 1 Bed from $1,5",
+      "raw_claim": "Cortland One Twenty One's official page includes this visible offer/pricing language: , Pearland, TX 77584 Pearland Apartments Cortland.com Search Results Pearland Apartments Cortland Avion Shadow Creek Contact Us Call Us at 281-957-8827 Send Us a Message Residents Applicants Contact Us Call Us at 281-957-8827 Send Us a Message Schedule a Tour Menu 1 Bed from $1,5",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Cortland One Twenty One",
+      "competitor_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_name": "Cortland One Twenty One official page",
+      "source_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Read More Located in the top-rated Alvin ISD, our apartments on Pearland Parkway offer a world of opportunity, close to home.",
+      "raw_claim": "Cortland One Twenty One's official page includes this visible offer/pricing language: Read More Located in the top-rated Alvin ISD, our apartments on Pearland Parkway offer a world of opportunity, close to home.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Cortland One Twenty One",
+      "competitor_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_name": "Cortland One Twenty One official page",
+      "source_url": "https://cortland.com/apartments/cortland-avion-shadow-creek/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-07-15",
+      "usp_text": ", Pearland, TX 77584 Pearland Apartments Cortland.com Search Results Pearland Apartments Cortland Avion Shadow Creek Contact Us Call Us at 281-957-8827 Send Us a Message Residents Applicants Contact Us Call Us at 281-957-8827 Send Us a Message Schedule a Tour Menu 1 Bed from $1,5 Designer features like quartz countertops and rainfall showerheads will make you proud to call any of our luxurious 1, 2, and 3-bedroom townhomes and apartments for rent in Pearland, TX home. Awards are based on the community\u2019s resident satisfaction surveys from the previous year. \u00d7 2025 Reputation 900 Award The Reputation 900 Award recognizes the top businesses as evaluated by Reputation's Reputation X Score, which measures the online reputation and digital reputation of businesses across industries.",
+      "raw_claim": "Cortland One Twenty One's official page provides competitor positioning evidence around: , Pearland, TX 77584 Pearland Apartments Cortland.com Search Results Pearland Apartments Cortland Avion Shadow Creek Contact Us Call Us at 281-957-8827 Send Us a Message Residents Applicants Contact Us Call Us at 281-957-8827 Send Us a Message Schedule a Tour Menu 1 Bed from $1,5 Designer features like quartz countertops and rainfall showerheads will make you proud to call any of our luxurious 1, 2, and 3-bedroom townhomes and apartments for rent in Pearland, TX home. Awards are based on the community\u2019s resident satisfaction surveys from the previous year. \u00d7 2025 Reputation 900 Award The Reputation 900 Award recognizes the top businesses as evaluated by Reputation's Reputation X Score, which measures the online reputation and digital reputation of businesses across industries.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Apartments in Pearland | Cortland Avion Shadow Creek",
+        "meta_description": "Welcome to our Pearland apartments. Discover our 1, 2, and 3-bedroom apartments and townhomes with garages at Cortland Avion Shadow Creek. Tour today!"
+      }
+    },
+    {
+      "competitor_name": "Alleia Long Meadow Farms",
+      "competitor_url": "https://www.alleialongmeadow.com/",
+      "source_name": "Alleia Long Meadow Farms official page",
+      "source_url": "https://www.alleialongmeadow.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Our community of one, two, and three-bedroom apartments offer everything you\u2019ve come to expect in a modern apartment \u2013 and then some.",
+      "raw_claim": "Alleia Long Meadow Farms's official page includes this visible offer/pricing language: Our community of one, two, and three-bedroom apartments offer everything you\u2019ve come to expect in a modern apartment \u2013 and then some.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Alleia Long Meadow Farms",
+      "competitor_url": "https://www.alleialongmeadow.com/",
+      "source_name": "Alleia Long Meadow Farms official page",
+      "source_url": "https://www.alleialongmeadow.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Floor Plans Apartment Amenities 1, 2, and 3-Bedroom Apartments for Rent Gourmet Kitchens * Stainless Steel Appliances * Granite Countertops in Kitchen * Sleek Modern Cabinetry * Designer Tile Backsplash in Kitchen * Executive Chef Undermount Sink * Relaxing Patio or Balcony * Lar",
+      "raw_claim": "Alleia Long Meadow Farms's official page includes this visible offer/pricing language: Floor Plans Apartment Amenities 1, 2, and 3-Bedroom Apartments for Rent Gourmet Kitchens * Stainless Steel Appliances * Granite Countertops in Kitchen * Sleek Modern Cabinetry * Designer Tile Backsplash in Kitchen * Executive Chef Undermount Sink * Relaxing Patio or Balcony * Lar",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Alleia Long Meadow Farms",
+      "competitor_url": "https://www.alleialongmeadow.com/",
+      "source_name": "Alleia Long Meadow Farms official page",
+      "source_url": "https://www.alleialongmeadow.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-07-15",
+      "usp_text": "Our community of one, two, and three-bedroom apartments offer everything you\u2019ve come to expect in a modern apartment \u2013 and then some. There\u2019s never a shortage of comfort, conveniences, and fun at Alleia Long Meadow Farms ! Floor Plans Apartment Amenities 1, 2, and 3-Bedroom Apartments for Rent Gourmet Kitchens * Stainless Steel Appliances * Granite Countertops in Kitchen * Sleek Modern Cabinetry * Designer Tile Backsplash in Kitchen * Executive Chef Undermount Sink * Relaxing Patio or Balcony * Lar Pets are known to better your physical health and mental well-being.",
+      "raw_claim": "Alleia Long Meadow Farms's official page provides competitor positioning evidence around: Our community of one, two, and three-bedroom apartments offer everything you\u2019ve come to expect in a modern apartment \u2013 and then some. There\u2019s never a shortage of comfort, conveniences, and fun at Alleia Long Meadow Farms ! Floor Plans Apartment Amenities 1, 2, and 3-Bedroom Apartments for Rent Gourmet Kitchens * Stainless Steel Appliances * Granite Countertops in Kitchen * Sleek Modern Cabinetry * Designer Tile Backsplash in Kitchen * Executive Chef Undermount Sink * Relaxing Patio or Balcony * Lar Pets are known to better your physical health and mental well-being.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Home | Alleia Long Meadow Farms",
+        "meta_description": "Apartments for rent in Richmond TX. Contact us Today!"
+      }
+    },
+    {
+      "competitor_name": "Cortland Lakemont",
+      "competitor_url": "https://cortland.com/apartments/cortland-lakemont/available-apartments/",
+      "source_name": "Cortland Lakemont official page",
+      "source_url": "https://grandealakemont.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "special",
+      "captured_date": "2026-07-15",
+      "special_text": "Nestled within the charming Lakemont neighborhood in Richmond, our community offers peaceful water views, tree-lined walking paths, and a relaxed suburban atmosphere that instantly feels like home.",
+      "raw_claim": "Cortland Lakemont's official page includes this visible offer/pricing language: Nestled within the charming Lakemont neighborhood in Richmond, our community offers peaceful water views, tree-lined walking paths, and a relaxed suburban atmosphere that instantly feels like home.",
+      "confidence": "directional",
+      "source_freshness_label": "captured_today"
+    },
+    {
+      "competitor_name": "Cortland Lakemont",
+      "competitor_url": "https://cortland.com/apartments/cortland-lakemont/available-apartments/",
+      "source_name": "Cortland Lakemont official page",
+      "source_url": "https://grandealakemont.com/",
+      "source_type": "official_competitor_page",
+      "evidence_category": "usp",
+      "captured_date": "2026-07-15",
+      "usp_text": "Richmond apartments for rent | Grandea Lakemont Skip to main content \u00d7 Pet Policy Grandea Lakemont is a pet-friendly community! Choose from spacious 1, 2, and 3-bedroom apartment homes, each designed with modern finishes, open layouts, and the everyday conveniences that make life feel effortless. Enjoy a resort-style pool, outdoor grilling areas, a fenced dog park, and quiet pockets of green space perfect for unwinding after a busy day. Contact Us View Floorplans Grandea Lakemont 7115 S Mason Rd Richmond, TX 77407 Call us at 346-791-1926 Pet Policy Home Amenities Floorplans Gallery Neighborhood Residents Contact Apply Now View Fee Sheet \u00a9 Copyright 2026 Grandea Lakemont.",
+      "raw_claim": "Cortland Lakemont's official page provides competitor positioning evidence around: Richmond apartments for rent | Grandea Lakemont Skip to main content \u00d7 Pet Policy Grandea Lakemont is a pet-friendly community! Choose from spacious 1, 2, and 3-bedroom apartment homes, each designed with modern finishes, open layouts, and the everyday conveniences that make life feel effortless. Enjoy a resort-style pool, outdoor grilling areas, a fenced dog park, and quiet pockets of green space perfect for unwinding after a busy day. Contact Us View Floorplans Grandea Lakemont 7115 S Mason Rd Richmond, TX 77407 Call us at 346-791-1926 Pet Policy Home Amenities Floorplans Gallery Neighborhood Residents Contact Apply Now View Fee Sheet \u00a9 Copyright 2026 Grandea Lakemont.",
+      "confidence": "confirmed",
+      "source_freshness_label": "captured_today",
+      "evidence": {
+        "title": "Richmond apartments for rent | Grandea Lakemont",
+        "meta_description": "Grandea Lakemont in Richmond, TX offers 1, 2, or 3 bedroom apartments for rent. Browse the gallery, explore the amenities, and get more information on availability today."
+      }
+    },
+    {
+      "competitor_name": "Haven at Bellaire",
+      "competitor_url": "https://www.havenbellaire.com/",
+      "source_name": "Haven at Bellaire official page",
+      "source_url": "https://www.havenbellaire.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-07-15",
+      "raw_claim": "Haven at Bellaire's official page could not provide usable crawlable evidence in this run (blocked_or_low_text).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    },
+    {
+      "competitor_name": "Lakeview At Westpark",
+      "competitor_url": "https://www.lakeviewatwestpark.com/",
+      "source_name": "Lakeview At Westpark official page",
+      "source_url": "https://www.lakeviewatwestpark.com/",
+      "source_type": "source_gap",
+      "evidence_category": "source_gap",
+      "captured_date": "2026-07-15",
+      "raw_claim": "Lakeview At Westpark's official page could not provide usable crawlable evidence in this run (blocked_or_low_text).",
+      "confidence": "missing",
+      "source_freshness_label": "needs_source"
+    }
+  ]
+}
