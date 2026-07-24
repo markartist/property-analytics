@@ -30,6 +30,7 @@ import { expertReads } from "./routes/expert-reads";
 import { awareness } from "./routes/awareness";
 import { experiments } from "./routes/experiments";
 import { directives } from "./routes/directives";
+import { pibBuilder, runScheduledPibReports } from "./routes/pib-builder";
 import { runScheduledCaptains } from "./platform/captain/runtime";
 
 // Phase 2 leasing funnel metric routers
@@ -89,6 +90,7 @@ app.route("/v1/expert-reads", expertReads);
 app.route("/v1/awareness", awareness);
 app.route("/v1/experiments", experiments);
 app.route("/v1/directives", directives);
+app.route("/v1/pib-builder", pibBuilder);
 
 // 404 fallback
 app.notFound((c) =>
@@ -110,6 +112,8 @@ export default {
   fetch: app.fetch.bind(app),
   request: app.request.bind(app),
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    await runScheduledCaptains(env.POP_BRIEF_DB, new Date(controller.scheduledTime));
+    const scheduledAt = new Date(controller.scheduledTime);
+    await runScheduledCaptains(env.POP_BRIEF_DB, scheduledAt);
+    await runScheduledPibReports(env, scheduledAt);
   },
 };

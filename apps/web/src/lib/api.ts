@@ -1148,6 +1148,178 @@ export async function getPibDetail(communityId: string, weekDate?: string): Prom
   return res.json();
 }
 
+export type PibBuilderScope = "portfolio" | "property";
+export type PibBuilderCadence = "one_time" | "weekly" | "monthly" | "quarterly";
+export type PibBuilderScheduleStatus = "draft" | "active" | "paused" | "archived";
+
+export interface PibBuilderConfig {
+  id: string;
+  report_name: string;
+  scope: PibBuilderScope;
+  community_id: string | null;
+  community_name: string | null;
+  date_range: string;
+  preset_id: string;
+  preset_label: string;
+  section_ids: string[];
+  canonical_path: string;
+  status: "active" | "archived";
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PibBuilderSchedule {
+  id: string;
+  config_id: string;
+  cadence: PibBuilderCadence;
+  timezone: string;
+  day_of_week: number | null;
+  day_of_month: string | null;
+  send_time: string;
+  recipients: string[];
+  status: PibBuilderScheduleStatus;
+  next_run_at: string | null;
+  last_run_at: string | null;
+  last_run_status: string | null;
+  failure_count: number;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PibBuilderRun {
+  id: string;
+  schedule_id: string | null;
+  config_id: string;
+  run_type: "manual" | "scheduled";
+  run_status: "queued" | "blocked" | "sent" | "failed" | "skipped";
+  scheduled_for: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+  canonical_path: string;
+  recipients: string[];
+  delivery_status: string;
+  delivery_error: string | null;
+  snapshot: Record<string, unknown>;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PibBuilderGenerationJob {
+  id: string;
+  config_id: string;
+  run_id: string | null;
+  requested_action: "open" | "email_now" | "save" | "scheduled_email";
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
+  scope: PibBuilderScope;
+  community_id: string | null;
+  community_name: string | null;
+  date_range: string;
+  preset_id: string;
+  preset_label: string;
+  section_ids: string[];
+  recipients: string[];
+  artifact_key: string | null;
+  artifact_filename: string | null;
+  error_text: string | null;
+  created_by: string | null;
+  claimed_by: string | null;
+  created_at: string;
+  updated_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface PibBuilderState {
+  configs: PibBuilderConfig[];
+  schedules: PibBuilderSchedule[];
+  runs: PibBuilderRun[];
+  generation_jobs?: PibBuilderGenerationJob[];
+}
+
+export interface PibBuilderConfigInput {
+  report_name: string;
+  scope: PibBuilderScope;
+  community_id?: string | null;
+  community_name?: string | null;
+  date_range: string;
+  preset_id: string;
+  preset_label: string;
+  section_ids: string[];
+}
+
+export interface PibBuilderScheduleInput {
+  config_id: string;
+  cadence: PibBuilderCadence;
+  timezone?: string;
+  day_of_week?: number | null;
+  day_of_month?: string | null;
+  send_time: string;
+  recipients: string[];
+  status: Exclude<PibBuilderScheduleStatus, "archived">;
+}
+
+export async function getPibBuilderState(): Promise<PibBuilderState> {
+  const res = await apiFetch("/v1/pib-builder");
+  if (!res.ok) throw new Error("Failed to load PIB Builder state");
+  return res.json();
+}
+
+export async function createPibBuilderConfig(body: PibBuilderConfigInput): Promise<PibBuilderConfig> {
+  const res = await apiFetch("/v1/pib-builder/configs", { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("Failed to save PIB Builder config");
+  return (await res.json()).config;
+}
+
+export async function updatePibBuilderConfig(id: string, body: Partial<PibBuilderConfigInput> & { status?: "active" | "archived" }): Promise<PibBuilderConfig> {
+  const res = await apiFetch(`/v1/pib-builder/configs/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("Failed to update PIB Builder config");
+  return (await res.json()).config;
+}
+
+export async function createPibBuilderSchedule(body: PibBuilderScheduleInput): Promise<PibBuilderSchedule> {
+  const res = await apiFetch("/v1/pib-builder/schedules", { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("Failed to create PIB Builder schedule");
+  return (await res.json()).schedule;
+}
+
+export async function updatePibBuilderSchedule(
+  id: string,
+  body: Partial<Omit<PibBuilderScheduleInput, "status">> & { status?: PibBuilderScheduleStatus }
+): Promise<PibBuilderSchedule> {
+  const res = await apiFetch(`/v1/pib-builder/schedules/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error("Failed to update PIB Builder schedule");
+  return (await res.json()).schedule;
+}
+
+export async function runPibBuilderScheduleNow(id: string): Promise<PibBuilderRun> {
+  const res = await apiFetch(`/v1/pib-builder/schedules/${encodeURIComponent(id)}/run`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to run PIB Builder schedule");
+  return (await res.json()).run;
+}
+
+export async function createPibBuilderGenerationJob(
+  configId: string,
+  body: { requested_action: PibBuilderGenerationJob["requested_action"]; recipients?: string[]; run_id?: string | null }
+): Promise<PibBuilderGenerationJob> {
+  const res = await apiFetch(`/v1/pib-builder/configs/${encodeURIComponent(configId)}/generation-jobs`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error("Failed to queue canonical PIB generation");
+  return (await res.json()).generation_job;
+}
+
+export async function getPibBuilderGenerationJob(id: string): Promise<PibBuilderGenerationJob> {
+  const res = await apiFetch(`/v1/pib-builder/generation-jobs/${encodeURIComponent(id)}`);
+  if (!res.ok) throw new Error("Failed to load canonical PIB generation job");
+  return (await res.json()).generation_job;
+}
+
 export interface SearchIntelligenceResponse {
   version: string;
   current_start: string;
@@ -1616,14 +1788,14 @@ export interface EvsExecutionPlan {
     reason: string;
     priority: "low" | "normal" | "high" | "urgent";
     target_pages: string[];
-    validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e")[];
+    validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e" | "employee_photo_integrity")[];
     device_profiles: ("iphone_safari" | "desktop_chrome")[];
     execution_mode: "manual" | "post_deploy" | "scheduled";
     trigger_metadata: Record<string, unknown>;
   };
   property: EvsProperty;
   profiles: {
-    id: "broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e";
+    id: "broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e" | "employee_photo_integrity";
     name: string;
     description: string;
     goals: string[];
@@ -1642,7 +1814,7 @@ export interface EvsRequestRuntimeView {
   reason: string;
   priority: "low" | "normal" | "high" | "urgent";
   target_pages: string[];
-  validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e")[];
+  validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e" | "employee_photo_integrity")[];
   device_profiles: ("iphone_safari" | "desktop_chrome")[];
   governance_context: Record<string, unknown> | null;
   execution_mode: "manual" | "post_deploy" | "scheduled";
@@ -1678,7 +1850,7 @@ export async function createEvsRequest(body: {
   reason: string;
   priority: "low" | "normal" | "high" | "urgent";
   target_pages: string[];
-  validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e")[];
+  validation_profiles: ("broad_experiential_homepage" | "critical_cta_smoke" | "header_navigation_integrity" | "portfolio_functionality_regression" | "apartments_pricing_deep_journey" | "apartments_pricing_mobile_journey" | "contact_form_checks" | "lead_attribution_e2e" | "employee_photo_integrity")[];
   device_profiles: ("iphone_safari" | "desktop_chrome")[];
   execution_mode: "manual" | "post_deploy" | "scheduled";
   trigger_metadata: Record<string, unknown>;

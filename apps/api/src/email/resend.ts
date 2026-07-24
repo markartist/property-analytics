@@ -8,6 +8,7 @@ interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
+  text?: string;
   attachments?: {
     filename: string;
     contentBase64: string;
@@ -42,6 +43,7 @@ export async function sendEmail(
         to: [params.to],
         subject: params.subject,
         html: params.html,
+        text: params.text,
         attachments: params.attachments?.map((a) => ({
           filename: a.filename,
           content: a.contentBase64,
