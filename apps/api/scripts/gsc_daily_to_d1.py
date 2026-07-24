@@ -23,7 +23,7 @@ import subprocess
 import sys
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -92,6 +92,7 @@ def fetch_daily_rows(
     conn: sqlite3.Connection,
     community_map: Dict[str, dict],
     days: Optional[int] = None,
+    since_date: Optional[str] = None,
 ) -> List[dict]:
     """
     Read gsc_daily_metrics from canonical DB.
@@ -100,7 +101,10 @@ def fetch_daily_rows(
     """
     date_filter = ""
     params: tuple = ()
-    if days:
+    if since_date:
+        date_filter = "WHERE date(metric_date) >= date(?)"
+        params = (since_date,)
+    elif days:
         date_filter = "WHERE metric_date >= date('now', ?)"
         params = (f"-{days} days",)
 
@@ -141,6 +145,19 @@ def fetch_daily_rows(
         print(f"⚠️  {len(unmapped)} unmapped property IDs skipped")
     print(f"📊 {len(result)} daily rows ready for D1")
     return result
+
+
+def resolve_since_date(
+    explicit_date: Optional[str],
+    weeks: Optional[int],
+) -> Optional[str]:
+    """Resolve d1_mirror_sync-compatible date/week arguments into a lower bound."""
+    if explicit_date:
+        date.fromisoformat(explicit_date)
+        return explicit_date
+    if weeks and weeks > 0:
+        return (date.today() - timedelta(days=weeks * 7)).isoformat()
+    return None
 
 
 def generate_sql(rows: List[dict], now: str) -> List[str]:
@@ -203,6 +220,8 @@ def execute_sql(sql_file: Path) -> bool:
 def main():
     parser = argparse.ArgumentParser(description="GSC Daily Metrics → D1 Sync")
     parser.add_argument("--days", type=int, help="Sync last N days only (default: all)")
+    parser.add_argument("--date", help="Accepted for d1_mirror_sync compatibility; sync rows on/after this date.")
+    parser.add_argument("--weeks", type=int, help="Sync rows from the last N weeks.")
     parser.add_argument("--dry-run", action="store_true", help="Generate SQL but don't execute")
     args = parser.parse_args()
 
@@ -218,7 +237,8 @@ def main():
     conn = _connect_canonical()
     print(f"📁 Canonical DB: {CANONICAL_DB}")
 
-    rows = fetch_daily_rows(conn, community_map, days=args.days)
+    since_date = resolve_since_date(args.date, args.weeks)
+    rows = fetch_daily_rows(conn, community_map, days=args.days, since_date=since_date)
     conn.close()
 
     if not rows:
@@ -242,7 +262,7 @@ def main():
     data_lines = [l for l in sql_lines if l.startswith("INSERT")]
     header = [l for l in sql_lines if not l.startswith("INSERT")]
 
-    BATCH_SIZE = 500
+    BATCH_SIZE = 1500
     if len(data_lines) <= BATCH_SIZE:
         sql_file = GENERATED_DIR / f"gsc_daily_{ts}.sql"
         with open(sql_file, "w") as f:

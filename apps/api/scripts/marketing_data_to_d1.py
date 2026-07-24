@@ -10,7 +10,7 @@ Data sources (all keyed by ga4_property_id):
   2. Google review count + score               ← gbp_reviews
   3. Google Ads spend (PPC + remarketing)       ← google_ads_campaigns
   4. Website/SEO session deltas                 ← ga4_traffic_sources
-  5. GC per door                                ← guest_card_metrics + unit_count
+  5. GC per door                                ← DW direct guest cards + unit_count
   6. SEMRush visibility + SERP traffic          ← semrush_domain_metrics
 
 Usage:
@@ -115,6 +115,25 @@ def _connect_canonical() -> sqlite3.Connection:
     conn = sqlite3.connect(f"file:{CANONICAL_DB}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table,),
+    ).fetchone()
+    return row is not None
+
+
+def _guest_card_source_table(conn: sqlite3.Connection) -> str:
+    """Prefer the Data Warehouse direct guest-card feed when populated."""
+    if _table_exists(conn, "guest_card_metrics_dw_direct"):
+        row = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM guest_card_metrics_dw_direct"
+        ).fetchone()
+        if row and int(row["cnt"] or 0) > 0:
+            return "guest_card_metrics_dw_direct"
+    return "guest_card_metrics"
 
 
 def get_available_fridays(conn: sqlite3.Connection) -> List[str]:
@@ -422,10 +441,10 @@ def fetch_gc_per_door(
         """Sum guest cards per encasa code in a date range."""
         query = """
             SELECT property_code, SUM(gc_this_period) AS g_cards
-            FROM guest_card_metrics
+            FROM {table}
             WHERE run_date BETWEEN ? AND ?
             GROUP BY property_code
-        """
+        """.format(table=_guest_card_source_table(conn))
         rows = conn.execute(query, (start, end)).fetchall()
         return {
             r["property_code"].strip().upper(): r["g_cards"] or 0
@@ -937,14 +956,26 @@ def sync_friday(
 FRESHNESS_SOURCES = [
     ("ga4",         "GA4 Traffic",        "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM ga4_daily_metrics"),
     ("ga4_sources", "GA4 Traffic Sources", "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM ga4_traffic_sources"),
-    ("gsc",         "Search (GSC)",       "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM gsc_daily_metrics"),
+    (
+        "gsc",
+        "Search (GSC)",
+        "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT pid) as props "
+        "FROM ("
+        "SELECT COALESCE(ga4_property_id, property_id) AS pid, metric_date "
+        "FROM gsc_daily_metrics "
+        "GROUP BY pid, metric_date"
+        ")",
+    ),
     ("google_ads",  "Google Ads",         "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM google_ads_campaigns"),
     ("ads_keywords","Google Ads Keywords","SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM google_ads_keywords"),
     ("pagespeed",   "PageSpeed Insights", "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM pagespeed_metrics"),
-    ("semrush",     "SEMRush",            "SELECT MAX(metric_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM semrush_domain_metrics"),
     ("gbp_reviews", "GBP Reviews",        "SELECT MAX(DATE(review_create_time)) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM gbp_reviews"),
     ("availability","Unit Availability",  "SELECT MAX(snapshot_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_id) as props FROM unit_availability"),
-    ("guest_cards", "Guest Cards",        "SELECT MAX(run_date) as latest, COUNT(*) as cnt, COUNT(DISTINCT property_code) as props FROM guest_card_metrics"),
+    (
+        "guest_cards",
+        "Guest Cards",
+        "__GUEST_CARD_FRESHNESS__",
+    ),
 ]
 
 
@@ -953,9 +984,18 @@ def push_data_freshness(now: str) -> bool:
     print(f"\n🕐 Updating data freshness...")
     conn = _connect_canonical()
 
-    sql_lines = [f"-- Data freshness update: {now}"]
+    sql_lines = [
+        f"-- Data freshness update: {now}",
+        "DELETE FROM data_freshness WHERE source_key = 'semrush';",
+    ]
     for key, label, query in FRESHNESS_SOURCES:
         try:
+            if query == "__GUEST_CARD_FRESHNESS__":
+                table = _guest_card_source_table(conn)
+                query = (
+                    "SELECT MAX(run_date) as latest, COUNT(*) as cnt, "
+                    f"COUNT(DISTINCT property_code) as props FROM {table}"
+                )
             row = conn.execute(query).fetchone()
             latest = row["latest"] if row else None
             cnt = row["cnt"] if row else 0

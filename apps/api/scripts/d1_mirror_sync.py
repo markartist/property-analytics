@@ -55,6 +55,9 @@ class StepResult:
 
 CORE_MIRROR_SYNC_SCRIPTS = {
     "guest_cards_to_d1.py",
+    "gbp_reviews_to_d1.py",
+    "gsc_daily_to_d1.py",
+    "google_ads_to_d1.py",
     "pib_data_to_d1.py",
     "marketing_data_to_d1.py",
 }
@@ -120,6 +123,24 @@ def _floor_to_friday(d: date) -> date:
 def _table_has_column(conn: sqlite3.Connection, table: str, col: str) -> bool:
     rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
     return any(r[1] == col for r in rows)
+
+
+def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table,),
+    ).fetchone()
+    return row is not None
+
+
+def _guest_card_source_table(conn: sqlite3.Connection) -> str:
+    if _table_exists(conn, "guest_card_metrics_dw_direct"):
+        row = conn.execute(
+            "SELECT COUNT(*) FROM guest_card_metrics_dw_direct"
+        ).fetchone()
+        if row and int(row[0] or 0) > 0:
+            return "guest_card_metrics_dw_direct"
+    return "guest_card_metrics"
 
 
 def _max_date(conn: sqlite3.Connection, table: str, col: str) -> Optional[str]:
@@ -556,7 +577,7 @@ def validate_local_db() -> Tuple[StepResult, Dict[str, str]]:
         recency = {
             "ga4_daily_metrics.metric_date": _max_date(conn, "ga4_daily_metrics", "metric_date") or "",
             "pagespeed_metrics.metric_date": _max_date(conn, "pagespeed_metrics", "metric_date") or "",
-            "guest_card_metrics.run_date": _max_date(conn, "guest_card_metrics", "run_date") or "",
+            "guest_cards.run_date": _max_date(conn, _guest_card_source_table(conn), "run_date") or "",
             "unit_availability.snapshot_date": _max_date(conn, "unit_availability", "snapshot_date") or "",
         }
         if any(not v for v in recency.values()):
@@ -709,7 +730,7 @@ def verify_local_source_freshness(recency: Dict[str, str], max_age_days: int = 2
     # - required=False sources are reported but do not block the mirror.
     source_policy = {
         "ga4_daily_metrics.metric_date": {"required": True, "max_age_days": max_age_days},
-        "guest_card_metrics.run_date": {"required": False, "max_age_days": max_age_days},
+        "guest_cards.run_date": {"required": False, "max_age_days": max_age_days},
         "unit_availability.snapshot_date": {"required": False, "max_age_days": max_age_days},
     }
 
@@ -1008,6 +1029,9 @@ def main() -> None:
     # Deterministic sync order.
     sync_scripts = [
         ("guest_cards_to_d1.py", True),
+        ("gbp_reviews_to_d1.py", True),
+        ("gsc_daily_to_d1.py", True),
+        ("google_ads_to_d1.py", True),
         ("pib_data_to_d1.py", True),
         ("marketing_data_to_d1.py", True),
         ("captain_sources_to_d1.py", False),

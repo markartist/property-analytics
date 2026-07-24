@@ -7,7 +7,7 @@ aggregates them into T7 and T30 windows aligned to Fridays, and pushes
 the results to the POP Brief D1 database (t7_metrics and t30_metrics tables).
 
 Data flow:
-  canonical DB (guest_card_metrics, daily, per property_code)
+  canonical DB (prefers guest_card_metrics_dw_direct, falls back to guest_card_metrics)
     → aggregate into T7 window (Friday−6 → Friday)
     → aggregate into T30 window (Friday−29 → Friday)
     → compute conversion rates (v/gc, a/gc)
@@ -109,10 +109,30 @@ def _connect_canonical() -> sqlite3.Connection:
     return conn
 
 
+def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table,),
+    ).fetchone()
+    return row is not None
+
+
+def _guest_card_source_table(conn: sqlite3.Connection) -> str:
+    """Prefer the Data Warehouse direct guest-card feed when it has rows."""
+    if _table_exists(conn, "guest_card_metrics_dw_direct"):
+        row = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM guest_card_metrics_dw_direct"
+        ).fetchone()
+        if row and int(row["cnt"] or 0) > 0:
+            return "guest_card_metrics_dw_direct"
+    return "guest_card_metrics"
+
+
 def get_available_fridays(conn: sqlite3.Connection) -> List[str]:
     """Return all Fridays that fall within the guest card data date range."""
+    table = _guest_card_source_table(conn)
     row = conn.execute(
-        "SELECT MIN(run_date) as min_d, MAX(run_date) as max_d FROM guest_card_metrics"
+        f"SELECT MIN(run_date) as min_d, MAX(run_date) as max_d FROM {table}"
     ).fetchone()
     if not row or not row["min_d"]:
         return []
@@ -150,10 +170,10 @@ def aggregate_window(
             SUM(ipt_appt_this_period + sgt_appt_this_period)  AS visits,
             SUM(init_cont_tour)                                AS first_tours,
             SUM(apps_this_period)                              AS apps
-        FROM guest_card_metrics
+        FROM {table}
         WHERE run_date BETWEEN ? AND ?
         GROUP BY property_code
-    """
+    """.format(table=_guest_card_source_table(conn))
     rows = conn.execute(query, (start_date, end_date)).fetchall()
     return {
         row["property_code"]: {

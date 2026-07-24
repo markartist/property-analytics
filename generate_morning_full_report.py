@@ -14,7 +14,10 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from Data_Collection.utils.source_freshness_policy import evaluate_source_freshness, is_source_suspended
+from Data_Collection.utils.source_freshness_policy import (
+    evaluate_source_freshness,
+    is_source_suspended,
+)
 from utils.pib_email_shell import wrap_pib_light_email
 
 ROOT = Path("/Users/mark/Property_Analytics")
@@ -55,36 +58,142 @@ def _age_status(date_str: Optional[str], critical: bool = False) -> Tuple[str, s
     return f"{age}d", "fresh"
 
 
-def _shared_status_for_report(source_key: str, latest: Optional[str], critical: bool = False) -> Tuple[str, str]:
+def _is_recent_clean_collection(run: Optional[sqlite3.Row]) -> bool:
+    if not run:
+        return False
+    if str(run["status"] or "").lower() != "completed":
+        return False
+    if int(run["properties_failed"] or 0) > 0:
+        return False
+
+    completed = _safe_iso_to_date(str(run["completed_at"] or run["started_at"] or "")[:10])
+    return bool(completed and (date.today() - completed).days <= 1)
+
+
+def _latest_collection_run(conn: sqlite3.Connection, data_source: str) -> Optional[sqlite3.Row]:
+    try:
+        return conn.execute(
+            """
+            SELECT
+              data_source,
+              status,
+              properties_total,
+              properties_success,
+              properties_failed,
+              properties_skipped,
+              started_at,
+              completed_at,
+              error_message,
+              notes
+            FROM data_collections
+            WHERE data_source = ?
+            ORDER BY started_at DESC, collection_id DESC
+            LIMIT 1
+            """,
+            (data_source,),
+        ).fetchone()
+    except sqlite3.Error:
+        return None
+
+
+def _collection_label(run: Optional[sqlite3.Row]) -> str:
+    if not run:
+        return "No run"
+    status = str(run["status"] or "unknown")
+    timestamp = str(run["completed_at"] or run["started_at"] or "")[:16]
+    success = int(run["properties_success"] or 0)
+    total = int(run["properties_total"] or 0)
+    coverage = f"{success}/{total}" if total else "-"
+    return f"{status} {timestamp} ({coverage})"
+
+
+def _freshness_detail_for_report(
+    source_key: str,
+    latest: Optional[str],
+    critical: bool = False,
+    collection_run: Optional[sqlite3.Row] = None,
+) -> Dict[str, str]:
     expectation = evaluate_source_freshness(source_key, latest)
     d = _safe_iso_to_date(latest)
     actual_age = (date.today() - d).days if d else None
     age_text = "N/A" if actual_age is None else f"{actual_age}d"
+    expected_text = expectation.expected_latest_date.isoformat()
+    lag_text = "N/A" if expectation.business_lag_days is None else f"{expectation.business_lag_days}d"
 
+    status = expectation.status
+    note = ""
     if expectation.status == "suspended":
-        return "Paused", "suspended"
-    if expectation.status == "missing":
-        return age_text, "unknown"
-    if expectation.status == "stale":
-        return age_text, "critical" if critical else "stale"
-    return age_text, expectation.status
+        age_text = "Paused"
+        status = "suspended"
+        lag_text = "N/A"
+    elif expectation.status == "missing":
+        status = "unknown"
+        note = "No source data found."
+    elif expectation.status in {"warning", "stale"} and _is_recent_clean_collection(collection_run):
+        status = "source_delay"
+        note = (
+            f"Collector completed cleanly; source has not returned expected date "
+            f"{expected_text} yet."
+        )
+    elif expectation.status == "stale":
+        status = "critical" if critical else "stale"
+        note = f"Latest source date is behind expected date {expected_text}."
+    elif expectation.status == "warning":
+        note = f"Latest source date is one day behind expected date {expected_text}."
+
+    return {
+        "age": age_text,
+        "expected": expected_text,
+        "lag": lag_text,
+        "status": status,
+        "collection": _collection_label(collection_run),
+        "note": note,
+    }
+
+
+def _latest_guest_cards_date(conn: sqlite3.Connection) -> Optional[str]:
+    latest_dates: List[str] = []
+    for sql in (
+        "SELECT MAX(run_date) FROM guest_card_metrics",
+        """
+        SELECT MAX(run_date)
+        FROM guest_card_metrics_dw_direct
+        WHERE COALESCE(trusted_core_posture, '') = 'trusted_core'
+        """,
+    ):
+        try:
+            latest = conn.execute(sql).fetchone()[0]
+        except sqlite3.Error:
+            continue
+        if latest:
+            latest_dates.append(str(latest))
+    return max(latest_dates) if latest_dates else None
 
 
 def _source_freshness(conn: sqlite3.Connection) -> List[Dict[str, str]]:
-    checks: Sequence[Tuple[str, str, bool, str]] = [
-        ("GA4", "SELECT MAX(metric_date) FROM ga4_daily_metrics", True, "ga4"),
-        ("GSC", "SELECT MAX(metric_date) FROM gsc_daily_metrics", True, "gsc"),
-        ("Google Ads", "SELECT MAX(metric_date) FROM google_ads_campaigns", False, "google_ads"),
-        ("Guest Cards", "SELECT MAX(run_date) FROM guest_card_metrics", False, "guest_cards"),
-        ("Unit Availability", "SELECT MAX(snapshot_date) FROM unit_availability", False, "unit_availability"),
-        ("PageSpeed", "SELECT MAX(metric_date) FROM pagespeed_metrics", False, "pagespeed"),
+    checks: Sequence[Tuple[str, str, bool, str, str]] = [
+        ("GA4", "SELECT MAX(metric_date) FROM ga4_daily_metrics", True, "ga4", "ga4"),
+        ("GSC", "SELECT MAX(metric_date) FROM gsc_daily_metrics", True, "gsc", "gsc"),
+        ("Google Ads", "SELECT MAX(metric_date) FROM google_ads_campaigns", False, "google_ads", "google_ads"),
+        ("Guest Cards", "__guest_cards_latest__", False, "guest_cards", "guest_card"),
+        (
+            "Unit Availability",
+            "SELECT MAX(snapshot_date) FROM unit_availability",
+            False,
+            "unit_availability",
+            "unit_availability",
+        ),
+        ("PageSpeed", "SELECT MAX(metric_date) FROM pagespeed_metrics", False, "pagespeed", "psi"),
     ]
 
     rows: List[Dict[str, str]] = []
-    for source, sql, is_critical, source_key in checks:
+    for source, sql, is_critical, source_key, collection_source in checks:
         latest: Optional[str] = None
         try:
-            latest = conn.execute(sql).fetchone()[0]
+            if sql == "__guest_cards_latest__":
+                latest = _latest_guest_cards_date(conn)
+            else:
+                latest = conn.execute(sql).fetchone()[0]
         except sqlite3.Error:
             latest = None
 
@@ -95,18 +204,26 @@ def _source_freshness(conn: sqlite3.Connection) -> List[Dict[str, str]]:
                     "latest": latest or "N/A",
                     "age": "Paused",
                     "status": "suspended",
+                    "expected": "Paused",
+                    "lag": "N/A",
+                    "collection": _collection_label(_latest_collection_run(conn, collection_source)),
+                    "note": "Source intentionally paused.",
                     "critical": "No",
                 }
             )
             continue
 
-        age_text, status = _shared_status_for_report(source_key, latest, critical=is_critical)
+        detail = _freshness_detail_for_report(
+            source_key,
+            latest,
+            critical=is_critical,
+            collection_run=_latest_collection_run(conn, collection_source),
+        )
         rows.append(
             {
                 "source": source,
                 "latest": latest or "N/A",
-                "age": age_text,
-                "status": status,
+                **detail,
                 "critical": "Yes" if is_critical else "No",
             }
         )
@@ -303,11 +420,15 @@ def _health_banner(freshness: Sequence[Dict[str, str]], mirror: Dict[str, object
     if critical_issues:
         return "ALERT", " | ".join(critical_issues)
 
-    warnings = [
-        f"{r['source']} {r['status']} ({r['latest']})"
-        for r in freshness
-        if r["status"] == "warning"
-    ]
+    warnings = []
+    for row in freshness:
+        if row["status"] == "warning":
+            warnings.append(f"{row['source']} warning (latest={row['latest']}; expected={row['expected']})")
+        elif row["status"] == "source_delay":
+            warnings.append(
+                f"{row['source']} source delay "
+                f"(latest={row['latest']}; expected={row['expected']}; collection={row['collection']})"
+            )
     if mirror.get("found") and mirror.get("core_success") and not mirror.get("success"):
         warnings.append("D1 mirror advisory sync degraded")
     if warnings:
@@ -334,12 +455,26 @@ def _build_risk_register(
                     "impact": "Executive reporting may be inaccurate or stale.",
                 }
             )
+        elif row["status"] == "source_delay":
+            risks.append(
+                {
+                    "severity": "MEDIUM",
+                    "category": "Data Freshness",
+                    "detail": (
+                        f"{row['source']} source delay "
+                        f"(latest={row['latest']}; expected={row['expected']}; lag={row['lag']})"
+                    ),
+                    "impact": (
+                        "Collection ran cleanly, but source data is not published through the expected date yet."
+                    ),
+                }
+            )
         elif row["status"] == "warning":
             risks.append(
                 {
                     "severity": "MEDIUM",
                     "category": "Data Freshness",
-                    "detail": f"{row['source']} aging (latest={row['latest']})",
+                    "detail": f"{row['source']} aging (latest={row['latest']}; expected={row['expected']})",
                     "impact": "Trend reliability may degrade if delay increases.",
                 }
             )
@@ -415,31 +550,36 @@ def _build_risk_register(
 
 def _status_badge(status: str) -> str:
     colors = {
-        "fresh": "#166534",
-        "warning": "#92400e",
-        "stale": "#92400e",
-        "critical": "#991b1b",
-        "unknown": "#334155",
+        "fresh": "#3B9189",
+        "warning": "#BD4830",
+        "source_delay": "#3D66B9",
+        "stale": "#BD4830",
+        "critical": "#E02472",
+        "unknown": "#294782",
+        "suspended": "#9B9B96",
     }
     bg = {
-        "fresh": "#dcfce7",
-        "warning": "#fef3c7",
-        "stale": "#fef3c7",
-        "critical": "#fee2e2",
-        "unknown": "#e2e8f0",
+        "fresh": "#F6F6F5",
+        "warning": "#F6F6F5",
+        "source_delay": "#F6F6F5",
+        "stale": "#F6F6F5",
+        "critical": "#F6F6F5",
+        "unknown": "#D6D6D2",
+        "suspended": "#D6D6D2",
     }
-    color = colors.get(status, "#334155")
-    background = bg.get(status, "#e2e8f0")
-    return f'<span style="padding:2px 8px;border-radius:999px;color:{color};background:{background};font-weight:600;font-size:12px;">{status.upper()}</span>'
+    color = colors.get(status, "#294782")
+    background = bg.get(status, "#D6D6D2")
+    label = status.replace("_", " ").upper()
+    return f'<span style="padding:2px 8px;border-radius:999px;color:{color};background:{background};font-weight:600;font-size:12px;">{label}</span>'
 
 
 def _severity_badge(severity: str) -> str:
     palette = {
-        "HIGH": ("#991b1b", "#fee2e2"),
-        "MEDIUM": ("#92400e", "#fef3c7"),
-        "LOW": ("#166534", "#dcfce7"),
+        "HIGH": ("#E02472", "#F6F6F5"),
+        "MEDIUM": ("#BD4830", "#F6F6F5"),
+        "LOW": ("#3B9189", "#F6F6F5"),
     }
-    fg, bg = palette.get(severity, ("#334155", "#e2e8f0"))
+    fg, bg = palette.get(severity, ("#294782", "#D6D6D2"))
     return f'<span style="padding:2px 8px;border-radius:999px;color:{fg};background:{bg};font-weight:700;font-size:12px;">{severity}</span>'
 
 
@@ -469,8 +609,12 @@ def build_report_html() -> str:
         [
             row["source"],
             row["latest"],
+            row["expected"],
             row["age"],
+            row["lag"],
+            row["collection"],
             _status_badge(row["status"]),
+            row["note"],
             row["critical"],
         ]
         for row in freshness
@@ -495,9 +639,18 @@ def build_report_html() -> str:
     mirror_steps = mirror.get("steps") or []
     mirror_step_rows = [
         [
-            str(s.get("step", "N/A")),
-            str(s.get("status", "N/A")),
-            str(s.get("note", "")),
+            str(s.get("step") or s.get("name") or "N/A"),
+            str(
+                s.get("status")
+                or (
+                    "PASS"
+                    if s.get("ok") is True
+                    else "FAIL"
+                    if s.get("ok") is False
+                    else "N/A"
+                )
+            ),
+            str(s.get("note") or s.get("details") or ""),
         ]
         for s in mirror_steps
     ] or [["No step detail", "N/A", ""]]
@@ -534,12 +687,12 @@ def build_report_html() -> str:
             f"Poor {psi['poor']} | Needs Improvement {psi['needs_improvement']} | Good {psi['good']}"
         )
 
-    health_bg = "#dcfce7"
-    health_fg = "#166534"
+    health_bg = "#F6F6F5"
+    health_fg = "#3B9189"
     if health_state == "WATCH":
-        health_bg, health_fg = "#fef3c7", "#92400e"
+        health_bg, health_fg = "#F6F6F5", "#BD4830"
     if health_state == "ALERT":
-        health_bg, health_fg = "#fee2e2", "#991b1b"
+        health_bg, health_fg = "#F6F6F5", "#E02472"
 
     content_html = f"""
   <style>
@@ -560,7 +713,7 @@ def build_report_html() -> str:
 
   <div class=\"card\">
     <h2>1) Data Freshness</h2>
-    {_html_table(["Source", "Latest Date", "Age", "Status", "Critical"], freshness_rows)}
+    {_html_table(["Source", "Latest Date", "Expected Date", "Age", "Source Lag", "Last Collection", "Status", "Note", "Critical"], freshness_rows)}
   </div>
 
   <div class=\"card\">
