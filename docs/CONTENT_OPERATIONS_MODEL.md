@@ -44,10 +44,26 @@ Why:
 The recommended domain model is:
 
 - `Content Operations`
+  - `Property Intel Pack`
   - `Site Content Creator`
   - `VACS`
 
-This keeps the foundation unified while preserving two focused execution experiences.
+This keeps the foundation unified while preserving two focused execution experiences. `Property Intel Pack` is the research/action product that feeds those execution experiences; it is not a third editor or content production workspace.
+
+### 3.1 Property Intel Pack
+
+`Property Intel Pack` is the set Content Ops companion to PIB. PIB answers how the property is performing. Property Intel Pack answers what Alex and Content Ops should write, adjust, test, or investigate next.
+
+Primary responsibilities:
+
+- package DataForSEO, SERP, competitor, review-language, OnPage, AI visibility, and Data Pond evidence into an action brief
+- translate evidence into page, section, FAQ, local-search, and positioning assignments
+- preserve the workbook as the deep evidence file while keeping the email body narrow and Outlook-friendly
+- serve as the governed handoff into Site Content Creator and VACS
+
+Governing standard:
+
+- `/Users/mark/Property_Analytics/docs/PROPERTY_INTEL_PACK_STANDARD_2026-07-15.md`
 
 ## 4. Shared Foundation
 

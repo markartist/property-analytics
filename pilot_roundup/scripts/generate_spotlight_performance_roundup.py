@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the pilot performance roundup view for the current Spotlight 11."""
+"""Generate the pilot performance roundup view for the current Spotlight set."""
 
 from __future__ import annotations
 
@@ -21,63 +21,53 @@ DB_PATH = ROOT / "data" / "portfolio_analytics.db"
 IDENTITY_MATRIX = ROOT / "config" / "property_identity_matrix.json"
 OUTPUT_DIR = ROOT / "pilot_roundup" / "reports" / "spotlight"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-SPOTLIGHT_11_CODES = [
-    "TX416",  # Avasa at 1604
-    "FL4TA",  # The Anatole
-    "GA4BL",  # Botanic Luxury
-    "TX4CO",  # College View
-    "KY4TG",  # The Reserves of Thomas Glen
-    "FL4GW",  # Avasa Grove West
-    "FL4HL",  # Avasa Hammock Landing
-    "KY4MP",  # The Metropolitan
-    "TX4FV",  # Forest View
-    "TX4GM",  # The Retreat
-    "KY4SC",  # Steeplechase
-]
-
-DISPLAY_NAMES = {
-    "TX416": "1604",
-    "FL4TA": "Anatole Daytona",
-    "GA4BL": "Botanic",
-    "TX4CO": "College View",
-    "KY4TG": "Thomas Glen",
-    "FL4GW": "Grove West",
-    "FL4HL": "Hammock Landing",
-    "KY4MP": "Metropolitan",
-    "TX4FV": "Forest View",
-    "TX4GM": "Retreat",
-    "KY4SC": "Steeplechase",
-}
+SPOTLIGHT_CONFIG_DIR = ROOT / "Spotlight_Properties_Report" / "config"
 
 
-def load_identity_by_code() -> Dict[str, dict]:
+def resolve_latest_spotlight_config() -> Path:
+    configs = sorted(SPOTLIGHT_CONFIG_DIR.glob("monthly_spotlight_properties_*.json"))
+    if not configs:
+        raise SystemExit("No monthly Spotlight config found.")
+    return configs[-1]
+
+
+def load_identity_by_ga4() -> Dict[str, dict]:
     matrix = json.loads(IDENTITY_MATRIX.read_text(encoding="utf-8"))
     return {
-        row["property_code"]: row
+        str(row["ga4_property_id"]): row
         for row in matrix.get("properties", [])
-        if row.get("property_code")
+        if row.get("ga4_property_id")
     }
 
 
-def spotlight_entries() -> List[pilot_roundup.Entry]:
-    by_code = load_identity_by_code()
+def spotlight_entries(config_path: Optional[Path] = None) -> List[pilot_roundup.Entry]:
+    config_path = config_path or resolve_latest_spotlight_config()
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    by_ga4 = load_identity_by_ga4()
     entries: List[pilot_roundup.Entry] = []
     missing: List[str] = []
-    for code in SPOTLIGHT_11_CODES:
-        row = by_code.get(code)
-        if not row:
-            missing.append(code)
+    for ga4_id, spotlight_row in config.get("spotlight_properties", {}).items():
+        if spotlight_row.get("active") is False:
             continue
-        property_id = str(row.get("ga4_property_id") or "").strip()
+        row = by_ga4.get(str(ga4_id))
+        if not row:
+            missing.append(str(ga4_id))
+            continue
+        property_id = str(ga4_id).strip()
         site_url = str(row.get("website_url") or "").strip()
         if not property_id or not site_url:
-            missing.append(code)
+            missing.append(str(ga4_id))
             continue
+        display_name = (
+            spotlight_row.get("source_name")
+            or spotlight_row.get("canonical_name")
+            or row.get("property_name")
+            or str(ga4_id)
+        )
         entries.append(
             pilot_roundup.Entry(
-                key=f"spotlight_{code.lower()}",
-                display_name=DISPLAY_NAMES.get(code) or row.get("property_name") or code,
+                key=f"spotlight_{property_id}",
+                display_name=display_name,
                 role="spotlight",
                 property_id=property_id,
                 site_url=site_url,
@@ -323,8 +313,8 @@ def psi_primary_performance_card(p: Dict[str, object]) -> str:
     """
 
 
-def build_report(report_date: str) -> tuple[Path, Path]:
-    entries = spotlight_entries()
+def build_report(report_date: str, config_path: Optional[Path] = None) -> tuple[Path, Path]:
+    entries = spotlight_entries(config_path)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     desktop_status, iphone_status = pilot_roundup.load_browserstack_status()
@@ -435,7 +425,7 @@ def build_report(report_date: str) -> tuple[Path, Path]:
     diagnostics_html = pilot_roundup.diagnostic_summary_html(properties)
     methodology_html = """
     <ul style="margin:0; padding-left:18px; line-height:1.8; font-size:14px; color:#495057;">
-        <li>This report reuses the Pilot Performance Roundup visual style for the governed Spotlight 11 property set.</li>
+        <li>This report reuses the Pilot Performance Roundup visual style for the governed monthly Spotlight property set.</li>
         <li>PSI mobile is the dominant displayed metric and is sourced from portfolio <code>pagespeed_metrics</code>.</li>
         <li>GTMetrix is intentionally omitted for this Spotlight run because current canonical GT coverage is incomplete for the set.</li>
         <li>New Users are sourced from GA4 daily metrics using governed GA4 property IDs.</li>
@@ -524,10 +514,11 @@ def build_report(report_date: str) -> tuple[Path, Path]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate the pilot performance view for the Spotlight 11.")
+    parser = argparse.ArgumentParser(description="Generate the pilot performance view for the current Spotlight set.")
     parser.add_argument("--date", default=date.today().isoformat(), help="Report date YYYY-MM-DD; defaults to today")
+    parser.add_argument("--config", type=Path, default=None, help="Monthly Spotlight config JSON; defaults to the latest monthly config")
     args = parser.parse_args()
-    html_path, md_path = build_report(args.date)
+    html_path, md_path = build_report(args.date, args.config)
     print(f"Saved HTML: {html_path}")
     print(f"Saved MD:   {md_path}")
     return 0

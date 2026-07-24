@@ -20,9 +20,9 @@ from summary_email_guard import successful_delivery_exists  # noqa: E402
 
 RECIPIENTS = [
     "mlaufhutte@venterraliving.com",
-    "sbynum@venterraliving.com",
     "elongoria@venterraliving.com",
     "jadomingue@venterraliving.com",
+    "dcrandall@venterraliving.com",
 ]
 
 DELIVERY_LOG_DIR = ROOT / "logs" / "email_delivery" / "spotlight_performance_roundup"

@@ -13,41 +13,38 @@ function normalizeName(value: string): string {
 const SPOTLIGHT_NAME_ALIASES: Record<string, string[]> = {
   "pointe at bentonville": ["pointe"],
   "clearwater heights": ["clearwater"],
+  "cendana district west": ["cendana"],
+  "elation at grandway west": ["elation"],
   "the villages at oakleaf": ["oakleaf"],
   "avasa at 1604": ["1604"],
+  "luminary 95": ["luminary"],
+  "luminary at 95": ["luminary"],
+  "preserve at baywood": ["baywood"],
+  "retreat lakeland": ["lakeland"],
   "the whitney": ["whitney"],
+  "westover oaks": ["westover"],
 };
 
 // Active Spotlight order sourced from:
-// /Users/mark/Property_Analytics/Spotlight_Properties_Report/config/monthly_spotlight_properties_2026-04.json
-const APRIL_2026_SPOTLIGHT_NAMES = [
-  "Anatole Daytona",
-  "Elation at Grandway West",
-  "Grand Harbor",
-  "Pointe at Bentonville",
-  "The Reserves of Thomas Glen",
-  "Townhomes",
-  "Avasa at 1604",
-  "Belterra",
-  "Botanic",
-  "Camber Ridge",
-  "The Villages at Oakleaf",
-  "Stonecreek",
-  "Cane Island",
-  "Clearwater Heights",
-  "CoHo",
-  "Forest View",
-  "Luma Headwaters",
-  "Phoenix",
+// /Users/mark/Property_Analytics/Spotlight_Properties_Report/config/monthly_spotlight_properties_2026-07.json
+const JULY_2026_SPOTLIGHT_NAMES = [
+  "Cendana",
+  "Elation",
   "Retreat",
-  "Steeplechase",
-  "Valencia",
-  "Villa Lago",
-  "The Whitney",
+  "Canton Mill Lofts",
+  "Clearwater Heights",
+  "College View",
+  "Gateway North",
+  "Luminary",
+  "Silverbrooke",
+  "Baywood",
+  "Shadowbrooke",
+  "St Andrews",
+  "Westover",
 ];
 
 export function getCurrentSpotlightNames(): string[] {
-  return APRIL_2026_SPOTLIGHT_NAMES;
+  return JULY_2026_SPOTLIGHT_NAMES;
 }
 
 export function getSpotlightCommunities(communities: Community[]): Community[] {
@@ -64,7 +61,7 @@ export function getSpotlightCommunities(communities: Community[]): Community[] {
     }
   }
 
-  return APRIL_2026_SPOTLIGHT_NAMES
+  return JULY_2026_SPOTLIGHT_NAMES
     .map((name) => lookup.get(normalizeName(name)) ?? null)
     .filter((community): community is Community => community !== null);
 }

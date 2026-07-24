@@ -100,6 +100,18 @@ Canonical owner:
 
 - Search Intelligence + GBP Posts + GSC surfaces in the Pond
 
+Members:
+
+- Property Intel Pack
+
+Current Property Intel Pack standard:
+
+- `/Users/mark/Property_Analytics/docs/PROPERTY_INTEL_PACK_STANDARD_2026-07-15.md`
+
+Boundary:
+
+- Property Intel Pack is the Content Ops companion to PIB. It turns DataForSEO, SERP, competitor, review-language, OnPage, AI visibility, and Data Pond evidence into Alex-facing content assignments. It must not replace or mutate the locked PIB family.
+
 ### Pilot / Specialized Families
 
 Outcome:

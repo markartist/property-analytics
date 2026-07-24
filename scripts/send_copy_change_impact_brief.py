@@ -24,6 +24,8 @@ ROOT = Path("/Users/mark/Property_Analytics")
 DB_PATH = ROOT / "data" / "portfolio_analytics.db"
 REPORT_DIR = ROOT / "reports" / "copy_change_impact_brief"
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
+REPORT_TEMPLATE_VERSION = "1.3"
+REPORT_SCHEMA_VERSION = "copy_change_impact_brief_v1_3_decision_read"
 
 import sys
 
@@ -38,6 +40,7 @@ from copy_change_monitoring import (  # noqa: E402
     store_observation,
 )
 from email_sender import EmailSender  # noqa: E402
+from property_identity import resolve_property_identity  # noqa: E402
 from templates.executive_template import get_logo_html  # noqa: E402
 
 
@@ -80,6 +83,7 @@ class PropertyImpact:
     gsc_prior: dict
     ga4_current: dict
     ga4_prior: dict
+    decision: Optional[dict] = None
 
 
 def fmt_int(value: Optional[int]) -> str:
@@ -267,8 +271,8 @@ def summarize_window(
     first_full_post_day: str,
 ) -> tuple[str, str, str]:
     used_days = min(requested_days, available_gsc_days, available_ga4_days)
-    if used_days <= 0:
-        return "No Data", MUTED, "No shared post-change days available"
+    if used_days < requested_days:
+        return "Pending", AMBER, "Awaiting full window"
 
     gsc_current = fetch_gsc_window(conn, property_id, build_relative_window(gsc_end, used_days))
     gsc_prior = fetch_gsc_window(conn, property_id, build_pre_window(used_days, first_full_post_day))
@@ -277,18 +281,15 @@ def summarize_window(
 
     gsc_delta = pct_change(gsc_current.get("clicks"), gsc_prior.get("clicks"))
     ga4_delta = pct_change(ga4_current.get("sessions"), ga4_prior.get("sessions"))
-    value = f"D{used_days}" if used_days < requested_days else fmt_delta_pct(gsc_current.get("clicks"), gsc_prior.get("clicks"))
+    value = fmt_delta_pct(gsc_current.get("clicks"), gsc_prior.get("clicks"))
     note = (
-        f"GSC clicks {fmt_delta_pct(gsc_current.get('clicks'), gsc_prior.get('clicks'))} | "
+        f"GSC clicks {fmt_delta_pct(gsc_current.get('clicks'), gsc_prior.get('clicks'))}<br>"
         f"GA4 sessions {fmt_delta_pct(ga4_current.get('sessions'), ga4_prior.get('sessions'))}"
     )
 
     signals = [delta for delta in (gsc_delta, ga4_delta) if delta is not None]
     avg_signal = sum(signals) / len(signals) if signals else 0.0
     color = GREEN if avg_signal > 5 else RED if avg_signal < -5 else VENTERRA_BLUE
-    if used_days < requested_days:
-        value = f"{used_days} of {requested_days} Days"
-        color = AMBER if color == VENTERRA_BLUE else color
     return value, color, note
 
 
@@ -433,19 +434,18 @@ def readiness_status(available_days: int, needed_days: int) -> tuple[str, str]:
 
 
 def build_exec_cards(impacts: list[PropertyImpact]) -> str:
-    positive_count = sum(1 for item in impacts if item.headline == "Early Positive")
-    mixed_count = sum(1 for item in impacts if item.headline == "Early Mixed")
-    soft_count = sum(1 for item in impacts if item.headline == "Early Softness")
-    pending_count = sum(1 for item in impacts if item.headline == "Pending")
-    card_count = 4 if pending_count else 3
-    card_width = 100 / card_count
+    act_now = sum(1 for item in impacts if decision_value(item, "action") in {"Investigate", "Revise"})
+    promising = sum(1 for item in impacts if decision_value(item, "action") in {"Hold", "Amplify"})
+    watch = sum(1 for item in impacts if decision_value(item, "action") == "Watch")
+    too_early = sum(1 for item in impacts if decision_value(item, "action") == "Too Early")
+    card_width = 25
 
-    def card(label: str, value: str, note: str) -> str:
+    def card(label: str, value: str, note: str, accent: str = VENTERRA_BLUE) -> str:
         return f"""
         <td style="width:{card_width:.2f}%;padding:8px;vertical-align:top;">
           <div style="background:#ffffff;border:1px solid #d9dee5;border-radius:6px;padding:18px 16px;text-align:center;">
             <div style="font-size:11px;color:{MUTED};text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">{label}</div>
-            <div style="font-size:30px;color:#111827;font-weight:700;margin-top:10px;">{value}</div>
+            <div style="font-size:30px;color:{accent};font-weight:700;margin-top:10px;">{value}</div>
             <div style="margin-top:8px;font-size:12px;color:{SLATE};line-height:1.45;">{note}</div>
           </div>
         </td>
@@ -454,29 +454,308 @@ def build_exec_cards(impacts: list[PropertyImpact]) -> str:
     return f"""
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;">
       <tr>
-        {card("Early Positive", f"{positive_count}/{len(impacts)}", "Properties showing more positive than negative early directional evidence.")}
-        {card("Early Mixed", f"{mixed_count}/{len(impacts)}", "Properties with mixed or still-noisy early directional evidence.")}
-        {card("Early Softness", f"{soft_count}/{len(impacts)}", "Properties currently showing more negative than positive early directional evidence.")}
-        {card("Pending", f"{pending_count}/{len(impacts)}", "Properties registered but awaiting first shared post-change data.") if pending_count else ""}
+        {card("Act Now", f"{act_now}/{len(impacts)}", "Investigate or revise before treating the copy read as clean.", RED if act_now else VENTERRA_BLUE)}
+        {card("Promising", f"{promising}/{len(impacts)}", "Hold or amplify patterns that are showing useful lift.", GREEN if promising else VENTERRA_BLUE)}
+        {card("Watch", f"{watch}/{len(impacts)}", "Let the next milestone mature before changing copy.", AMBER if watch else VENTERRA_BLUE)}
+        {card("Too Early", f"{too_early}/{len(impacts)}", "Registered, but not enough shared post-change history.", AMBER if too_early else VENTERRA_BLUE)}
       </tr>
     </table>
     """
 
 
-def build_comparison_strip(item: PropertyImpact) -> str:
+def delta_label(label: str, curr: Optional[float], prev: Optional[float]) -> str:
+    return f"{label} {fmt_delta_pct(curr, prev)}"
+
+
+def build_window_maturity_note(item: PropertyImpact) -> str:
+    shared_post_days = min(item.gsc_current.get("days") or 0, item.ga4_current.get("rows") or 0)
+    if shared_post_days >= 30:
+        return "Clean milestone reads live: T7, T14, and T30."
+    if shared_post_days >= 14:
+        return "Clean milestone reads live: T7 and T14; later read pending."
+    if shared_post_days >= 7:
+        return "Clean milestone read live: T7; later reads pending."
+    if shared_post_days <= 0:
+        return "Awaiting first shared post-change data."
+    return "Milestone reads pending."
+
+
+def build_at_glance_read(item: PropertyImpact) -> str:
+    shared_post_days = min(item.gsc_current.get("days") or 0, item.ga4_current.get("rows") or 0)
+    if shared_post_days <= 0:
+        return "No shared post-change data yet."
+    metrics = [
+        delta_label("GSC clicks", item.gsc_current.get("clicks"), item.gsc_prior.get("clicks")),
+        delta_label("CTR", item.gsc_current.get("ctr"), item.gsc_prior.get("ctr")),
+        delta_label("GA4 sessions", item.ga4_current.get("sessions"), item.ga4_prior.get("sessions")),
+        delta_label("conversions", item.ga4_current.get("conversions"), item.ga4_prior.get("conversions")),
+    ]
+    return f"Since change: {'; '.join(metrics)}. {build_window_maturity_note(item)}"
+
+
+def safe_pct(value: Optional[float]) -> float:
+    return value if value is not None else 0.0
+
+
+def latest_unit_context(conn: sqlite3.Connection, item: PropertyImpact) -> dict:
+    latest = conn.execute(
+        """
+        SELECT MAX(snapshot_date) AS snapshot_date
+        FROM unit_availability_units
+        WHERE property_id = ?
+        """,
+        (item.property_id,),
+    ).fetchone()["snapshot_date"]
+    if not latest:
+        return {"available": None, "special_units": None, "latest_date": None, "prior_available": None}
+
+    current = conn.execute(
+        """
+        SELECT
+            COUNT(*) AS available,
+            SUM(CASE WHEN COALESCE(concession_amount, 0) > 0
+                      OR COALESCE(pricing_and_specials_message, '') <> ''
+                     THEN 1 ELSE 0 END) AS special_units
+        FROM unit_availability_units
+        WHERE property_id = ?
+          AND snapshot_date = ?
+        """,
+        (item.property_id, latest),
+    ).fetchone()
+    prior = conn.execute(
+        """
+        SELECT MAX(snapshot_date) AS snapshot_date
+        FROM unit_availability_units
+        WHERE property_id = ?
+          AND snapshot_date < ?
+        """,
+        (item.property_id, item.first_full_post_day),
+    ).fetchone()["snapshot_date"]
+    prior_available = None
+    if prior:
+        prior_row = conn.execute(
+            """
+            SELECT COUNT(*) AS available
+            FROM unit_availability_units
+            WHERE property_id = ?
+              AND snapshot_date = ?
+            """,
+            (item.property_id, prior),
+        ).fetchone()
+        prior_available = int(prior_row["available"] or 0)
+    return {
+        "available": int(current["available"] or 0),
+        "special_units": int(current["special_units"] or 0),
+        "latest_date": latest,
+        "prior_available": prior_available,
+    }
+
+
+def latest_ads_context(conn: sqlite3.Connection, item: PropertyImpact) -> dict:
+    row = conn.execute(
+        """
+        SELECT
+            MAX(metric_date) AS latest_date,
+            SUM(clicks) AS clicks,
+            SUM(conversions) AS conversions
+        FROM google_ads_campaigns
+        WHERE property_id = ?
+        """,
+        (item.property_id,),
+    ).fetchone()
+    latest = row["latest_date"]
+    stale = True
+    if latest:
+        stale = (date.today() - datetime.strptime(latest, "%Y-%m-%d").date()).days > 30
+    return {
+        "latest_date": latest,
+        "clicks": int(row["clicks"] or 0) if latest else None,
+        "conversions": float(row["conversions"] or 0) if latest else None,
+        "stale": stale,
+    }
+
+
+def latest_onpage_context(conn: sqlite3.Connection, item: PropertyImpact) -> dict:
+    row = conn.execute(
+        """
+        SELECT run_date, status_code, title_length, description_length
+        FROM dataforseo_onpage_page_snapshots
+        WHERE property_id IN (?, ?)
+        ORDER BY run_date DESC, updated_at DESC
+        LIMIT 1
+        """,
+        (item.property_code, item.property_id),
+    ).fetchone()
+    if not row:
+        return {"latest_date": None}
+    issues: list[str] = []
+    if row["status_code"] and int(row["status_code"]) >= 400:
+        issues.append(f"DataForSEO status {row['status_code']}")
+    title_length = row["title_length"]
+    description_length = row["description_length"]
+    if title_length is not None and (int(title_length) < 30 or int(title_length) > 65):
+        issues.append("title length review")
+    if description_length is not None and (int(description_length) < 80 or int(description_length) > 170):
+        issues.append("meta length review")
+    return {
+        "latest_date": row["run_date"],
+        "status_code": row["status_code"],
+        "title_length": title_length,
+        "description_length": description_length,
+        "issues": issues,
+    }
+
+
+def build_query_signal(conn: sqlite3.Connection, item: PropertyImpact) -> dict:
+    current_window = Window(**item.gsc_current["window"])
+    prior_window = Window(**item.gsc_prior["window"])
+    current = aggregate_query_cohorts(fetch_gsc_query_window(conn, item.property_id, current_window), item)
+    prior = aggregate_query_cohorts(fetch_gsc_query_window(conn, item.property_id, prior_window), item)
+
+    def cohort_delta(name: str, metric: str) -> Optional[float]:
+        return pct_change(current.get(name, {}).get(metric), prior.get(name, {}).get(metric))
+
+    local_delta = cohort_delta("local_non_brand", "clicks")
+    amenity_delta = cohort_delta("amenity_floorplan", "clicks")
+    brand_delta = cohort_delta("brand", "clicks")
+    nonbrand_clicks = sum(current.get(name, {}).get("clicks") or 0 for name in ("local_non_brand", "amenity_floorplan", "non_brand_other"))
+    brand_clicks = current.get("brand", {}).get("clicks") or 0
+
+    if nonbrand_clicks and (safe_pct(local_delta) > 0 or safe_pct(amenity_delta) > 0):
+        label = "Nonbrand demand is contributing"
+    elif brand_clicks and brand_clicks >= nonbrand_clicks:
+        label = "Lift is mostly brand-led"
+    elif nonbrand_clicks:
+        label = "Nonbrand demand is present but not clearly improving"
+    else:
+        label = "Query mix is thin"
+
+    return {
+        "label": label,
+        "brand_clicks": brand_clicks,
+        "nonbrand_clicks": nonbrand_clicks,
+        "brand_click_delta_pct": brand_delta,
+        "local_nonbrand_click_delta_pct": local_delta,
+        "amenity_click_delta_pct": amenity_delta,
+    }
+
+
+def compact_flags(flags: list[str], max_items: int = 3) -> str:
+    if not flags:
+        return "No major confound flagged."
+    visible = flags[:max_items]
+    extra = len(flags) - len(visible)
+    suffix = f"; +{extra} more" if extra > 0 else ""
+    return "; ".join(visible) + suffix
+
+
+def build_decision_read(conn: sqlite3.Connection, item: PropertyImpact) -> dict:
+    shared_post_days = min(item.gsc_current.get("days") or 0, item.ga4_current.get("rows") or 0)
+    gsc_click_delta = pct_change(item.gsc_current.get("clicks"), item.gsc_prior.get("clicks"))
+    impression_delta = pct_change(item.gsc_current.get("impressions"), item.gsc_prior.get("impressions"))
+    ctr_delta = pct_change(item.gsc_current.get("ctr"), item.gsc_prior.get("ctr"))
+    session_delta = pct_change(item.ga4_current.get("sessions"), item.ga4_prior.get("sessions"))
+    conversion_delta = pct_change(item.ga4_current.get("conversions"), item.ga4_prior.get("conversions"))
+    query_signal = build_query_signal(conn, item)
+    units = latest_unit_context(conn, item)
+    ads = latest_ads_context(conn, item)
+    onpage = latest_onpage_context(conn, item)
+
+    if shared_post_days < 7:
+        confidence = "Too Early"
+    elif shared_post_days < 14:
+        confidence = "Directional"
+    elif shared_post_days < 30:
+        confidence = "Directional"
+    else:
+        confidence = "Reliable"
+
+    flags: list[str] = []
+    available = units.get("available")
+    prior_available = units.get("prior_available")
+    if available is None:
+        flags.append("availability source missing")
+    else:
+        if available <= 3:
+            flags.append(f"low inventory ({available} units)")
+        if prior_available is not None and abs(available - prior_available) >= 5:
+            direction = "up" if available > prior_available else "down"
+            flags.append(f"inventory {direction} {abs(available - prior_available)} units")
+        if units.get("special_units"):
+            flags.append(f"{units['special_units']} units with specials")
+    if not ads.get("latest_date"):
+        flags.append("no Google Ads detail")
+    elif ads.get("stale"):
+        flags.append(f"Google Ads stale ({ads['latest_date']})")
+    if onpage.get("issues"):
+        flags.extend(onpage["issues"])
+
+    driver = query_signal["label"]
+    if impression_delta is not None and impression_delta > 10 and ctr_delta is not None and ctr_delta < -5:
+        driver = "Visibility widened but click appeal softened"
+    elif gsc_click_delta is not None and gsc_click_delta > 10 and session_delta is not None and session_delta < -5:
+        driver = "Search clicks improved but sessions did not follow"
+    elif session_delta is not None and session_delta > 10 and conversion_delta is not None and conversion_delta < -10:
+        driver = "Organic traffic improved but conversion quality softened"
+
+    if confidence == "Too Early":
+        action = "Too Early"
+        recommendation = "Hold changes and wait for the first clean T7 read before interpreting performance."
+    elif item.headline == "Early Positive" and (session_delta is None or session_delta >= -5) and (conversion_delta is None or conversion_delta >= -10):
+        action = "Amplify" if shared_post_days >= 14 else "Hold"
+        recommendation = "Keep the copy live; if the T14/T30 read holds, reuse the title/meta and upper-copy pattern on similar spotlight pages."
+    elif item.headline == "Early Softness":
+        action = "Revise" if shared_post_days >= 30 else "Investigate"
+        recommendation = "Audit query mix, title CTR, availability/specials, and page health before changing copy again."
+    elif gsc_click_delta is not None and gsc_click_delta < -10 and session_delta is not None and session_delta > 5:
+        action = "Watch"
+        recommendation = "Do not rewrite yet; traffic quality may be holding while search demand is noisy."
+    elif session_delta is not None and session_delta < -10:
+        action = "Investigate"
+        recommendation = "Check whether the new search promise matches on-page proof, current specials, and available floor plans."
+    else:
+        action = "Watch"
+        recommendation = "Let the next milestone read mature; look for nonbrand query lift before borrowing this pattern."
+
+    if flags and action in {"Hold", "Amplify"} and confidence != "Too Early":
+        recommendation = "Keep the copy live, but separate copy impact from the flagged confounds before scaling the pattern."
+
+    return {
+        "action": action,
+        "confidence": confidence,
+        "driver": driver,
+        "recommendation": recommendation,
+        "watch_flags": flags,
+        "watch_flags_label": compact_flags(flags),
+        "query_signal": query_signal,
+        "supporting_context": {
+            "unit_availability": units,
+            "google_ads": ads,
+            "dataforseo_onpage": onpage,
+        },
+    }
+
+
+def decision_value(item: PropertyImpact, key: str, default: str = "Pending") -> str:
+    if not item.decision:
+        return default
+    return str(item.decision.get(key) or default)
+
+
+def build_compact_metrics_strip(item: PropertyImpact) -> str:
     shared_post_days = min(item.gsc_current.get("days") or 0, item.ga4_current.get("rows") or 0)
     since_change_note = (
-        f"GSC clicks {fmt_delta_pct(item.gsc_current.get('clicks'), item.gsc_prior.get('clicks'))} | "
+        f"GSC clicks {fmt_delta_pct(item.gsc_current.get('clicks'), item.gsc_prior.get('clicks'))}<br>"
         f"GA4 sessions {fmt_delta_pct(item.ga4_current.get('sessions'), item.ga4_prior.get('sessions'))}"
     )
 
     def chip(label: str, value: str, note: str, value_color: str = BODY) -> str:
         return f"""
-        <td style="padding:6px;vertical-align:top;">
-          <div style="background:#ffffff;border:1px solid #d9dee5;border-radius:6px;padding:10px 12px;min-height:72px;">
-            <div style="font-size:10px;color:{MUTED};text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">{label}</div>
-            <div style="font-size:18px;color:{value_color};font-weight:700;margin-top:6px;">{value}</div>
-            <div style="font-size:11px;color:{SLATE};line-height:1.45;margin-top:6px;">{note}</div>
+        <td style="padding:4px;vertical-align:top;">
+          <div style="background:#ffffff;border:1px solid #d9dee5;border-radius:6px;padding:8px 10px;min-height:50px;">
+            <div style="font-size:9px;color:{MUTED};text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">{label}</div>
+            <div style="font-size:15px;color:{value_color};font-weight:700;margin-top:5px;line-height:1.15;">{value}</div>
+            <div style="font-size:10px;color:{SLATE};line-height:1.35;margin-top:5px;">{note}</div>
           </div>
         </td>
         """
@@ -488,33 +767,45 @@ def build_comparison_strip(item: PropertyImpact) -> str:
             conn,
             item.property_id,
             item.gsc_current["window"]["end"],
-        item.ga4_current["window"]["end"],
-        7,
-        item.gsc_current.get("days") or 0,
-        item.ga4_current.get("rows") or 0,
-        item.first_full_post_day,
-    )
+            item.ga4_current["window"]["end"],
+            7,
+            item.gsc_current.get("days") or 0,
+            item.ga4_current.get("rows") or 0,
+            item.first_full_post_day,
+        )
         t14_value, t14_color, t14_note = summarize_window(
             conn,
             item.property_id,
             item.gsc_current["window"]["end"],
-        item.ga4_current["window"]["end"],
-        14,
-        item.gsc_current.get("days") or 0,
-        item.ga4_current.get("rows") or 0,
-        item.first_full_post_day,
-    )
+            item.ga4_current["window"]["end"],
+            14,
+            item.gsc_current.get("days") or 0,
+            item.ga4_current.get("rows") or 0,
+            item.first_full_post_day,
+        )
+        t30_value, t30_color, t30_note = summarize_window(
+            conn,
+            item.property_id,
+            item.gsc_current["window"]["end"],
+            item.ga4_current["window"]["end"],
+            30,
+            item.gsc_current.get("days") or 0,
+            item.ga4_current.get("rows") or 0,
+            item.first_full_post_day,
+        )
     finally:
         conn.close()
-    t30_status, t30_color = readiness_status(shared_post_days, 30)
+
+    t30_label = t30_value
+    t30_note = t30_note if shared_post_days >= 30 else "Awaiting full window"
 
     return f"""
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:8px;">
       <tr>
-        {chip("Since Change", f"GSC D{item.gsc_current.get('days') or 0} | GA4 D{item.ga4_current.get('rows') or 0}", since_change_note)}
+        {chip("Since Change", f"GSC D{item.gsc_current.get('days') or 0}<br>GA4 D{item.ga4_current.get('rows') or 0}", since_change_note)}
         {chip("T7 Window", t7_value, t7_note, t7_color)}
         {chip("T14 Window", t14_value, t14_note, t14_color)}
-        {chip("T30 Window", t30_status, f"{min(shared_post_days, 30)}/30 shared post-change days available", t30_color)}
+        {chip("T30 Window", t30_label, t30_note, t30_color)}
       </tr>
     </table>
     """
@@ -525,6 +816,8 @@ def build_bottom_notes(impacts: list[PropertyImpact], gsc_latest: date, ga4_late
     mixed_count = sum(1 for item in impacts if item.headline == "Early Mixed")
     soft_count = sum(1 for item in impacts if item.headline == "Early Softness")
     pending_count = sum(1 for item in impacts if item.headline == "Pending")
+    act_now = sum(1 for item in impacts if decision_value(item, "action") in {"Investigate", "Revise"})
+    promising = sum(1 for item in impacts if decision_value(item, "action") in {"Hold", "Amplify"})
     property_count = len(impacts)
     gsc_days = max(((item.gsc_current.get("days") or 0) for item in impacts), default=0)
     ga4_days = max(((item.ga4_current.get("rows") or 0) for item in impacts), default=0)
@@ -537,61 +830,90 @@ def build_bottom_notes(impacts: list[PropertyImpact], gsc_latest: date, ga4_late
     <div style="margin-top:22px;border:1px solid #d9dee5;border-radius:6px;background:#ffffff;padding:18px;">
       <div style="font-size:11px;color:{MUTED};text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">Brief</div>
       <div style="margin-top:8px;font-size:14px;line-height:1.7;color:{BODY};">
-        Early read remains directional. Current mix is <strong>{positive_count}/{property_count} Early Positive</strong>,
+        This read is now decision-led: <strong>{act_now}/{property_count} need action</strong> and
+        <strong>{promising}/{property_count} are promising enough to hold or amplify</strong>.
+        The underlying evidence mix is <strong>{positive_count}/{property_count} Early Positive</strong>,
         <strong>{mixed_count}/{property_count} Early Mixed</strong>, and <strong>{soft_count}/{property_count} Early Softness</strong>.{pending_sentence}
-        Day-prior movement is live now, while longer windows are still maturing by wave.
+        Since-change movement is live now, while milestone reads stay pending until enough shared post-change history exists.
       </div>
       <div style="margin-top:16px;font-size:11px;color:{MUTED};text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">Notes</div>
       <ul style="margin:8px 0 0 18px;padding:0;font-size:13px;line-height:1.65;color:{SLATE};">
         <li>Each intervention uses the first full day after the publish timestamp as its post-change start.</li>
         <li>Current canonical depth in this brief is up to GSC D{gsc_days} through {gsc_latest.isoformat()} and GA4 D{ga4_days} through {ga4_latest.isoformat()}.</li>
-        <li>T7, T14, and T30 stay pending by intervention until enough shared post-change history exists to support a clean read.</li>
+        <li>Milestone read labels appear only after each intervention has enough shared post-change history to support a clean read.</li>
       </ul>
     </div>
     """
 
 
-def build_property_card(item: PropertyImpact) -> str:
-    def line(label: str, curr: Optional[float], prev: Optional[float], formatter, higher_is_better: bool = True, suffix: str = "") -> str:
-        arrow, color, _ = trend_meta(curr, prev, higher_is_better)
-        value = formatter(curr) if suffix == "" else formatter(curr, 2, suffix)
-        delta = fmt_delta_pct(curr, prev)
-        return f'<tr><td style="padding:6px 0;color:{MUTED};font-size:12px;text-transform:uppercase;font-weight:700;">{label}</td><td style="padding:6px 0;text-align:right;color:{BODY};font-size:14px;font-weight:700;">{value}</td><td style="padding:6px 0 6px 12px;text-align:right;color:{color};font-size:16px;font-weight:700;">{arrow}</td><td style="padding:6px 0 6px 8px;text-align:right;color:{color};font-size:13px;font-weight:700;">{delta}</td></tr>'
+def build_portfolio_decision_summary(impacts: list[PropertyImpact]) -> str:
+    action_groups: dict[str, list[str]] = {"Investigate": [], "Revise": [], "Amplify": [], "Hold": [], "Watch": [], "Too Early": []}
+    drivers: dict[str, int] = {}
+    for item in impacts:
+        action = decision_value(item, "action")
+        action_groups.setdefault(action, []).append(item.request_name)
+        driver = decision_value(item, "driver", "")
+        if driver:
+            drivers[driver] = drivers.get(driver, 0) + 1
 
-    metrics_html = "".join([
-        line("GSC Impressions", item.gsc_current.get("impressions"), item.gsc_prior.get("impressions"), fmt_int),
-        line("GSC Clicks", item.gsc_current.get("clicks"), item.gsc_prior.get("clicks"), fmt_int),
-        line("GSC CTR", item.gsc_current.get("ctr"), item.gsc_prior.get("ctr"), fmt_float, True, "%"),
-        line("GA4 Organic Sessions", item.ga4_current.get("sessions"), item.ga4_prior.get("sessions"), fmt_int),
-        line("GA4 Engaged Sessions", item.ga4_current.get("engaged_sessions"), item.ga4_prior.get("engaged_sessions"), fmt_int),
-        line("GA4 Organic Conversions", item.ga4_current.get("conversions"), item.ga4_prior.get("conversions"), fmt_int),
-    ])
-    fields = ", ".join(item.changed_fields) if item.changed_fields else item.change_type
-    fields = html.escape(fields)
-    change_summary = html.escape(item.change_summary)
+    act_now = action_groups.get("Revise", []) + action_groups.get("Investigate", [])
+    promising = action_groups.get("Amplify", []) + action_groups.get("Hold", [])
+    watch = action_groups.get("Watch", [])
+    pattern_line = "No dominant repeat pattern yet."
+    if drivers:
+        top_driver, top_count = sorted(drivers.items(), key=lambda kv: (-kv[1], kv[0]))[0]
+        pattern_line = f"Most common driver: {html.escape(top_driver)} ({top_count} properties)."
+
+    def names(items: list[str]) -> str:
+        if not items:
+            return "None"
+        shown = ", ".join(html.escape(name) for name in items[:4])
+        if len(items) > 4:
+            shown += f", +{len(items) - 4} more"
+        return shown
+
     return f"""
-    <div style="margin-top:18px;border:1px solid #d9dee5;border-radius:6px;background:#ffffff;padding:18px;">
-      <div style="border-bottom:1px solid #edf1f5;padding-bottom:12px;">
-        <div style="font-size:22px;font-weight:700;color:{VENTERRA_BLUE};line-height:1.15;">{item.request_name}</div>
-        <div style="margin-top:6px;font-size:11px;color:{SLATE};line-height:1.45;">
-          {item.wave_name} | First full post-change day: {item.first_full_post_day} | Fields: {fields}
-        </div>
-        <div style="margin-top:7px;font-size:13px;color:{BODY};line-height:1.5;">
-          {change_summary}
-        </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-          <div style="display:inline-block;padding:5px 10px;border:1px solid #d9dee5;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:{item.headline_color};background:#ffffff;">{item.headline}</div>
-          <div style="font-size:12px;color:{SLATE};text-align:right;line-height:1.45;">
-            GSC: {item.gsc_current['window']['end']} vs {item.gsc_prior['window']['end']}<br>
-            GA4: {item.ga4_current['window']['end']} vs {item.ga4_prior['window']['end']}
-          </div>
+    <div style="margin-top:14px;border:1px solid #d9dee5;border-radius:6px;background:#ffffff;padding:14px 16px;">
+      <div style="font-size:11px;color:{MUTED};text-transform:uppercase;font-weight:700;letter-spacing:0.3px;">Executive Read</div>
+      <div style="margin-top:7px;font-size:13px;line-height:1.6;color:{BODY};">
+        <strong>Act now:</strong> {names(act_now)}<br>
+        <strong>Promising:</strong> {names(promising)}<br>
+        <strong>Watch:</strong> {names(watch)}<br>
+        <strong>Pattern:</strong> {pattern_line}
+      </div>
+    </div>
+    """
+
+
+def build_property_card(item: PropertyImpact) -> str:
+    change_summary = html.escape(item.change_summary)
+    source_depth = f"GSC D{item.gsc_current.get('days') or 0}; GA4 D{item.ga4_current.get('rows') or 0}"
+    action = html.escape(decision_value(item, "action"))
+    confidence = html.escape(decision_value(item, "confidence"))
+    driver = html.escape(decision_value(item, "driver", "Awaiting clean signal."))
+    recommendation = html.escape(decision_value(item, "recommendation", "Hold until more data is available."))
+    watch_flags = html.escape(decision_value(item, "watch_flags_label", "No major confound flagged."))
+    return f"""
+    <div style="margin-top:12px;border:1px solid #d9dee5;border-radius:6px;background:#ffffff;padding:14px 16px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:20px;font-weight:700;color:{VENTERRA_BLUE};line-height:1.15;">{item.request_name}</div>
+          <div style="margin-top:5px;font-size:12px;color:{SLATE};line-height:1.45;">Post-change start {item.first_full_post_day}; {source_depth}</div>
         </div>
       </div>
-      {build_comparison_strip(item)}
-      <table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-top:12px;">
-        {metrics_html}
-      </table>
-    </div>
+      <div style="margin-top:10px;font-size:13px;color:{BODY};line-height:1.55;">
+        <strong>{change_summary}</strong>
+      </div>
+      <div style="margin-top:8px;">
+        <div style="display:inline-block;padding:5px 10px;border:1px solid #d9dee5;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:{item.headline_color};background:#ffffff;white-space:nowrap;">{item.headline}</div>
+      </div>
+      <div style="margin-top:8px;border-left:3px solid {item.headline_color};padding:8px 10px;background:#f8fafc;">
+        <div style="font-size:12px;color:{BODY};line-height:1.45;"><strong>Action: {action}</strong> <span style="color:{MUTED};">({confidence})</span> - {driver}</div>
+        <div style="font-size:12px;color:{SLATE};line-height:1.45;margin-top:3px;">Next: {recommendation}</div>
+        <div style="font-size:11px;color:{MUTED};line-height:1.4;margin-top:3px;">Watch: {watch_flags}</div>
+      </div>
+      {build_compact_metrics_strip(item)}
+        </div>
     """
 
 
@@ -601,6 +923,7 @@ def build_html(impacts: list[PropertyImpact], gsc_latest: date, ga4_latest: date
     body_html = f"""
     <div style="font-family:Arial,sans-serif;color:{BODY};">
       {build_exec_cards(impacts)}
+      {build_portfolio_decision_summary(impacts)}
       {''.join(build_property_card(item) for item in impacts)}
       {build_bottom_notes(impacts, gsc_latest, ga4_latest)}
     </div>
@@ -615,12 +938,12 @@ def build_html(impacts: list[PropertyImpact], gsc_latest: date, ga4_latest: date
   <tr><td style="text-align:center;">
     <div style="color:{VENTERRA_BLUE};font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Property Intelligence</div>
     <h1 style="margin:8px 0 6px 0;color:{VENTERRA_BLUE};font-size:30px;line-height:1.2;">Copy Change Impact Brief</h1>
-    <div style="color:#6c757d;font-size:14px;">Daily quick read for active copy-change waves | Generated {generated}</div>
+    <div style="color:#6c757d;font-size:14px;">Daily quick read for active copy-change waves; Template v{REPORT_TEMPLATE_VERSION}; Generated {generated}</div>
   </td></tr>
 </table>
 {body_html}
 <div style="margin-top:28px;padding-top:14px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;font-style:italic;text-align:center;">
-PIB-style copy-change impact brief generated from canonical GSC and GA4 organic search data.
+PIB-style copy-change impact brief v{REPORT_TEMPLATE_VERSION} generated from canonical GSC and GA4 organic search data.
 </div>
 </td></tr></table>
 </body>
@@ -635,16 +958,79 @@ def build_plain_text(impacts: list[PropertyImpact], gsc_latest: date, ga4_latest
         "",
     ]
     for item in impacts:
-        shared_post_days = min(item.gsc_current.get("days") or 0, item.ga4_current.get("rows") or 0)
         lines.append(
             f"- {item.request_name}: "
-            f"{item.change_summary} "
-            f"GSC impressions {fmt_delta_pct(item.gsc_current.get('impressions'), item.gsc_prior.get('impressions'))}, "
-            f"GSC clicks {fmt_delta_pct(item.gsc_current.get('clicks'), item.gsc_prior.get('clicks'))}, "
-            f"GA4 organic sessions {fmt_delta_pct(item.ga4_current.get('sessions'), item.ga4_prior.get('sessions'))}, "
-            f"T7 {'live' if shared_post_days >= 7 else 'pending'}"
+            f"{decision_value(item, 'action')} / {decision_value(item, 'confidence')}. "
+            f"{decision_value(item, 'driver', 'Awaiting clean signal.')}. "
+            f"Next: {decision_value(item, 'recommendation', 'Hold until more data is available.')} "
+            f"{build_at_glance_read(item)}"
         )
     return "\n".join(lines)
+
+
+def parse_sortable_timestamp(value: str) -> datetime:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return datetime.min
+
+
+def dedupe_interventions_latest(interventions: list[CopyChangeIntervention]) -> list[CopyChangeIntervention]:
+    """Keep one visible report card per property, preferring the latest active intervention."""
+    selected: dict[str, CopyChangeIntervention] = {}
+    order: list[str] = []
+    for intervention in interventions:
+        key = (intervention.property_code or intervention.ga4_property_id or intervention.property_name).lower()
+        current = selected.get(key)
+        if current is None:
+            selected[key] = intervention
+            order.append(key)
+            continue
+        current_sort = (
+            parse_sortable_timestamp(current.publish_timestamp),
+            current.first_full_post_day,
+            current.wave_id,
+        )
+        candidate_sort = (
+            parse_sortable_timestamp(intervention.publish_timestamp),
+            intervention.first_full_post_day,
+            intervention.wave_id,
+        )
+        if candidate_sort > current_sort:
+            selected[key] = intervention
+    return [selected[key] for key in order]
+
+
+def build_filter_identity_keys(property_filters: list[str]) -> set[str]:
+    keys = {item.lower() for item in property_filters}
+    for item in property_filters:
+        identity = resolve_property_identity(item)
+        if not identity:
+            continue
+        for value in (
+            identity.property_name,
+            identity.property_code,
+            identity.ga4_property_id,
+            identity.canonical_property_id,
+            identity.community_id,
+            identity.website_url,
+            *identity.aliases,
+        ):
+            if value:
+                keys.add(str(value).lower())
+    return keys
+
+
+def intervention_matches_filter(intervention: CopyChangeIntervention, wanted: set[str]) -> bool:
+    values = {
+        intervention.property_name,
+        intervention.property_code,
+        intervention.ga4_property_id,
+        intervention.canonical_property_id,
+        intervention.community_id,
+        intervention.page_url,
+    }
+    return any(str(value).lower() in wanted for value in values if value)
 
 
 def normalized_words(value: str) -> set[str]:
@@ -789,20 +1175,29 @@ def generate_report(
 ) -> tuple[Path, Path, list[PropertyImpact], date, date]:
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout=30000")
+    write_limited = False
+    write_warnings: list[str] = []
     try:
-        ensure_copy_change_schema(conn)
-        seed_april_17_wave(conn)
+        try:
+            ensure_copy_change_schema(conn)
+            seed_april_17_wave(conn)
+        except sqlite3.OperationalError as exc:
+            if "locked" not in str(exc).lower():
+                raise
+            write_limited = True
+            write_warnings.append("Copy-change registry writes skipped because the local database was locked.")
+            conn.rollback()
         gsc_latest, ga4_latest = get_latest_dates(conn)
         interventions = list_interventions(conn, wave_ids=wave_ids)
         if property_filters:
-            wanted = {item.lower() for item in property_filters}
+            wanted = build_filter_identity_keys(property_filters)
             interventions = [
                 item
                 for item in interventions
-                if item.property_name.lower() in wanted
-                or item.property_code.lower() in wanted
-                or item.ga4_property_id.lower() in wanted
+                if intervention_matches_filter(item, wanted)
             ]
+        interventions = dedupe_interventions_latest(interventions)
         impacts: list[PropertyImpact] = []
         for intervention in interventions:
             post_start = datetime.strptime(intervention.first_full_post_day, "%Y-%m-%d").date()
@@ -811,20 +1206,28 @@ def generate_report(
                 ga4_latest,
                 post_start,
             )
-            impacts.append(
-                build_property_impact(
-                    conn,
-                    intervention,
-                    gsc_current_window,
-                    gsc_prior_window,
-                    ga4_current_window,
-                    ga4_prior_window,
-                )
+            impact = build_property_impact(
+                conn,
+                intervention,
+                gsc_current_window,
+                gsc_prior_window,
+                ga4_current_window,
+                ga4_prior_window,
             )
+            impact.decision = build_decision_read(conn, impact)
+            impacts.append(impact)
         observation_date = datetime.now().date().isoformat()
-        for impact in impacts:
-            record_metric_observations(conn, impact, observation_date)
-        conn.commit()
+        if not write_limited:
+            try:
+                for impact in impacts:
+                    record_metric_observations(conn, impact, observation_date)
+                conn.commit()
+            except sqlite3.OperationalError as exc:
+                if "locked" not in str(exc).lower():
+                    raise
+                write_limited = True
+                write_warnings.append("Observation writes skipped because the local database was locked.")
+                conn.rollback()
     finally:
         conn.close()
 
@@ -840,7 +1243,10 @@ def generate_report(
         json.dumps(
             {
                 "generated_at": datetime.now().isoformat(),
-                "schema_version": "copy_change_impact_brief_v2_wave_registry",
+                "schema_version": REPORT_SCHEMA_VERSION,
+                "template_version": REPORT_TEMPLATE_VERSION,
+                "write_limited": write_limited,
+                "write_warnings": write_warnings,
                 "gsc_latest": gsc_latest.isoformat(),
                 "ga4_latest": ga4_latest.isoformat(),
                 "active_wave_ids": sorted({item.wave_id for item in impacts}),
@@ -861,6 +1267,7 @@ def generate_report(
                         "change_summary": item.change_summary,
                         "headline": item.headline,
                         "headline_color": item.headline_color,
+                        "decision": item.decision,
                         "gsc_current": item.gsc_current,
                         "gsc_prior": item.gsc_prior,
                         "ga4_current": item.ga4_current,
