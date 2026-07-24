@@ -1,0 +1,15 @@
+name = "steps-freedom-email"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+routes = [
+  { pattern = "steps.yournamehere.vip/api/email", zone_name = "yournamehere.vip" }
+]
+
+[vars]
+ENABLE_EMAIL_SEND = "true"
+EMAIL_FROM_NAME = "Steps to Freedom"
+
+# Secrets are deployed through Keeper-backed Wrangler flows.
+# RESEND_API_KEY
+# EMAIL_FROM

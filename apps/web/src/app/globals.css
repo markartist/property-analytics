@@ -31,6 +31,29 @@
   --sunset-amber: 38 92% 50%;     /* #D97706 */
   --pine-green: 142 64% 24%;      /* #15803D */
   --mist: 215 17% 60%;            /* #94A3B8 */
+
+  /* Venterra official palette */
+  --venterra-navy: #15284B;
+  --venterra-san-marino: #3D66B9;
+  --venterra-bay: #294782;
+  --venterra-indigo: #5A81CF;
+  --venterra-monte-carlo: #7DCAC2;
+  --venterra-pink: #E02472;
+  --venterra-white-smoke: #F6F6F5;
+  --venterra-terra-cotta: #BD4830;
+  --venterra-quill-gray: #D6D6D2;
+  --venterra-blue-chill: #3B9189;
+  --venterra-delta: #9B9B96;
+
+  /* Venterra Clearwater glass system */
+  --clearwater-fill: rgba(246, 246, 245, 0.065);
+  --clearwater-fill-clear: rgba(246, 246, 245, 0.04);
+  --clearwater-fill-tinted: rgba(21, 40, 75, 0.36);
+  --clearwater-border: rgba(246, 246, 245, 0.18);
+  --clearwater-border-muted: rgba(246, 246, 245, 0.145);
+  --clearwater-highlight: rgba(255, 255, 255, 0.24);
+  --clearwater-shadow: rgba(0, 0, 0, 0.1);
+  --clearwater-navy-shadow: rgba(21, 40, 75, 0.2);
 }
 
 * {
@@ -41,4 +64,234 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-lato), "Lato", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer utilities {
+  .clearwater-stage {
+    background:
+      linear-gradient(118deg, rgba(224, 36, 114, 0.075) 0%, transparent 24%),
+      linear-gradient(142deg, transparent 35%, rgba(125, 202, 194, 0.12) 58%, transparent 84%),
+      linear-gradient(24deg, rgba(90, 129, 207, 0.14) 0%, transparent 36%),
+      linear-gradient(135deg, var(--venterra-navy) 0%, var(--venterra-bay) 48%, var(--venterra-blue-chill) 100%);
+  }
+
+  .clearwater-field {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(115deg, transparent 0%, rgba(246, 246, 245, 0.055) 34%, transparent 55%),
+      linear-gradient(72deg, transparent 12%, rgba(61, 102, 185, 0.11) 44%, transparent 74%);
+    background-size: 32px 32px, 32px 32px, auto;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.86), rgba(0, 0, 0, 0.2));
+    pointer-events: none;
+  }
+
+  .clearwater-lane-field {
+    position: absolute;
+    inset: -8% -4%;
+    background:
+      linear-gradient(118deg, transparent 8%, rgba(224, 36, 114, 0.055) 22%, transparent 42%),
+      linear-gradient(68deg, transparent 28%, rgba(125, 202, 194, 0.085) 52%, transparent 74%),
+      linear-gradient(142deg, rgba(90, 129, 207, 0.085), transparent 38%, rgba(61, 102, 185, 0.055) 80%),
+      linear-gradient(180deg, rgba(246, 246, 245, 0.025), transparent 62%);
+    filter: saturate(110%);
+    pointer-events: none;
+  }
+
+  .clearwater-glass {
+    position: relative;
+    isolation: isolate;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.026) 46%, rgba(255, 255, 255, 0.055)),
+      var(--clearwater-fill);
+    border: 1px solid var(--clearwater-border);
+    box-shadow:
+      inset 0 1px 0 var(--clearwater-highlight),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+      inset 1px 0 0 rgba(255, 255, 255, 0.12),
+      0 14px 44px var(--clearwater-shadow);
+    -webkit-backdrop-filter: blur(16px) saturate(130%) contrast(106%);
+    backdrop-filter: blur(16px) saturate(130%) contrast(106%);
+  }
+
+  .clearwater-glass::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background:
+      linear-gradient(112deg, rgba(255, 255, 255, 0.14), transparent 30%),
+      linear-gradient(288deg, transparent 62%, rgba(255, 255, 255, 0.045));
+    opacity: 0.62;
+    pointer-events: none;
+  }
+
+  .clearwater-glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.045) 12%, transparent 30%),
+      radial-gradient(120% 90% at 10% 0%, rgba(255, 255, 255, 0.05), transparent 50%);
+    mix-blend-mode: screen;
+    opacity: 0.34;
+    pointer-events: none;
+  }
+
+  .clearwater-glass > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .clearwater-glass-clear {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.022)),
+      var(--clearwater-fill-clear);
+  }
+
+  .clearwater-glass-tinted {
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.12), rgba(21, 40, 75, 0.12) 48%, rgba(125, 202, 194, 0.035)),
+      var(--clearwater-fill-tinted);
+    border-color: var(--clearwater-border-muted);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.055),
+      inset 1px 0 0 rgba(255, 255, 255, 0.07),
+      0 14px 44px var(--clearwater-navy-shadow);
+  }
+
+  .clearwater-lens-card {
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.075), rgba(21, 40, 75, 0.22) 46%, rgba(246, 246, 245, 0.032)),
+      rgba(21, 40, 75, 0.34);
+  }
+
+  .clearwater-data-card {
+    border: 1px solid rgba(246, 246, 245, 0.16);
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.055), rgba(21, 40, 75, 0.12)),
+      rgba(21, 40, 75, 0.44);
+    color: rgba(255, 255, 255, 0.82);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 10px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .watchtower-stage {
+    background:
+      radial-gradient(circle at 16% 10%, rgba(125, 202, 194, 0.14), transparent 28%),
+      radial-gradient(circle at 76% 18%, rgba(90, 129, 207, 0.14), transparent 32%),
+      radial-gradient(circle at 84% 78%, rgba(224, 36, 114, 0.09), transparent 30%),
+      linear-gradient(135deg, #061722 0%, var(--venterra-navy) 42%, #061722 100%);
+  }
+
+  .watchtower-signal-shell {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid rgba(246, 246, 245, 0.16);
+    background:
+      radial-gradient(circle at 18% 24%, rgba(125, 202, 194, 0.13), transparent 32%),
+      radial-gradient(circle at 82% 20%, rgba(90, 129, 207, 0.12), transparent 30%),
+      linear-gradient(135deg, rgba(6, 23, 34, 0.94), rgba(21, 40, 75, 0.88) 52%, rgba(6, 23, 34, 0.96));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.07),
+      0 44px 140px rgba(0, 0, 0, 0.34);
+  }
+
+  .watchtower-signal-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+      linear-gradient(90deg, rgba(246, 246, 245, 0.045) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(246, 246, 245, 0.035) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(circle at 45% 36%, rgba(0, 0, 0, 0.9), transparent 78%);
+  }
+
+  .watchtower-signal-shell::after {
+    content: "";
+    position: absolute;
+    inset: -30% -20%;
+    z-index: -1;
+    background:
+      conic-gradient(from 210deg at 50% 45%, transparent 0deg, rgba(125, 202, 194, 0.16) 28deg, transparent 64deg, transparent 360deg);
+    opacity: 0.7;
+    transform: rotate(-8deg);
+    animation: watchtower-sweep 18s linear infinite;
+    pointer-events: none;
+  }
+
+  .watchtower-rail-card,
+  .watchtower-panel {
+    border: 1px solid rgba(246, 246, 245, 0.14);
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.07), rgba(21, 40, 75, 0.16)),
+      rgba(6, 23, 34, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 16px 44px rgba(0, 0, 0, 0.18);
+  }
+
+  .watchtower-panel {
+    -webkit-backdrop-filter: blur(14px) saturate(125%);
+    backdrop-filter: blur(14px) saturate(125%);
+  }
+
+  .watchtower-horizon {
+    position: relative;
+  }
+
+  .watchtower-horizon::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(125, 202, 194, 0.72), rgba(246, 246, 245, 0.42), transparent);
+  }
+
+  .watchtower-signal-node {
+    border: 1px solid rgba(246, 246, 245, 0.16);
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.06), rgba(21, 40, 75, 0.18)),
+      rgba(6, 23, 34, 0.54);
+  }
+}
+
+@keyframes watchtower-sweep {
+  from {
+    transform: rotate(-8deg);
+  }
+  to {
+    transform: rotate(352deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watchtower-signal-shell::after {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --clearwater-fill: rgba(255, 255, 255, 0.08);
+    --clearwater-fill-clear: rgba(255, 255, 255, 0.055);
+    --clearwater-fill-tinted: rgba(255, 255, 255, 0.085);
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .clearwater-glass {
+    background: rgba(21, 40, 75, 0.78);
+  }
 }

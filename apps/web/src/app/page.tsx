@@ -3,16 +3,20 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  ClearwaterBadge,
+  ClearwaterKicker,
+  ClearwaterPanel,
+  ClearwaterStage,
+} from "@/components/shared/clearwater-glass";
 import { getPondInsights, type PondInsight, type PondSurface } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { getFeaturedOfferings, getRoleTitle, type AppRole, type SurfaceId } from "@/lib/permissions";
 import {
   Anchor, Eye, Fish,
   TrendingUp, TrendingDown, AlertTriangle, Trophy, Zap, BarChart3,
-  Loader2, Waves, Clock, Database, Gauge, FlaskConical,
-  BriefcaseBusiness, ClipboardCheck,
+  Loader2, Waves, Clock, Database, Gauge, FlaskConical, Route,
+  BriefcaseBusiness, ClipboardCheck, FileText, ShieldCheck, ListChecks,
 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
@@ -30,19 +34,19 @@ const INSIGHT_ICONS: Record<string, React.ElementType> = {
 };
 
 const INSIGHT_COLORS: Record<string, string> = {
-  green: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  amber: "bg-amber-100 text-amber-700 border-amber-200",
-  red: "bg-red-100 text-red-700 border-red-200",
-  teal: "bg-teal-100 text-teal-700 border-teal-200",
-  blue: "bg-blue-100 text-blue-700 border-blue-200",
+  green: "border-[#7DCAC2]/35 bg-[#7DCAC2]/14 text-[#7DCAC2]",
+  amber: "border-[#BD4830]/35 bg-[#BD4830]/16 text-[#F6F6F5]",
+  red: "border-[#E02472]/35 bg-[#E02472]/16 text-[#F6F6F5]",
+  teal: "border-[#3B9189]/35 bg-[#3B9189]/18 text-[#7DCAC2]",
+  blue: "border-[#5A81CF]/35 bg-[#5A81CF]/18 text-[#D6D6D2]",
 };
 
 const INSIGHT_ICON_COLORS: Record<string, string> = {
-  green: "text-emerald-600",
-  amber: "text-amber-600",
-  red: "text-red-600",
-  teal: "text-teal-600",
-  blue: "text-blue-600",
+  green: "text-[#7DCAC2]",
+  amber: "text-[#F6F6F5]",
+  red: "text-[#F6F6F5]",
+  teal: "text-[#7DCAC2]",
+  blue: "text-[#D6D6D2]",
 };
 
 // ────────────────────────────────────────────────────────────────
@@ -58,8 +62,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "The Pond",
     subtitle: "Survey the surface",
     description: "Portfolio-wide landing lane for governed signals, orientation, and next moves.",
-    gradient: "from-[#1a355d] to-[#1f4772]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: Waves,
   },
   watchtower: {
@@ -67,17 +71,17 @@ const FEATURED_ZONE_DECOR: Record<
     title: "The Watchtower",
     subtitle: "Check the pulse",
     description: "System health, data freshness, coverage matrix, and pipeline status at a glance.",
-    gradient: "from-[#0D5E6D] to-[#0a4a56]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#294782]/30 via-white/[0.055] to-[#3B9189]/12",
+    iconBg: "bg-white/[0.18]",
     icon: Eye,
   },
   dock: {
     kicker: "Browse",
-    title: "The Dock",
-    subtitle: "Browse your reports",
-    description: "PIB dashboards, leasing funnels, marketing data, and portfolio analysis — all in one place.",
-    gradient: "from-[#15284B] to-[#1e3a5f]",
-    iconBg: "bg-white/18",
+    title: "Report Archive",
+    subtitle: "Find generated work",
+    description: "Browse governed dashboards, report lanes, generated packets, and portfolio analysis from one place.",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: Anchor,
   },
   fish: {
@@ -85,8 +89,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "The Fishing Hole",
     subtitle: "Ask anything",
     description: "Cast a question into the pond — get answers, reports, CSVs, or email summaries powered by AI.",
-    gradient: "from-[#15803D] to-[#166534]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#15284B]/12",
+    iconBg: "bg-white/[0.18]",
     icon: Fish,
   },
   tracker: {
@@ -94,8 +98,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Pilot Tracker",
     subtitle: "Watch pilots move",
     description: "Follow pilot and paired-lane movement without leaving the governed platform.",
-    gradient: "from-[#4f46e5] to-[#3343b5]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#5A81CF]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: Gauge,
   },
   popBrief: {
@@ -103,8 +107,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "POP Brief",
     subtitle: "Read the portfolio story",
     description: "Move directly into governed briefing and performance interpretation.",
-    gradient: "from-[#7c3aed] to-[#5b21b6]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#E02472]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   captainBrief: {
@@ -112,8 +116,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Captain Brief",
     subtitle: "Read the property command view",
     description: "Open Captain Benton style operating reads with watch items, actions, and source-grounded inventory detail.",
-    gradient: "from-[#15284B] to-[#0D5E6D]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#3B9189]/12",
+    iconBg: "bg-white/[0.18]",
     icon: Anchor,
   },
   captainOffice: {
@@ -121,8 +125,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Captain’s Office",
     subtitle: "Work the governed property office",
     description: "Run property-specific runtime interactions with evidence lineage, authority state, and candidate memory visible.",
-    gradient: "from-[#15284B] to-[#0D5E6D]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#3B9189]/12",
+    iconBg: "bg-white/[0.18]",
     icon: ClipboardCheck,
   },
   pibBuilder: {
@@ -130,8 +134,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "PIB Builder",
     subtitle: "Shape a property brief",
     description: "Open the PIB workflow and work directly with the canonical briefing lane.",
-    gradient: "from-[#1d4ed8] to-[#1e40af]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3D66B9]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   searchIntelligence: {
@@ -139,8 +143,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Search Intelligence",
     subtitle: "Read the search picture",
     description: "Inspect search signals, positioning, and governed search insight.",
-    gradient: "from-[#0f766e] to-[#115e59]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   gbpPosts: {
@@ -148,8 +152,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "GBP Posts",
     subtitle: "Operate local posts",
     description: "Manage governed local-posting work without leaving the Pond.",
-    gradient: "from-[#0f766e] to-[#0b5b57]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#15284B]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   gscReport: {
@@ -157,8 +161,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "GSC Report",
     subtitle: "Review visibility",
     description: "Open Search Console-driven reporting and trend visibility.",
-    gradient: "from-[#2563eb] to-[#1d4ed8]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3D66B9]/30 via-white/[0.055] to-[#15284B]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   contentOffice: {
@@ -166,8 +170,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Content Office",
     subtitle: "Coordinate channel work",
     description: "Turn Captain and Data Pond intelligence into governed drafts, approvals, and handoffs.",
-    gradient: "from-[#14532d] to-[#0f766e]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BriefcaseBusiness,
   },
   intelligenceOffice: {
@@ -175,8 +179,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Intelligence Office",
     subtitle: "Set editorial direction",
     description: "Admin-owned guidance, claims, and directives workspace.",
-    gradient: "from-[#6d28d9] to-[#5b21b6]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#5A81CF]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   directiveControlCenter: {
@@ -184,8 +188,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Directive Control Center",
     subtitle: "Control policy data",
     description: "Admin-only directive policy, validation, approval, simulation, and runtime-snapshot control.",
-    gradient: "from-[#0f172a] to-[#1e3a5f]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BriefcaseBusiness,
   },
   siteContent: {
@@ -193,17 +197,26 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Site Content Creator",
     subtitle: "Run governed rewrites",
     description: "Map, assess, and rewrite site sections in the governed content lane.",
-    gradient: "from-[#0D5E6D] to-[#136878]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
+  },
+  routingOps: {
+    kicker: "Route",
+    title: "Routing Ops",
+    subtitle: "Control launch routes",
+    description: "Inspect portfolio URL moves, staging origins, route readiness, and launch approval posture.",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#3B9189]/12",
+    iconBg: "bg-white/[0.18]",
+    icon: Route,
   },
   experiments: {
     kicker: "Test",
     title: "Experiment Lab",
     subtitle: "Draft edge trials",
     description: "Govern small site-experience tests with readiness gates, EVS proof, and rollback discipline.",
-    gradient: "from-[#0f766e] to-[#164e63]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: FlaskConical,
   },
   vacs: {
@@ -211,8 +224,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "VACS",
     subtitle: "Drive content execution",
     description: "Machine-first content execution lane with governed bridge posture.",
-    gradient: "from-[#1f2937] to-[#111827]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#000000]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   evs: {
@@ -220,8 +233,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "EVS",
     subtitle: "Review validation work",
     description: "Validation requests, handoff posture, and governed review.",
-    gradient: "from-[#1d4ed8] to-[#0f3aa7]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#3D66B9]/30 via-white/[0.055] to-[#15284B]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   controlPlane: {
@@ -229,8 +242,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Control Plane",
     subtitle: "Inspect the architecture",
     description: "Admin-only landscape, trust, and consolidation surface.",
-    gradient: "from-[#394867] to-[#243248]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#294782]/30 via-white/[0.055] to-[#15284B]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   backup: {
@@ -238,8 +251,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Backup & Export",
     subtitle: "Move governed outputs",
     description: "Operational export and backup tooling.",
-    gradient: "from-[#334155] to-[#1e293b]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#9B9B96]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
   adminUsers: {
@@ -247,8 +260,8 @@ const FEATURED_ZONE_DECOR: Record<
     title: "Admin",
     subtitle: "Manage platform access",
     description: "User and administrative control surface.",
-    gradient: "from-[#475569] to-[#334155]",
-    iconBg: "bg-white/18",
+    gradient: "from-[#D6D6D2]/30 via-white/[0.055] to-[#294782]/12",
+    iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
 };
@@ -258,15 +271,26 @@ const FEATURED_ZONE_DECOR: Record<
 // ────────────────────────────────────────────────────────────────
 
 function freshnessAge(dateStr: string | null): { label: string; color: string } {
-  if (!dateStr) return { label: "No data", color: "text-red-500" };
+  if (!dateStr) return { label: "No data", color: "text-[#E02472]" };
   const age = Date.now() - parseISO(dateStr).getTime();
   const days = Math.floor(age / 86400000);
-  if (days <= 7) return { label: `${days}d ago`, color: "text-emerald-600" };
-  if (days <= 14) return { label: `${days}d ago`, color: "text-amber-600" };
-  return { label: `${days}d ago`, color: "text-red-600" };
+  if (days <= 7) return { label: `${days}d ago`, color: "text-[#7DCAC2]" };
+  if (days <= 14) return { label: `${days}d ago`, color: "text-[#BD4830]" };
+  return { label: `${days}d ago`, color: "text-[#E02472]" };
+}
+
+function freshnessStatus(dateStr: string | null): "ready" | "watch" | "stale" {
+  if (!dateStr) return "stale";
+  const age = Date.now() - parseISO(dateStr).getTime();
+  const days = Math.floor(age / 86400000);
+  if (days <= 7) return "ready";
+  if (days <= 14) return "watch";
+  return "stale";
 }
 
 // Labels for source freshness keys (from data_freshness table)
+const SUNSET_SOURCE_KEYS = new Set(["semrush"]);
+
 const SOURCE_LABELS: Record<string, string> = {
   ga4: "GA4 Traffic",
   ga4_sources: "Traffic Sources",
@@ -274,7 +298,6 @@ const SOURCE_LABELS: Record<string, string> = {
   google_ads: "Google Ads",
   ads_keywords: "Ads Keywords",
   pagespeed: "PageSpeed",
-  semrush: "SEMRush",
   gbp_reviews: "GBP Reviews",
   availability: "Availability",
   guest_cards: "Guest Cards",
@@ -292,6 +315,29 @@ const TABLE_LABELS: Record<string, string> = {
   t7: "T7 Leasing",
   t30: "T30 Leasing",
 };
+
+const PIB_PRESETS = [
+  {
+    label: "Full PIB",
+    detail: "All governed executive sections with always-on identity, freshness, and methodology.",
+  },
+  {
+    label: "Website / Funnel",
+    detail: "Site evaluation, traffic, conversion intent, search, paid, local, and reputation.",
+  },
+  {
+    label: "Leasing / Inventory",
+    detail: "Availability, guest cards, conversion intent, and SightMap when applicable.",
+  },
+  {
+    label: "Market Context",
+    detail: "Competitor, DataForSEO, ApartmentIQ, and internal availability context.",
+  },
+  {
+    label: "Reputation / Local",
+    detail: "Reviews, local presence, DataForSEO visibility, and owned search context.",
+  },
+];
 
 const ROLE_EXPERIENCE: Record<AppRole, {
   eyebrow: string;
@@ -371,6 +417,20 @@ export default function DataPondLanding() {
     return base;
   }, [user?.role]);
   const roleProfile = ROLE_EXPERIENCE[user?.role ?? "viewer"];
+  const sourceEntries = React.useMemo(() => {
+    if (!surface) return [];
+    return Object.entries(surface.freshness)
+      .filter(([key]) => !SUNSET_SOURCE_KEYS.has(key.toLowerCase()))
+      .map(([key, dateStr]) => {
+        const label = SOURCE_LABELS[key] ?? TABLE_LABELS[key] ?? key;
+        const age = freshnessAge(dateStr);
+        const status = freshnessStatus(dateStr);
+        return { key, label, dateStr, age, status };
+      });
+  }, [surface]);
+  const staleSources = sourceEntries.filter((entry) => entry.status === "stale");
+  const watchSources = sourceEntries.filter((entry) => entry.status === "watch");
+  const readySources = sourceEntries.filter((entry) => entry.status === "ready");
 
   React.useEffect(() => {
     getPondInsights()
@@ -383,7 +443,7 @@ export default function DataPondLanding() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <ClearwaterStage>
       {/* ── Hero ─────────────────────────────────────────── */}
       <div className="relative overflow-hidden border-b border-slate-200/50">
         {/* Pond scene background */}
@@ -402,21 +462,21 @@ export default function DataPondLanding() {
           <div className="mx-auto grid max-w-[1400px] gap-8 xl:grid-cols-[1.15fr_0.85fr] xl:items-end">
             <div>
               {user && (
-                <Badge className="border-white/20 bg-white/10 text-white/85 backdrop-blur-sm">
+                <ClearwaterBadge>
                   {getRoleTitle(user.role)} access
-                </Badge>
+                </ClearwaterBadge>
               )}
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.34em] text-white/55">
+              <ClearwaterKicker className="mt-4">
                 {roleProfile.eyebrow}
-              </p>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-white/55">
-                Monitor. Browse. Ask.
-              </p>
+              </ClearwaterKicker>
+              <ClearwaterKicker>
+                Monitor. Build. Govern.
+              </ClearwaterKicker>
               <h1 className="mt-3 text-5xl font-black tracking-[-0.05em] text-white md:text-6xl">
                 The Data Pond
               </h1>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-white/72">
-                Your analytics resort. Browse reports, monitor system health, or cast a question into the pond and reel in an answer.
+                The governed source layer for property facts, freshness, evidence, and executive briefing work.
               </p>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-white/62">
                 {roleProfile.summary}
@@ -424,20 +484,20 @@ export default function DataPondLanding() {
 
               {surface && (
                 <div className="mt-7 flex flex-wrap items-center gap-3">
-                  <Badge className="border-white/20 bg-white/10 text-white/90 text-xs py-1 px-3 backdrop-blur-sm">
+                  <ClearwaterBadge className="py-1 text-white/90">
                     <Database className="mr-1.5 h-3 w-3" />
                     {surface.community_count} Properties
-                  </Badge>
-                  <Badge className="border-white/20 bg-white/10 text-white/90 text-xs py-1 px-3 backdrop-blur-sm">
+                  </ClearwaterBadge>
+                  <ClearwaterBadge className="py-1 text-white/90">
                     <Clock className="mr-1.5 h-3 w-3" />
                     Latest: {surface.latest_snapshot
                       ? formatDistanceToNow(parseISO(surface.latest_snapshot), { addSuffix: true })
                       : "—"}
-                  </Badge>
-                  <Badge className="border-white/20 bg-white/10 text-white/90 text-xs py-1 px-3 backdrop-blur-sm">
+                  </ClearwaterBadge>
+                  <ClearwaterBadge className="py-1 text-white/90">
                     <Waves className="mr-1.5 h-3 w-3" />
                     9 Data Sources
-                  </Badge>
+                  </ClearwaterBadge>
                 </div>
               )}
               <div className="mt-6 flex flex-wrap gap-2">
@@ -454,17 +514,17 @@ export default function DataPondLanding() {
             </div>
 
             <div className="hidden xl:block">
-              <div className="rounded-[24px] border border-white/14 bg-[linear-gradient(160deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06))] p-6 shadow-[0_30px_80px_rgba(8,15,32,0.18)] backdrop-blur-md">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/55">Operator flow</p>
+              <ClearwaterPanel tone="standard">
+                <ClearwaterKicker>Operator flow</ClearwaterKicker>
                 <div className="mt-4 grid gap-3">
                   {roleProfile.operatorFlow.map((step) => (
-                    <div key={step.title} className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+                    <div key={step.title} className="clearwater-glass clearwater-glass-clear rounded-2xl border border-white/10 px-4 py-4">
                       <p className="text-sm font-semibold text-white">{step.title}</p>
                       <p className="mt-1 text-sm leading-6 text-white/60">{step.detail}</p>
                     </div>
                   ))}
                 </div>
-              </div>
+              </ClearwaterPanel>
             </div>
           </div>
         </div>
@@ -473,55 +533,182 @@ export default function DataPondLanding() {
       {/* ── Main content ─────────────────────────────────── */}
       <div className="mx-auto max-w-[1400px] space-y-8 px-6 py-8 md:px-12">
 
-        {/* Zone Cards */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {featuredZones.map((zone) => (
-            <Link key={zone.key} href={zone.href} className="group">
-              <div
-                className={`relative overflow-hidden rounded-[24px] bg-gradient-to-br ${zone.gradient} p-6 shadow-[0_18px_50px_rgba(15,23,42,0.14)] transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_22px_60px_rgba(15,23,42,0.18)]`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className={`inline-flex rounded-2xl ${zone.iconBg} p-3`}>
-                    <zone.icon className="h-7 w-7 text-white" />
-                  </div>
-                  <span className="rounded-full border border-white/14 bg-white/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">
-                    {zone.kicker}
-                  </span>
+        {/* Source Readiness */}
+        {surface && (
+          <div className="grid gap-5 xl:grid-cols-[0.92fr_1.08fr]">
+            <ClearwaterPanel tone="tinted" className="clearwater-lens-card">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <ClearwaterKicker>Source readiness</ClearwaterKicker>
+                  <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Trust the pond before you act</h2>
+                  <p className="mt-3 max-w-xl text-sm leading-7 text-white/62">
+                    Data Pond is the source-of-truth layer. Stale source lanes should be visible before reports, exports, or recommendations move downstream.
+                  </p>
                 </div>
-                <h2 className="mt-5 text-[30px] font-black leading-none tracking-[-0.04em] text-white">{zone.title}</h2>
-                <p className="mt-2 text-sm font-medium text-white/72">{zone.subtitle}</p>
-                <p className="mt-4 max-w-sm text-sm leading-7 text-white/55">{zone.description}</p>
-                <div className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/46 transition-colors group-hover:text-white/74">
-                  Enter lane
-                  <span className="text-sm">→</span>
+                <div className="rounded-2xl border border-white/14 bg-white/[0.07] px-4 py-3 text-right">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/50">Roster</p>
+                  <p className="mt-1 text-2xl font-black text-white">{surface.community_count}</p>
+                  <p className="text-xs text-white/54">active Pond records</p>
                 </div>
               </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-[#7DCAC2]/24 bg-[#7DCAC2]/10 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Ready</p>
+                  <p className="mt-2 text-3xl font-black text-[#7DCAC2]">{readySources.length}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">fresh source lanes</p>
+                </div>
+                <div className="rounded-2xl border border-[#BD4830]/26 bg-[#BD4830]/12 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Watch</p>
+                  <p className="mt-2 text-3xl font-black text-[#F6F6F5]">{watchSources.length}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">aging source lanes</p>
+                </div>
+                <div className="rounded-2xl border border-[#E02472]/30 bg-[#E02472]/14 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Stale</p>
+                  <p className="mt-2 text-3xl font-black text-[#F6F6F5]">{staleSources.length}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">needs attention</p>
+                </div>
+              </div>
+
+              {staleSources.length > 0 ? (
+                <div className="mt-5 rounded-2xl border border-[#E02472]/28 bg-[#E02472]/12 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#E02472]" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">Freshness pressure is active</p>
+                      <p className="mt-1 text-sm leading-6 text-white/58">
+                        {staleSources.slice(0, 3).map((source) => `${source.label} ${source.age.label}`).join(", ")}
+                        {staleSources.length > 3 ? `, and ${staleSources.length - 3} more` : ""}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-[#7DCAC2]/22 bg-[#7DCAC2]/10 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#7DCAC2]" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">Core source posture is current</p>
+                      <p className="mt-1 text-sm leading-6 text-white/58">No stale source lanes are visible in this Pond snapshot.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </ClearwaterPanel>
+
+            <div className="clearwater-data-card rounded-2xl p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Waves className="h-5 w-5 text-[#7DCAC2]" />
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Surface Conditions</h2>
+                    <p className="text-xs text-white/50">Actual freshness across governed source lanes</p>
+                  </div>
+                </div>
+                <Link
+                  href="/watchtower"
+                  className="inline-flex items-center rounded-xl border border-white/14 bg-white/[0.08] px-3 py-2 text-xs font-semibold text-white/82 transition-colors hover:bg-white/[0.13] hover:text-white"
+                >
+                  Open Watchtower
+                </Link>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+                {sourceEntries.map((entry) => (
+                  <div key={entry.key} className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-3 text-center">
+                    <p className="truncate text-xs font-medium text-white/56">{entry.label}</p>
+                    <p className={`mt-1 text-sm font-bold tabular-nums ${entry.age.color}`}>
+                      {entry.age.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Canonical PIB Builder */}
+        <ClearwaterPanel tone="tinted" className="clearwater-lens-card">
+          <div className="grid gap-6 xl:grid-cols-[0.86fr_1.14fr] xl:items-center">
+            <div>
+              <div className="inline-flex rounded-2xl bg-white/[0.14] p-3">
+                <FileText className="h-7 w-7 text-white" />
+              </div>
+              <ClearwaterKicker className="mt-5">Canonical briefing lane</ClearwaterKicker>
+              <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-white">PIB Builder</h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-white/62">
+                Choose a governed preset, inspect source coverage, then hand the request to the canonical PIB route. Section selection stays a contract over the approved PIB family.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  href="/analysis/pib"
+                  className="inline-flex items-center rounded-xl border border-white/14 bg-white/[0.1] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white/90 transition-colors hover:bg-white/[0.16] hover:text-white"
+                >
+                  Open Builder
+                </Link>
+                <Link
+                  href="/analysis/pib"
+                  className="inline-flex items-center rounded-xl border border-white/12 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white"
+                >
+                  Report Library
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {PIB_PRESETS.map((preset) => (
+                <div key={preset.label} className="rounded-2xl border border-white/12 bg-white/[0.055] px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-[#7DCAC2]" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">{preset.label}</p>
+                      <p className="mt-1 text-xs leading-5 text-white/54">{preset.detail}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </ClearwaterPanel>
+
+        {/* Zone Cards */}
+        <div className="relative">
+          <div className="clearwater-lane-field" aria-hidden="true" />
+          <div className="relative grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {featuredZones.map((zone) => (
+            <Link key={zone.key} href={zone.href} className="group">
+              <ClearwaterPanel
+                tone="tinted"
+                className="clearwater-lens-card relative min-h-[250px] overflow-hidden transition-all duration-300 group-hover:-translate-y-0.5"
+              >
+                <div className="relative">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className={`inline-flex rounded-2xl ${zone.iconBg} p-3`}>
+                      <zone.icon className="h-7 w-7 text-white" />
+                    </div>
+                    <span className="rounded-full border border-white/14 bg-white/8 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">
+                      {zone.kicker}
+                    </span>
+                  </div>
+                  <h2 className="mt-5 text-[30px] font-black leading-none tracking-[-0.04em] text-white">{zone.title}</h2>
+                  <p className="mt-2 text-sm font-medium text-white/72">{zone.subtitle}</p>
+                  <p className="mt-4 max-w-sm text-sm leading-7 text-white/55">{zone.description}</p>
+                  <div className="mt-6 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/46 transition-colors group-hover:text-white/74">
+                    Enter lane
+                    <span className="text-sm">→</span>
+                  </div>
+                </div>
+              </ClearwaterPanel>
             </Link>
           ))}
+          </div>
         </div>
-
-        <Card className="overflow-hidden rounded-[24px] border-[#0D5E6D]/20 bg-gradient-to-r from-[#0D5E6D]/5 to-[#15803D]/5 shadow-[0_12px_40px_rgba(15,23,42,0.05)]">
-          <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#0D5E6D]/70">Briefing shortcut</p>
-              <p className="mt-1 text-base font-semibold text-slate-900">Need a PIB fast?</p>
-              <p className="mt-1 text-sm text-slate-600">Open the PIB dashboard and drill into your standard PIB sections.</p>
-            </div>
-            <Link
-              href="/pib"
-              className="inline-flex items-center rounded-xl bg-[#0D5E6D] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white hover:bg-[#0a4d59]"
-            >
-              Open PIB
-            </Link>
-          </CardContent>
-        </Card>
 
         {/* Catch of the Day */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Fish className="h-5 w-5 text-[#0D5E6D]" />
-            <h2 className="text-lg font-bold text-slate-900">Catch of the Day</h2>
-            <span className="text-xs text-slate-400 ml-1">Auto-generated insights from your latest data</span>
+            <Fish className="h-5 w-5 text-[#7DCAC2]" />
+            <h2 className="text-lg font-bold text-white">Latest Governed Signals</h2>
+            <span className="text-xs text-white/50 ml-1">Source-backed reads from the current Pond snapshot</span>
           </div>
 
           {loading ? (
@@ -529,11 +716,9 @@ export default function DataPondLanding() {
               <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             </div>
           ) : insights.length === 0 ? (
-            <Card>
-              <CardContent className="py-10 text-center text-slate-400">
+            <div className="clearwater-data-card rounded-2xl py-10 text-center text-white/58">
                 No insights yet — data will appear after your first PIB snapshot.
-              </CardContent>
-            </Card>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {insights.map((insight) => {
@@ -541,79 +726,48 @@ export default function DataPondLanding() {
                 const colorCls = INSIGHT_COLORS[insight.color] ?? INSIGHT_COLORS.teal;
                 const iconColor = INSIGHT_ICON_COLORS[insight.color] ?? "text-teal-600";
                 return (
-                  <Card key={insight.id} className="transition-shadow hover:shadow-md">
-                    <CardContent className="p-5">
+                  <div key={insight.id} className="clearwater-data-card rounded-2xl p-5 transition-transform hover:-translate-y-0.5">
                       <div className="flex items-start gap-3">
                         <div className={`mt-0.5 rounded-lg border p-2 ${colorCls}`}>
                           <Icon className={`h-4 w-4 ${iconColor}`} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-slate-900 leading-snug">
+                          <p className="text-sm font-semibold leading-snug text-white/88">
                             {insight.title}
                           </p>
-                          <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+                          <p className="mt-1.5 text-xs leading-relaxed text-white/52">
                             {insight.detail}
                           </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
 
-        {/* Data Freshness */}
-        {surface && (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Waves className="h-5 w-5 text-[#0D5E6D]" />
-              <h2 className="text-lg font-bold text-slate-900">Surface Conditions</h2>
-              <span className="text-xs text-slate-400 ml-1">Actual data freshness across all sources</span>
-            </div>
-            <Card>
-              <CardContent className="p-5">
-                <div className="grid grid-cols-3 gap-3 md:grid-cols-5 lg:grid-cols-5">
-                  {Object.entries(surface.freshness).map(([key, dateStr]) => {
-                    const label = SOURCE_LABELS[key] ?? TABLE_LABELS[key] ?? key;
-                    const { label: ageLabel, color } = freshnessAge(dateStr);
-                    return (
-                      <div key={key} className="text-center">
-                        <p className="text-xs font-medium text-slate-500 truncate">{label}</p>
-                        <p className={`mt-1 text-sm font-bold tabular-nums ${color}`}>
-                          {ageLabel}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         {/* Quick links footer */}
-        <div className="border-t border-slate-200 pt-6 pb-4">
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-            <Link href="/pib" className="hover:text-[#0D5E6D] transition-colors">PIB Dashboard</Link>
+        <div className="border-t border-white/12 pt-6 pb-4">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-white/46">
+            <Link href="/analysis/pib" className="transition-colors hover:text-white">PIB Builder</Link>
             <span>·</span>
-            <Link href="/marketing" className="hover:text-[#0D5E6D] transition-colors">Marketing Data</Link>
+            <Link href="/marketing" className="transition-colors hover:text-white">Marketing Data</Link>
             <span>·</span>
-            <Link href="/analysis" className="hover:text-[#0D5E6D] transition-colors">Analysis</Link>
+            <Link href="/analysis" className="transition-colors hover:text-white">Analysis</Link>
             <span>·</span>
-            <Link href="/t7-metrics" className="hover:text-[#0D5E6D] transition-colors">T7 Metrics</Link>
+            <Link href="/t7-metrics" className="transition-colors hover:text-white">T7 Metrics</Link>
             <span>·</span>
-            <Link href="/t30-metrics" className="hover:text-[#0D5E6D] transition-colors">T30 Metrics</Link>
+            <Link href="/t30-metrics" className="transition-colors hover:text-white">T30 Metrics</Link>
             <span>·</span>
-            <Link href="/backup" className="hover:text-[#0D5E6D] transition-colors">Backup & Export</Link>
+            <Link href="/backup" className="transition-colors hover:text-white">Backup & Export</Link>
             <div className="ml-auto flex items-center gap-2">
               <Image src="/velo-current.svg" alt="" width={12} height={7} className="shrink-0 opacity-40" />
-              <span>Produced by MarketingOps</span>
+              <span>Produced by WebOps</span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </ClearwaterStage>
   );
 }

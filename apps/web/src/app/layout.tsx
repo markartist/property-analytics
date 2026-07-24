@@ -11,7 +11,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
-  title: "The Data Pond — MarketingOps",
+  title: "The Data Pond — WebOps",
   description: "Analytics resort for property data — reports, monitoring, and AI-powered insights.",
 };
 

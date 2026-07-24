@@ -52,6 +52,19 @@ const config: Config = {
         mist: {
           DEFAULT: "hsl(var(--mist))",
         },
+        venterra: {
+          navy: "#15284B",
+          "san-marino": "#3D66B9",
+          bay: "#294782",
+          indigo: "#5A81CF",
+          "monte-carlo": "#7DCAC2",
+          pink: "#E02472",
+          "white-smoke": "#F6F6F5",
+          "terra-cotta": "#BD4830",
+          "quill-gray": "#D6D6D2",
+          "blue-chill": "#3B9189",
+          delta: "#9B9B96",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
