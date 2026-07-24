@@ -14,6 +14,9 @@ Locked files:
 - `Property_Intelligence_Brief/generate_property_intelligence_brief_v2_2_0.py`
 - `Property_Intelligence_Brief/templates/executive_email_template_v2_2_0.py`
 - `Property_Intelligence_Brief/send_property_intelligence_brief_email_v2_2_0.py`
+- `Property_Intelligence_Brief/generate_property_intelligence_brief_v2_2_1.py`
+- `Property_Intelligence_Brief/templates/executive_email_template_v2_2_1.py`
+- `Property_Intelligence_Brief/send_property_intelligence_brief_email_v2_2_1.py`
 
 ## Required Behavior for Agents
 
@@ -68,6 +71,34 @@ Agents must:
 6. If an approved output and a local/generated output differ, stop and reconcile to the approved output before sending anything.
 
 Failure mode to avoid: generating a technically reasonable alternate report when the user asked for the already-approved format.
+
+### Human-Facing Date Format Discipline
+
+Use `MM/DD/YYYY` for all dates shown to humans in reports, emails, decks, documents, spreadsheets, UI labels, narrative summaries, screenshots/captions, and final user-facing messages unless the user explicitly requests a different display format in the current task.
+
+Agents must:
+
+1. Treat ISO dates like `YYYY-MM-DD` as internal/machine format only by default.
+2. Preserve ISO dates for filenames, file paths, JSON contracts, API payloads, database values, logs, sortable IDs, specs, validation metadata, and other machine-readable artifacts.
+3. Convert internal dates to `MM/DD/YYYY` before rendering human-facing copy, table cells, chart labels, section headers, email subjects, and executive summaries.
+4. For date-time displays intended for humans, use `MM/DD/YYYY h:mm AM/PM` with timezone context when the timezone matters.
+5. When quoting or referencing an existing internal file path or artifact ID, do not rewrite the date embedded in that path; explain nearby human-facing date ranges in `MM/DD/YYYY`.
+
+Failure mode to avoid: exposing internal ISO-style dates in executive-facing or reader-facing prose just because the source data, filenames, or system time use ISO dates.
+
+### Ad Hoc Executive Report Discipline
+
+When the user requests a new ad hoc executive report, specialty report, or Outlook/HTML email report and no already-approved report family owns the request, use the governed Ad Hoc Executive Report System instead of creating a one-off renderer or sender.
+
+Agents must:
+
+1. Route preliminary ad hoc report work through `/Users/mark/Property_Analytics/scripts/run_adhoc_report.py` and the supporting engine in `/Users/mark/Property_Analytics/utils/adhoc_report_orchestrator.py`.
+2. Render through `/Users/mark/Property_Analytics/utils/outlook_report_builder.py` and validate with `/Users/mark/Property_Analytics/scripts/check_outlook_email_safety.py` before any email send.
+3. Preserve the run-packet contract under `/Users/mark/Property_Analytics/reports/adhoc_executive/`: `request.json`, `report_spec.json`, `report.html`, `report.xlsx`, `validation.json`, `delivery.json`, and `sources_used.md`.
+4. Send only through the universal email sender (`/Users/mark/Property_Analytics/utils/email_sender.py`) unless the user explicitly approves another delivery path in the current task.
+5. Extend the source registry/report builders instead of adding standalone custom HTML email scripts for each new subject.
+
+Failure mode to avoid: guessing at layout or delivery when the ad hoc report system can produce an Outlook-safe PIB-style report packet and enforce validation.
 
 ### Session Discipline
 
