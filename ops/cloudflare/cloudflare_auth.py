@@ -11,14 +11,23 @@ Resolution order:
 from __future__ import annotations
 
 import os
-import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+ROOT = Path("/Users/mark/Property_Analytics")
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from utils.ksm import KsmResolutionError, resolve_secret
+
 
 class CloudflareAuthError(RuntimeError):
     """Raised when no Cloudflare credentials can be resolved."""
+
+
+DEFAULT_CLOUDFLARE_TOKEN_NOTATION = "keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password"
 
 
 @dataclass
@@ -36,26 +45,22 @@ def _clean_token(raw: str) -> str:
 
 
 def _from_keeper() -> Optional[ResolvedToken]:
-    notation = os.getenv("KSM_CLOUDFLARE_TOKEN_NOTATION")
+    notation = os.getenv("KSM_CLOUDFLARE_TOKEN_NOTATION", DEFAULT_CLOUDFLARE_TOKEN_NOTATION)
     if not notation:
         return None
 
-    profile = os.getenv("KSM_PROFILE", "cloudflare-dns")
-    cmd = ["ksm", "-p", profile, "secret", "notation", notation]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise CloudflareAuthError(
-            "Keeper lookup failed. "
-            f"Profile={profile!r} notation={notation!r} stderr={result.stderr.strip()}"
+    profile = os.getenv("KSM_PROFILE", "marketingops")
+    try:
+        token = resolve_secret(
+            description="Cloudflare API token",
+            notation_env_var="KSM_CLOUDFLARE_TOKEN_NOTATION",
+            default_notation=DEFAULT_CLOUDFLARE_TOKEN_NOTATION,
+            direct_env_var=None,
+            default_profile=profile,
         )
-
-    token = _clean_token(result.stdout)
-    if not token:
-        raise CloudflareAuthError(
-            "Keeper returned an empty Cloudflare token. "
-            f"Profile={profile!r} notation={notation!r}"
-        )
-    return ResolvedToken(token=token, source=f"keeper:{profile}")
+    except KsmResolutionError as exc:
+        raise CloudflareAuthError(str(exc)) from exc
+    return ResolvedToken(token=_clean_token(token), source=f"keeper:{profile}")
 
 
 def _from_env() -> Optional[ResolvedToken]:

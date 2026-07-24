@@ -173,6 +173,7 @@ As of April 9, 2026:
   - `Google Ads API Config v2`
   - `DataForSEO API Credentials`
   - `ApartmentIQ API`
+  - `aHrefs API Key`
 - Keeper file records now exist for:
   - `GA4 Service Account JSON`
   - `GSC OAuth Client JSON`
@@ -197,6 +198,7 @@ Current Keeper notation targets:
 - `KSM_DATAFORSEO_LOGIN_NOTATION=keeper://8xxZUZB5ISyM1BhBrnaI2w/field/login`
 - `KSM_DATAFORSEO_PASSWORD_NOTATION=keeper://8xxZUZB5ISyM1BhBrnaI2w/field/password`
 - `KSM_APARTMENTIQ_API_KEY_NOTATION=keeper://aRP2hTUWhLTCAn-ye7GJ_w/field/password`
+- `KSM_AHREFS_API_KEY_NOTATION=keeper://xbIaayyCqMfrzVFjRei5hA/field/password`
 
 File-backed Keeper UIDs:
 

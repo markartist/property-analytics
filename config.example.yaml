@@ -1,0 +1,10 @@
+team_name: "Marketing Ops"
+shared_folder_name: "Marketing Ops Shared Credentials"
+default_permissions:
+  can_edit: false
+  can_share: false
+  manage_users: false
+  manage_records: false
+allow_blank_passwords: false
+duplicate_policy: "warn"
+url_validation: "warn"

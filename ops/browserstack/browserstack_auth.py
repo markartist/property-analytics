@@ -12,14 +12,24 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+ROOT = Path("/Users/mark/Property_Analytics")
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from utils.ksm import KsmResolutionError, resolve_secret
+
 
 class BrowserStackAuthError(RuntimeError):
     """Raised when BrowserStack credentials cannot be resolved."""
+
+
+DEFAULT_BROWSERSTACK_USERNAME_NOTATION = "keeper://y6GUrHJgXsSxybHruXcVWg/field/login"
+DEFAULT_BROWSERSTACK_ACCESS_KEY_NOTATION = "keeper://y6GUrHJgXsSxybHruXcVWg/field/password"
 
 
 @dataclass
@@ -33,38 +43,31 @@ def _clean_value(raw: str) -> str:
     return raw.strip().strip('"').strip("'")
 
 
-def _read_keeper_notation(notation: str, profile: str) -> str:
-    cmd = ["ksm", "-p", profile, "secret", "notation", notation]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise BrowserStackAuthError(
-            "Keeper lookup failed. "
-            f"Profile={profile!r} notation={notation!r} stderr={result.stderr.strip()}"
-        )
-
-    value = _clean_value(result.stdout)
-    if not value:
-        raise BrowserStackAuthError(
-            "Keeper returned an empty BrowserStack value. "
-            f"Profile={profile!r} notation={notation!r}"
-        )
-    return value
-
-
 def _from_keeper() -> Optional[ResolvedCredentials]:
-    username_notation = os.getenv("KSM_BROWSERSTACK_USERNAME_NOTATION")
-    access_key_notation = os.getenv("KSM_BROWSERSTACK_ACCESS_KEY_NOTATION")
+    username_notation = os.getenv("KSM_BROWSERSTACK_USERNAME_NOTATION", DEFAULT_BROWSERSTACK_USERNAME_NOTATION)
+    access_key_notation = os.getenv("KSM_BROWSERSTACK_ACCESS_KEY_NOTATION", DEFAULT_BROWSERSTACK_ACCESS_KEY_NOTATION)
     if not username_notation or not access_key_notation:
         return None
 
-    profile = os.getenv("KSM_PROFILE", "browserstack-qa")
-    username = _read_keeper_notation(username_notation, profile)
-    access_key = _read_keeper_notation(access_key_notation, profile)
-    return ResolvedCredentials(
-        username=username,
-        access_key=access_key,
-        source=f"keeper:{profile}",
-    )
+    profile = os.getenv("KSM_PROFILE", "marketingops")
+    try:
+        username = resolve_secret(
+            description="BrowserStack username",
+            notation_env_var="KSM_BROWSERSTACK_USERNAME_NOTATION",
+            default_notation=DEFAULT_BROWSERSTACK_USERNAME_NOTATION,
+            direct_env_var=None,
+            default_profile=profile,
+        )
+        access_key = resolve_secret(
+            description="BrowserStack access key",
+            notation_env_var="KSM_BROWSERSTACK_ACCESS_KEY_NOTATION",
+            default_notation=DEFAULT_BROWSERSTACK_ACCESS_KEY_NOTATION,
+            direct_env_var=None,
+            default_profile=profile,
+        )
+    except KsmResolutionError as exc:
+        raise BrowserStackAuthError(str(exc)) from exc
+    return ResolvedCredentials(username=username, access_key=access_key, source=f"keeper:{profile}")
 
 
 def _from_env() -> Optional[ResolvedCredentials]:
