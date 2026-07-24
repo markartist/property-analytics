@@ -1,15 +1,15 @@
 # Edge Message Toolkit
 
 Date: 2026-05-23
-Status: Beta capability, proven on `pilot.venterradev.com` homepage
-Current proof: `edge_transparent_pricing_intro_homepage_v1`
-Current Worker: `edge-transparent-pricing-intro-beta`
+Status: Live production promotion; first production target is `thevinekyle.com`
+Current production message: `edge_message_the_vine_transparent_pricing_homepage_v1`
+Current Worker family: `edge-message-worker`
 
 ## Purpose
 
 The Edge Message Toolkit is a reusable Cloudflare Worker capability for launching lightweight, governed, page-level messages without changing WordPress, YOOtheme, RentPress, or page templates.
 
-The first proof is the Venterra-branded transparent-pricing intro message on the pilot homepage.
+The first proof was the Venterra-branded transparent-pricing intro message on the pilot homepage. The first production promotion is the The Vine Kyle Parkway VIP-list message on `thevinekyle.com`.
 
 ## Why This Exists
 
@@ -62,8 +62,27 @@ Current live proof:
 - Test params: force/reset are converted into short-lived Worker-only cookies and redirected to a clean URL before page hydration
 - External dependencies: none
 - External popup requests: none
-- Current live Worker version: `aac2168c-6f12-4a4c-937e-fbad8086b7c6`
+- Current pilot demo Worker version: `e446f570-e373-409f-a8fb-446c4866bf59`
 - Current layout: property name top-center, large two-line `Say hello to clearer` / `monthly pricing` headline, centered body and disclaimer, countdown/progress, bottom Venterra mark, no top logo.
+- 2026-07-02 demo reinstatement: the original pilot homepage popup and `/apartments/` helper tag are live again through existing Worker name `edge-transparent-pricing-intro-beta`. The shared Worker code now has pilot-specific fallback configs plus The Vine production configs. Route configs are split so `wrangler.pilot.toml` owns `pilot.venterradev.com/*`, while `wrangler.toml` keeps `edge-message-worker` scoped to The Vine. Smoke confirmed the pilot homepage contains `edge_transparent_pricing_intro_homepage_v1`; the pilot apartments route contains `edge_message_all_in_pricing_coachmark_v1` and retains `vtr_edge_sightmap`.
+
+Current production promotion:
+
+- Domain: `thevinekyle.com`
+- Route config: `thevinekyle.com/*` and `www.thevinekyle.com/*`
+- Injection scope: exact path `/`
+- UI shape: centered non-blocking modal-style notice
+- Property: The Vine Kyle Parkway / `TX4EK`
+- Community id: `44a4349b-6ac2-46fe-b8ef-167e4f1c3e3e`
+- Experience id: `edge_message_the_vine_transparent_pricing_homepage_v1`
+- Title: `Join the VIP List`
+- Body: `Receive insider updates, leasing specials, and early access opportunities.`
+- CTA: `Get in the Know!` linking to `/contact/#contact`
+- Behavior: 2-second delayed intro, 600ms fade-in/fade-out, 7-second countdown/progress timer in official greys, X/Escape dismiss, auto-close, cookie/localStorage cap
+- Production frequency posture: frequency capped; `ignoreFrequencyCap` is forced off on launch
+- Analytics: CTA clicks emit `edge_message_cta_click` through `dataLayer.push`, direct GA4 `gtag('event', ...)`, and Heap direct-or-queued tracking
+- Fallback Worker config: disabled by default; D1 active config is required to launch
+- Current cutover state: Worker version `9dc42d2b-bb7b-4232-9fbb-3e58029bfdef` is deployed, D1 has active config version `4`, and live traffic enters the Worker through Cloudflare-proxied CNAMEs to Kinsta (`thevine.hosting.kinsta.cloud`). Live response headers confirm Kinsta O2O with `ki-edge-o2o: yes`.
 
 Current anchored coach-mark proof:
 
@@ -132,9 +151,9 @@ Recommended config fields:
   "body": "See base rent plus required monthly fees together, so your estimated monthly cost is easier to understand.",
   "disclaimer": "Required monthly fees exclude variable fees and optional services.",
   "brandColor": "#15284B",
-  "showDelayMs": 800,
+  "showDelayMs": 2000,
   "durationMs": 7000,
-  "fadeMs": 360,
+  "fadeMs": 600,
   "frequencyCapSeconds": 86400,
   "waitForUnitSelectors": false,
   "analyticsEnabled": true,
@@ -154,9 +173,11 @@ First admin surface:
 
 Current status:
 
-- Live message styling now comes from the active D1 config written by the Edge Messages admin, with the approved Worker config retained as a safe fallback.
-- The Pond surface now inventories the two live beta proofs and provides editable content, style, placement, delivery, timing, decoration, frequency, preview, and guardrail controls.
-- Launch, pause, and rollback buttons are intentionally disabled until the approval workflow, EVS preflight, and benchmark gates are wired; the config publish/read path for this beta admin surface is now wired.
+- Live message styling now comes from the active D1 config written by the Edge Messages admin, with a disabled Worker fallback retained as a safe baseline.
+- The Pond surface now inventories the The Vine production message and the all-in pricing coach-mark pattern, and provides editable content, CTA, style, placement, delivery, timing, decoration, frequency, preview, and guardrail controls.
+- Draft saves and production actions are separated. `Save Draft` writes a D1 `draft` config version. `Launch`, `Pause`, and `Rollback` write explicit Worker-readable active config versions.
+- The current production admin pass is deployed at `https://ca35a518.property-analytics.pages.dev`; operator URL remains `https://app.venterradev.com/experiments/edge-messages` behind Cloudflare Access. The page uses progressive disclosure: Content and Preview are visible by default, while Timing, Style, Targeting, and Publish are collapsible. Header actions include `Save Draft`, `Reset`, `Force preview`, and `Open page`; Publish carries Pause/Launch/Rollback behind the existing admin role gate. Smoke checks confirmed `200` on the preview route, Access `302` on the custom route, and protected `401 NO_SESSION` on the live API route.
+- Admin inventory correction: Pages deployment `https://7e9eb13d.property-analytics.pages.dev` restores the two pilot demo messages as editable records in `/experiments/edge-messages`, alongside the two The Vine production records. The deployed bundle includes `edge_transparent_pricing_intro_homepage_v1`, `edge_message_all_in_pricing_coachmark_v1`, `edge_message_the_vine_transparent_pricing_homepage_v1`, and `edge_message_the_vine_all_in_pricing_coachmark_v1`.
 - The first admin surface is live on Cloudflare Pages deployment `9aaf825f.property-analytics.pages.dev`; operator URL is `https://app.venterradev.com/experiments/edge-messages` behind Cloudflare Access. Style controls now include title, body, fine-print, and on-color text colors plus fixed official brand swatches alongside the free color picker. The swatches are restricted to the official Venterra palette plus black and white from `/Users/mark/Property_Analytics/docs/VENTERRA_BRAND_COLOR_STANDARD_2026-05-23.md`. Type size controls now provide one-pixel increase/decrease steppers for property, title, body, fine-print, and countdown text, with the preview reading those draft font-size values. The preview mirrors the current modal layout with the property name at top, 7-second countdown, and bottom Venterra/Velo mark, scaled to fit cleanly inside the preview frame. Admin edits now use `Save & Publish`: the page persists the draft locally, posts the exact draft to `POST /v1/experiments/edge-messages/:messageId/live-config`, and the API writes an active Worker-ready row in `edge_experiment_config_versions`. Preview scenes are separated by message shape: modal/banner/toast/inline use the homepage hero context without the apartment all-in button, and the coach mark uses a dedicated apartments-list screenshot asset (`/edge-message-apartments-preview.png`) with the bubble lowered so the pointer lands on the first visible `All-In Price & Details` button. The font-size and live-publish slices were published through the Keeper/KSM-backed Wrangler path after direct Wrangler auth failed in non-interactive mode; curl smoke confirmed the live bundle contains the Type size controls and live publish UI. The live Worker version `3a19688f-51eb-445b-aae5-8e25969bd935` now reads active D1 config through its `POP_BRIEF_DB` binding and falls back to the hard-coded config only when D1 is unavailable or no active row exists. The API Worker version serving the publish endpoint is `8f0af5e6-86ce-463e-9b27-aec8618ba4e7`.
 
 The admin experience should support:

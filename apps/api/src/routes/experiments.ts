@@ -39,7 +39,12 @@ const EDGE_MESSAGE_ASSET_EXTENSIONS = [
 const EDGE_MESSAGE_PATH_EXCLUDES = ["/wp-admin", "/wp-login.php", "/wp-json", "/xmlrpc.php"];
 
 const EdgeMessageDraftPayload = z.object({
-  id: z.enum(["edge_transparent_pricing_intro_homepage_v1", "edge_message_all_in_pricing_coachmark_v1"]),
+  id: z.enum([
+    "edge_transparent_pricing_intro_homepage_v1",
+    "edge_message_all_in_pricing_coachmark_v1",
+    "edge_message_the_vine_transparent_pricing_homepage_v1",
+    "edge_message_the_vine_all_in_pricing_coachmark_v1",
+  ]),
   name: z.string().min(1).max(140),
   shape: z.enum(["modal_notice", "anchored_coachmark", "top_banner", "bottom_toast", "inline_callout"]),
   propertyName: z.string().min(1).max(120),
@@ -51,6 +56,8 @@ const EdgeMessageDraftPayload = z.object({
   title: z.string().min(1).max(240),
   body: z.string().min(1).max(420),
   disclaimer: z.string().max(360),
+  ctaLabel: z.string().max(80).optional(),
+  ctaHref: z.string().max(300).optional(),
   brandColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   titleColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
@@ -72,6 +79,11 @@ const EdgeMessageDraftPayload = z.object({
   ignoreFrequencyCap: z.boolean(),
   decoration: z.enum(["none", "badge", "pulse_badge"]),
   benchmark: z.string().max(180),
+});
+
+const EdgeMessageActionPayload = z.object({
+  action: z.enum(["launch", "pause", "rollback"]),
+  reason: z.string().min(3).max(500).optional(),
 });
 
 const PromoteSiteContentContractPayload = CreateEdgeExperimentDraftPayload.pick({
@@ -507,9 +519,11 @@ function deriveCoachMarkMaxWidth(titleFontSize: number, bodyFontSize: number): n
 }
 
 function buildEdgeMessageLiveConfig(draft: z.infer<typeof EdgeMessageDraftPayload>, configVersion: string) {
+  const initiative = draft.id.includes("vip") || draft.title.toLowerCase().includes("vip") ? "vip_list" : "transparent_pricing";
   const common = {
     id: draft.id,
     configVersion,
+    initiative,
     enabled: true,
     hostnames: [draft.hostname],
     pathExact: [normalizeLivePath(draft.path)],
@@ -538,6 +552,8 @@ function buildEdgeMessageLiveConfig(draft: z.infer<typeof EdgeMessageDraftPayloa
     title: draft.title,
     body: draft.body,
     disclaimer: draft.disclaimer,
+    ctaLabel: draft.ctaLabel ?? "",
+    ctaHref: draft.ctaHref ?? "",
     analyticsEnabled: true,
   };
 
@@ -600,11 +616,10 @@ async function ensureEdgeMessageExperiment(db: D1Database, draft: z.infer<typeof
       approved_at,
       started_at,
       notes
-    ) VALUES (?, ?, ?, ?, 'running', ?, ?, ?, ?, ?, ?, 'edge_message_admin', 'insert_adjacent', 'pricing_detail_click_rate', 'edge_message_beta_guardrails', 100, 'anonymous_visitor', ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, 'edge_message_admin', 'insert_adjacent', 'pricing_detail_click_rate', 'edge_message_production_guardrails', 100, 'anonymous_visitor', ?, ?, NULL, ?, ?, NULL, NULL, ?)
     ON CONFLICT(experiment_id) DO UPDATE SET
       name = excluded.name,
       description = excluded.description,
-      status = 'running',
       property_code = excluded.property_code,
       community_id = excluded.community_id,
       website_host = excluded.website_host,
@@ -625,15 +640,93 @@ async function ensureEdgeMessageExperiment(db: D1Database, draft: z.infer<typeof
       normalizeLivePath(draft.path),
       draft.id,
       userId,
-      userId,
-      userId,
       now,
       now,
-      now,
-      now,
-      "Config is read by the Cloudflare edge-transparent-pricing-intro-beta Worker from D1 active config versions.",
+      "Config is read by the production Edge Message Worker from D1 config versions. Launch, pause, and rollback are explicit actions.",
     ],
   );
+}
+
+async function getLatestEdgeMessageConfigVersion(db: D1Database, messageId: string, statuses: string[]) {
+  const placeholders = statuses.map(() => "?").join(",");
+  return await queryFirst<ConfigVersionRow>(
+    db,
+    `SELECT config_version_id, experiment_id, config_version, config_status, config_json, config_hash,
+            signed_at, activated_at, deactivated_at, created_by, created_at
+     FROM edge_experiment_config_versions
+     WHERE experiment_id = ? AND config_status IN (${placeholders})
+     ORDER BY config_version DESC
+     LIMIT 1`,
+    [messageId, ...statuses],
+  );
+}
+
+async function insertEdgeMessageConfigVersion(
+  db: D1Database,
+  messageId: string,
+  status: "draft" | "active",
+  config: Record<string, unknown>,
+  userId: string,
+  now: string,
+) {
+  const latest = await queryFirst<{ max_version: number | null }>(
+    db,
+    "SELECT MAX(config_version) AS max_version FROM edge_experiment_config_versions WHERE experiment_id = ?",
+    [messageId],
+  );
+  const nextVersion = (latest?.max_version ?? 0) + 1;
+  const configJson = JSON.stringify(config);
+  const configHash = await sha256Hex(configJson);
+  const configVersionId = `cfg_${newId()}`;
+
+  if (status === "active") {
+    await run(
+      db,
+      `UPDATE edge_experiment_config_versions
+       SET config_status = 'replaced', deactivated_at = ?
+       WHERE experiment_id = ? AND config_status = 'active'`,
+      [now, messageId],
+    );
+  }
+
+  await run(
+    db,
+    `INSERT INTO edge_experiment_config_versions (
+      config_version_id,
+      experiment_id,
+      config_version,
+      config_status,
+      config_json,
+      config_hash,
+      signed_at,
+      activated_at,
+      deactivated_at,
+      created_by,
+      created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+    [
+      configVersionId,
+      messageId,
+      nextVersion,
+      status,
+      configJson,
+      configHash,
+      status === "active" ? now : null,
+      status === "active" ? now : null,
+      userId,
+      now,
+    ],
+  );
+
+  return {
+    config_version_id: configVersionId,
+    experiment_id: messageId,
+    config_version: nextVersion,
+    config_status: status,
+    config_hash: configHash,
+    activated_at: status === "active" ? now : null,
+    config,
+  };
 }
 
 async function resolveCommunity(db: D1Database, propertyCode: string, communityId?: string) {
@@ -649,6 +742,35 @@ async function resolveCommunity(db: D1Database, propertyCode: string, communityI
     "SELECT id, name, encasa_property_code, full_url FROM communities WHERE encasa_property_code = ? AND deleted_at IS NULL",
     [propertyCode],
   );
+}
+
+function validateEdgeMessageDraft(draft: z.infer<typeof EdgeMessageDraftPayload>): string | null {
+  const isCoachMark = draft.id === "edge_message_all_in_pricing_coachmark_v1" || draft.id === "edge_message_the_vine_all_in_pricing_coachmark_v1";
+  const isHomepageModal = draft.id === "edge_transparent_pricing_intro_homepage_v1" || draft.id === "edge_message_the_vine_transparent_pricing_homepage_v1";
+  if (isCoachMark && draft.shape !== "anchored_coachmark") return "All-In pricing message must remain a coach mark";
+  if (isHomepageModal && draft.shape !== "modal_notice") return "Homepage transparent pricing message must remain a modal notice";
+
+  for (const [field, value] of Object.entries({
+    name: draft.name,
+    title: draft.title,
+    body: draft.body,
+    disclaimer: draft.disclaimer,
+    targetText: draft.targetText,
+    ctaLabel: draft.ctaLabel ?? "",
+  })) {
+    const unsafe = validateSafeText(value, field);
+    if (unsafe) return unsafe;
+  }
+  if (draft.ctaHref && !draft.ctaHref.startsWith("/") && !draft.ctaHref.startsWith("https://thevinekyle.com/") && !draft.ctaHref.startsWith("https://venterraliving.com/")) {
+    return "CTA href must be site-relative or an approved Venterra URL.";
+  }
+  return null;
+}
+
+function edgeMessageExperimentStatus(action: z.infer<typeof EdgeMessageActionPayload>["action"]) {
+  if (action === "launch") return "running";
+  if (action === "pause") return "paused";
+  return "rolled_back";
 }
 
 experiments.get("/", requireOfferingAction("experiments", "view"), async (c) => {
@@ -1025,6 +1147,151 @@ experiments.post("/", requireOfferingAction("experiments", "draft"), async (c) =
   return c.json({ experiment, component_contract: contract, readiness: buildReadiness(experiment, contract) }, 201);
 });
 
+experiments.get("/edge-messages", requireOfferingAction("experiments", "view"), async (c) => {
+  const rows = await queryAll<ExperimentRow>(
+    c.env.POP_BRIEF_DB,
+    `SELECT *
+     FROM edge_experiments
+     WHERE component_contract_source = 'edge_message_admin'
+     ORDER BY updated_at DESC, created_at DESC`,
+  );
+  const states = await Promise.all(rows.map(async (experiment) => {
+    const active = await getLatestEdgeMessageConfigVersion(c.env.POP_BRIEF_DB, experiment.experiment_id, ["active"]);
+    const draft = await getLatestEdgeMessageConfigVersion(c.env.POP_BRIEF_DB, experiment.experiment_id, ["draft"]);
+    return {
+      experiment,
+      active_config: toDryRunVersion(active),
+      draft_config: toDryRunVersion(draft),
+    };
+  }));
+  return c.json({ edge_messages: states });
+});
+
+experiments.post("/edge-messages/:messageId/draft-config", requireOfferingAction("experiments", "administer"), async (c) => {
+  const parsed = EdgeMessageDraftPayload.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) {
+    return c.json(errJson("VALIDATION_ERROR", "Invalid Edge Message draft config payload", parsed.error.issues), 400);
+  }
+
+  const draft = parsed.data;
+  const messageId = c.req.param("messageId");
+  if (messageId !== draft.id) {
+    return c.json(errJson("VALIDATION_ERROR", "Route message id must match payload id"), 400);
+  }
+
+  const validationError = validateEdgeMessageDraft(draft);
+  if (validationError) return c.json(errJson("VALIDATION_ERROR", validationError), 400);
+
+  const now = nowISO();
+  const user = c.get("user");
+  await ensureEdgeMessageExperiment(c.env.POP_BRIEF_DB, draft, user.id, now);
+
+  const latest = await queryFirst<{ max_version: number | null }>(
+    c.env.POP_BRIEF_DB,
+    "SELECT MAX(config_version) AS max_version FROM edge_experiment_config_versions WHERE experiment_id = ?",
+    [draft.id],
+  );
+  const configVersionLabel = `edge-message-draft-v${(latest?.max_version ?? 0) + 1}`;
+  const config = {
+    ...buildEdgeMessageLiveConfig(draft, configVersionLabel),
+    enabled: false,
+  };
+  const draftConfig = await insertEdgeMessageConfigVersion(c.env.POP_BRIEF_DB, draft.id, "draft", config, user.id, now);
+
+  return c.json({ draft_config: draftConfig });
+});
+
+experiments.post("/edge-messages/:messageId/actions", requireOfferingAction("experiments", "administer"), async (c) => {
+  const parsed = EdgeMessageActionPayload.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) {
+    return c.json(errJson("VALIDATION_ERROR", "Invalid Edge Message action payload", parsed.error.issues), 400);
+  }
+
+  const messageId = c.req.param("messageId");
+  const user = c.get("user");
+  const now = nowISO();
+  const action = parsed.data.action;
+
+  const experiment = await queryFirst<ExperimentRow>(
+    c.env.POP_BRIEF_DB,
+    "SELECT * FROM edge_experiments WHERE experiment_id = ? AND component_contract_source = 'edge_message_admin'",
+    [messageId],
+  );
+  if (!experiment) return c.json(errJson("NOT_FOUND", "Edge Message draft not found. Save a draft before changing live state."), 404);
+
+  const sourceConfig = action === "launch"
+    ? await getLatestEdgeMessageConfigVersion(c.env.POP_BRIEF_DB, messageId, ["draft", "active"])
+    : await getLatestEdgeMessageConfigVersion(c.env.POP_BRIEF_DB, messageId, ["active", "draft"]);
+  const parsedConfig = sourceConfig ? parseJsonObject(sourceConfig.config_json) : null;
+  if (!parsedConfig) {
+    return c.json(errJson("VALIDATION_ERROR", "No Edge Message config exists for this action"), 400);
+  }
+
+  const enabled = action === "launch";
+  const nextConfig = {
+    ...parsedConfig,
+    enabled,
+    ignoreFrequencyCap: action === "launch" ? false : parsedConfig.ignoreFrequencyCap,
+    configVersion: `edge-message-${action}-${Date.now()}`,
+  };
+  const liveConfig = await insertEdgeMessageConfigVersion(c.env.POP_BRIEF_DB, messageId, "active", nextConfig, user.id, now);
+  const nextStatus = edgeMessageExperimentStatus(action);
+
+  await run(
+    c.env.POP_BRIEF_DB,
+    `UPDATE edge_experiments
+     SET status = ?,
+         approved_by = CASE WHEN ? = 'running' THEN ? ELSE approved_by END,
+         approved_at = CASE WHEN ? = 'running' THEN COALESCE(approved_at, ?) ELSE approved_at END,
+         started_at = CASE WHEN ? = 'running' THEN COALESCE(started_at, ?) ELSE started_at END,
+         ended_at = CASE WHEN ? IN ('paused', 'rolled_back') THEN ? ELSE ended_at END,
+         updated_at = ?,
+         notes = ?
+     WHERE experiment_id = ?`,
+    [
+      nextStatus,
+      nextStatus,
+      user.id,
+      nextStatus,
+      now,
+      nextStatus,
+      now,
+      nextStatus,
+      now,
+      now,
+      parsed.data.reason ?? `Edge Message ${action} action recorded from the production admin.`,
+      messageId,
+    ],
+  );
+
+  if (action !== "launch") {
+    await run(
+      c.env.POP_BRIEF_DB,
+      `INSERT INTO edge_experiment_decisions (
+        decision_id, experiment_id, decision, decision_by, decision_at, rationale,
+        evidence_summary, rollback_reference, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        `decision_${newId()}`,
+        messageId,
+        action === "pause" ? "pause" : "rollback",
+        user.id,
+        now,
+        parsed.data.reason ?? `Operator ${action} action from Edge Messages admin.`,
+        "D1 active config was replaced with an enabled:false Worker-readable config.",
+        liveConfig.config_version_id,
+        now,
+      ],
+    );
+  }
+
+  return c.json({
+    action,
+    status: nextStatus,
+    live_config: liveConfig,
+  });
+});
+
 experiments.post("/edge-messages/:messageId/live-config", requireOfferingAction("experiments", "administer"), async (c) => {
   const parsed = EdgeMessageDraftPayload.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
@@ -1036,23 +1303,8 @@ experiments.post("/edge-messages/:messageId/live-config", requireOfferingAction(
   if (messageId !== draft.id) {
     return c.json(errJson("VALIDATION_ERROR", "Route message id must match payload id"), 400);
   }
-  if (draft.id === "edge_message_all_in_pricing_coachmark_v1" && draft.shape !== "anchored_coachmark") {
-    return c.json(errJson("VALIDATION_ERROR", "All-In pricing message must remain a coach mark"), 400);
-  }
-  if (draft.id === "edge_transparent_pricing_intro_homepage_v1" && draft.shape !== "modal_notice") {
-    return c.json(errJson("VALIDATION_ERROR", "Homepage transparent pricing message must remain a modal notice"), 400);
-  }
-
-  for (const [field, value] of Object.entries({
-    name: draft.name,
-    title: draft.title,
-    body: draft.body,
-    disclaimer: draft.disclaimer,
-    targetText: draft.targetText,
-  })) {
-    const unsafe = validateSafeText(value, field);
-    if (unsafe) return c.json(errJson("VALIDATION_ERROR", unsafe), 400);
-  }
+  const validationError = validateEdgeMessageDraft(draft);
+  if (validationError) return c.json(errJson("VALIDATION_ERROR", validationError), 400);
 
   const now = nowISO();
   const user = c.get("user");

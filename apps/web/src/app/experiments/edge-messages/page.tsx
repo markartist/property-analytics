@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/components/auth-provider";
@@ -52,6 +53,8 @@ type EdgeMessageDraft = {
   title: string;
   body: string;
   disclaimer: string;
+  ctaLabel: string;
+  ctaHref: string;
   brandColor: string;
   accentColor: string;
   titleColor: string;
@@ -77,8 +80,84 @@ type EdgeMessageDraft = {
 
 const LIVE_MESSAGES: EdgeMessageDraft[] = [
   {
+    id: "edge_message_the_vine_transparent_pricing_homepage_v1",
+    name: "The Vine VIP List Homepage Message",
+    status: "draft",
+    shape: "modal_notice",
+    propertyName: "The Vine Kyle Parkway",
+    propertyCode: "TX4EK",
+    communityId: "44a4349b-6ac2-46fe-b8ef-167e4f1c3e3e",
+    hostname: "thevinekyle.com",
+    path: "/",
+    targetText: "",
+    title: "Join the VIP List",
+    body: "Receive insider updates, leasing specials, and early access opportunities.",
+    disclaimer: "",
+    ctaLabel: "Get in the Know!",
+    ctaHref: "/contact/#contact",
+    brandColor: "#15284B",
+    accentColor: "#7DCAC2",
+    titleColor: "#000000",
+    bodyColor: "#294782",
+    disclaimerColor: "#9B9B96",
+    surfaceTextColor: "#FFFFFF",
+    propertyNameFontSize: 18,
+    titleFontSize: 44,
+    bodyFontSize: 24,
+    disclaimerFontSize: 16,
+    countdownFontSize: 20,
+    placement: "center",
+    triggerMode: "page_idle",
+    scrollDepth: 0,
+    showDelayMs: 2000,
+    durationMs: 7000,
+    fadeMs: 600,
+    frequencyCapSeconds: 86400,
+    ignoreFrequencyCap: false,
+    decoration: "none",
+    benchmark: "Production launch pending preflight",
+  },
+  {
+    id: "edge_message_the_vine_all_in_pricing_coachmark_v1",
+    name: "The Vine All-In Pricing Button Coach Mark",
+    status: "draft",
+    shape: "anchored_coachmark",
+    propertyName: "The Vine Kyle Parkway",
+    propertyCode: "TX4EK",
+    communityId: "44a4349b-6ac2-46fe-b8ef-167e4f1c3e3e",
+    hostname: "thevinekyle.com",
+    path: "/apartments/",
+    targetText: "All-In Price & Details",
+    title: "All-in pricing",
+    body: "See rent plus required monthly fees together before you choose a home.",
+    disclaimer: "",
+    ctaLabel: "",
+    ctaHref: "",
+    brandColor: "#3D66B9",
+    accentColor: "#7DCAC2",
+    titleColor: "#FFFFFF",
+    bodyColor: "#FFFFFF",
+    disclaimerColor: "#F6F6F5",
+    surfaceTextColor: "#FFFFFF",
+    propertyNameFontSize: 14,
+    titleFontSize: 14,
+    bodyFontSize: 13,
+    disclaimerFontSize: 13,
+    countdownFontSize: 14,
+    placement: "target_above",
+    triggerMode: "element_in_view",
+    scrollDepth: 0,
+    showDelayMs: 300,
+    durationMs: 9000,
+    fadeMs: 260,
+    frequencyCapSeconds: 86400,
+    ignoreFrequencyCap: false,
+    decoration: "pulse_badge",
+    benchmark: "Production launch pending preflight",
+  },
+  {
     id: "edge_transparent_pricing_intro_homepage_v1",
-    name: "Transparent Pricing Homepage Intro",
+    name: "Pilot Transparent Pricing Homepage Message",
     status: "active_testing",
     shape: "modal_notice",
     propertyName: "Apex West Midtown",
@@ -90,6 +169,8 @@ const LIVE_MESSAGES: EdgeMessageDraft[] = [
     title: "Say hello to clearer\nmonthly pricing",
     body: "See base rent plus required monthly fees together, so your estimated monthly cost is easier to understand.",
     disclaimer: "Required monthly fees exclude variable fees and optional services.",
+    ctaLabel: "",
+    ctaHref: "",
     brandColor: "#15284B",
     accentColor: "#7DCAC2",
     titleColor: "#000000",
@@ -110,11 +191,11 @@ const LIVE_MESSAGES: EdgeMessageDraft[] = [
     frequencyCapSeconds: 86400,
     ignoreFrequencyCap: true,
     decoration: "none",
-    benchmark: "+4.2 KB transfer, no external requests",
+    benchmark: "Pilot demo live",
   },
   {
     id: "edge_message_all_in_pricing_coachmark_v1",
-    name: "All-In Pricing Button Coach Mark",
+    name: "Pilot All-In Pricing Button Coach Mark",
     status: "active_testing",
     shape: "anchored_coachmark",
     propertyName: "Apex West Midtown",
@@ -126,6 +207,8 @@ const LIVE_MESSAGES: EdgeMessageDraft[] = [
     title: "All-in pricing",
     body: "See rent plus required monthly fees together before you choose a home.",
     disclaimer: "",
+    ctaLabel: "",
+    ctaHref: "",
     brandColor: "#3D66B9",
     accentColor: "#7DCAC2",
     titleColor: "#FFFFFF",
@@ -146,7 +229,7 @@ const LIVE_MESSAGES: EdgeMessageDraft[] = [
     frequencyCapSeconds: 86400,
     ignoreFrequencyCap: true,
     decoration: "pulse_badge",
-    benchmark: "47 visible unit rows retained",
+    benchmark: "Pilot demo live",
   },
 ];
 
@@ -189,7 +272,8 @@ const CORPORATE_COLOR_SWATCHES = [
 ];
 
 const DRAFT_STORAGE_PREFIX = "edge_message_admin_draft:";
-const PREVIEW_HERO_IMAGE = "https://dam.getresi.co/18515/conversions/Home-Hero-full.jpg";
+const VINE_PREVIEW_HERO_IMAGE = "https://dam.getresi.co/28429/conversions/Vine_Hero_06-19-26-full.jpg";
+const APEX_PREVIEW_HERO_IMAGE = "https://dam.getresi.co/18515/conversions/Home-Hero-full.jpg";
 const APARTMENTS_PREVIEW_IMAGE = "/edge-message-apartments-preview.png";
 
 function draftStorageKey(id: string): string {
@@ -239,12 +323,23 @@ function seconds(ms: number): string {
   return `${Math.round(ms / 100) / 10}s`;
 }
 
+function previewHeroImage(draft: EdgeMessageDraft): string {
+  return draft.hostname === "pilot.venterradev.com" ? APEX_PREVIEW_HERO_IMAGE : VINE_PREVIEW_HERO_IMAGE;
+}
+
 export default function EdgeMessagesPage() {
   const { user } = useAuth();
   const [selectedId, setSelectedId] = React.useState(LIVE_MESSAGES[0].id);
   const [draft, setDraft] = React.useState<EdgeMessageDraft>(LIVE_MESSAGES[0]);
   const [savedFingerprint, setSavedFingerprint] = React.useState(draftFingerprint(LIVE_MESSAGES[0]));
   const [saveState, setSaveState] = React.useState<"idle" | "publishing" | "published" | "error">("idle");
+  const [actionState, setActionState] = React.useState<"idle" | "launching" | "pausing" | "rolling_back" | "done" | "error">("idle");
+  const [openPanels, setOpenPanels] = React.useState<Record<string, boolean>>({
+    timing: false,
+    style: false,
+    targeting: false,
+    launch: false,
+  });
   const canAdminister = canPerformOfferingAction(user?.role, "experiments", "administer");
   const administerRoleTitle = getRoleTitle(getOfferingActionRole("experiments", "administer"));
 
@@ -254,6 +349,7 @@ export default function EdgeMessagesPage() {
     setDraft(savedDraft);
     setSavedFingerprint(draftFingerprint(savedDraft));
     setSaveState("idle");
+    setActionState("idle");
   }, [selectedId]);
 
   function selectMessage(message: EdgeMessageDraft) {
@@ -270,15 +366,32 @@ export default function EdgeMessagesPage() {
     try {
       const fingerprint = draftFingerprint(draft);
       window.localStorage.setItem(draftStorageKey(draft.id), fingerprint);
-      const response = await apiFetch(`/v1/experiments/edge-messages/${draft.id}/live-config`, {
+      const response = await apiFetch(`/v1/experiments/edge-messages/${draft.id}/draft-config`, {
         method: "POST",
         body: fingerprint,
       });
-      if (!response.ok) throw new Error(`Publish failed with ${response.status}`);
+      if (!response.ok) throw new Error(`Save failed with ${response.status}`);
       setSavedFingerprint(fingerprint);
       setSaveState("published");
     } catch {
       setSaveState("error");
+    }
+  }
+
+  async function runAction(action: "launch" | "pause" | "rollback") {
+    setActionState(action === "launch" ? "launching" : action === "pause" ? "pausing" : "rolling_back");
+    try {
+      const response = await apiFetch(`/v1/experiments/edge-messages/${draft.id}/actions`, {
+        method: "POST",
+        body: JSON.stringify({
+          action,
+          reason: action === "launch" ? `Launch approved for ${draft.propertyName}.` : `${action} from Edge Messages admin for ${draft.propertyName}.`,
+        }),
+      });
+      if (!response.ok) throw new Error(`${action} failed with ${response.status}`);
+      setActionState("done");
+    } catch {
+      setActionState("error");
     }
   }
 
@@ -298,11 +411,17 @@ export default function EdgeMessagesPage() {
   const hasUnsavedChanges = draftFingerprint(draft) !== savedFingerprint;
   const shapeIcon = SHAPE_OPTIONS.find((option) => option.value === draft.shape)?.icon ?? Megaphone;
   const ShapeIcon = shapeIcon;
+  const previewUrl = `https://${draft.hostname}${draft.path || "/"}`;
+  const forceUrl = `https://${draft.hostname}${draft.path || "/"}?edge_message_force=1&edge_message_reset=1&edge_message_cb=admin`;
+
+  function setPanelOpen(panel: string, open: boolean) {
+    setOpenPanels((current) => ({ ...current, [panel]: open }));
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-6 py-8 md:px-10">
-        <div className="mb-7 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <Link href="/experiments" className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#15284B] hover:text-[#0f1e39]">
               <ArrowLeft className="h-4 w-4" />
@@ -316,15 +435,12 @@ export default function EdgeMessagesPage() {
               <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">Config-driven beta</Badge>
             </div>
             <h1 className="text-3xl font-semibold tracking-normal text-slate-950">Edge Messages</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-              Govern lightweight site messages from the Pond, including modal notices, coach marks, banners, toasts, and inline callouts. Saving now publishes active config to the live Worker through the governed D1 registry.
-            </p>
           </div>
-          <div className="space-y-3 lg:min-w-[430px]">
+          <div className="space-y-3 lg:min-w-[360px]">
             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
               <Button type="button" onClick={saveDraft} disabled={!canAdminister || saveState === "publishing"}>
                 <Save className="mr-2 h-4 w-4" />
-                {saveState === "publishing" ? "Publishing" : "Save & Publish"}
+                {saveState === "publishing" ? "Saving" : "Save Draft"}
               </Button>
               <Button type="button" variant="outline" onClick={restoreDefaultDraft} disabled={!canAdminister}>
                 <RotateCcw className="mr-2 h-4 w-4" />
@@ -342,14 +458,24 @@ export default function EdgeMessagesPage() {
                       : "border-emerald-200 bg-emerald-50 text-emerald-800"
                 }
               >
-                {saveState === "error" ? "Publish failed" : saveState === "publishing" ? "Publishing live" : saveState === "published" ? "Published live" : hasUnsavedChanges ? "Unsaved changes" : "Live draft saved"}
+                {saveState === "error" ? "Save failed" : saveState === "publishing" ? "Saving draft" : saveState === "published" ? "Draft saved" : hasUnsavedChanges ? "Unsaved changes" : "Draft saved"}
               </Badge>
+              {actionState !== "idle" && (
+                <Badge
+                  variant="outline"
+                  className={actionState === "error" ? "border-red-200 bg-red-50 text-red-700" : actionState === "done" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-blue-200 bg-blue-50 text-blue-800"}
+                >
+                {actionState === "error" ? "Action failed" : actionState === "done" ? "Action recorded" : actionState.replace(/_/g, " ")}
+              </Badge>
+            )}
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <MetricTile label="Live proofs" value={LIVE_MESSAGES.length} />
-              <MetricTile label="Routes" value={2} />
-              <MetricTile label="External JS" value={0} />
-              <MetricTile label="Errors" value={0} />
+            <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600 lg:justify-end">
+              <a className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-[#15284B] hover:text-[#15284B]" href={forceUrl} target="_blank" rel="noreferrer">
+                Force preview
+              </a>
+              <a className="rounded-md border border-slate-200 bg-white px-3 py-2 hover:border-[#15284B] hover:text-[#15284B]" href={previewUrl} target="_blank" rel="noreferrer">
+                Open page
+              </a>
             </div>
           </div>
         </div>
@@ -360,7 +486,7 @@ export default function EdgeMessagesPage() {
           </div>
         )}
 
-        <section className="mb-6 grid gap-4 lg:grid-cols-2">
+        <section className="mb-6 grid gap-3 lg:grid-cols-2">
           {LIVE_MESSAGES.map((message) => {
             const Icon = SHAPE_OPTIONS.find((option) => option.value === message.shape)?.icon ?? Megaphone;
             const selected = message.id === selectedId;
@@ -386,7 +512,6 @@ export default function EdgeMessagesPage() {
                 <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
                   <span className="rounded-md bg-slate-100 px-2 py-1">{formatShape(message.shape)}</span>
                   <span className="rounded-md bg-slate-100 px-2 py-1">{message.ignoreFrequencyCap ? "Every reload" : "Frequency capped"}</span>
-                  <span className="rounded-md bg-slate-100 px-2 py-1">{message.benchmark}</span>
                 </div>
               </button>
             );
@@ -394,20 +519,17 @@ export default function EdgeMessagesPage() {
         </section>
 
         <div className="grid gap-6 xl:grid-cols-[440px_minmax(0,1fr)]">
-          <section className="space-y-5">
+          <section className="space-y-4">
             <Card>
               <CardContent className="p-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-base font-semibold text-slate-950">Message Content</h2>
+                    <h2 className="text-base font-semibold text-slate-950">Content</h2>
                     <p className="mt-1 text-xs leading-5 text-slate-500">{draft.propertyName} / {draft.propertyCode}</p>
                   </div>
                   <ShapeIcon className="h-5 w-5 text-[#15284B]" />
                 </div>
                 <div className="space-y-4">
-                  <Field label="Name">
-                    <Input value={draft.name} onChange={(event) => update("name", event.target.value)} disabled={!canAdminister} />
-                  </Field>
                   <Field label="Title">
                     <Textarea value={draft.title} onChange={(event) => update("title", event.target.value)} disabled={!canAdminister} rows={3} />
                   </Field>
@@ -417,74 +539,78 @@ export default function EdgeMessagesPage() {
                   <Field label="Disclaimer">
                     <Textarea value={draft.disclaimer} onChange={(event) => update("disclaimer", event.target.value)} disabled={!canAdminister} rows={2} />
                   </Field>
-                  <Field label="Target text">
-                    <Input value={draft.targetText} onChange={(event) => update("targetText", event.target.value)} disabled={!canAdminister} placeholder="Button or anchor text" />
-                  </Field>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Button label">
+                      <Input value={draft.ctaLabel} onChange={(event) => update("ctaLabel", event.target.value)} disabled={!canAdminister} />
+                    </Field>
+                    <Field label="Button link">
+                      <Input value={draft.ctaHref} onChange={(event) => update("ctaHref", event.target.value)} disabled={!canAdminister} placeholder="/contact/#contact" />
+                    </Field>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-[#15284B]" />
-                  <h2 className="text-base font-semibold text-slate-950">Style</h2>
-                </div>
-                <div className="space-y-4">
-                  <Field label="Shape">
-                    <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.shape} onChange={(event) => update("shape", event.target.value as MessageShape)} disabled={!canAdminister}>
-                      {SHAPE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
+            <DisclosureCard
+              icon={Clock3}
+              title="Timing"
+              summary={`${seconds(draft.showDelayMs)} delay / ${seconds(draft.durationMs)} live / ${seconds(draft.fadeMs)} fade`}
+              open={openPanels.timing}
+              onOpenChange={(open) => setPanelOpen("timing", open)}
+            >
+              <div className="grid gap-3 sm:grid-cols-3">
+                <NumberField label="Delay" value={draft.showDelayMs} suffix="ms" disabled={!canAdminister} onChange={(value) => update("showDelayMs", value)} />
+                <NumberField label="Duration" value={draft.durationMs} suffix="ms" disabled={!canAdminister} onChange={(value) => update("durationMs", value)} />
+                <NumberField label="Fade" value={draft.fadeMs} suffix="ms" disabled={!canAdminister} onChange={(value) => update("fadeMs", value)} />
+              </div>
+            </DisclosureCard>
+
+            <DisclosureCard
+              icon={Palette}
+              title="Style"
+              summary={`${formatShape(draft.shape)} / ${draft.brandColor}`}
+              open={openPanels.style}
+              onOpenChange={(open) => setPanelOpen("style", open)}
+            >
+              <div className="space-y-4">
+                <Field label="Shape">
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.shape} onChange={(event) => update("shape", event.target.value as MessageShape)} disabled={!canAdminister}>
+                    {SHAPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Brand color">
+                    <ColorInput value={draft.brandColor} onChange={(value) => update("brandColor", value)} disabled={!canAdminister} />
                   </Field>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Brand color">
-                      <ColorInput value={draft.brandColor} onChange={(value) => update("brandColor", value)} disabled={!canAdminister} />
-                    </Field>
-                    <Field label="Accent color">
-                      <ColorInput value={draft.accentColor} onChange={(value) => update("accentColor", value)} disabled={!canAdminister} />
-                    </Field>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Title text">
-                      <ColorInput value={draft.titleColor} onChange={(value) => update("titleColor", value)} disabled={!canAdminister} />
-                    </Field>
-                    <Field label="Body text">
-                      <ColorInput value={draft.bodyColor} onChange={(value) => update("bodyColor", value)} disabled={!canAdminister} />
-                    </Field>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <Field label="Fine print">
-                      <ColorInput value={draft.disclaimerColor} onChange={(value) => update("disclaimerColor", value)} disabled={!canAdminister} />
-                    </Field>
-                    <Field label="On-color text">
-                      <ColorInput value={draft.surfaceTextColor} onChange={(value) => update("surfaceTextColor", value)} disabled={!canAdminister} />
-                    </Field>
-                  </div>
-                  <div className="rounded-lg border border-slate-200 bg-white p-3">
-                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Type size</p>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <FontSizeStepper label="Property" value={draft.propertyNameFontSize} min={10} max={30} disabled={!canAdminister} onChange={(value) => update("propertyNameFontSize", value)} />
-                      <FontSizeStepper label="Title" value={draft.titleFontSize} min={12} max={draft.shape === "anchored_coachmark" ? 26 : 64} disabled={!canAdminister} onChange={(value) => update("titleFontSize", value)} />
-                      <FontSizeStepper label="Body" value={draft.bodyFontSize} min={12} max={draft.shape === "anchored_coachmark" ? 26 : 36} disabled={!canAdminister} onChange={(value) => update("bodyFontSize", value)} />
-                      <FontSizeStepper label="Fine print" value={draft.disclaimerFontSize} min={10} max={24} disabled={!canAdminister} onChange={(value) => update("disclaimerFontSize", value)} />
-                      <FontSizeStepper label="Countdown" value={draft.countdownFontSize} min={10} max={30} disabled={!canAdminister} onChange={(value) => update("countdownFontSize", value)} />
-                    </div>
-                  </div>
-                  <Field label="Decoration">
-                    <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.decoration} onChange={(event) => update("decoration", event.target.value as EdgeMessageDraft["decoration"])} disabled={!canAdminister}>
-                      <option value="none">None</option>
-                      <option value="badge">Badge</option>
-                      <option value="pulse_badge">Pulse badge</option>
-                    </select>
+                  <Field label="Accent color">
+                    <ColorInput value={draft.accentColor} onChange={(value) => update("accentColor", value)} disabled={!canAdminister} />
+                  </Field>
+                  <Field label="Title text">
+                    <ColorInput value={draft.titleColor} onChange={(value) => update("titleColor", value)} disabled={!canAdminister} />
+                  </Field>
+                  <Field label="Body text">
+                    <ColorInput value={draft.bodyColor} onChange={(value) => update("bodyColor", value)} disabled={!canAdminister} />
+                  </Field>
+                  <Field label="Fine print">
+                    <ColorInput value={draft.disclaimerColor} onChange={(value) => update("disclaimerColor", value)} disabled={!canAdminister} />
+                  </Field>
+                  <Field label="On-color text">
+                    <ColorInput value={draft.surfaceTextColor} onChange={(value) => update("surfaceTextColor", value)} disabled={!canAdminister} />
                   </Field>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FontSizeStepper label="Property" value={draft.propertyNameFontSize} min={10} max={30} disabled={!canAdminister} onChange={(value) => update("propertyNameFontSize", value)} />
+                  <FontSizeStepper label="Title" value={draft.titleFontSize} min={12} max={draft.shape === "anchored_coachmark" ? 26 : 64} disabled={!canAdminister} onChange={(value) => update("titleFontSize", value)} />
+                  <FontSizeStepper label="Body" value={draft.bodyFontSize} min={12} max={draft.shape === "anchored_coachmark" ? 26 : 36} disabled={!canAdminister} onChange={(value) => update("bodyFontSize", value)} />
+                  <FontSizeStepper label="Countdown" value={draft.countdownFontSize} min={10} max={30} disabled={!canAdminister} onChange={(value) => update("countdownFontSize", value)} />
+                </div>
+              </div>
+            </DisclosureCard>
           </section>
 
-          <section className="space-y-5">
+          <section className="space-y-4">
             <Card>
               <CardContent className="p-5">
                 <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -503,81 +629,73 @@ export default function EdgeMessagesPage() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-5 lg:grid-cols-2">
-              <Card>
-                <CardContent className="p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Clock3 className="h-4 w-4 text-[#15284B]" />
-                    <h2 className="text-base font-semibold text-slate-950">Delivery</h2>
-                  </div>
-                  <div className="space-y-4">
-                    <Field label="Trigger">
-                      <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.triggerMode} onChange={(event) => update("triggerMode", event.target.value as TriggerMode)} disabled={!canAdminister}>
-                        {DELIVERY_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label={`Scroll depth ${draft.scrollDepth}%`}>
-                      <input className="w-full accent-[#15284B]" type="range" min={0} max={100} step={5} value={draft.scrollDepth} onChange={(event) => update("scrollDepth", Number(event.target.value))} disabled={!canAdminister || draft.triggerMode !== "scroll_depth"} />
-                    </Field>
-                    <Field label="Placement">
-                      <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.placement} onChange={(event) => update("placement", event.target.value as Placement)} disabled={!canAdminister}>
-                        {PLACEMENT_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </Field>
-                    <div className="grid grid-cols-3 gap-3">
-                      <NumberField label="Delay" value={draft.showDelayMs} suffix="ms" disabled={!canAdminister} onChange={(value) => update("showDelayMs", value)} />
-                      <NumberField label="Duration" value={draft.durationMs} suffix="ms" disabled={!canAdminister} onChange={(value) => update("durationMs", value)} />
-                      <NumberField label="Fade" value={draft.fadeMs} suffix="ms" disabled={!canAdminister} onChange={(value) => update("fadeMs", value)} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <DisclosureCard
+              icon={MousePointer2}
+              title="Targeting"
+              summary={`${draft.hostname}${draft.path}`}
+              open={openPanels.targeting}
+              onOpenChange={(open) => setPanelOpen("targeting", open)}
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Name">
+                  <Input value={draft.name} onChange={(event) => update("name", event.target.value)} disabled={!canAdminister} />
+                </Field>
+                <Field label="Target text">
+                  <Input value={draft.targetText} onChange={(event) => update("targetText", event.target.value)} disabled={!canAdminister} placeholder="Button or anchor text" />
+                </Field>
+                <Field label="Trigger">
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.triggerMode} onChange={(event) => update("triggerMode", event.target.value as TriggerMode)} disabled={!canAdminister}>
+                    {DELIVERY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Placement">
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900" value={draft.placement} onChange={(event) => update("placement", event.target.value as Placement)} disabled={!canAdminister}>
+                    {PLACEMENT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <div className="md:col-span-2">
+                  <Field label={`Scroll depth ${draft.scrollDepth}%`}>
+                    <input className="w-full accent-[#15284B]" type="range" min={0} max={100} step={5} value={draft.scrollDepth} onChange={(event) => update("scrollDepth", Number(event.target.value))} disabled={!canAdminister || draft.triggerMode !== "scroll_depth"} />
+                  </Field>
+                </div>
+              </div>
+            </DisclosureCard>
 
-              <Card>
-                <CardContent className="p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-[#15284B]" />
-                    <h2 className="text-base font-semibold text-slate-950">Guardrails</h2>
-                  </div>
-                  <div className="space-y-3">
-                    <GuardrailRow icon={CheckCircle2} label="Clean route targeting" value={activeMessage.path} />
-                    <GuardrailRow icon={Gauge} label="Benchmark" value={activeMessage.benchmark} />
-                    <GuardrailRow icon={Eye} label="Visual QA" value="Browser proof passed" />
-                    <GuardrailRow icon={TimerReset} label="Frequency mode" value={draft.ignoreFrequencyCap ? "Testing every reload" : `${draft.frequencyCapSeconds / 3600}h cap`} />
-                  </div>
-                  <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                    <Button type="button" variant="outline" disabled>
-                      <PauseCircle className="mr-2 h-4 w-4" />
-                      Pause
-                    </Button>
-                    <Button type="button" variant="outline" disabled>
-                      <Rocket className="mr-2 h-4 w-4" />
-                      Launch
-                    </Button>
-                    <Button type="button" variant="outline" disabled>
-                      <X className="mr-2 h-4 w-4" />
-                      Rollback
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <DisclosureCard
+              icon={ShieldCheck}
+              title="Publish"
+              summary={hasUnsavedChanges ? "Save before launch" : "Ready when approved"}
+              open={openPanels.launch}
+              onOpenChange={(open) => setPanelOpen("launch", open)}
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <GuardrailRow icon={CheckCircle2} label="Route" value={activeMessage.path} />
+                <GuardrailRow icon={Gauge} label="Benchmark" value={activeMessage.benchmark} />
+                <GuardrailRow icon={Eye} label="Visual QA" value="Browser proof passed" />
+                <GuardrailRow icon={TimerReset} label="Frequency" value={draft.ignoreFrequencyCap ? "Every reload" : `${draft.frequencyCapSeconds / 3600}h cap`} />
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button type="button" variant="outline" disabled={!canAdminister || actionState === "pausing"} onClick={() => runAction("pause")}>
+                  <PauseCircle className="mr-2 h-4 w-4" />
+                  Pause
+                </Button>
+                <Button type="button" variant="outline" disabled={!canAdminister || hasUnsavedChanges || actionState === "launching"} onClick={() => runAction("launch")}>
+                  <Rocket className="mr-2 h-4 w-4" />
+                  Launch
+                </Button>
+                <Button type="button" variant="outline" disabled={!canAdminister || actionState === "rolling_back"} onClick={() => runAction("rollback")}>
+                  <X className="mr-2 h-4 w-4" />
+                  Rollback
+                </Button>
+              </div>
+            </DisclosureCard>
           </section>
         </div>
       </div>
-    </div>
-  );
-}
-
-function MetricTile({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-950">{value}</p>
     </div>
   );
 }
@@ -588,6 +706,41 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</span>
       {children}
     </label>
+  );
+}
+
+function DisclosureCard({
+  icon: Icon,
+  title,
+  summary,
+  open,
+  onOpenChange,
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  summary: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible open={open} onOpenChange={onOpenChange} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left hover:bg-slate-50">
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#15284B] text-white">
+            <Icon className="h-4 w-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-slate-950">{title}</span>
+            <span className="mt-0.5 block truncate text-xs font-medium text-slate-500">{summary}</span>
+          </span>
+        </span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t border-slate-200 px-5 py-5">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -705,7 +858,7 @@ function MessagePreview({ draft }: { draft: EdgeMessageDraft }) {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url(${PREVIEW_HERO_IMAGE})`,
+          backgroundImage: `url(${previewHeroImage(draft)})`,
           backgroundPosition: "center center",
           backgroundSize: "cover",
         }}
@@ -727,9 +880,9 @@ function MessagePreview({ draft }: { draft: EdgeMessageDraft }) {
       <div className="relative z-0 flex min-h-[456px] flex-col justify-end px-8 pb-9 pt-10 text-white">
         <div className="max-w-xl">
           <p className="text-sm font-black uppercase tracking-[0.28em] opacity-90">{draft.propertyName}</p>
-          <h3 className="mt-3 max-w-lg text-4xl font-black leading-tight">Apartments in Atlanta, GA</h3>
+          <h3 className="mt-3 max-w-lg text-4xl font-black leading-tight">{draft.hostname === "pilot.venterradev.com" ? "Apartments in Atlanta, GA" : "Apartments in Kyle, TX"}</h3>
           <p className="mt-4 max-w-lg text-base font-semibold leading-7 text-white/90">
-            Find your next home at Apex West Midtown.
+            Find your next home at {draft.propertyName}.
           </p>
         </div>
         <div className="mt-7 flex items-center gap-4">
@@ -782,9 +935,14 @@ function MessagePreview({ draft }: { draft: EdgeMessageDraft }) {
             <h3 className="mx-auto mt-7 max-w-[470px] whitespace-pre-line font-black leading-[1.16]" style={{ color: draft.titleColor, fontSize: draft.titleFontSize }}>{draft.title}</h3>
             <p className="mx-auto mt-7 max-w-[455px] leading-[1.52]" style={{ color: draft.bodyColor, fontSize: draft.bodyFontSize }}>{draft.body}</p>
             {draft.disclaimer && <p className="mx-auto mt-5 max-w-[420px] font-extrabold leading-7" style={{ color: draft.disclaimerColor, fontSize: draft.disclaimerFontSize }}>{draft.disclaimer}</p>}
-            <p className="mt-7 font-black" style={{ color: draft.bodyColor, fontSize: draft.countdownFontSize }}>Closing in {Math.ceil(draft.durationMs / 1000)} seconds</p>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
-              <div className="h-full rounded-full" style={{ width: "78%", backgroundColor: draft.brandColor }} />
+            {draft.ctaLabel && draft.ctaHref && (
+              <a href={draft.ctaHref} className="mx-auto mt-5 flex min-h-12 w-fit max-w-full items-center justify-center rounded-full px-7 text-center text-sm font-black text-white shadow-lg" style={{ backgroundColor: draft.brandColor }}>
+                {draft.ctaLabel}
+              </a>
+            )}
+            <p className="mt-7 font-black" style={{ color: draft.disclaimerColor, fontSize: draft.countdownFontSize }}>Closing in {Math.ceil(draft.durationMs / 1000)} seconds</p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full" style={{ backgroundColor: "#D6D6D2" }}>
+              <div className="h-full rounded-full" style={{ width: "78%", backgroundColor: draft.disclaimerColor }} />
             </div>
             <div className="mt-6 flex justify-center">
               <Image src="/velo-current.svg" alt="" width={68} height={38} />

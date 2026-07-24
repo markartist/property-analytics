@@ -988,9 +988,14 @@ export default function ExperimentLabPage() {
 
         <div className="mb-5 rounded-lg border border-cyan-200 bg-white px-4 py-3 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-950">Edge Message Toolkit</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Transparent-pricing modal and all-in pricing coach-mark controls now have a dedicated Pond admin surface.</p>
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-[#15284B] text-white">
+                <MousePointerClick className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-slate-950">Edge Message Toolkit</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">Transparent-pricing modal and all-in pricing coach-mark controls now have a dedicated Pond admin surface.</p>
+              </div>
             </div>
             <Link
               href="/experiments/edge-messages"

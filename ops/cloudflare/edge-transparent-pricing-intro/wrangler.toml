@@ -1,10 +1,11 @@
-name = "edge-transparent-pricing-intro-beta"
+name = "edge-message-worker"
 main = "worker.js"
 compatibility_date = "2024-12-01"
 workers_dev = false
 
 routes = [
-  { pattern = "pilot.venterradev.com/*", zone_name = "venterradev.com" }
+  { pattern = "thevinekyle.com/*", zone_name = "thevinekyle.com" },
+  { pattern = "www.thevinekyle.com/*", zone_name = "thevinekyle.com" }
 ]
 
 [[d1_databases]]
