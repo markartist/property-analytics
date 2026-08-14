@@ -17,6 +17,8 @@ import sqlite3
 import subprocess
 import re
 import html
+import importlib.util
+import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
@@ -26,7 +28,11 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from Data_Collection.collectors.guest_card_collector import GuestCardCollector
 from Data_Collection.utils.bi_manual_ingest import get_pending_bi_workbooks
-from Data_Collection.utils.daily_collection_closure import evaluate_daily_collection_closure
+from Data_Collection.utils.daily_collection_closure import (
+    MANUAL_DEPENDENCY_SOURCES,
+    evaluate_daily_collection_closure,
+    reconcile_completed_source_retry_markers,
+)
 from Data_Collection.utils.source_freshness_policy import (
     evaluate_source_freshness,
     is_guest_card_harvest_suspended,
@@ -58,6 +64,7 @@ class DataAlertEmailer:
         backup = os.getenv("EMAIL_BACKUP_RECIPIENT", "").strip()
         self.recipients = [self.recipient] + ([backup] if backup and backup != self.recipient else [])
         self.delivery_log_dir = self.base_dir / 'logs' / 'email_delivery'
+        self.alert_snapshot_dir = self.base_dir / 'logs' / 'monitoring_alert_snapshots'
         self.prelaunch_property_names = set()
         self.prelaunch_gsc_urls = set()
         self.prelaunch_ga4_property_ids = set()
@@ -98,6 +105,113 @@ class DataAlertEmailer:
             return evaluate_daily_collection_closure(self.db_path)
         except Exception:
             return None
+
+    def _preflight_reconcile_collection_state(self):
+        if self.test_mode:
+            return []
+        try:
+            return reconcile_completed_source_retry_markers(self.db_path)
+        except Exception as exc:
+            return [{
+                "source": "collection_closure",
+                "action": "preflight_reconcile_failed",
+                "error": str(exc)[:300],
+            }]
+
+    def _failure_item_count(self, collection_failures, *, include_manual_dependency=False):
+        count = 0
+        for failures in (collection_failures or {}).values():
+            for item in failures:
+                is_manual = item.get('classification') == 'manual_dependency'
+                if include_manual_dependency or not is_manual:
+                    count += 1
+        return count
+
+    def _manual_dependency_count(self, collection_failures):
+        return sum(
+            1
+            for failures in (collection_failures or {}).values()
+            for item in failures
+            if item.get('classification') == 'manual_dependency'
+        )
+
+    def _write_alert_snapshot(self, *, closure, collection_failures, issues, indexation_warnings, remediation_actions):
+        self.alert_snapshot_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        payload = {
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "closure": closure or {},
+            "collection_failures": collection_failures or {},
+            "issues": issues or {},
+            "cross_source_diagnostics": self._cross_source_diagnostics(issues or {}),
+            "indexation_warnings": indexation_warnings or [],
+            "remediation_actions": remediation_actions or [],
+            "runtime_health": self._runtime_health_snapshot(),
+        }
+        path = self.alert_snapshot_dir / f"alert_snapshot_{timestamp}.json"
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        return path
+
+    def _runtime_health_snapshot(self):
+        import_checks = {}
+        for module_name in ("pypdf", "requests", "yaml", "google.analytics.data_v1beta"):
+            import_checks[module_name] = importlib.util.find_spec(module_name) is not None
+        db_present = self.db_path.exists()
+        return {
+            "python_executable": sys.executable,
+            "python_version": sys.version.split()[0],
+            "python3_on_path": shutil.which("python3"),
+            "keeper_runtime_ready": os.getenv("PA_KEEPER_RUNTIME_READY") == "1",
+            "db_path": str(self.db_path),
+            "db_present": db_present,
+            "db_parent_writable": os.access(self.db_path.parent, os.W_OK),
+            "imports": import_checks,
+        }
+
+    def _cross_source_diagnostics(self, issues):
+        ga4_problem_names = {
+            str(prop_name)
+            for bucket in ("missing", "stale")
+            for prop_name, _ in (issues.get("ga4", {}).get(bucket, []) if issues else [])
+        }
+        if not ga4_problem_names:
+            return []
+
+        conn = sqlite3.connect(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT gsc_site_url, MAX(metric_date) AS latest_date
+                FROM gsc_daily_metrics
+                GROUP BY gsc_site_url
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+
+        latest_by_gsc = {
+            self._normalize_url_key(str(url or "")): str(latest or "")
+            for url, latest in rows
+            if url and latest
+        }
+        gsc_expected = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+        diagnostics = []
+        for prop in self._registry_properties:
+            prop_name = str(prop.get("name") or "")
+            if prop_name not in ga4_problem_names:
+                continue
+            gsc_url = str(prop.get("gsc_url") or "").strip()
+            latest_gsc = latest_by_gsc.get(self._normalize_url_key(gsc_url))
+            if latest_gsc and latest_gsc >= gsc_expected:
+                diagnostics.append({
+                    "property": prop_name,
+                    "type": "ga4_tracking_gap",
+                    "message": (
+                        f"GA4 is stale/missing while GSC is current through {latest_gsc} "
+                        f"for {gsc_url}; verify live-site GA4 measurement/property wiring."
+                    ),
+                })
+        return diagnostics
 
     def _unresolved_core_sources(self) -> dict[str, dict]:
         closure = self._current_closure() or {}
@@ -279,10 +393,9 @@ class DataAlertEmailer:
             if prop_name:
                 return prop_name
 
-        fallback = url.replace('sc-domain:', '').replace('https://', '').replace('http://', '').replace('www.', '')
-        if '/' in fallback:
-            return fallback.split('/')[0]
-        return fallback
+        # Historical GSC sites that no longer resolve through the governed registry
+        # should not page forever as stale current-property coverage.
+        return ''
 
     def _is_prelaunch_gsc_issue(self, source: str, error_message: str) -> bool:
         """Return True when a GSC/GSC inspection failure references prelaunch property/url."""
@@ -353,16 +466,22 @@ class DataAlertEmailer:
 
             for row in cursor.fetchall():
                 source, started, status, error, total, failed, notes = row
+                source_l = (source or '').lower()
                 # URL Inspection is advisory and can fail on non-indexed/prelaunch URLs.
                 # Keep it out of collection-system critical failure classification.
-                if (source or '').lower() == 'gsc_url_inspection':
+                if source_l == 'gsc_url_inspection':
                     continue
-                if (source or '').lower() == 'semrush':
+                if source_l == 'semrush':
                     continue
-                if (source or '').lower() == 'bi_report' and not self._pending_bi_workbooks():
+                if source_l == 'bi_report' and not self._pending_bi_workbooks():
                     continue
                 if self._is_prelaunch_gsc_issue(source, f"{error or ''} {notes or ''}"):
                     continue
+                classification = 'collection_failure'
+                tier = 'core' if source_l in self.core_failure_sources else 'specialty'
+                if source_l in MANUAL_DEPENDENCY_SOURCES and str(status or '').lower() == 'blocked' and int(failed or 0) == 0:
+                    classification = 'manual_dependency'
+                    tier = 'manual_dependency'
 
                 if source not in failures:
                     failures[source] = []
@@ -373,7 +492,8 @@ class DataAlertEmailer:
                     'error': error,
                     'properties_total': total,
                     'properties_failed': failed,
-                    'tier': 'core' if (source or '').lower() in self.core_failure_sources else 'specialty',
+                    'tier': tier,
+                    'classification': classification,
                 })
         except sqlite3.OperationalError:
             # Table might not exist in older databases
@@ -398,7 +518,8 @@ class DataAlertEmailer:
                 'error': f"Closure unresolved: {item.get('reason') or 'source_not_closed'}",
                 'properties_total': 0,
                 'properties_failed': 0,
-                'tier': 'core' if source in self.core_failure_sources else 'specialty',
+                'tier': 'manual_dependency' if item.get('reason') == 'manual_dependency' else ('core' if source in self.core_failure_sources else 'specialty'),
+                'classification': 'manual_dependency' if item.get('reason') == 'manual_dependency' else 'collection_failure',
             })
         return failures
 
@@ -406,7 +527,10 @@ class DataAlertEmailer:
         core_sources = 0
         specialty_sources = 0
         for failures in (collection_failures or {}).values():
-            if any((item.get('tier') == 'core') for item in failures):
+            active_failures = [item for item in failures if item.get('classification') != 'manual_dependency']
+            if not active_failures:
+                continue
+            if any((item.get('tier') == 'core') for item in active_failures):
                 core_sources += 1
             else:
                 specialty_sources += 1
@@ -787,12 +911,13 @@ class DataAlertEmailer:
         indexation_warnings = indexation_warnings or []
         total_missing = sum(len(v['missing']) for v in issues.values())
         total_stale = sum(len(v['stale']) for v in issues.values())
-        collection_failure_count = sum(len(v) for v in collection_failures.values()) if collection_failures else 0
+        collection_failure_count = self._failure_item_count(collection_failures)
+        manual_dependency_count = self._manual_dependency_count(collection_failures)
         core_failure_sources, specialty_failure_sources = self.summarize_failure_tiers(collection_failures or {})
         indexation_warning_count = len(indexation_warnings)
         critical_indexation_count = sum(1 for item in indexation_warnings if item.get("severity") == "critical")
 
-        if total_missing == 0 and total_stale == 0 and collection_failure_count == 0 and indexation_warning_count == 0:
+        if total_missing == 0 and total_stale == 0 and collection_failure_count == 0 and manual_dependency_count == 0 and indexation_warning_count == 0:
             return self._build_all_clear_html()
 
         if critical_indexation_count > 0 or core_failure_sources > 0 or total_missing > 10 or total_stale > 10:
@@ -809,7 +934,7 @@ class DataAlertEmailer:
           <tr>
             <td style="width:25%;padding:12px;border:1px solid #e2e8f0;background:#f8fafc;">
               <div style="font-size:30px;font-weight:700;color:#15284B;">{collection_failure_count}</div>
-              <div style="font-size:12px;color:#334155;">Collection Failures ({core_failure_sources} core / {specialty_failure_sources} specialty)</div>
+              <div style="font-size:12px;color:#334155;">Collection Failures ({core_failure_sources} core / {specialty_failure_sources} specialty{f" / {manual_dependency_count} manual" if manual_dependency_count else ""})</div>
             </td>
             <td style="width:25%;padding:12px;border:1px solid #e2e8f0;background:#f8fafc;">
               <div style="font-size:30px;font-weight:700;color:#15284B;">{indexation_warning_count}</div>
@@ -839,32 +964,68 @@ class DataAlertEmailer:
 
         failures_html = ""
         if collection_failures:
-            core_failures = {k: v for k, v in collection_failures.items() if any((item.get('tier') == 'core') for item in v)}
-            specialty_failures = {k: v for k, v in collection_failures.items() if all((item.get('tier') != 'core') for item in v)}
-            failures_html += """
-            <div style="margin-top:12px;padding:12px;border-left:4px solid #dc2626;background:#fff5f5;font-family:Arial, sans-serif;">
-              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Collection Job Failures</div>
-            """
-            for section_title, bucket in (("Core Pipeline", core_failures), ("Specialty / Sidecar Jobs", specialty_failures)):
-                if not bucket:
-                    continue
-                failures_html += f'<div style="margin-top:10px;font-size:14px;font-weight:700;color:#7f1d1d;">{section_title}</div>'
-                for source, failures in bucket.items():
+            core_failures = {
+                k: [item for item in v if item.get('tier') == 'core' and item.get('classification') != 'manual_dependency']
+                for k, v in collection_failures.items()
+            }
+            specialty_failures = {
+                k: [item for item in v if item.get('tier') == 'specialty' and item.get('classification') != 'manual_dependency']
+                for k, v in collection_failures.items()
+            }
+            manual_dependency_waits = {
+                k: [item for item in v if item.get('classification') == 'manual_dependency']
+                for k, v in collection_failures.items()
+            }
+            core_failures = {k: v for k, v in core_failures.items() if v}
+            specialty_failures = {k: v for k, v in specialty_failures.items() if v}
+            manual_dependency_waits = {k: v for k, v in manual_dependency_waits.items() if v}
+            active_failure_buckets = (("Core Pipeline", core_failures), ("Specialty / Sidecar Jobs", specialty_failures))
+            if any(bucket for _, bucket in active_failure_buckets):
+                failures_html += """
+                <div style="margin-top:12px;padding:12px;border-left:4px solid #dc2626;background:#fff5f5;font-family:Arial, sans-serif;">
+                  <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Collection Job Failures</div>
+                """
+                for section_title, bucket in active_failure_buckets:
+                    if not bucket:
+                        continue
+                    failures_html += f'<div style="margin-top:10px;font-size:14px;font-weight:700;color:#7f1d1d;">{section_title}</div>'
+                    for source, failures in bucket.items():
+                        failures_html += f'<div style="margin-top:8px;font-size:13px;font-weight:700;color:#15284B;">{source.upper()}</div>'
+                        for failure in failures:
+                            timestamp = failure['timestamp']
+                            status = failure['status']
+                            error = failure['error'] or 'No error message'
+                            total = failure['properties_total'] or 0
+                            failed = failure['properties_failed'] or 0
+                            failures_html += (
+                                f'<div style="margin:6px 0;padding:8px;border:1px solid #fecaca;background:#ffffff;">'
+                                f'<div style="font-size:12px;color:#6b7280;">{timestamp}</div>'
+                                f'<div style="font-size:13px;color:#111827;"><strong>Status:</strong> {status} ({failed}/{total} failed)</div>'
+                                f'<div style="font-size:12px;color:#475569;">{error[:220]}</div>'
+                                '</div>'
+                            )
+                failures_html += "</div>"
+
+            if manual_dependency_waits:
+                failures_html += """
+                <div style="margin-top:12px;padding:12px;border-left:4px solid #d97706;background:#fffbeb;font-family:Arial, sans-serif;">
+                  <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Manual Dependency Waits</div>
+                """
+                for source, waits in manual_dependency_waits.items():
                     failures_html += f'<div style="margin-top:8px;font-size:13px;font-weight:700;color:#15284B;">{source.upper()}</div>'
-                    for failure in failures:
-                        timestamp = failure['timestamp']
-                        status = failure['status']
-                        error = failure['error'] or 'No error message'
-                        total = failure['properties_total'] or 0
-                        failed = failure['properties_failed'] or 0
+                    for wait in waits:
+                        timestamp = wait['timestamp']
+                        status = wait['status']
+                        error = wait['error'] or 'Waiting on manually supplied source material'
+                        total = wait['properties_total'] or 0
                         failures_html += (
-                            f'<div style="margin:6px 0;padding:8px;border:1px solid #fecaca;background:#ffffff;">'
+                            f'<div style="margin:6px 0;padding:8px;border:1px solid #fde68a;background:#ffffff;">'
                             f'<div style="font-size:12px;color:#6b7280;">{timestamp}</div>'
-                            f'<div style="font-size:13px;color:#111827;"><strong>Status:</strong> {status} ({failed}/{total} failed)</div>'
+                            f'<div style="font-size:13px;color:#111827;"><strong>Status:</strong> {status} ({total} tracked item(s))</div>'
                             f'<div style="font-size:12px;color:#475569;">{error[:220]}</div>'
                             '</div>'
                         )
-            failures_html += "</div>"
+                failures_html += "</div>"
 
         indexation_html = ""
         if indexation_warnings:
@@ -914,6 +1075,42 @@ class DataAlertEmailer:
                 )
             remediation_html += "</div>"
 
+        runtime = self._runtime_health_snapshot()
+        import_status = runtime.get("imports") or {}
+        import_bits = ", ".join(
+            f"{name}: {'ok' if ok else 'missing'}"
+            for name, ok in sorted(import_status.items())
+        )
+        runtime_html = f"""
+            <div style="margin-top:12px;padding:12px;border-left:4px solid #3B9189;background:#f6fffd;font-family:Arial, sans-serif;">
+              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Runtime Health</div>
+              <div style="font-size:12px;color:#475569;line-height:1.45;">
+                Python: {html.escape(str(runtime.get("python_version") or ""))} at <code>{html.escape(str(runtime.get("python_executable") or ""))}</code><br>
+                Keeper runtime: {'ready' if runtime.get("keeper_runtime_ready") else 'not marked ready'}<br>
+                DB present/writable parent: {'yes' if runtime.get("db_present") else 'no'} / {'yes' if runtime.get("db_parent_writable") else 'no'}<br>
+                Imports: {html.escape(import_bits)}
+              </div>
+            </div>
+        """
+
+        diagnostics = self._cross_source_diagnostics(issues)
+        diagnostics_html = ""
+        if diagnostics:
+            rows_html = ""
+            for item in diagnostics:
+                rows_html += (
+                    f'<div style="margin:6px 0;padding:8px;border:1px solid #bfdbfe;background:#ffffff;">'
+                    f'<div style="font-size:13px;color:#15284B;font-weight:700;">{html.escape(str(item.get("property") or ""))}</div>'
+                    f'<div style="font-size:12px;color:#475569;">{html.escape(str(item.get("message") or ""))}</div>'
+                    '</div>'
+                )
+            diagnostics_html = f"""
+            <div style="margin-top:12px;padding:12px;border-left:4px solid #294782;background:#eff6ff;font-family:Arial, sans-serif;">
+              <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">Cross-Source Diagnostics</div>
+              {rows_html}
+            </div>
+            """
+
         issues_html = ""
         for source, data in issues.items():
             if not data['missing'] and not data['stale']:
@@ -949,6 +1146,8 @@ class DataAlertEmailer:
         content_html = (
             summary_tiles
             + remediation_html
+            + runtime_html
+            + diagnostics_html
             + failures_html
             + indexation_html
             + issues_html
@@ -1075,7 +1274,8 @@ class DataAlertEmailer:
 
         # Determine subject based on severity
         total_issues = sum(len(v['missing']) + len(v['stale']) for v in issues.values())
-        collection_failure_count = len(collection_failures) if collection_failures else 0
+        collection_failure_count = self._failure_item_count(collection_failures)
+        manual_dependency_count = self._manual_dependency_count(collection_failures)
         core_failure_sources, _ = self.summarize_failure_tiers(collection_failures or {})
         indexation_warning_count = len(indexation_warnings)
         critical_indexation_count = sum(1 for item in indexation_warnings if item.get("severity") == "critical")
@@ -1088,6 +1288,8 @@ class DataAlertEmailer:
             subject = f"🔴 CRITICAL: Consolidated Morning Failure Alert ({collection_failure_count} jobs failed)"
         elif collection_failure_count > 0:
             subject = f"⚠️ Data Collection Alert: {collection_failure_count} specialty job(s) failed"
+        elif manual_dependency_count > 0:
+            subject = f"⚠️ Data Collection Alert: {manual_dependency_count} manual source wait(s)"
         elif total_issues == 0:
             subject = "✅ Data Collection Status: All Clear"
         elif total_issues > 20:
@@ -1148,6 +1350,14 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
 
+        preflight_actions = self._preflight_reconcile_collection_state()
+        if preflight_actions:
+            print("Preflight reconciliation:")
+            for action in preflight_actions[:10]:
+                detail = action.get('error') or action.get('action') or ''
+                print(f"   - {action.get('source')}: {detail}")
+            print()
+
         closure = evaluate_daily_collection_closure(self.db_path)
         if not closure.get('ready_for_summary'):
             print(
@@ -1165,14 +1375,22 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         if collection_failures:
             core_sources, specialty_sources = self.summarize_failure_tiers(collection_failures)
+            active_failure_count = self._failure_item_count(collection_failures)
+            manual_dependency_count = self._manual_dependency_count(collection_failures)
             banner = "🔴 CRITICAL" if core_sources > 0 else "⚠️  WARNING"
             print(
-                f"{banner}: Found {len(collection_failures)} data sources with collection failures! "
+                f"{banner}: Found {active_failure_count} collection failure(s) "
+                f"and {manual_dependency_count} manual dependency wait(s) "
                 f"(core={core_sources}, specialty={specialty_sources})"
             )
             for source, failures in collection_failures.items():
-                tier = 'core' if any((item.get('tier') == 'core') for item in failures) else 'specialty'
-                print(f"   {source.upper()} [{tier}]: {len(failures)} failed job(s) in last 3 days")
+                active_items = [item for item in failures if item.get('classification') != 'manual_dependency']
+                manual_items = [item for item in failures if item.get('classification') == 'manual_dependency']
+                if active_items:
+                    tier = 'core' if any((item.get('tier') == 'core') for item in active_items) else 'specialty'
+                    print(f"   {source.upper()} [{tier}]: {len(active_items)} failed job(s) in last 3 days")
+                if manual_items:
+                    print(f"   {source.upper()} [manual_dependency]: {len(manual_items)} source wait(s) in last 3 days")
         else:
             print("✅ No collection job failures detected")
 
@@ -1219,6 +1437,16 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             print(f"   Remaining freshness issues: {remaining_issues}")
             print(f"   Remaining core indexation warnings: {len(indexation_warnings)}")
             print()
+
+        snapshot_path = self._write_alert_snapshot(
+            closure=closure,
+            collection_failures=collection_failures,
+            issues=issues,
+            indexation_warnings=indexation_warnings,
+            remediation_actions=remediation_actions,
+        )
+        print(f"Alert snapshot: {snapshot_path}")
+        print()
 
         # Send alert email
         print("Sending alert email...")

@@ -1,0 +1,405 @@
+{
+  "schema_version": "resi_edge_manifest_v1",
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "target": {
+    "property_code": "FL4DU",
+    "source_property_code": "FL4DU",
+    "domain": "thedistrictuniversal.com",
+    "property_name": "The District Universal Boulevard",
+    "city": "Orlando",
+    "state": "FL",
+    "community_id": "dab83b7e-ad92-447c-a255-cf195dd6f053",
+    "ga4_property_id": "378644585",
+    "ga4_measurement_id": "G-S66DL2W3V1",
+    "gsc_property": "sc-domain:thedistrictuniversal.com",
+    "canonical_url": "https://thedistrictuniversal.com/",
+    "governed_reference_url": "https://thedistrictuniversal.com/"
+  },
+  "routing": {
+    "cloudflare_zone_name": "thedistrictuniversal.com",
+    "route_pattern": "thedistrictuniversal.com/*",
+    "existing_worker_script": "not_yet_assigned_in_governed_package",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green"
+  },
+  "mobile_shell": {
+    "layout_contract": {
+      "source_reference": "The District Universal Boulevard live source audit from current vanity domain, verified 08/10/2026",
+      "mobile_only": true,
+      "desktop_topper_allowed": false,
+      "property_specific_variants_allowed": false,
+      "standalone_edge_owned_initial_response_required": true,
+      "promo_bar_height_px": 60,
+      "header_height_px": 80,
+      "full_height_mobile_hero_required": true,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false
+    },
+    "brand_theme": {
+      "source": "District live theme tokens, verified from current source CSS 08/10/2026",
+      "promo_background": "#15284B",
+      "promo_text": "#FFFFFF",
+      "promo_surface": "#F6F6F5",
+      "promo_panel_text": "#15284B",
+      "primary_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "body_text": "#15284B",
+      "panel_background": "#F6F6F5"
+    },
+    "fonts": [
+      {
+        "family": "Lato",
+        "url": "https://thedistrictuniversal.com/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400,
+        "style": "normal"
+      },
+      {
+        "family": "Lato",
+        "url": "https://thedistrictuniversal.com/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700,
+        "style": "normal"
+      },
+      {
+        "family": "Noto Serif",
+        "url": "https://thedistrictuniversal.com/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700,
+        "style": "normal"
+      },
+      {
+        "family": "Brittany Signature",
+        "url": "https://thedistrictuniversal.com/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400,
+        "style": "normal"
+      }
+    ],
+    "body_font": "Lato",
+    "heading_font": "Noto Serif",
+    "title_font": "Brittany Signature",
+    "awards": {
+      "present": true,
+      "source": "live native welcome content block exposes Kingsley award, verified 08/10/2026",
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg",
+          "alt": "Kingsley Excellence resident satisfaction award badge"
+        }
+      ]
+    },
+    "promo": {
+      "present": true,
+      "source": "feed_backed:unit_availability_units:snapshot_date=2026-08-10",
+      "title": "Up To 1 Month's Rent Free",
+      "title_case_required": true,
+      "body": "Up to 1 month's rent free on select apartment homes.",
+      "disclaimer": "*Select Homes - Limited Time Offer",
+      "primary_cta_label": "See Availability",
+      "primary_cta_url": "https://thedistrictuniversal.com/apartments/?has_specials=true",
+      "secondary_cta_label": "Contact Us",
+      "secondary_cta_url": "https://thedistrictuniversal.com/contact/"
+    },
+    "hero": {
+      "image_mobile": "/assets/resi-edge-assets/FL4DU/home/hero-mobile-750x1000.avif",
+      "source_image": "https://dam.getresi.co/10445/conversions/District-at-Universal-Home-Hero_WEB-full.jpg",
+      "tm_allowed": false,
+      "headline": "Studio, 1, 2, and 3 Bedroom Apartments in Orlando, FL",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://thedistrictuniversal.com/apartments/",
+      "title_text": "Live Better. Live Easy."
+    },
+    "reviews": {
+      "present": true,
+      "source": "live origin review row, verified 08/10/2026",
+      "rating": 4.4,
+      "count": 540,
+      "url": "https://thedistrictuniversal.com/reviews/",
+      "last_verified": "08/10/2026",
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "link_required": true
+    },
+    "navigation": {
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/FL4DU",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/FL4DU",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://thedistrictuniversal.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://thedistrictuniversal.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://thedistrictuniversal.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://thedistrictuniversal.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://thedistrictuniversal.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://thedistrictuniversal.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://thedistrictuniversal.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://thedistrictuniversal.com/contact/"
+        },
+        {
+          "label": "Specials",
+          "url": "https://thedistrictuniversal.com/specials/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://thedistrictuniversal.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ]
+    },
+    "content_blocks": [
+      {
+        "sequence": 1,
+        "kind": "welcome",
+        "heading": "Welcome to The District Universal Boulevard Apartments",
+        "subheading": "Choose the perfect layout for your lifestyle.",
+        "body": "In Orlando, The District Universal Boulevard brings a lively, connected lifestyle together with a welcoming sense of ease. Modern homes and a walkable, convenient setting create an environment that feels effortless, while the energy of Orlando surrounds you-making it simple to enjoy both the buzz and the calm.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://thedistrictuniversal.com/apartments/",
+        "image_url": "/assets/resi-edge-assets/FL4DU/home/welcome-640.avif",
+        "source_image_url": "https://dam.getresi.co/10446/conversions/District-at-Universal-Home-Welcome_WEB-full.jpg",
+        "image_alt": "Clubroom seating at The District Universal Boulevard"
+      },
+      {
+        "sequence": 2,
+        "kind": "features",
+        "eyebrow": "Apartment Features",
+        "heading": "Stylish Living Spaces",
+        "body": "Enjoy polished interiors with granite countertops, full-size washers and dryers, and relaxing Roman soaking tubs-paired with well-planned one-, two-, and three-bedroom layouts designed to feel both elevated and effortlessly livable.",
+        "bullets": [
+          "Granite Countertops",
+          "Full-Size Washer/Dryer",
+          "Roman Soaking Tubs",
+          "Spacious Layouts"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://thedistrictuniversal.com/features/",
+        "image_url": "/assets/resi-edge-assets/FL4DU/home/features-900.avif",
+        "source_image_url": "https://dam.getresi.co/10443/conversions/District-at-Universal-Home-Features_WEB-full.jpg",
+        "image_alt": "Apartment kitchen at The District Universal Boulevard"
+      }
+    ],
+    "native_continuation": {
+      "required_after_edge_shell": true,
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true
+    }
+  },
+  "desktop": {
+    "mode": "native_passthrough_with_analytics_guards",
+    "desktop_topper_allowed": false,
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "phone_attribution": {
+    "default_source": "VWS",
+    "default_display_phone": "(407) 313-0333",
+    "office_phone_must_not_be_default": "default display is the VWS attribution phone from the governed source lookup; District VWS currently equals the local office number in the feed and should be reviewed before apply",
+    "lookup_trigger": "incoming URL source/id string",
+    "source_lookup": [
+      {
+        "code": "FL4DU30L",
+        "source": "VWS",
+        "phone": "(407) 313-0333"
+      },
+      {
+        "code": "FL4DUAH",
+        "source": "AH",
+        "phone": "(407) 313-0333"
+      },
+      {
+        "code": "FL4DUALIST",
+        "source": "APL",
+        "phone": "(833) 692-5633"
+      },
+      {
+        "code": "FL4DUAR",
+        "source": "APR",
+        "phone": "(407) 313-0333"
+      },
+      {
+        "code": "FL4DUAPT",
+        "source": "ADC-VL",
+        "phone": "(689) 407-8177"
+      },
+      {
+        "code": "FL4DUBNG",
+        "source": "BNG",
+        "phone": "(689) 220-3782"
+      },
+      {
+        "code": "FL4DUGEO",
+        "source": "GEO",
+        "phone": "(407) 279-3125"
+      },
+      {
+        "code": "FL4DUGOO",
+        "source": "GOO-VL",
+        "phone": "(689) 220-3782"
+      },
+      {
+        "code": "FL4DUGOA",
+        "source": "GOA",
+        "phone": "(407) 612-7310"
+      },
+      {
+        "code": "FL4DUSOC",
+        "source": "SOC",
+        "phone": "(689) 407-8623"
+      },
+      {
+        "code": "FL4DUUNA",
+        "source": "UNA",
+        "phone": "(407) 313-0333"
+      },
+      {
+        "code": "FL4DUYAH",
+        "source": "YHO",
+        "phone": "(689) 220-3782"
+      },
+      {
+        "code": "FL4DUZI",
+        "source": "ZIL-VL",
+        "phone": "(689) 210-3941"
+      },
+      {
+        "code": "FL4DUZUM",
+        "source": "ZUM-VL",
+        "phone": "(689) 220-3782"
+      }
+    ]
+  },
+  "analytics": {
+    "owner": "cloudflare_zaraz",
+    "ga4": {
+      "owner": "cloudflare_zaraz",
+      "property_id": "378644585",
+      "measurement_id": "G-S66DL2W3V1",
+      "measurement_id_status": "configured_live_in_cloudflare_zaraz",
+      "zaraz_tool_name": "GA4DU"
+    },
+    "heap": {
+      "owner": "cloudflare_zaraz",
+      "app_id": "286627304",
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "passive_timer_allowed": false,
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1",
+        "expected_status": 204
+      },
+      "zaraz_tool_name": "HDU"
+    },
+    "ahrefs": {
+      "owner": "cloudflare_zaraz",
+      "project_policy": "lookup_existing_project_before_create",
+      "existing_project_id": "9836929",
+      "target": "thedistrictuniversal.com/",
+      "verified": true,
+      "data_key_status": "configured_in_zaraz_for_existing_active_vanity_domain_profile",
+      "profile_policy": "use_existing_active_vanity_domain_profile_only; do_not_create_new_ahrefs_profiles; reassess only after launch URL migration",
+      "zaraz_tool_name": "aHrefs"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "zaraz_tool_name": "RBFL4DU",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "promo_open",
+        "promo_cta_click",
+        "menu_open"
+      ]
+    }
+  },
+  "consent": {
+    "owner": "cloudflare_zaraz_consent",
+    "mode": "finalized_cmp_required",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_finalized_pill_v27_2026_08_12"
+  },
+  "seo": {
+    "llms_url": "https://thedistrictuniversal.com/llms.txt",
+    "sitemap_url": "https://thedistrictuniversal.com/sitemap_index.xml",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "The District Universal Boulevard Apartments in Orlando, FL",
+    "meta_description": "Welcome home to The District Universal Boulevard Apartments in Orlando, FL. Discover luxury living in our studio, 1, 2, and 3 bedroom homes.",
+    "og_image": "https://thedistrictuniversal.com/wp-content/uploads/2026/03/District-at-Universal-Home-Hero_WEB.jpg",
+    "stale_identity_scan_required": true,
+    "gsc_indexing_record": "reports/gsc_indexing/thedistrictuniversal/2026-08-10/thedistrictuniversal_gsc_indexing_evidence_2026-08-10.json"
+  },
+  "captain": {
+    "id": "FL4DU-captain",
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_fl4du_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/copy_change_alerts/fl4du_resi_edge_preapply_captain_handoff_2026-08-10.md"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source."
+    }
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/resi_edge_performance/08-09-2026/thedistrictuniversal-com/plan-20260810T160800Z/plan-readout.json",
+      "/tmp/district_psi_baseline/psi-mobile-exact-1.json",
+      "/tmp/district_psi_baseline/psi-mobile-fresh-1.json",
+      "/tmp/district_psi_baseline/psi-desktop-exact-1.json",
+      "/tmp/district_zaraz_audit.json",
+      "/tmp/district_ahrefs_plan/ahrefs_project_plan_20260810T160234Z.json",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json"
+    ]
+  },
+  "rollback": {
+    "strategy": "no_live_mutation_yet; before any explicit apply, record existing route/worker state and restore prior route/script if any live proof fails",
+    "previous_worker_script": "not_yet_recorded",
+    "no_wordpress_mutation_required": false
+  }
+}

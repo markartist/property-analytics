@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">aHrefs supporting tool flow</title>
+  <desc id="desc">Diagram showing aHrefs as a supporting website health and SEO review tool that observes the public website service and produces reports for Web Operations.</desc>
+  <defs>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; }
+      .title { font-size: 42px; font-weight: 700; fill: #15284B; }
+      .subtitle { font-size: 22px; font-weight: 400; fill: #294782; }
+      .section-title { font-size: 24px; font-weight: 700; fill: #15284B; }
+      .box-title { font-size: 22px; font-weight: 700; fill: #15284B; }
+      .box-title-light { font-size: 22px; font-weight: 700; fill: #FFFFFF; }
+      .body { font-size: 18px; font-weight: 400; fill: #15284B; }
+      .body-light { font-size: 18px; font-weight: 400; fill: #FFFFFF; }
+      .small { font-size: 16px; font-weight: 400; fill: #294782; }
+      .label { font-size: 16px; font-weight: 700; fill: #15284B; }
+      .note { font-size: 20px; font-weight: 700; fill: #BD4830; }
+      .card { fill: #FFFFFF; stroke: #3D66B9; stroke-width: 3; rx: 8; }
+      .soft-card { fill: #F6F6F5; stroke: #3D66B9; stroke-width: 3; rx: 8; }
+      .navy-card { fill: #15284B; stroke: #3D66B9; stroke-width: 3; rx: 8; }
+      .teal-card { fill: #7DCAC2; stroke: #3B9189; stroke-width: 3; rx: 8; }
+      .line { fill: none; stroke: #294782; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .line-teal { fill: none; stroke: #3B9189; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .line-red { fill: none; stroke: #BD4830; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .dash { stroke-dasharray: 10 10; }
+    </style>
+    <marker id="arrow-blue" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#294782"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L12,7 L2,12 Z" fill="#3B9189"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#FFFFFF"/>
+  <rect x="40" y="40" width="1520" height="820" fill="#F6F6F5" stroke="#D6D6D2" stroke-width="2" rx="8"/>
+
+  <text x="90" y="105" class="title">aHrefs in the Public Website Service</text>
+  <text x="90" y="142" class="subtitle">aHrefs observes the website and produces advisory SEO/site health evidence.</text>
+  <text x="90" y="174" class="subtitle">It does not run, route, host, fix, or change the website.</text>
+
+  <rect x="90" y="225" width="390" height="210" class="navy-card"/>
+  <text x="125" y="267" class="box-title-light">Public Website Service</text>
+  <text x="125" y="305" class="body-light">Property websites</text>
+  <text x="125" y="335" class="body-light">Launch and vanity domains</text>
+  <text x="125" y="365" class="body-light">Cloudflare delivery path</text>
+  <text x="125" y="395" class="body-light">Website vendor origin</text>
+  <text x="125" y="425" class="body-light">Leasing paths and forms</text>
+
+  <rect x="610" y="225" width="380" height="210" class="teal-card"/>
+  <text x="650" y="267" class="box-title">aHrefs</text>
+  <text x="650" y="305" class="body">Supporting tool for:</text>
+  <text x="650" y="335" class="body">Site health and SEO review</text>
+  <text x="650" y="365" class="body">Project coverage checks</text>
+  <text x="650" y="395" class="body">Competitor context</text>
+  <text x="650" y="425" class="body">Advisory reporting evidence</text>
+
+  <rect x="1120" y="225" width="350" height="210" class="soft-card"/>
+  <text x="1155" y="267" class="box-title">Not The Service</text>
+  <text x="1155" y="305" class="body">Does not host the site</text>
+  <text x="1155" y="335" class="body">Does not control DNS</text>
+  <text x="1155" y="365" class="body">Does not change redirects</text>
+  <text x="1155" y="395" class="body">Does not fix outages</text>
+  <text x="1155" y="425" class="body">Does not replace GA4/GSC</text>
+
+  <path d="M480 320 C535 320 555 320 610 320" class="line-teal dash" marker-end="url(#arrow-teal)"/>
+  <text x="505" y="295" class="label">observes</text>
+
+  <path d="M990 320 C1045 320 1065 320 1120 320" class="line-red dash"/>
+  <text x="1018" y="295" class="note">boundary</text>
+
+  <text x="90" y="505" class="section-title">What aHrefs Produces</text>
+
+  <rect x="90" y="555" width="300" height="120" class="card"/>
+  <text x="125" y="595" class="box-title">Site Audit</text>
+  <text x="125" y="630" class="body">Technical site health</text>
+  <text x="125" y="658" class="small">Crawl issues and fixes to review</text>
+
+  <rect x="430" y="555" width="300" height="120" class="card"/>
+  <text x="465" y="595" class="box-title">SEO Context</text>
+  <text x="465" y="630" class="body">Visibility and rankings</text>
+  <text x="465" y="658" class="small">Advisory, not official traffic</text>
+
+  <rect x="770" y="555" width="300" height="120" class="card"/>
+  <text x="805" y="595" class="box-title">Authority Signals</text>
+  <text x="805" y="630" class="body">Backlinks and Domain Rating</text>
+  <text x="805" y="658" class="small">Context for website review</text>
+
+  <rect x="1110" y="555" width="300" height="120" class="card"/>
+  <text x="1145" y="595" class="box-title">Competitors</text>
+  <text x="1145" y="630" class="body">Comparison context</text>
+  <text x="1145" y="658" class="small">Where configured and current</text>
+
+  <path d="M800 435 L800 525" class="line-teal" marker-end="url(#arrow-teal)"/>
+  <path d="M800 525 H240 V555" class="line-teal" marker-end="url(#arrow-teal)"/>
+  <path d="M800 525 H580 V555" class="line-teal" marker-end="url(#arrow-teal)"/>
+  <path d="M800 525 H920 V555" class="line-teal" marker-end="url(#arrow-teal)"/>
+  <path d="M800 525 H1260 V555" class="line-teal" marker-end="url(#arrow-teal)"/>
+
+  <rect x="365" y="735" width="870" height="80" class="navy-card"/>
+  <text x="410" y="770" class="box-title-light">Reports, Exports, and Data Pond Collection</text>
+  <text x="410" y="800" class="body-light">Used by Web Operations for review, follow-up, and support evidence.</text>
+
+  <path d="M240 675 C240 710 470 710 470 735" class="line" marker-end="url(#arrow-blue)"/>
+  <path d="M580 675 C580 710 650 710 650 735" class="line" marker-end="url(#arrow-blue)"/>
+  <path d="M920 675 C920 710 950 710 950 735" class="line" marker-end="url(#arrow-blue)"/>
+  <path d="M1260 675 C1260 710 1130 710 1130 735" class="line" marker-end="url(#arrow-blue)"/>
+
+  <text x="90" y="830" class="small">Support rule: If the public website is down or routing incorrectly, start with TBL - Public Website Down or Degraded, not aHrefs.</text>
+</svg>

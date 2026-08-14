@@ -1,0 +1,27 @@
+name = "calais-resi-edge-candidate"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+account_id = "5a5a60afaad00085864fe6bab7eb2882"
+workers_dev = true
+
+[[rules]]
+type = "Text"
+globs = ["**/*.svg"]
+fallthrough = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.avif"]
+fallthrough = true
+
+[vars]
+EDGE_SHELL_ENABLED = "true"
+EDGE_PRODUCTION_MOBILE_TOPPER_ENABLED = "true"
+EDGE_PREVIEW_PARAM = "edge_preview"
+EDGE_PREVIEW_VALUE = "1"
+EDGE_HTML_CACHE_ENABLED = "true"
+EDGE_HTML_CACHE_VERSION = "2026-08-11-calais-mobile-shell-v27-shared-consent"
+EDGE_HTML_CACHE_TTL_SECONDS = "300"
+EDGE_NATIVE_PROPERTY_SYNC_ENABLED = "true"
+EDGE_RUNTIME_PROPERTY_CACHE_VERSION = "2026-08-07-calais-native-specials-v11"
+EDGE_RUNTIME_PROPERTY_CACHE_TTL_SECONDS = "300"

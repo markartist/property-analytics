@@ -1,0 +1,18 @@
+name = "townestone-native-optimizer"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+account_id = "5a5a60afaad00085864fe6bab7eb2882"
+workers_dev = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.webp", "**/*.jpg"]
+fallthrough = true
+
+[[routes]]
+pattern = "townestoneat359.com/*"
+zone_id = "66f08cb069ee5f17428f08bee888d176"
+
+[vars]
+OPTIMIZER_ENABLED = "true"
+OPTIMIZER_VERSION = "2026-08-08.mobile-topper-production-cmp-v22"

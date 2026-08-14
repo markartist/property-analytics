@@ -21,7 +21,6 @@ from summary_email_guard import successful_delivery_exists  # noqa: E402
 RECIPIENTS = [
     "mlaufhutte@venterraliving.com",
     "elongoria@venterraliving.com",
-    "jadomingue@venterraliving.com",
     "dcrandall@venterraliving.com",
 ]
 

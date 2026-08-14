@@ -1,0 +1,30 @@
+# Cloudflare Billable Usage
+#
+# Source contract:
+# - Uses Cloudflare REST API `GET /accounts/{account_id}/billable-usage`.
+# - Stores daily/account/product/zone cost facts in Data Pond.
+# - Read-only by design; does not mutate Cloudflare state.
+
+enabled: true
+timeout_seconds: 45
+max_retries: 2
+query_current_billing_period: true
+use_previous_day_window: true
+
+token_notation_env: "KSM_CLOUDFLARE_BILLING_TOKEN_NOTATION"
+token_notation: "keeper://LttlGLhno7Ddd-GYZPWFTw/field/password"
+
+# Account id resolution order:
+# 1. Explicit `account_id`
+# 2. `account_id_env`
+# 3. Single-account discovery through `/accounts`
+account_id: "5a5a60afaad00085864fe6bab7eb2882"
+account_name:
+account_id_env: "CLOUDFLARE_ACCOUNT_ID"
+
+# Optional query window. Defaults to the current billing period when omitted.
+# Explicit date collection uses `to` as the exclusive next-day boundary required
+# by Cloudflare.
+window:
+  from:
+  to:

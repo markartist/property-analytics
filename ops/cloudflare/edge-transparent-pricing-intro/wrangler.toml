@@ -4,6 +4,8 @@ compatibility_date = "2024-12-01"
 workers_dev = false
 
 routes = [
+  { pattern = "thevinekyle.com/llms.txt", zone_name = "thevinekyle.com" },
+  { pattern = "www.thevinekyle.com/llms.txt", zone_name = "thevinekyle.com" },
   { pattern = "thevinekyle.com/*", zone_name = "thevinekyle.com" },
   { pattern = "www.thevinekyle.com/*", zone_name = "thevinekyle.com" }
 ]
@@ -12,3 +14,8 @@ routes = [
 binding = "POP_BRIEF_DB"
 database_name = "pop-brief-db"
 database_id = "dad3e7d1-147b-438d-8cd0-2cbf537a87b2"
+
+[[rules]]
+type = "Data"
+globs = ["**/*.webp", "**/*.jpg"]
+fallthrough = true

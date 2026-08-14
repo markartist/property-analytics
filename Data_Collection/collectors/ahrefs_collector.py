@@ -12,13 +12,15 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, time as dt_time, timedelta
+from datetime import date, datetime, time as dt_time, timedelta, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import requests
 import yaml
+
+UTC = timezone.utc
 
 ROOT = Path("/Users/mark/Property_Analytics")
 if str(ROOT) not in sys.path:
@@ -507,8 +509,11 @@ class AhrefsCollector:
                 else:
                     result.errors.append(error_class(payload) or f"site-audit/projects returned {status_code}")
 
-            for project in project_rows:
+            total_projects = len(project_rows)
+            for index, project in enumerate(project_rows, 1):
                 project_id = project["project_id"]
+                if index == 1 or index == total_projects or index % 10 == 0:
+                    self.logger.info("Ahrefs project progress: %s/%s (%s)", index, total_projects, project.get("project_name") or project_id)
                 if bool(collection.get("collect_web_analytics", True)):
                     status_code, payload = self._request(
                         "/web-analytics/stats",
@@ -589,13 +594,116 @@ def main() -> None:
     parser.add_argument("--max-projects", type=int)
     args = parser.parse_args()
 
-    collection_date = date.fromisoformat(args.date) if args.date else None
+    started_at = datetime.now()
+    started_at_value = started_at.isoformat(sep=" ", timespec="seconds")
     collector = AhrefsCollector(db_path=Path(args.db), config_path=Path(args.config))
-    result = collector.collect(
-        collection_date=collection_date,
-        discovery_only=args.discovery_only,
-        max_projects=args.max_projects,
-    )
+    collection = collector.config.get("collection") or {}
+    collection_date = date.fromisoformat(args.date) if args.date else None
+    metric_date = collection_date
+    if metric_date is None:
+        metric_date = date.today() - timedelta(days=1) if bool(collection.get("use_previous_day_window", True)) else date.today()
+    collection_id: int | None = None
+    with sqlite3.connect(str(args.db)) as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO data_collections (
+                collection_date,
+                collection_type,
+                data_source,
+                started_at,
+                status
+            )
+            VALUES (?, 'daily', 'ahrefs', ?, 'in_progress')
+            """,
+            (metric_date.isoformat(), started_at_value),
+        )
+        collection_id = int(cursor.lastrowid)
+        conn.commit()
+
+    try:
+        result = collector.collect(
+            collection_date=collection_date,
+            collection_id=collection_id,
+            discovery_only=args.discovery_only,
+            max_projects=args.max_projects,
+        )
+    except Exception as exc:
+        completed_at = datetime.now()
+        completed_at_value = completed_at.isoformat(sep=" ", timespec="seconds")
+        with sqlite3.connect(str(args.db)) as conn:
+            conn.execute(
+                """
+                UPDATE data_collections
+                SET completed_at = ?,
+                    status = 'partial',
+                    properties_collected = 0,
+                    properties_total = 1,
+                    properties_success = 0,
+                    properties_failed = 1,
+                    duration_seconds = ?,
+                    api_calls_failed = 1,
+                    error_message = ?,
+                    notes = 'Ahrefs failed gracefully; standalone collector closed its collection record.'
+                WHERE collection_id = ?
+                """,
+                (
+                    completed_at_value,
+                    (completed_at - started_at).total_seconds(),
+                    str(exc)[:500],
+                    collection_id,
+                ),
+            )
+            conn.commit()
+        raise
+    completed_at = datetime.now()
+    completed_at_value = completed_at.isoformat(sep=" ", timespec="seconds")
+    status = "completed"
+    if result.skipped:
+        status = "completed"
+    elif result.errors:
+        status = "partial"
+    with sqlite3.connect(str(args.db)) as conn:
+        conn.execute(
+            """
+            UPDATE data_collections
+            SET completed_at = ?,
+                status = ?,
+                properties_collected = ?,
+                properties_total = ?,
+                properties_success = ?,
+                properties_failed = ?,
+                properties_skipped = ?,
+                duration_seconds = ?,
+                api_calls_total = ?,
+                api_calls_failed = ?,
+                error_message = ?,
+                notes = ?
+            WHERE collection_id = ?
+            """,
+            (
+                completed_at_value,
+                status,
+                result.rows_written,
+                result.projects_seen,
+                result.rows_written,
+                len(result.errors),
+                1 if result.skipped else 0,
+                (completed_at - started_at).total_seconds(),
+                result.requests_made,
+                len(result.errors),
+                "; ".join(result.errors[:3]) if result.errors else None,
+                (
+                    "Ahrefs collector skipped by configuration."
+                    if result.skipped
+                    else (
+                        f"Ahrefs collected free-endpoint source facts: {result.projects_seen} projects, "
+                        f"{result.requests_made} API requests, {result.rows_written} rows upserted."
+                    )
+                ),
+                collection_id,
+            ),
+        )
+        conn.commit()
     print(json.dumps(result.__dict__ | {"rows_written": result.rows_written}, indent=2, sort_keys=True))
     if result.errors and result.rows_written == 0:
         raise SystemExit(1)

@@ -13,6 +13,10 @@ const lato = Lato({
 export const metadata: Metadata = {
   title: "The Data Pond — WebOps",
   description: "Analytics resort for property data — reports, monitoring, and AI-powered insights.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png", sizes: "96x96" }],
+    apple: [{ url: "/favicon.png", type: "image/png", sizes: "96x96" }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

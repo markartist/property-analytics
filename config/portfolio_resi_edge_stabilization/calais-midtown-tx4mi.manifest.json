@@ -1,0 +1,277 @@
+{
+  "schemaVersion": "2026-08-06.draft",
+  "status": "candidate_preview_validated_mobile_r2_uploaded",
+  "property": {
+    "propertyCode": "TX4MI",
+    "communityId": "4607fc30-325a-4f4f-9499-70ffe40ebdf0",
+    "ga4PropertyId": "378381499",
+    "name": "Calais Midtown",
+    "city": "Houston",
+    "state": "TX",
+    "unitCount": 357
+  },
+  "hostnames": [
+    "calaismidtownapartments.com"
+  ],
+  "identityNotes": [
+    "Property identity resolves through the governed matrix by propertyCode TX4MI.",
+    "The governed Venterra URL https://venterraliving.com/apartments/calais-midtown/ redirects to https://calaismidtownapartments.com/ via Rank Math.",
+    "Do not use GA4CM for Calais. GA4CM is Canton Mill Lofts."
+  ],
+  "template": {
+    "class": "resi-original-yootheme-v1",
+    "archetype": "property_marketing_v1",
+    "sitePageTemplate": "homepage-apartments-apartment_details-features-amenities-gallery-neighborhood-contact-specials-reviews-faqs-about",
+    "heroPattern": "uk-background-cover",
+    "desktopHeroPatchRequired": false
+  },
+  "routes": {
+    "homepage": "/",
+    "apartments": "/apartments/",
+    "features": "/features/",
+    "reviews": "/reviews/",
+    "contact": "/contact/",
+    "specials": "/specials/",
+    "amenities": "/amenities/",
+    "gallery": "/gallery/",
+    "neighborhood": "/neighborhood/",
+    "faqs": "/faqs/"
+  },
+  "runtimeModes": {
+    "mobile": "edge-shell-candidate",
+    "desktop": "native-with-guards-candidate"
+  },
+  "r2": {
+    "bucket": "resi-edge-assets",
+    "publicBaseUrl": "https://assets.venterradev.com/resi-edge-assets/TX4MI/",
+    "keyPrefix": "resi-edge-assets/TX4MI/"
+  },
+  "metadata": {
+    "pageTitle": "Calais Midtown",
+    "metaDescription": "Welcome home to Calais Midtown Apartments in Houston, TX - Discover luxury living in our 1, 2, and 3 bedroom homes.",
+    "canonicalHref": "https://calaismidtownapartments.com/",
+    "ogTitle": "Calais Midtown",
+    "ogDescription": "Welcome home to Calais Midtown Apartments in Houston, TX - Discover luxury living in our 1, 2, and 3 bedroom homes.",
+    "ogImage": "https://calaismidtownapartments.com/wp-content/uploads/2026/03/Calais-Home-Hero_WEB.jpg"
+  },
+  "address": {
+    "streetAddress": "3210 Louisiana St.",
+    "addressLocality": "Houston",
+    "addressRegion": "TX",
+    "postalCode": "77006",
+    "addressCountry": "US",
+    "latitude": 29.743286,
+    "longitude": -95.38035
+  },
+  "contact": {
+    "phoneLabel": "(346) 414-0841",
+    "phoneHref": "tel:(346) 414-0841",
+    "telephoneSchema": "+13464140841",
+    "email": "venterra_calaismidtown_website@leads.anyonehome.com"
+  },
+  "hero": {
+    "source": "https://dam.getresi.co/10487/conversions/Calais-Home-Hero_WEB-full.jpg",
+    "sourceFromMarkup": "data-src on uk-background-cover hero wrapper",
+    "mobileCrop": {
+      "strategy": "center-out",
+      "targetWidth": 750,
+      "targetHeight": 1000,
+      "aspectRatio": "3:4",
+      "reviewRequired": true,
+      "overrideAllowed": true
+    },
+    "plannedAssets": {
+      "mobileAvif": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/hero-mobile-750x1000.avif",
+      "mobileWebp": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/hero-mobile-750x1000.webp",
+      "desktopAvif": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/hero-desktop-1600.avif",
+      "desktopWebp": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/hero-desktop-1600.webp"
+    },
+    "text": {
+      "tagline": "Live Better. Live Easy.",
+      "headline": "1, 2, and 3 Bedroom Apartments in Houston, TX",
+      "primaryCtaLabel": "Find Your Home",
+      "primaryCtaHref": "/apartments/"
+    }
+  },
+  "ctas": {
+    "phone": "tel:(346) 414-0841",
+    "tour": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/TX4MI",
+    "apply": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/TX4MI",
+    "findHome": "/apartments/",
+    "specials": "/apartments/?has_specials=true",
+    "contact": "/contact/"
+  },
+  "imageRewrites": [
+    {
+      "role": "home.welcome",
+      "source": "https://dam.getresi.co/10488/conversions/Calais-Home-Welcome_WEB-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/welcome-640.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/welcome-640.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.features",
+      "source": "https://dam.getresi.co/10486/conversions/Calais-Home-Features_WEB-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/features-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/features-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.amenities",
+      "source": "https://dam.getresi.co/10485/conversions/Calais-Home-Amenities_WEB-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/amenities-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/TX4MI/home/amenities-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.benefits.pets",
+      "source": "https://dam.getresi.co/3022/conversions/Venterra-Benefits_Pets-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-pets-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-pets-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.benefits.tech",
+      "source": "https://dam.getresi.co/3021/conversions/Venterra-Benefits_Tech-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-tech-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-tech-900.webp",
+      "loading": "lazy"
+    },
+    {
+      "role": "home.benefits.perks",
+      "source": "https://dam.getresi.co/3023/conversions/Venterra-Benefits_Perks-full.jpg",
+      "plannedAvif": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-perks-900.avif",
+      "plannedWebp": "https://assets.venterradev.com/resi-edge-assets/shared/venterra-benefits-perks-900.webp",
+      "loading": "lazy"
+    }
+  ],
+  "observedBaseline": {
+    "date": "2026-08-06",
+    "canonicalTestUrl": "https://venterraliving.com/apartments/calais-midtown/",
+    "finalUrl": "https://calaismidtownapartments.com/",
+    "htmlCache": {
+      "cfCacheStatus": "DYNAMIC",
+      "kiCfCacheStatus": "HIT",
+      "xKinstaCache": "HIT",
+      "cacheControl": "public, max-age=0, s-maxage=86400"
+    },
+    "psi": {
+      "mobile": {
+        "exactScore": 53,
+        "freshScore": 58,
+        "exactLcpMs": 5179,
+        "freshLcpMs": 5096,
+        "exactTbtMs": 546,
+        "freshTbtMs": 347,
+        "cls": 0.05638902561398831
+      },
+      "desktop": {
+        "exactScore": 73,
+        "freshScore": 69,
+        "exactLcpMs": 1213,
+        "freshLcpMs": 1222,
+        "exactTbtMs": 373,
+        "freshTbtMs": 445.5,
+        "cls": 0.03445692883895131
+      }
+    },
+    "browser": {
+      "artifact": "/Users/mark/Property_Analytics/reports/resi_edge_performance/2026-08-06/champions-calais-package/calais-live-browser/browser-summary.json",
+      "consoleErrorsPerProfile": 1,
+      "failedRequestsPerProfile": 2,
+      "containsApexWestMidtown": false,
+      "containsTX054": false,
+      "recurringFailedEndpoint": "https://tcvsapi.contentsquare.com/v2/projects/289716/verify-installation/auto"
+    }
+  },
+  "analytics": {
+    "mode": "queue-and-replay-candidate",
+    "requiredEvents": [
+      "page_view",
+      "find_your_home_click",
+      "schedule_tour_click",
+      "apply_now_click",
+      "phone_click",
+      "promo_cta_click",
+      "menu_open"
+    ],
+    "duplicatePageviewProtection": true
+  },
+  "promotion": {
+    "currentPhase": "workers_dev_candidate_preview_validated",
+    "liveTrafficChangeApproved": false,
+    "queryGatedRouteActive": false,
+    "workersDevPreviewUrl": "https://calais-resi-edge-candidate.mlaufhutte.workers.dev/?edge_preview=1",
+    "workersDevVersionId": "c1d43eb8-a906-4d1f-aed9-666fbbfbad1a",
+    "previewRequired": true,
+    "rollbackRequired": true,
+    "assetGeneration": {
+      "status": "generated_locally",
+      "packet": "reports/resi_edge_performance/2026-08-06/champions-calais-package/calais-assets-q64/generated-assets.json",
+      "assetCount": 16,
+      "mobileHeroCrop": "center-out",
+      "encoder": "Pillow AVIF/WebP quality 64"
+    },
+    "r2Upload": {
+      "status": "complete",
+      "dryRun": "passed",
+      "apply": "uploaded",
+      "bucket": "resi-edge-assets",
+      "objectsPlanned": 16,
+      "objectsUploaded": 16,
+      "uploadedAt": "08/06/2026",
+      "verification": "Sampled remote R2 downloads matched local bytes and SHA for hero-mobile-750x1000.avif, welcome-640.avif, amenities-900.avif, and shared venterra-benefits-perks-900.webp."
+    },
+    "browserPreview": {
+      "artifact": "reports/resi_edge_performance/2026-08-06/champions-calais-package/calais-candidate-preview-browser-v3/browser-summary.json",
+      "mobile": {
+        "status": 200,
+        "mode": "performance-topper",
+        "candidateOwnedErrors": 0,
+        "containsApexWestMidtown": false,
+        "containsTX054": false,
+        "containsGA4CG": false
+      },
+      "desktop": {
+        "status": 200,
+        "mode": "native-desktop-guards-v2",
+        "candidateOwnedErrors": 0,
+        "containsApexWestMidtown": false,
+        "containsTX054": false,
+        "containsGA4CG": false
+      }
+    },
+    "candidatePsi": {
+      "artifact": "reports/resi_edge_performance/2026-08-06/champions-calais-package/calais-candidate-preview-psi/psi-summary.json",
+      "mobile": {
+        "exactScore": 100,
+        "freshScore": 99,
+        "exactLcpMs": 1728,
+        "freshLcpMs": 2102,
+        "exactTbtMs": 0,
+        "freshTbtMs": 0,
+        "cls": 0.0008116533227345441,
+        "requests": 9
+      },
+      "desktop": {
+        "mode": "native_guard_acceptance",
+        "exactScore": 48,
+        "freshScore": 73,
+        "exactLcpMs": 2697,
+        "freshLcpMs": 2571,
+        "exactTbtMs": 2207.5,
+        "freshTbtMs": 277.5,
+        "cls": 0,
+        "requestsExact": 56,
+        "requestsFresh": 51
+      },
+      "seoNote": "Preview pages intentionally carry noindex, so PSI SEO score is not a launch SEO regression."
+    },
+    "pendingBeforePromotion": [
+      "Audit Calais analytics ownership and move GA4/Heap/Ahrefs/Resi event bridge into Zaraz or document an approved exception before final performance acceptance.",
+      "Remove equivalent WordPress GTM/gtag/Heap snippets and flush Kinsta/Cloudflare caches if Zaraz owns analytics.",
+      "Validate CTA and analytics continuity.",
+      "Document rollback that does not require WordPress changes."
+    ]
+  }
+}

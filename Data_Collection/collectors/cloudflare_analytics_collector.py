@@ -15,12 +15,14 @@ import logging
 import os
 import sys
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 import requests
 import yaml
+
+UTC = timezone.utc
 
 _repo_root = str(Path(__file__).resolve().parents[2])
 if _repo_root not in sys.path:

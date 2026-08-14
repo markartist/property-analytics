@@ -11,6 +11,7 @@ from utils.ksm import KsmResolutionError, resolve_secret
 DEFAULT_GODADDY_KEY_NOTATION = "keeper://FCaG6ON9q3_5Z-7ATYV5wQ/field/login"
 DEFAULT_GODADDY_SECRET_NOTATION = "keeper://FCaG6ON9q3_5Z-7ATYV5wQ/field/password"
 DEFAULT_GODADDY_CUSTOMER_ID_NOTATION = "keeper://FCaG6ON9q3_5Z-7ATYV5wQ/custom_field/customer_id"
+DEFAULT_GODADDY_PAT_NOTATION = "keeper://LNDz2zPtN7y_P_mFpRRPug/field/password"
 
 
 @dataclass(frozen=True)
@@ -64,3 +65,15 @@ def resolve_godaddy_customer_id() -> tuple[str, str]:
             "Keeper/KSM before running forwarding collection."
         ) from exc
     return customer_id, "Keeper/KSM or current environment"
+
+
+def resolve_godaddy_pat() -> tuple[str, str]:
+    """Resolve a GoDaddy Domains v3 PAT for nameserver mutations."""
+    pat = resolve_secret(
+        description="GoDaddy Domains v3 personal access token",
+        notation_env_var="KSM_GODADDY_PAT_NOTATION",
+        default_notation=DEFAULT_GODADDY_PAT_NOTATION,
+        direct_env_var="GODADDY_PAT",
+        default_profile="marketingops",
+    )
+    return pat, "Keeper/KSM notation or current environment"

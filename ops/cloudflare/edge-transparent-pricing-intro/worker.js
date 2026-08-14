@@ -1,3 +1,7 @@
+import vineHeroMobileWebp from "./assets/thevine/hero-mobile-900.webp";
+import vineHeroMobileJpg from "./assets/thevine/hero-mobile-900.jpg";
+import { renderZarazConsentPillScript } from "../shared/resi-consent-widget/widget.mjs";
+
 const EDGE_MESSAGE_CONFIG = {
   id: "edge_message_the_vine_transparent_pricing_homepage_v1",
   configVersion: "2026-07-01-the-vine-production-fallback",
@@ -144,24 +148,23 @@ const EDGE_COACH_MARK_FALLBACK_CONFIGS = [EDGE_COACH_MARK_CONFIG, PILOT_EDGE_COA
 
 const ZARAZ_CONSENT_NOTICE_CONFIG = {
   enabled: true,
-  hostnames: ["pilot.venterradev.com"],
+  hostnames: ["pilot.venterradev.com", "thevinekyle.com", "www.thevinekyle.com"],
   pathExcludes: ["/wp-admin", "/wp-login.php", "/wp-json", "/xmlrpc.php"],
   assetExtensions: EDGE_MESSAGE_CONFIG.assetExtensions,
-  storageKey: "vtr_zaraz_consent_notice_done_v1",
+  storageKey: "vtr_zaraz_consent_notice_done_v2",
   interactionQueueKey: "vtr_zaraz_pending_interactions_v1",
   interactionQueueMax: 30,
   interactionQueueTtlMs: 30 * 60 * 1000,
   interactionTrackEventName: "vtr_preconsent_interaction",
   unresolvedReportPath: "/__vtr/zaraz-consent-unresolved",
   unresolvedReportMaxEvents: 30,
-  propertyCode: "GA4AX",
-  communityId: "eed3da54-7b7a-4dae-984b-a203113fc2f3",
-  propertyName: "Apex West Midtown",
-  text: "We use cookies to improve site performance and measure leasing activity.",
+  propertyCode: "TX4EK",
+  communityId: "44a4349b-6ac2-46fe-b8ef-167e4f1c3e3e",
+  propertyName: "The Vine Kyle Parkway",
+  text: "This website uses cookies",
   privacyHref: "/privacy-policy/",
   acceptLabel: "Accept",
-  rejectLabel: "Reject",
-  manageLabel: "Manage"
+  manageLabel: "Preferences"
 };
 
 const RESI_PERFORMANCE_CONFIG = {
@@ -474,8 +477,413 @@ const EDGE_RUNTIME_PAUSE_CONFIG = {
   messageMobileScrollTriggerServerTiming: 'vtr_edge_message_mobile_scroll;desc="scroll-gated"'
 };
 
+const VINE_LLMS_TXT_VERSION = "2026-08-06.the-vine-linked-llms-v1";
+const VINE_MOBILE_TOPPER_VERSION = "2026-08-07.the-vine-mobile-topper-v4-brand-theme";
+const VINE_NATIVE_CONTINUATION_PARAM = "edge_vine_native_continuation";
+const VINE_ASSET_BASE = "/assets/resi-edge-assets/thevinekyle/home/";
+const VINE_NATIVE_ANALYTICS_STRIP_SERVER_TIMING = 'vtr_vine_native_analytics_strip;desc="zaraz-owned"';
+
+const VINE_PROPERTY = {
+  name: "The Vine Kyle Parkway",
+  shortName: "The Vine",
+  phone: "(737) 357-8867",
+  phoneHref: "tel:+17373578867",
+  cityState: "Kyle, TX",
+  street: "1201 Seton Parkway",
+  description:
+    "Contemporary comfort meets everyday convenience in Kyle with 1 and 2 Bedroom apartment homes near dining, shopping, entertainment, and major Austin-area destinations.",
+  promoText: "Up To 8 Weeks Free – Pre-Lease Today!",
+  heroTitle: "Live Better. Live Easy.",
+  heroSubtitle: "1 and 2 Bedroom Apartments in Kyle, TX",
+  apartmentsHref: "/apartments/",
+  tourHref: "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/TX4EK",
+  applyHref: "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/TX4EK",
+  brandTheme: {
+    promoBg: "#4E343F",
+    promoText: "#FFFFFF",
+    promoSurface: "#F1EFEB",
+    promoPanelText: "#35343A",
+    promoButtonBg: "#792640",
+    drawerBg: "#4E343F",
+    drawerText: "#FFFFFF",
+    heroBg: "#4E343F",
+    heroOverlay: "rgba(78,52,63,.38)"
+  }
+};
+
+const VINE_TOPPER_ASSETS = {
+  [`${VINE_ASSET_BASE}hero-mobile-900.webp`]: {
+    body: vineHeroMobileWebp,
+    type: "image/webp"
+  },
+  [`${VINE_ASSET_BASE}hero-mobile-900.jpg`]: {
+    body: vineHeroMobileJpg,
+    type: "image/jpeg"
+  }
+};
+
+function isTheVineLlmsTxt(request) {
+  const url = new URL(request.url);
+  return (
+    ["GET", "HEAD"].includes(request.method) &&
+    url.pathname === "/llms.txt" &&
+    ["thevinekyle.com", "www.thevinekyle.com"].includes(url.hostname)
+  );
+}
+
+function renderTheVineLlmsTxt() {
+  return `# The Vine Kyle Parkway
+
+> Apartments in Kyle, TX
+> Last updated: 08/06/2026
+
+Important notes:
+- Pricing, availability, specials, fees, lease terms, and policies may change. Verify current details on the Apartments page or by contacting the leasing office.
+- This file highlights official property resources from The Vine Kyle Parkway and does not replace the full XML sitemap.
+
+## Core Property Information
+
+- [Homepage](https://thevinekyle.com/): Official overview of The Vine Kyle Parkway.
+- [Apartments](https://thevinekyle.com/apartments/): Floor plans, pricing, availability, bedroom and bathroom options, and current leasing details.
+- [Features](https://thevinekyle.com/features/): Apartment features, interior finishes, home conveniences, and in-home details.
+- [Amenities](https://thevinekyle.com/amenities/): Community amenities, shared spaces, resident services, and lifestyle details.
+- [Gallery](https://thevinekyle.com/gallery/): Official property photos, apartment images, amenity photos, and visual context.
+- [Neighborhood](https://thevinekyle.com/neighborhood/): Nearby shopping, dining, employers, schools, transportation, and local area context.
+
+## Leasing And Contact
+
+- [Specials](https://thevinekyle.com/specials/): Current leasing specials, promotions, and offer details when available.
+- [Contact](https://thevinekyle.com/contact/): Leasing office contact information, tour requests, phone number, address, and inquiry form.
+
+## Search
+
+- [Search this site](https://thevinekyle.com/?s=): WordPress search results for official The Vine Kyle Parkway website content.
+
+## Optional
+
+- [XML Sitemap](https://thevinekyle.com/sitemaps.xml): Complete list of indexable URLs for this property website.
+`;
+}
+
+function serveTheVineLlmsTxt(request) {
+  return new Response(request.method === "HEAD" ? null : renderTheVineLlmsTxt(), {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=300",
+      "X-VTR-The-Vine-llms": VINE_LLMS_TXT_VERSION
+    }
+  });
+}
+
+function isTheVineHost(url) {
+  return ["thevinekyle.com", "www.thevinekyle.com"].includes(url.hostname);
+}
+
+function isTheVineHomepage(url) {
+  return isTheVineHost(url) && (url.pathname === "/" || url.pathname === "");
+}
+
+function isTheVineNativeContinuation(url) {
+  return isTheVineHomepage(url) && url.searchParams.get(VINE_NATIVE_CONTINUATION_PARAM) === "1";
+}
+
+function shouldServeTheVineMobileTopper(request, url) {
+  return isTheVineHomepage(url) && isMobileRequest(request);
+}
+
+function clientAcceptsWebp(request) {
+  return (request.headers.get("accept") || "").includes("image/webp");
+}
+
+function selectedVineHero(request) {
+  const webp = clientAcceptsWebp(request);
+  return {
+    href: `${VINE_ASSET_BASE}hero-mobile-900.${webp ? "webp" : "jpg"}`,
+    type: webp ? "image/webp" : "image/jpeg"
+  };
+}
+
+function serveTheVineTopperAsset(request, asset) {
+  return new Response(request.method === "HEAD" ? null : asset.body, {
+    headers: {
+      "Content-Type": asset.type,
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "X-VTR-The-Vine-Mobile-Topper": VINE_MOBILE_TOPPER_VERSION
+    }
+  });
+}
+
+function vineEscapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderVinePhoneIcon() {
+  return `<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M6.4 2.2c.4-.2.9-.1 1.2.3l1.6 2.8c.3.4.2 1-.2 1.3l-1.2 1c.8 1.7 2.1 3 3.8 3.8l1-1.2c.3-.4.9-.5 1.3-.2l2.8 1.6c.4.2.6.7.4 1.2l-.9 3c-.2.6-.7 1-1.3 1C8.4 16.8 3.2 11.6 3.2 5.1c0-.6.4-1.2 1-1.3l2.2-1.6Z"/></svg>`;
+}
+
+function vineCssColor(value, fallback) {
+  const normalized = String(value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(normalized)) return normalized;
+  if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}(?:\s*,\s*(?:0|1|0?\.\d+))?\s*\)$/.test(normalized)) return normalized;
+  return fallback;
+}
+
+function renderVineBrandThemeCssVars(theme = {}) {
+  return [
+    `--promo-bg:${vineCssColor(theme.promoBg, "#15284B")}`,
+    `--promo-text:${vineCssColor(theme.promoText, "#FFFFFF")}`,
+    `--promo-surface:${vineCssColor(theme.promoSurface, "#F6F6F5")}`,
+    `--promo-panel-text:${vineCssColor(theme.promoPanelText, "#343838")}`,
+    `--promo-button-bg:${vineCssColor(theme.promoButtonBg, "#3D66B9")}`,
+    `--drawer-bg:${vineCssColor(theme.drawerBg, "#15284B")}`,
+    `--drawer-text:${vineCssColor(theme.drawerText, "#FFFFFF")}`,
+    `--hero-bg:${vineCssColor(theme.heroBg, "#15284B")}`,
+    `--hero-overlay:${vineCssColor(theme.heroOverlay, "rgba(21,40,75,.38)")}`
+  ].join(";");
+}
+
+function renderVineTopperAnalytics() {
+  return `<script>(function(w,d){w.dataLayer=w.dataLayer||[];function emit(name,data){var payload=Object.assign({event:name,vtr_surface:"mobile_topper",vtr_site:"thevinekyle.com",property_code:"TX4EK"},data||{});w.dataLayer.push(payload);if(w.zaraz&&typeof w.zaraz.track==="function"){try{w.zaraz.track(name,payload)}catch(e){}}}w.vtrVineTopperTrack=emit;emit("edge_mobile_topper_view");d.addEventListener("click",function(e){var el=e.target&&e.target.closest?e.target.closest("a[href],button"):null;if(!el)return;var label=(el.textContent||"").replace(/\\s+/g," ").trim();var href=el.getAttribute("href")||"";if(href.indexOf("/apartments")!==-1||label.indexOf("Find Your Home")!==-1)emit("find_your_home_click",{cta_label:label,cta_href:href});else if(href.indexOf("scheduleTour")!==-1||label.indexOf("Tour")!==-1)emit("schedule_tour_click",{cta_label:label,cta_href:href});else if(href.indexOf("createPipelineApplication")!==-1||label.indexOf("Apply")!==-1)emit("apply_now_click",{cta_label:label,cta_href:href});else if(href.indexOf("tel:")===0)emit("phone_click",{cta_label:label,cta_href:href});},{passive:true});})(window,document);</script>`;
+}
+
+function renderVineTopperBehavior() {
+  return `<script>(function(w,d){var drawer=d.querySelector("[data-vine-drawer]");var scrim=d.querySelector("[data-vine-drawer-scrim]");var open=d.querySelector("[data-vine-drawer-open]");var close=d.querySelector("[data-vine-drawer-close]");var promo=d.querySelector("[data-vine-promo-toggle]");var promoDrop=d.querySelector("[data-vine-promo-drop]");var promoClose=d.querySelector("[data-vine-promo-close]");function track(name,data){if(w.vtrVineTopperTrack)w.vtrVineTopperTrack(name,data||{});}function setDrawer(value){if(!drawer)return;drawer.dataset.open=value?"true":"false";drawer.setAttribute("aria-hidden",value?"false":"true");if(value){drawer.removeAttribute("inert");}else{drawer.setAttribute("inert","");}if(scrim)scrim.hidden=!value;d.documentElement.classList.toggle("vine-drawer-open",value);track(value?"mobile_menu_open":"mobile_menu_close");}function setPromo(value){if(!promoDrop||!promo)return;promoDrop.hidden=!value;promo.setAttribute("aria-expanded",value?"true":"false");track(value?"promo_open":"promo_close");}if(open)open.addEventListener("click",function(){setDrawer(true);});if(close)close.addEventListener("click",function(){setDrawer(false);});if(scrim)scrim.addEventListener("click",function(){setDrawer(false);});if(promo)promo.addEventListener("click",function(){setPromo(promoDrop.hidden);});if(promoClose)promoClose.addEventListener("click",function(){setPromo(false);});d.addEventListener("keydown",function(e){if(e.key==="Escape"){setDrawer(false);setPromo(false);}});})(window,document);</script>`;
+}
+
+function vineNativeContinuationHref(request) {
+  const url = new URL(request.url);
+  url.pathname = "/";
+  url.search = "";
+  url.searchParams.set(VINE_NATIVE_CONTINUATION_PARAM, "1");
+  url.searchParams.set("vtr_cv", VINE_MOBILE_TOPPER_VERSION);
+  return `${url.pathname}${url.search}`;
+}
+
+function renderVineNativeContinuationShell(request) {
+  const src = vineNativeContinuationHref(request);
+  return `<section class="native-continuation" data-vine-native-continuation data-vine-native-continuation-state="idle" aria-label="Native site continuation"><div class="native-continuation-status" aria-live="polite"></div><iframe class="native-continuation-frame" title="${vineEscapeHtml(VINE_PROPERTY.name)} native site continuation" loading="lazy" data-src="${src}" hidden></iframe></section>`;
+}
+
+function renderVineNativeContinuationLoader() {
+  return `<script data-vtr-vine-native-continuation-loader="1">(function(w,d){var section=d.querySelector("[data-vine-native-continuation]");if(!section)return;var frame=section.querySelector(".native-continuation-frame");var status=section.querySelector(".native-continuation-status");var loaded=false;function track(name,data){if(w.vtrVineTopperTrack)w.vtrVineTopperTrack(name,data||{});}function setState(state,message){section.setAttribute("data-vine-native-continuation-state",state);if(status)status.textContent=message||"";}function load(reason){if(loaded||!frame)return;loaded=true;setState("loading","Loading the native site.");frame.hidden=false;frame.src=frame.getAttribute("data-src");frame.addEventListener("load",function(){setState("loaded","");},{once:true});track("native_continuation_load",{reason:reason||"unknown"});}w.addEventListener("message",function(event){if(event.origin!==w.location.origin)return;var data=event.data||{};if(data.type!=="vtr-vine-native-continuation-height"||!frame)return;var reported=Number(data.height)||0;if(reported<=0)return;frame.style.height=Math.max(640,Math.min(14000,Math.ceil(reported)))+"px";});if("IntersectionObserver"in w){var observer=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){observer.disconnect();load("scroll");}});},{rootMargin:"0px 0px",threshold:0.01});observer.observe(section);}else{w.addEventListener("load",function(){setTimeout(function(){load("fallback");},1500);},{once:true});}})(window,document);</script>`;
+}
+
+function renderTheVineMobileTopper(request) {
+  const hero = selectedVineHero(request);
+  const brandThemeVars = renderVineBrandThemeCssVars(VINE_PROPERTY.brandTheme);
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "ApartmentComplex",
+    name: VINE_PROPERTY.name,
+    url: "https://thevinekyle.com/",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: VINE_PROPERTY.street,
+      addressLocality: "Kyle",
+      addressRegion: "TX",
+      postalCode: "78640",
+      addressCountry: "US"
+    },
+    telephone: "+17373578867",
+    image: `https://thevinekyle.com${hero.href}`
+  };
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index,follow">
+<title>${vineEscapeHtml(VINE_PROPERTY.name)} Apartments in ${vineEscapeHtml(VINE_PROPERTY.cityState)}</title>
+<meta name="description" content="${vineEscapeHtml(VINE_PROPERTY.description)}">
+<link rel="canonical" href="https://thevinekyle.com/">
+<link rel="icon" href="/wp-content/uploads/2026/01/favicon.png" sizes="any">
+<link rel="icon" href="/wp-content/uploads/2026/01/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/wp-content/uploads/2026/01/apple-touch-icon.png">
+<link rel="preload" as="image" href="${hero.href}" type="${hero.type}" fetchpriority="high">
+<script type="application/ld+json">${JSON.stringify(schema)}</script>
+<style>
+@font-face{font-family:Montserrat;src:url("https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/montserrat-ab105b20.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:Montserrat;src:url("https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/montserrat-a77dae9d.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:Montserrat;src:url("https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/montserrat-67e78cf5.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:ms_madiregular;src:url("https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/msmadi-regular-webfont.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+:root{--navy:#15284B;--bay:#294782;--button:#3D66B9;--mint:#7DCAC2;--smoke:#F6F6F5;--quill:#D6D6D2;--text:#343838;--white:#FFFFFF;--shadow:rgba(21,40,75,.22);${brandThemeVars}}
+*{box-sizing:border-box}html{font-size:18px;background:#fff;color:var(--text)}body{margin:0;background:#fff;color:var(--text);font-family:Montserrat,Arial,sans-serif;font-size:18px;font-weight:400;line-height:1.625;text-rendering:optimizeLegibility}a{color:inherit;text-decoration:none}button{font:inherit}img{display:block;max-width:100%;height:auto}.vine-drawer-open{overflow:hidden}
+.promo-wrap{position:relative;z-index:1100}.promo{width:100%;height:60px;border:0;border-radius:0;background:var(--promo-bg);color:var(--promo-text);display:flex;align-items:center;justify-content:center;padding:0 18px;font-size:16px;font-weight:700;line-height:60px;letter-spacing:0;text-align:center}.promo svg{width:18px;height:18px;margin-left:10px;stroke:currentColor;stroke-width:2;fill:none;transition:transform .15s ease}.promo[aria-expanded="true"] svg{transform:rotate(180deg)}.promo-drop{position:absolute;top:60px;left:0;width:100%;z-index:1020;background:var(--promo-surface);color:var(--promo-panel-text);padding:20px 20px 22px;text-align:center;box-shadow:0 18px 35px rgba(0,0,0,.15)}.promo-drop[hidden]{display:none}.promo-close{position:absolute;right:15px;top:10px;width:24px;height:24px;border:0;background:transparent;color:var(--promo-panel-text);font-size:28px;line-height:24px;padding:0}.promo-drop h3{margin:0 28px 16px;color:var(--promo-panel-text);font-size:19px;font-weight:600;line-height:26px;letter-spacing:.5px}.promo-drop p{margin:0 auto 28px;max-width:330px;color:var(--promo-panel-text);font-size:16px;line-height:26px}.promo-actions{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}.promo-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:50px;min-width:180px;padding:0 20px;border:2px solid var(--promo-button-bg);border-radius:50px;background:var(--promo-button-bg);color:#fff;font-size:14px;font-weight:900;line-height:46px;letter-spacing:1.2px}.promo-actions a.secondary{min-width:0;min-height:0;height:28px;border:0;background:transparent;color:var(--promo-panel-text);padding:0;font-size:14px;line-height:28px;letter-spacing:1.2px}
+.bar{height:80px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 15px;color:var(--text);position:relative;z-index:990}.brand{height:80px;display:flex;align-items:center;font-size:10px;font-weight:600;line-height:16px;letter-spacing:2px;text-transform:uppercase;white-space:nowrap}.actions{height:80px;display:flex;align-items:center;gap:20px}.phone{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:var(--text)}.phone svg{display:block;width:20px;height:20px;fill:currentColor}.tour{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:2px solid var(--text);border-radius:50px;color:var(--text);background:#fff;font-size:11.5px;font-weight:900;line-height:40px;letter-spacing:1.5px}.hamb{position:relative;width:20px;height:80px;border:0;background:transparent;color:var(--text);padding:0;cursor:pointer}.hamb:before,.hamb:after,.hamb span{content:"";position:absolute;left:0;right:0;height:2px;background:currentColor}.hamb:before{top:31px}.hamb span{top:39px}.hamb:after{top:47px}
+.hero{height:704px;min-height:704px;position:relative;overflow:hidden;background:var(--hero-bg);display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:0 15px}.hero-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}.hero::after{content:"";position:absolute;inset:0;background:var(--hero-overlay);z-index:1}.hero-inner{width:360px;max-width:100%;position:relative;z-index:2;margin-top:4px}.hero h1{font-family:ms_madiregular,cursive;font-size:62px;line-height:58px;margin:0 auto 10px;font-weight:400;letter-spacing:0;color:#fff}.hero p{font-size:19px;line-height:27px;margin:0 auto 32px;font-weight:600;max-width:360px;color:#fff}.cta{display:inline-flex;align-items:center;justify-content:center;min-width:197px;min-height:50px;border:2px solid #fff;border-radius:50px;padding:0 30px;background:#fff;color:var(--text);font-size:14px;font-weight:600;line-height:46px;letter-spacing:1.5px}.cta span{font-size:18px;margin-left:10px}
+.native-continuation{min-height:640px;background:#fff;color:var(--text)}.native-continuation-status{min-height:28px;padding:14px 15px;text-align:center;font-size:11px;font-weight:700;line-height:1.4;letter-spacing:1px;text-transform:uppercase;color:var(--text)}.native-continuation-frame{display:block;width:100%;min-height:640px;border:0;background:#fff}.native-continuation-frame[hidden]{display:none}.native-continuation[data-vine-native-continuation-state="idle"] .native-continuation-status{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}.native-continuation[data-vine-native-continuation-state="loaded"]{min-height:0}.native-continuation[data-vine-native-continuation-state="loaded"] .native-continuation-status{display:none}
+.drawer-scrim{position:fixed;inset:0;z-index:1190;background:rgba(0,0,0,.45)}.drawer-scrim[hidden]{display:none}.drawer{position:fixed;top:0;right:0;bottom:0;z-index:1200;width:270px;height:100svh;min-height:100vh;padding:50px 25px 34px;background:var(--drawer-bg);color:var(--drawer-text);box-shadow:-20px 0 60px var(--shadow);transform:translateX(105%);transition:transform .18s ease;overflow:auto}.drawer[data-open="true"]{transform:translateX(0)}.drawer-close{position:absolute;top:5px;right:5px;width:37px;height:37px;border:0;background:transparent;color:var(--drawer-text);font-size:34px;font-weight:300;line-height:37px;padding:0;cursor:pointer}.drawer-logo{display:block;margin:0 0 20px;color:var(--drawer-text);font-size:18px;line-height:26px;letter-spacing:2px;text-transform:uppercase}.drawer nav{display:grid;gap:0;margin:0}.drawer nav a{display:block;padding:8px 0;color:var(--drawer-text);font-size:15px;font-weight:700;line-height:24px;letter-spacing:.75px}.drawer-actions{display:flex;align-items:center;gap:10px;margin:20px 0 17px}.drawer-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border:2px solid rgba(255,255,255,.72);border-radius:50px;font-size:14px;font-weight:900;line-height:46px;letter-spacing:1.5px;white-space:nowrap;color:var(--drawer-text)}.drawer-actions a:first-child{background:#fff;color:var(--drawer-bg);border-color:#fff}.drawer-phone{display:block;color:var(--drawer-text);font-size:14px;font-weight:900;line-height:28px;letter-spacing:1.5px}
+</style>
+</head>
+<body>
+<div class="promo-wrap"><button class="promo" data-vine-promo-toggle aria-expanded="false">${vineEscapeHtml(VINE_PROPERTY.promoText)} <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5"/></svg></button><div class="promo-drop" data-vine-promo-drop hidden><button class="promo-close" data-vine-promo-close aria-label="Close special">&times;</button><h3>${vineEscapeHtml(VINE_PROPERTY.promoText)}</h3><p>Join the VIP list for insider updates, leasing specials, and early access opportunities.</p><div class="promo-actions"><a href="${VINE_PROPERTY.apartmentsHref}">See Availability</a><a class="secondary" href="/contact/#contact">Join VIP List</a></div></div></div>
+<header class="bar"><a class="brand" href="/">${vineEscapeHtml(VINE_PROPERTY.name)}</a><div class="actions"><a class="phone" href="${VINE_PROPERTY.phoneHref}" aria-label="Call ${vineEscapeHtml(VINE_PROPERTY.name)}">${renderVinePhoneIcon()}</a><a class="tour" href="${VINE_PROPERTY.tourHref}">Tour</a><button class="hamb" data-vine-drawer-open aria-label="Menu" aria-controls="vine-mobile-drawer"><span></span></button></div></header>
+<div class="drawer-scrim" data-vine-drawer-scrim hidden></div>
+<aside class="drawer" id="vine-mobile-drawer" data-vine-drawer data-open="false" aria-hidden="true" inert><button class="drawer-close" data-vine-drawer-close aria-label="Close menu">&times;</button><a class="drawer-logo" href="/" aria-label="${vineEscapeHtml(VINE_PROPERTY.name)} home">The Vine<br>Kyle Parkway</a><nav aria-label="Mobile menu"><a href="${VINE_PROPERTY.apartmentsHref}">Apartments &amp; Pricing</a><a href="/features/">Features</a><a href="/amenities/">Amenities</a><a href="/gallery/">Gallery</a><a href="/neighborhood/">Neighborhood</a><a href="/faqs/">FAQs</a><a href="/contact/">Contact</a><a href="/specials/">Specials</a></nav><div class="drawer-actions"><a href="${VINE_PROPERTY.tourHref}">Tour</a><a href="${VINE_PROPERTY.applyHref}">Apply</a></div><a class="drawer-phone" href="${VINE_PROPERTY.phoneHref}">${vineEscapeHtml(VINE_PROPERTY.phone)}</a></aside>
+<main><section class="hero"><img class="hero-media" src="${hero.href}" width="900" height="540" alt="" fetchpriority="high" decoding="sync"><div class="hero-inner"><h1>${vineEscapeHtml(VINE_PROPERTY.heroTitle)}</h1><p>${vineEscapeHtml(VINE_PROPERTY.heroSubtitle)}</p><a class="cta" href="${VINE_PROPERTY.apartmentsHref}">Find Your Home <span>&rarr;</span></a></div></section>${renderVineNativeContinuationShell(request)}</main>
+${renderVineTopperAnalytics()}
+${renderVineTopperBehavior()}
+${renderZarazConsentPillScript()}
+${renderVineNativeContinuationLoader()}
+</body>
+</html>`;
+}
+
+function buildTheVineNativeHomepageRequest(request) {
+  const url = new URL(request.url);
+  url.pathname = "/";
+  url.search = "";
+  const headers = new Headers();
+  const source = request.headers;
+  headers.set("accept", source.get("accept") || "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+  const language = source.get("accept-language");
+  const userAgent = source.get("user-agent");
+  if (language) headers.set("accept-language", language);
+  if (userAgent) headers.set("user-agent", userAgent);
+  return new Request(url.toString(), { method: "GET", headers, redirect: "follow" });
+}
+
+function normalizeTheVineNativeHtml(html) {
+  return html
+    .replace(/\s*<script>\s*window\.HEAP_JS_DEBUG\s*=\s*true;\s*<\/script>\s*/gi, "\n")
+    .replace(/\s*<script[^>]*id=["']resi-pixel-js-before["'][^>]*>[\s\S]*?<\/script>\s*/gi, "\n")
+    .replace(/\s*<script[^>]+js\.getresi\.co\/pixel\/[^"'\s<>]+\/resi-pixel\.iife\.js[^>]*><\/script>\s*/gi, "\n")
+    .replace(/tel:\(?512\)?[\s.-]*800[\s.-]*7701/gi, VINE_PROPERTY.phoneHref)
+    .replace(/\(?512\)?[\s.-]*800[\s.-]*7701/g, VINE_PROPERTY.phone)
+    .replace(/data-property-name="[^"]*"/i, 'data-property-name="The Vine Kyle Parkway"')
+    .replace(/data-property-code="[^"]*"/i, 'data-property-code="TX4EK"');
+}
+
+function shouldApplyTheVineNativeAnalyticsStrip(request, response) {
+  if (request.method !== "GET") return false;
+  if (response.status < 200 || response.status >= 300) return false;
+
+  const url = new URL(request.url);
+  if (!isTheVineHost(url)) return false;
+  if (url.pathname !== "/" && url.pathname !== "") return false;
+
+  const contentType = response.headers.get("content-type") || "";
+  return contentType.toLowerCase().includes("text/html");
+}
+
+function addTheVineNativeAnalyticsStripRewriter(rewriter) {
+  return rewriter.on("script", new TheVineNativeAnalyticsStripScriptHandler());
+}
+
+class TheVineNativeAnalyticsStripScriptHandler {
+  element(element) {
+    const id = element.getAttribute("id") || "";
+    const src = element.getAttribute("src") || "";
+    if (id === "resi-pixel-js-before") {
+      element.remove();
+      return;
+    }
+    if (id === "resi-pixel-js" && /https:\/\/js\.getresi\.co\/pixel\/[^"'\s<>]+\/resi-pixel\.iife\.js/i.test(src)) {
+      element.remove();
+      return;
+    }
+    if (src && /https:\/\/js\.getresi\.co\/pixel\/[^"'\s<>]+\/resi-pixel\.iife\.js/i.test(src)) {
+      element.remove();
+      return;
+    }
+  }
+
+  text(text) {
+    if (/window\.HEAP_JS_DEBUG\s*=\s*true/.test(text.text)) {
+      text.replace("");
+    }
+  }
+}
+
+function theVineNativeContinuationHiddenCss() {
+  return `body.vtr-vine-native-continuation .tm-header,
+body.vtr-vine-native-continuation .tm-header-mobile,
+body.vtr-vine-native-continuation [data-page-section="promo_bar"],
+body.vtr-vine-native-continuation [data-component-name="open_promo_bar"],
+body.vtr-vine-native-continuation [data-page-section="hero"]{display:none!important}`;
+}
+
+class TheVineNativeContinuationHeadRewriter {
+  element(element) {
+    element.prepend(`<base href="https://thevinekyle.com/">`, { html: true });
+    element.append(`<style data-vtr-vine-native-continuation="1">
+${theVineNativeContinuationHiddenCss()}
+html{margin:0!important;padding:0!important;overflow:hidden!important;background:#fff!important}
+body{margin:0!important;padding:0!important;background:#fff!important}
+.vtr-vine-native-continuation-frame-marker{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>`, { html: true });
+  }
+}
+
+class TheVineNativeContinuationBodyRewriter {
+  element(element) {
+    element.setAttribute("class", addClassName(element.getAttribute("class") || "", "vtr-vine-native-continuation"));
+    element.prepend(`<div class="vtr-vine-native-continuation-frame-marker" data-vtr-vine-native-continuation-frame="1">Native continuation loaded</div>`, { html: true });
+    element.append(`<script data-vtr-vine-native-continuation-resize="1">(function(){function postHeight(){var body=document.body,doc=document.documentElement;var height=Math.max(body?body.scrollHeight:0,body?body.offsetHeight:0,doc?doc.scrollHeight:0,doc?doc.offsetHeight:0);try{parent.postMessage({type:"vtr-vine-native-continuation-height",height:height},location.origin)}catch(e){}}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",postHeight,{once:true});}else{postHeight();}addEventListener("load",postHeight,{once:true});if("ResizeObserver"in window&&document.body){new ResizeObserver(postHeight).observe(document.body);}setTimeout(postHeight,250);setTimeout(postHeight,1000);setTimeout(postHeight,2500);setTimeout(postHeight,5000);})();</script>`, { html: true });
+  }
+}
+
+async function renderTheVineNativeContinuationResponse(request) {
+  const originRequest = buildTheVineNativeHomepageRequest(request);
+  const originResponse = await fetch(originRequest, { cf: { cacheEverything: false, cacheTtl: 0 } });
+  const contentType = originResponse.headers.get("content-type") || "";
+  if (!contentType.includes("text/html") || originResponse.status !== 200) {
+    return originResponse;
+  }
+
+  let html = await originResponse.text();
+  html = normalizeTheVineNativeHtml(html);
+
+  const headers = new Headers(originResponse.headers);
+  headers.delete("content-length");
+  headers.delete("set-cookie");
+  headers.set("Content-Type", "text/html; charset=utf-8");
+  headers.set("Cache-Control", "private, no-store");
+  headers.set("X-VTR-The-Vine-Mobile-Topper", VINE_MOBILE_TOPPER_VERSION);
+  headers.set("X-VTR-The-Vine-Mobile-Continuation", "1");
+  headers.set("X-Robots-Tag", "noindex, nofollow");
+  headers.append("Server-Timing", 'vtr_vine_native_continuation;desc="lazy"');
+
+  return new HTMLRewriter()
+    .on("head", new TheVineNativeContinuationHeadRewriter())
+    .on("body", new TheVineNativeContinuationBodyRewriter())
+    .transform(new Response(html, {
+      status: originResponse.status,
+      statusText: originResponse.statusText,
+      headers
+    }));
+}
+
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const vineAsset = VINE_TOPPER_ASSETS[url.pathname];
+    if (vineAsset) return serveTheVineTopperAsset(request, vineAsset);
+
+    if (isTheVineLlmsTxt(request)) {
+      return serveTheVineLlmsTxt(request);
+    }
+
+    if (isTheVineNativeContinuation(url)) {
+      return renderTheVineNativeContinuationResponse(request);
+    }
+
+    if (shouldServeTheVineMobileTopper(request, url)) {
+      const headers = new Headers({
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-VTR-The-Vine-Mobile-Topper": VINE_MOBILE_TOPPER_VERSION
+      });
+      headers.set("Vary", "User-Agent");
+      headers.append("Server-Timing", 'vtr_vine_mobile_topper;desc="production"');
+      return new Response(renderTheVineMobileTopper(request), { headers });
+    }
+
     const fontResponse = await maybeHandleEdgeFontAsset(request, ctx);
     if (fontResponse) return fontResponse;
 
@@ -646,7 +1054,6 @@ export default {
         ZARAZ_CONSENT_NOTICE_CONFIG.enabled
       )
     };
-    const url = new URL(request.url);
     if (isZarazConsentUnresolvedReportRequest(request, consentNoticeConfig)) {
       return handleZarazConsentUnresolvedReport(request, env, consentNoticeConfig);
     }
@@ -787,6 +1194,10 @@ export default {
       originResponse,
       RESI_HOME_NATIVE_PROMO_CONFIG
     ) && !shouldApplyHomeStaticShellRewrite(request, originResponse, homeStaticShellEnabled);
+    const shouldStripTheVineNativeAnalytics = shouldApplyTheVineNativeAnalyticsStrip(
+      request,
+      originResponse
+    );
 
     if (shouldRewriteFontDisplay) {
       return rewriteFontDisplayResponse(originResponse, responseHeaders, fontDisplayConfig);
@@ -831,8 +1242,7 @@ export default {
       scripts.push(buildCoachMarkScript(coachMarkConfig));
     }
     if (shouldInjectConsentNotice(request, originResponse, consentNoticeConfig)) {
-      scripts.push(buildZarazConsentNoticeScript(consentNoticeConfig));
-      scripts.push(buildZarazConsentNoticeButtonStyleScript());
+      scripts.push(renderZarazConsentPillScript());
       scripts.push(buildZarazConsentInteractionQueueScript(consentNoticeConfig));
       responseHeaders.append("Server-Timing", 'vtr_zaraz_consent_notice;desc="passive"');
     }
@@ -859,7 +1269,8 @@ export default {
       !shouldRewriteHeroViewportHeight &&
       !shouldTrimHomepageAssets &&
       !shouldRewriteHomeStaticHero &&
-      !shouldInjectNativePromo
+      !shouldInjectNativePromo &&
+      !shouldStripTheVineNativeAnalytics
     ) {
       const passthroughResponse = new Response(originResponse.body, {
         status: originResponse.status,
@@ -902,6 +1313,11 @@ export default {
     if (shouldInjectNativePromo) {
       responseHeaders.append("Server-Timing", RESI_HOME_NATIVE_PROMO_CONFIG.serverTiming);
       rewriter = addHomeNativePromoRewriter(rewriter);
+    }
+
+    if (shouldStripTheVineNativeAnalytics) {
+      responseHeaders.append("Server-Timing", VINE_NATIVE_ANALYTICS_STRIP_SERVER_TIMING);
+      rewriter = addTheVineNativeAnalyticsStripRewriter(rewriter);
     }
 
     if (shouldRewritePerformanceHtml) {
@@ -3150,21 +3566,9 @@ function buildBootstrapScript(config, state = {}) {
 }
 
 function buildZarazConsentNoticeScript(config = ZARAZ_CONSENT_NOTICE_CONFIG) {
-  const payload = JSON.stringify({
-    storageKey: config.storageKey,
-    text: config.text,
-    privacyHref: config.privacyHref,
-    acceptLabel: config.acceptLabel,
-    rejectLabel: config.rejectLabel,
-    manageLabel: config.manageLabel
-  }).replace(/</g, "\\u003c");
-
-  return `<script data-vtr-zaraz-consent-notice="1">(function(){const c=${payload};if(document.getElementById("vtr-cookie-notice"))return;function ready(fn){document.readyState==="loading"?document.addEventListener("DOMContentLoaded",fn,{once:true}):fn()}function getConsent(){return window.zaraz&&window.zaraz.consent}function getChoices(){const z=getConsent();return z&&typeof z.getAll==="function"?z.getAll():null}function hasStoredDecision(){try{return localStorage.getItem(c.storageKey)==="1"}catch(e){return false}}function markDone(){try{localStorage.setItem(c.storageKey,"1")}catch(e){}}function allPayload(value){const choices=getChoices()||{};return Object.fromEntries(Object.keys(choices).map(function(id){return [id,value]}))}function setAll(value){const z=getConsent();if(!z||typeof z.set!=="function")return false;const payload=allPayload(value);if(!Object.keys(payload).length)return false;z.set(payload);if(value&&typeof z.sendQueuedEvents==="function")z.sendQueuedEvents();document.dispatchEvent(new Event("zarazConsentChoicesUpdated"));return true}function shouldShow(){if(hasStoredDecision())return false;const choices=getChoices();if(!choices)return true;return Object.values(choices).every(function(value){return value===false})}function remove(){const el=document.getElementById("vtr-cookie-notice");if(el)el.remove()}function show(){if(!shouldShow())return;const style=document.createElement("style");style.id="vtr-cookie-notice-style";style.textContent="#vtr-cookie-notice{position:fixed;left:16px;right:16px;bottom:16px;z-index:2147482500;display:flex;align-items:center;gap:14px;box-sizing:border-box;max-width:980px;margin:0 auto;padding:12px 14px;border:1px solid #D6D6D2;border-radius:8px;background:#FFFFFF;color:#294782;box-shadow:0 10px 34px rgba(0,0,0,.18);font-family:Lato,Arial,sans-serif}#vtr-cookie-notice p{flex:1;margin:0;font-size:13px;line-height:1.4;color:#294782}#vtr-cookie-notice a{color:#3D66B9;font-weight:900;text-decoration:underline;text-underline-offset:3px}#vtr-cookie-notice-actions{display:flex;gap:8px;flex:0 0 auto}#vtr-cookie-notice button{height:34px;margin:0;padding:0 14px;border-radius:6px;font-size:12px;font-weight:900;line-height:34px;cursor:pointer}#vtr-cookie-accept{border:0;background:#15284B;color:#FFFFFF}#vtr-cookie-manage{border:0;background:#3D66B9;color:#FFFFFF}#vtr-cookie-reject{border:1px solid #D6D6D2;background:#FFFFFF;color:#15284B}#vtr-cookie-notice button:focus,#vtr-cookie-notice a:focus{outline:3px solid #7DCAC2;outline-offset:2px}@media(max-width:640px){#vtr-cookie-notice{left:10px;right:10px;bottom:10px;display:block;padding:12px}#vtr-cookie-notice-actions{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:10px}#vtr-cookie-notice button{width:100%;padding:0 8px}}";const wrap=document.createElement("section");wrap.id="vtr-cookie-notice";wrap.setAttribute("role","region");wrap.setAttribute("aria-label","Cookie preferences");wrap.innerHTML='<p>'+escapeHtml(c.text)+' <a href="'+escapeAttr(c.privacyHref)+'" target="_blank" rel="noopener">Privacy Policy</a></p><div id="vtr-cookie-notice-actions"><button id="vtr-cookie-accept" type="button">'+escapeHtml(c.acceptLabel)+'</button><button id="vtr-cookie-reject" type="button">'+escapeHtml(c.rejectLabel)+'</button><button id="vtr-cookie-manage" type="button">'+escapeHtml(c.manageLabel)+'</button></div>';document.head.appendChild(style);document.body.appendChild(wrap);wrap.querySelector("#vtr-cookie-accept").addEventListener("click",function(){if(setAll(true)){markDone();remove()}});wrap.querySelector("#vtr-cookie-reject").addEventListener("click",function(){setAll(false);markDone();remove()});wrap.querySelector("#vtr-cookie-manage").addEventListener("click",function(){remove();if(window.zaraz&&typeof window.zaraz.showConsentModal==="function")window.zaraz.showConsentModal()})}function boot(){let tries=0;const timer=setInterval(function(){tries+=1;if(getConsent()||tries>=20){clearInterval(timer);show()}},250)}document.addEventListener("zarazConsentChoicesUpdated",function(){markDone();remove()});ready(boot);function escapeHtml(value){return String(value).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]})}function escapeAttr(value){return escapeHtml(value).replace(/\\x60/g,"&#96;")}})();</script>`;
+  return renderZarazConsentPillScript();
 }
 
-function buildZarazConsentNoticeButtonStyleScript() {
-  return `<script data-vtr-zaraz-consent-notice-style="1">(function(){if(document.getElementById("vtr-cookie-notice-button-style"))return;const style=document.createElement("style");style.id="vtr-cookie-notice-button-style";style.textContent="#vtr-cookie-notice-actions{align-items:center!important}#vtr-cookie-accept{min-width:108px!important;border:0!important;background:#15284B!important;color:#FFFFFF!important;box-shadow:0 8px 18px rgba(21,40,75,.18)!important}#vtr-cookie-accept:hover{background:#294782!important}#vtr-cookie-reject{border:1px solid #D6D6D2!important;background:#FFFFFF!important;color:#15284B!important}#vtr-cookie-manage{width:auto!important;height:auto!important;margin-left:2px!important;padding:0 2px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#3D66B9!important;box-shadow:none!important;line-height:1.25!important;text-decoration:underline!important;text-underline-offset:3px!important}#vtr-cookie-manage:hover{color:#294782!important}#vtr-cookie-notice button:focus,#vtr-cookie-notice a:focus{outline:3px solid #7DCAC2!important;outline-offset:2px!important}@media(max-width:640px){#vtr-cookie-notice-actions{grid-template-columns:1fr 1fr!important;align-items:center!important}#vtr-cookie-accept{grid-column:1/2!important}#vtr-cookie-reject{grid-column:2/3!important}#vtr-cookie-manage{grid-column:1/3!important;justify-self:center!important;margin:2px 0 0!important}}";document.head.appendChild(style)})();</script>`;
-}
 
 function buildZarazConsentInteractionQueueScript(config = ZARAZ_CONSENT_NOTICE_CONFIG) {
   const payload = JSON.stringify({
@@ -3176,7 +3580,7 @@ function buildZarazConsentInteractionQueueScript(config = ZARAZ_CONSENT_NOTICE_C
     reportEndpoint: config.unresolvedReportPath
   }).replace(/</g, "\\u003c");
 
-  return `<script data-vtr-zaraz-consent-interaction-queue="1">(function(){const c=${payload};if(window.__vtrZarazConsentInteractionQueue)return;window.__vtrZarazConsentInteractionQueue=true;let queuedPageview=false;let reportedUnresolved=false;let suppressHideUntil=0;function now(){return Date.now()}function readQueue(){try{const raw=sessionStorage.getItem(c.queueKey);const data=raw?JSON.parse(raw):[];if(!Array.isArray(data))return [];const cutoff=now()-c.queueTtlMs;return data.filter(function(item){return item&&item.ts>=cutoff})}catch(e){return []}}function writeQueue(queue){try{sessionStorage.setItem(c.queueKey,JSON.stringify(queue.slice(-c.queueMax)))}catch(e){}}function clearQueue(){try{sessionStorage.removeItem(c.queueKey)}catch(e){}}function hasStoredDecision(){try{return localStorage.getItem(c.noticeStorageKey)==="1"}catch(e){return false}}function getConsent(){return window.zaraz&&window.zaraz.consent}function getChoices(){const z=getConsent();return z&&typeof z.getAll==="function"?z.getAll():null}function hasGrantedConsent(){const choices=getChoices();return !!choices&&Object.values(choices).some(function(value){return value===true})}function isRejectedDecision(){const choices=getChoices();return hasStoredDecision()&&!!choices&&Object.values(choices).every(function(value){return value===false})}function isUndecided(){if(hasGrantedConsent()||hasStoredDecision())return false;const choices=getChoices();if(!choices)return true;return Object.values(choices).every(function(value){return value===false})}function cleanUrl(value){try{const u=new URL(value,location.href);return u.origin+u.pathname}catch(e){return String(value||"").split("?")[0].slice(0,240)}}function labelFor(el){return (el.getAttribute("aria-label")||el.textContent||el.value||"").replace(/\\s+/g," ").trim().slice(0,120)}function classify(el){const href=el.href||el.getAttribute("href")||"";const text=labelFor(el);const haystack=(text+" "+href).toLowerCase();if(haystack.indexOf("schedule")!==-1&&haystack.indexOf("tour")!==-1)return "schedule_tour_click";if(haystack.indexOf("createpipelineapplication")!==-1||haystack.indexOf("apply now")!==-1)return "apply_now_click";if(haystack.indexOf("find your home")!==-1||haystack.indexOf("/apartments")!==-1)return "find_home_click";if(haystack.indexOf("tel:")!==-1||haystack.indexOf("call:")!==-1)return "phone_click";if(haystack.indexOf("/contact")!==-1)return "contact_click";if(haystack.indexOf("/specials")!==-1)return "specials_click";return ""}function isSameSiteNavigation(el){const href=el&&el.href||el&&el.getAttribute&&el.getAttribute("href")||"";if(!href||href.indexOf("#")===0)return false;try{const u=new URL(href,location.href);const target=(el.target||"").toLowerCase();return u.origin===location.origin&&(!target||target==="_self")}catch(e){return false}}function enqueue(eventType, extra){if(!isUndecided())return;const queue=readQueue();queue.push(Object.assign({event_type:eventType,ts:now(),page_path:location.pathname,page_url:cleanUrl(location.href),page_title:document.title||"",source:"preconsent_session_queue"},extra||{}));writeQueue(queue)}function queuePageview(){if(queuedPageview)return;queuedPageview=true;enqueue("page_view",{})}function queueClick(event){const target=event.target&&event.target.closest&&event.target.closest("a,button");if(!target)return;if(target.id==="vtr-cookie-reject"){setTimeout(clearQueue,0);reportedUnresolved=true;return}if(target.id==="vtr-cookie-accept"){reportedUnresolved=true;setTimeout(flushQueue,0);return}if(target.closest("#vtr-cookie-notice"))return;if(isSameSiteNavigation(target))suppressHideUntil=now()+2500;const eventType=classify(target);if(!eventType)return;enqueue(eventType,{cta_text:labelFor(target),cta_href:cleanUrl(target.href||target.getAttribute("href")||""),cta_target:target.target||""})}function reportUnresolved(reason){if(reportedUnresolved||now()<suppressHideUntil||!isUndecided())return;const queue=readQueue();if(!queue.length)return;reportedUnresolved=true;const body=JSON.stringify({reason:reason,page_path:location.pathname,page_title:document.title||"",events:queue,consent:getChoices()||{}});const url=c.reportEndpoint;if(navigator.sendBeacon){try{const blob=new Blob([body],{type:"application/json"});if(navigator.sendBeacon(url,blob))return}catch(e){}}try{fetch(url,{method:"POST",body:body,headers:{"content-type":"application/json"},keepalive:true,credentials:"same-origin"})}catch(e){}}function flushQueue(){const z=window.zaraz;if(isRejectedDecision()){clearQueue();return}if(!hasGrantedConsent()||!z||typeof z.track!=="function")return;const queue=readQueue();if(!queue.length)return;queue.forEach(function(item,index){z.track(c.trackEventName,Object.assign({queue_index:index,queue_size:queue.length},item))});clearQueue();if(z.consent&&typeof z.consent.sendQueuedEvents==="function")z.consent.sendQueuedEvents()}function ready(fn){document.readyState==="loading"?document.addEventListener("DOMContentLoaded",fn,{once:true}):fn()}document.addEventListener("click",queueClick,true);addEventListener("pagehide",function(){reportUnresolved("pagehide")});document.addEventListener("zarazConsentChoicesUpdated",flushQueue);document.addEventListener("zarazConsentAPIReady",function(){queuePageview();flushQueue()});ready(function(){queuePageview();flushQueue()})})();</script>`;
+  return `<script data-vtr-zaraz-consent-interaction-queue="1">(function(){const c=${payload};if(window.__vtrZarazConsentInteractionQueue)return;window.__vtrZarazConsentInteractionQueue=true;let queuedPageview=false;let reportedUnresolved=false;let suppressHideUntil=0;function now(){return Date.now()}function readQueue(){try{const raw=sessionStorage.getItem(c.queueKey);const data=raw?JSON.parse(raw):[];if(!Array.isArray(data))return [];const cutoff=now()-c.queueTtlMs;return data.filter(function(item){return item&&item.ts>=cutoff})}catch(e){return []}}function writeQueue(queue){try{sessionStorage.setItem(c.queueKey,JSON.stringify(queue.slice(-c.queueMax)))}catch(e){}}function clearQueue(){try{sessionStorage.removeItem(c.queueKey)}catch(e){}}function hasStoredDecision(){try{return localStorage.getItem(c.noticeStorageKey)==="1"}catch(e){return false}}function getConsent(){return window.zaraz&&window.zaraz.consent}function getChoices(){const z=getConsent();return z&&typeof z.getAll==="function"?z.getAll():null}function hasGrantedConsent(){const choices=getChoices();return !!choices&&Object.values(choices).some(function(value){return value===true})}function isRejectedDecision(){const choices=getChoices();return hasStoredDecision()&&!!choices&&Object.values(choices).every(function(value){return value===false})}function isUndecided(){if(hasGrantedConsent()||hasStoredDecision())return false;const choices=getChoices();if(!choices)return true;return Object.values(choices).every(function(value){return value===false})}function cleanUrl(value){try{const u=new URL(value,location.href);return u.origin+u.pathname}catch(e){return String(value||"").split("?")[0].slice(0,240)}}function labelFor(el){return (el.getAttribute("aria-label")||el.textContent||el.value||"").replace(/\\s+/g," ").trim().slice(0,120)}function classify(el){const href=el.href||el.getAttribute("href")||"";const text=labelFor(el);const haystack=(text+" "+href).toLowerCase();if(haystack.indexOf("schedule")!==-1&&haystack.indexOf("tour")!==-1)return "schedule_tour_click";if(haystack.indexOf("createpipelineapplication")!==-1||haystack.indexOf("apply now")!==-1)return "apply_now_click";if(haystack.indexOf("find your home")!==-1||haystack.indexOf("/apartments")!==-1)return "find_home_click";if(haystack.indexOf("tel:")!==-1||haystack.indexOf("call:")!==-1)return "phone_click";if(haystack.indexOf("/contact")!==-1)return "contact_click";if(haystack.indexOf("/specials")!==-1)return "specials_click";return ""}function isSameSiteNavigation(el){const href=el&&el.href||el&&el.getAttribute&&el.getAttribute("href")||"";if(!href||href.indexOf("#")===0)return false;try{const u=new URL(href,location.href);const target=(el.target||"").toLowerCase();return u.origin===location.origin&&(!target||target==="_self")}catch(e){return false}}function enqueue(eventType, extra){if(!isUndecided())return;const queue=readQueue();queue.push(Object.assign({event_type:eventType,ts:now(),page_path:location.pathname,page_url:cleanUrl(location.href),page_title:document.title||"",source:"preconsent_session_queue"},extra||{}));writeQueue(queue)}function queuePageview(){if(queuedPageview)return;queuedPageview=true;enqueue("page_view",{})}function queueClick(event){const target=event.target&&event.target.closest&&event.target.closest("a,button");if(!target)return;if(target.id==="vtr-cookie-accept"){reportedUnresolved=true;setTimeout(flushQueue,0);return}if(target.closest("#vtr-cookie-notice"))return;if(isSameSiteNavigation(target))suppressHideUntil=now()+2500;const eventType=classify(target);if(!eventType)return;enqueue(eventType,{cta_text:labelFor(target),cta_href:cleanUrl(target.href||target.getAttribute("href")||""),cta_target:target.target||""})}function reportUnresolved(reason){if(reportedUnresolved||now()<suppressHideUntil||!isUndecided())return;const queue=readQueue();if(!queue.length)return;reportedUnresolved=true;const body=JSON.stringify({reason:reason,page_path:location.pathname,page_title:document.title||"",events:queue,consent:getChoices()||{}});const url=c.reportEndpoint;if(navigator.sendBeacon){try{const blob=new Blob([body],{type:"application/json"});if(navigator.sendBeacon(url,blob))return}catch(e){}}try{fetch(url,{method:"POST",body:body,headers:{"content-type":"application/json"},keepalive:true,credentials:"same-origin"})}catch(e){}}function flushQueue(){const z=window.zaraz;if(isRejectedDecision()){clearQueue();return}if(!hasGrantedConsent()||!z||typeof z.track!=="function")return;const queue=readQueue();if(!queue.length)return;queue.forEach(function(item,index){z.track(c.trackEventName,Object.assign({queue_index:index,queue_size:queue.length},item))});clearQueue();if(z.consent&&typeof z.consent.sendQueuedEvents==="function")z.consent.sendQueuedEvents()}function ready(fn){document.readyState==="loading"?document.addEventListener("DOMContentLoaded",fn,{once:true}):fn()}document.addEventListener("click",queueClick,true);addEventListener("pagehide",function(){reportUnresolved("pagehide")});document.addEventListener("zarazConsentChoicesUpdated",flushQueue);document.addEventListener("zarazConsentAPIReady",function(){queuePageview();flushQueue()});ready(function(){queuePageview();flushQueue()})})();</script>`;
 }
 
 function buildCoachMarkScript(config) {

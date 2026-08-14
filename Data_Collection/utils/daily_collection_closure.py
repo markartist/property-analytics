@@ -101,6 +101,74 @@ def load_retry_queue(conn: sqlite3.Connection, target_date: date) -> List[Dict[s
     return [dict(row) for row in rows]
 
 
+def reconcile_completed_source_retry_markers(
+    db_path: Path | str | sqlite3.Connection,
+    target_date: Optional[date | str] = None,
+    now: Optional[datetime] = None,
+    sources: Optional[List[str] | tuple[str, ...] | set[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Resolve stale source-level retry markers when the latest same-day run completed."""
+    effective_now = local_now(now)
+    effective_date = _coerce_target_date(target_date, effective_now.date())
+    allowed_sources = {str(source).strip().lower() for source in sources} if sources else None
+
+    def _reconcile(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
+        conn.row_factory = sqlite3.Row
+        latest_runs = load_latest_collection_runs(conn, effective_date)
+        latest_by_source = {
+            str(row.get("data_source") or "").strip().lower(): row
+            for row in latest_runs
+            if row.get("data_source")
+        }
+        retry_rows = conn.execute(
+            """
+            SELECT queue_id, data_source, property_id, status
+            FROM collection_retry_queue
+            WHERE collection_date = ?
+              AND property_id = ?
+              AND status NOT IN ('resolved', 'exhausted')
+            ORDER BY queue_id ASC
+            """,
+            (effective_date.isoformat(), SOURCE_LEVEL_PROPERTY_ID),
+        ).fetchall()
+
+        actions: List[Dict[str, Any]] = []
+        for retry_row in retry_rows:
+            source = str(retry_row["data_source"] or "").strip().lower()
+            if not source or (allowed_sources is not None and source not in allowed_sources):
+                continue
+            latest_run = latest_by_source.get(source)
+            if str((latest_run or {}).get("status") or "").strip().lower() != "completed":
+                continue
+            conn.execute(
+                """
+                UPDATE collection_retry_queue
+                SET status = 'resolved',
+                    notes = ?,
+                    resolved_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE queue_id = ?
+                """,
+                (
+                    "Stale source-level retry marker cleared during collection closure reconciliation.",
+                    retry_row["queue_id"],
+                ),
+            )
+            actions.append({
+                "source": source,
+                "queue_id": retry_row["queue_id"],
+                "action": "resolved_completed_source_marker",
+            })
+        conn.commit()
+        return actions
+
+    if isinstance(db_path, sqlite3.Connection):
+        return _reconcile(db_path)
+
+    with sqlite3.connect(str(db_path)) as conn:
+        return _reconcile(conn)
+
+
 def evaluate_daily_collection_closure(
     db_path: Path | str | sqlite3.Connection,
     target_date: Optional[date | str] = None,

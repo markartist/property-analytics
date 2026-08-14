@@ -13,7 +13,7 @@ import shutil
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -47,6 +47,7 @@ DEFAULT_HEADERS_TO_CAPTURE = [
 
 
 STATUS_ORDER = {"pass": 0, "warn": 1, "fail": 2}
+UTC = timezone.utc
 
 
 def _worst_status(statuses: List[str]) -> str:

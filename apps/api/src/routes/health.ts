@@ -49,7 +49,7 @@ type AdvisoryFreshnessStatus = "fresh" | "warning" | "stale" | "missing" | "idle
 type AdvisorySourcePolicy = {
   cadence_key: AdvisoryCadenceKey;
   cadence_label: string;
-  latestDataQuery?: { table: string; dateCol: string };
+  latestDataQuery?: { table: string; dateCol: string; whereClause?: string };
 };
 
 const ADVISORY_SOURCE_POLICIES: Record<string, AdvisorySourcePolicy> = {
@@ -85,6 +85,11 @@ const ADVISORY_SOURCE_POLICIES: Record<string, AdvisorySourcePolicy> = {
     latestDataQuery: { table: "gbp_daily_insights", dateCol: "metric_date" },
   },
   cloudflare_cache_audit: { cadence_key: "weekly_automated", cadence_label: "Weekly automated" },
+  cloudflare_billable_usage: {
+    cadence_key: "daily_diagnostic",
+    cadence_label: "Daily diagnostic",
+    latestDataQuery: { table: "cloudflare_billable_usage_collections", dateCol: "collection_date", whereClause: "api_status = 'ok'" },
+  },
   browserstack: { cadence_key: "targeted_manual", cadence_label: "Targeted manual audit" },
   evs: { cadence_key: "targeted_manual", cadence_label: "Targeted manual audit" },
   sightmap: { cadence_key: "targeted_manual", cadence_label: "Targeted manual audit" },
@@ -279,11 +284,13 @@ async function safeQueryLatestDate(
   db: D1Database,
   table: string,
   dateCol: string,
+  whereClause?: string,
 ): Promise<string | null> {
   try {
+    const resolvedWhere = whereClause ? ` WHERE ${whereClause}` : "";
     const row = await queryFirst<{ latest: string | null }>(
       db,
-      `SELECT MAX(${dateCol}) AS latest FROM ${table}`
+      `SELECT MAX(${dateCol}) AS latest FROM ${table}${resolvedWhere}`
     );
     return row?.latest ?? null;
   } catch {
@@ -653,7 +660,7 @@ health.get("/status", async (c) => {
     }
     advisoryLatestDataDateBySource.set(
       source,
-      await safeQueryLatestDate(db, queryDef.table, queryDef.dateCol)
+      await safeQueryLatestDate(db, queryDef.table, queryDef.dateCol, queryDef.whereClause)
     );
   }
 

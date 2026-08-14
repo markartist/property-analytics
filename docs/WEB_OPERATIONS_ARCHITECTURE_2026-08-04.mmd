@@ -1,0 +1,124 @@
+flowchart TB
+  users["Public users<br/>Search crawlers<br/>Prospects"]
+  operators["Venterra operators<br/>Technology<br/>Marketing Operations"]
+
+  subgraph governance["Governance and Ownership"]
+    tech["Technology<br/>Account, DNS, Access, security, registrar, credentials"]
+    mops["Marketing Operations<br/>WebOps, SEO, cache, redirects, Workers, analytics"]
+    vendor["Website vendor<br/>Resi / Kinsta / WP Engine origin function"]
+    keeper["Keeper Secrets Manager<br/>Credential source of truth"]
+  end
+
+  subgraph domains["Domain and Edge Control"]
+    registrar["GoDaddy / registrar portfolio<br/>284-domain snapshot"]
+    cf["Cloudflare account<br/>5a5a60afaad00085864fe6bab7eb2882"]
+    folders["Cloudflare zone folders<br/>Live Active Domains<br/>Vanity Domains<br/>Lease-Up / Coming Soon<br/>Corporate / Platform<br/>Retired / Defensive"]
+    dns["Cloudflare DNS<br/>nameservers, records, SSL validation"]
+    proxy["Cloudflare edge<br/>proxy, SSL, cache rules, redirect rules, WAF posture"]
+    access["Cloudflare Access<br/>app and API admission boundary"]
+    zaraz["Cloudflare Zaraz<br/>GA4 / Heap / Ahrefs tool orchestration"]
+  end
+
+  subgraph workers["Cloudflare Workers and Edge Assets"]
+    apiWorker["pop-brief-api<br/>api.venterradev.com"]
+    vineWorker["edge-message-worker<br/>thevinekyle.com"]
+    pilotWorker["edge-transparent-pricing-intro-beta<br/>pilot.venterradev.com"]
+    championsWorker["portfolio-resi-edge-prototype<br/>championsgreen-ga.com<br/>edge_preview=1"]
+    townestoneWorker["townestone-native-optimizer<br/>townestoneat359.com"]
+    cendanaWorker["cendana-native-optimizer<br/>edge-preview.cendanalife.com"]
+    d1["D1<br/>pop-brief-db"]
+    r2Uploads["R2<br/>pop-brief-uploads"]
+    r2Assets["R2<br/>resi-edge-assets"]
+  end
+
+  subgraph origins["Website Origins and Applications"]
+    resi["Resi / Kinsta property sites<br/>current main origin family"]
+    wpengine["WP Engine-origin path<br/>Cendana captured state"]
+    pages["Cloudflare Pages / Web app<br/>app.venterradev.com"]
+    portfolioProxy["Portfolio Launch Proxy<br/>venterraliving.io beta route model"]
+  end
+
+  subgraph sources["Measurement and External Data Sources"]
+    ga4["GA4<br/>traffic, channel, events"]
+    gsc["Google Search Console<br/>clicks, impressions, indexation"]
+    heap["Heap / Contentsquare<br/>behavior analytics"]
+    ahrefs["Ahrefs<br/>technical SEO, authority, Web Analytics, GSC Insights"]
+    dataforseo["DataForSEO<br/>SERP, keyword, OnPage, AI visibility"]
+    gbp["Google Business Profile<br/>local listings and reviews"]
+    psi["PageSpeed / CrUX<br/>performance diagnostics"]
+    cfAnalytics["Cloudflare Analytics<br/>edge request, cache, status facts"]
+    cfBilling["Cloudflare Billable Usage<br/>account usage and cost facts"]
+  end
+
+  subgraph datapond["Data Pond and Operating Intelligence"]
+    collectors["Data Collection<br/>daily master collection and source collectors"]
+    db["Local Data Pond<br/>portfolio_analytics.db"]
+    d1Mirror["D1 mirror sync<br/>selected platform facts"]
+    watchtower["Watchtower<br/>source health, freshness, advisory status"]
+    reports["Executive and WebOps outputs<br/>PIB, ad hoc reports, audits, run packets"]
+  end
+
+  subgraph webops["WebOps Workstreams"]
+    domainOps["Domain Ops<br/>Cloudflare staging, redirects, nameserver readback"]
+    resiEdge["Resi Edge<br/>performance shells, image rewrites, Workers, R2 assets"]
+    seoOps["SEO Operations<br/>GSC, Ahrefs, DataForSEO, audits, launch readiness"]
+    contentOps["Content Operations<br/>Site Content Creator, Content Office, VACS"]
+    captain["Captain / property intelligence<br/>property routines, memory, action tracking"]
+  end
+
+  users --> registrar --> cf --> folders --> dns --> proxy
+  proxy --> resi
+  proxy --> wpengine
+  proxy --> pages
+  proxy --> vineWorker
+  proxy --> pilotWorker
+  proxy --> championsWorker
+  proxy --> townestoneWorker
+  proxy --> cendanaWorker
+
+  access --> pages
+  access --> apiWorker
+  apiWorker --> d1
+  apiWorker --> r2Uploads
+  championsWorker --> r2Assets
+  townestoneWorker --> r2Assets
+  cendanaWorker --> r2Assets
+  zaraz --> ga4
+  zaraz --> heap
+  zaraz --> ahrefs
+
+  operators --> access
+  operators --> webops
+  tech --> cf
+  tech --> registrar
+  tech --> keeper
+  mops --> webops
+  vendor --> resi
+  vendor --> wpengine
+  keeper --> collectors
+  keeper --> apiWorker
+
+  ga4 --> collectors
+  gsc --> collectors
+  heap --> collectors
+  ahrefs --> collectors
+  dataforseo --> collectors
+  gbp --> collectors
+  psi --> reports
+  cfAnalytics --> collectors
+  cfBilling --> collectors
+  collectors --> db --> d1Mirror --> d1
+  db --> watchtower
+  db --> reports
+
+  domainOps --> cf
+  domainOps --> registrar
+  resiEdge --> proxy
+  resiEdge --> workers
+  seoOps --> sources
+  seoOps --> reports
+  contentOps --> reports
+  captain --> db
+  watchtower --> operators
+  reports --> operators
+  portfolioProxy --> proxy

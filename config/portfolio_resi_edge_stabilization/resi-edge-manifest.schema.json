@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://property-analytics.local/schemas/resi-edge-manifest.schema.json",
+  "title": "Resi Edge Upgrade Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "package_contract_id",
+    "target",
+    "routing",
+    "mobile_shell",
+    "desktop",
+    "phone_attribution",
+    "analytics",
+    "consent",
+    "seo",
+    "captain",
+    "evidence",
+    "rollback"
+  ],
+  "properties": {
+    "schema_version": { "const": "resi_edge_manifest_v1" },
+    "package_contract_id": { "const": "resi-edge-canonical-upgrade-package" },
+    "target": {
+      "type": "object",
+      "required": [
+        "property_code",
+        "source_property_code",
+        "domain",
+        "property_name",
+        "city",
+        "state",
+        "community_id",
+        "ga4_property_id",
+        "ga4_measurement_id",
+        "gsc_property",
+        "canonical_url"
+      ],
+      "properties": {
+        "property_code": { "type": "string", "minLength": 1 },
+        "source_property_code": { "type": "string", "minLength": 1 },
+        "domain": { "type": "string", "minLength": 1 },
+        "property_name": { "type": "string", "minLength": 1 },
+        "city": { "type": "string", "minLength": 1 },
+        "state": { "type": "string", "minLength": 2 },
+        "community_id": { "type": "string", "minLength": 1 },
+        "ga4_property_id": { "type": "string", "minLength": 1 },
+        "ga4_measurement_id": { "type": "string", "pattern": "^G-[A-Z0-9]+$" },
+        "gsc_property": { "type": "string", "minLength": 1 },
+        "canonical_url": { "type": "string", "format": "uri" }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "required": ["cloudflare_zone_name", "route_pattern", "mutation_policy"]
+    },
+    "mobile_shell": {
+      "type": "object",
+      "required": ["layout_contract", "brand_theme", "fonts", "body_font", "heading_font", "awards", "promo", "hero", "reviews", "content_blocks", "native_continuation"],
+      "properties": {
+        "fonts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["family", "url"],
+            "properties": {
+              "family": { "type": "string", "minLength": 1 },
+              "url": { "type": "string", "format": "uri" },
+              "weight": {},
+              "style": { "type": "string" }
+            }
+          }
+        },
+        "body_font": { "type": "string", "minLength": 1 },
+        "heading_font": { "type": "string", "minLength": 1 },
+        "awards": {
+          "type": "object",
+          "required": ["present", "source", "assets"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "source": { "type": "string", "minLength": 1 },
+            "assets": { "type": "array" }
+          }
+        },
+        "promo": {
+          "type": "object",
+          "required": ["present", "source"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "source": { "type": "string", "minLength": 1 },
+            "bar_label": { "type": "string", "minLength": 1 },
+            "title": { "type": "string", "minLength": 1 },
+            "title_case_required": { "type": "boolean" },
+            "body": { "type": "string", "minLength": 1 },
+            "disclaimer": { "type": "string" },
+            "primary_cta_label": { "type": "string", "minLength": 1 },
+            "primary_cta_url": { "type": "string", "format": "uri" },
+            "secondary_cta_label": { "type": "string", "minLength": 1 },
+            "secondary_cta_url": { "type": "string", "format": "uri" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "present": { "const": true } }, "required": ["present"] },
+              "then": {
+                "required": ["title", "body", "primary_cta_label", "primary_cta_url", "secondary_cta_label", "secondary_cta_url"]
+              }
+            }
+          ]
+        },
+        "hero": {
+          "type": "object",
+          "required": ["image_mobile", "source_image", "title_text", "tm_allowed", "headline", "primary_cta_label", "primary_cta_url"],
+          "properties": {
+            "image_mobile": {
+              "type": "string",
+              "pattern": "^/assets/resi-edge-assets/.+\\.avif$"
+            },
+            "source_image": {
+              "type": "string",
+              "format": "uri"
+            },
+            "title_text": {
+              "type": "string",
+              "minLength": 1
+            },
+            "title_mode": {
+              "enum": ["shared_lble_svg", "property_tagline_svg"]
+            },
+            "title_svg": {
+              "type": "string",
+              "pattern": "^/assets/resi-edge-assets/.+\\.svg$"
+            },
+            "title_svg_lines": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "title_svg_width": {
+              "type": "integer",
+              "minimum": 240,
+              "maximum": 1000
+            },
+            "title_svg_height": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 320
+            },
+            "title_svg_display_width_px": {
+              "type": "integer",
+              "minimum": 240,
+              "maximum": 380
+            },
+            "title_svg_max_width_vw": {
+              "type": "number",
+              "minimum": 70,
+              "maximum": 90
+            },
+            "title_svg_font_size": {
+              "type": "number",
+              "minimum": 20,
+              "maximum": 110
+            },
+            "title_svg_line_gap": {
+              "type": "number",
+              "minimum": -40,
+              "maximum": 60
+            },
+            "title_svg_letter_spacing": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 20
+            },
+            "title_svg_horizontal_padding": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 180
+            },
+            "title_svg_viewbox_bleed": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 120
+            },
+            "tm_allowed": {
+              "const": false
+            },
+            "headline": {
+              "type": "string",
+              "minLength": 1
+            },
+            "headline_lines": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "primary_cta_label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "primary_cta_url": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "title_mode": { "const": "property_tagline_svg" }
+                },
+                "required": ["title_mode"]
+              },
+              "then": {
+                "required": ["title_svg", "title_svg_lines", "title_svg_width", "title_svg_height", "title_svg_display_width_px"]
+              },
+              "else": {
+                "properties": {
+                  "title_text": { "const": "Live Better. Live Easy." }
+                }
+              }
+            }
+          ],
+          "not": {
+            "anyOf": [
+              { "required": ["title_asset"] },
+              { "required": ["title_asset_text"] },
+              { "required": ["title_render_mode"] }
+            ]
+          }
+        },
+        "content_blocks": { "type": "array", "minItems": 2 },
+        "reviews": {
+          "type": "object",
+          "required": ["present", "source", "last_verified", "fractional_stars_required", "full_star_rounding_allowed", "link_required"],
+          "properties": {
+            "present": { "type": "boolean" },
+            "rating": { "type": "number", "minimum": 0, "maximum": 5 },
+            "count": { "type": "integer", "minimum": 0 },
+            "url": { "type": "string", "format": "uri" },
+            "last_verified": { "type": "string", "minLength": 1 },
+            "fractional_stars_required": { "const": true },
+            "full_star_rounding_allowed": { "const": false },
+            "link_required": { "type": "boolean" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "present": { "const": true } }, "required": ["present"] },
+              "then": {
+                "required": ["rating", "count", "url"],
+                "properties": { "link_required": { "const": true } }
+              }
+            },
+            {
+              "if": { "properties": { "present": { "const": false } }, "required": ["present"] },
+              "then": { "properties": { "link_required": { "const": false } } }
+            }
+          ]
+        }
+      }
+    },
+    "desktop": {
+      "type": "object",
+      "required": ["mode", "desktop_topper_allowed", "native_render_required"]
+    },
+    "phone_attribution": {
+      "type": "object",
+      "required": ["default_source", "default_display_phone", "source_lookup"]
+    },
+    "analytics": {
+      "type": "object",
+      "required": ["owner", "ga4", "heap", "ahrefs", "cloudflare_analytics", "resi_event_bridge"],
+      "properties": {
+        "owner": { "const": "cloudflare_zaraz" },
+        "ga4": {
+          "type": "object",
+          "required": ["owner", "property_id", "measurement_id", "zaraz_tool_name"],
+          "properties": {
+            "owner": { "const": "cloudflare_zaraz" },
+            "property_id": { "type": "string", "minLength": 1 },
+            "measurement_id": { "type": "string", "pattern": "^G-[A-Z0-9]+$" },
+            "zaraz_tool_name": { "type": "string", "minLength": 1 }
+          }
+        },
+        "heap": {
+          "type": "object",
+          "required": ["owner", "app_id", "mode", "passive_timer_allowed", "contentsquare_verify_guard", "zaraz_tool_name"],
+          "properties": {
+            "owner": { "const": "cloudflare_zaraz" },
+            "app_id": { "type": "string", "minLength": 1 },
+            "mode": { "const": "interaction_only_queue_v6_input_only_cs_verify_home_204" },
+            "passive_timer_allowed": { "const": false },
+            "contentsquare_verify_guard": {
+              "type": "object",
+              "required": ["enabled", "endpoint_pattern", "same_origin_path", "expected_status"],
+              "properties": {
+                "enabled": { "const": true },
+                "endpoint_pattern": { "const": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto" },
+                "same_origin_path": { "const": "/?vtr_cs_verify_suppressed=1" },
+                "expected_status": { "const": 204 }
+              }
+            },
+            "zaraz_tool_name": { "type": "string", "minLength": 1 }
+          }
+        },
+        "ahrefs": {
+          "type": "object",
+          "required": ["owner", "project_policy", "existing_project_id", "target", "verified", "zaraz_tool_name"],
+          "properties": {
+            "owner": { "const": "cloudflare_zaraz" },
+            "project_policy": { "const": "lookup_existing_project_before_create" },
+            "existing_project_id": { "type": "string", "minLength": 1 },
+            "target": { "type": "string", "minLength": 1 },
+            "verified": { "const": true },
+            "zaraz_tool_name": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "consent": {
+      "type": "object",
+      "required": ["owner", "mode", "widget_version", "purposes", "required_proofs"],
+      "properties": {
+        "owner": { "const": "cloudflare_zaraz_consent" },
+        "mode": { "const": "finalized_cmp_required" },
+        "widget_version": { "const": "compact_finalized_pill_v27_2026_08_12" },
+        "purposes": { "type": "array", "minItems": 1 },
+        "required_proofs": { "type": "array", "minItems": 1 }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "required": ["llms_url", "sitemap_url", "schema_url_policy", "meta_og_policy", "meta_title", "meta_description", "og_image", "stale_identity_scan_required"]
+    },
+    "captain": {
+      "type": "object",
+      "required": ["id", "evidence_path"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "evidence_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["required_live_proofs"]
+    },
+    "rollback": {
+      "type": "object",
+      "required": ["strategy"]
+    }
+  }
+}

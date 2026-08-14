@@ -14,21 +14,17 @@ type = "Data"
 globs = ["**/*.avif"]
 fallthrough = true
 
-[[routes]]
-pattern = "championsgreen-ga.com/*"
-zone_id = "7edc3f2752106cc860528432a72e3d67"
-
 [[r2_buckets]]
 binding = "RESI_EDGE_ASSETS"
 bucket_name = "resi-edge-assets"
 
 [vars]
-EDGE_SHELL_ENABLED = "true"
+EDGE_SHELL_ENABLED = "false"
 EDGE_PREVIEW_PARAM = "edge_preview"
 EDGE_PREVIEW_VALUE = "1"
 EDGE_HTML_CACHE_ENABLED = "true"
-EDGE_HTML_CACHE_VERSION = "2026-07-23-performance-topper-v16-q36-mobile-hero"
+EDGE_HTML_CACHE_VERSION = "champions-locked-mobile-upgrade-contract"
 EDGE_HTML_CACHE_TTL_SECONDS = "300"
 EDGE_NATIVE_PROPERTY_SYNC_ENABLED = "true"
-EDGE_RUNTIME_PROPERTY_CACHE_VERSION = "2026-07-22-native-specials-v2"
+EDGE_RUNTIME_PROPERTY_CACHE_VERSION = "2026-08-08-native-specials-v3"
 EDGE_RUNTIME_PROPERTY_CACHE_TTL_SECONDS = "300"

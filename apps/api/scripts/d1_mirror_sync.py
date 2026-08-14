@@ -64,6 +64,7 @@ CORE_MIRROR_SYNC_SCRIPTS = {
 
 ADVISORY_MIRROR_SYNC_SCRIPTS = {
     "captain_sources_to_d1.py",
+    "cloudflare_billable_usage_to_d1.py",
 }
 
 
@@ -1035,6 +1036,7 @@ def main() -> None:
         ("pib_data_to_d1.py", True),
         ("marketing_data_to_d1.py", True),
         ("captain_sources_to_d1.py", False),
+        ("cloudflare_billable_usage_to_d1.py", False),
     ]
     for script, required in sync_scripts:
         step = run_sync_script(

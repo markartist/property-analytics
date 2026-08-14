@@ -43,6 +43,7 @@ from Data_Collection.collectors.guest_card_collector import GuestCardCollector
 from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollector
 from Data_Collection.collectors.cloudflare_cache_audit import CloudflareCacheAuditCollector
 from Data_Collection.collectors.cloudflare_analytics_collector import CloudflareAnalyticsCollector
+from Data_Collection.collectors.cloudflare_billable_usage_collector import CloudflareBillableUsageCollector
 from Data_Collection.collectors.apartmentiq_collector import ApartmentIqCollector
 from Data_Collection.collectors.ahrefs_collector import AhrefsCollector
 from Data_Collection.monitoring.alert_sender import DataAlertEmailer
@@ -127,6 +128,7 @@ class PortfolioDataCollector:
             'ahrefs': {'success': 0, 'failed': 0, 'skipped': 0},
             'cloudflare_cache_audit': {'success': 0, 'failed': 0, 'skipped': 0},
             'cloudflare_edge_analytics': {'success': 0, 'failed': 0, 'skipped': 0},
+            'cloudflare_billable_usage': {'success': 0, 'failed': 0, 'skipped': 0},
             'd1_mirror': {'success': 0, 'failed': 0, 'skipped': 0},
             'errors': []
         }
@@ -3388,6 +3390,101 @@ class PortfolioDataCollector:
                     pass
             print()
 
+    def collect_cloudflare_billable_usage(self):
+        """Collect daily Cloudflare billable usage as read-only FinOps facts."""
+        print('=' * 80)
+        print('☁️  COLLECTING CLOUDFLARE BILLABLE USAGE')
+        print('=' * 80)
+        print()
+
+        collection_id = None
+        try:
+            config_path = self.base_dir / 'config' / 'cloudflare_billable_usage.yaml'
+            if not config_path.exists():
+                print(f'   ⚠️  Config not found: {config_path}')
+                self.results['cloudflare_billable_usage']['skipped'] = 1
+                print()
+                return
+
+            metric_date = (datetime.utcnow() - timedelta(days=1)).date()
+            collection_id = self.db.start_data_collection(
+                collection_date=metric_date,
+                collection_type='daily',
+                data_source='cloudflare_billable_usage'
+            )
+            collector = CloudflareBillableUsageCollector(
+                config_path=config_path,
+                db_path=self.db_path,
+            )
+            result = collector.run(collection_date=metric_date, collection_id=collection_id)
+
+            if result.skipped:
+                self.results['cloudflare_billable_usage']['skipped'] = 1
+                self.db.complete_data_collection(
+                    collection_id=collection_id,
+                    properties_collected=0,
+                    properties_failed=0,
+                    properties_total=0,
+                    properties_skipped=1,
+                    status='completed',
+                    notes='Cloudflare billable usage skipped because credentials or config were unavailable.'
+                )
+                print('   ⚠️  Cloudflare billable usage skipped; see log for credential/config details.')
+                print()
+                return
+
+            self.results['cloudflare_billable_usage']['success'] = result.rows_upserted
+            self.results['cloudflare_billable_usage']['failed'] = result.accounts_failed
+            self.results['cloudflare_billable_usage']['skipped'] = 0
+
+            for message in result.errors[:5]:
+                self.results['errors'].append({
+                    'property': 'Cloudflare Account',
+                    'collector': 'Cloudflare Billable Usage',
+                    'error': str(message)[:100]
+                })
+
+            self.db.complete_data_collection(
+                collection_id=collection_id,
+                properties_collected=result.rows_upserted,
+                properties_failed=result.accounts_failed,
+                properties_total=result.accounts_total,
+                properties_success=result.rows_upserted,
+                status='partial' if result.accounts_failed else 'completed',
+                error_message='; '.join(result.errors[:3]) if result.errors else None,
+                notes='Cloudflare billable usage collected as read-only FinOps source facts; no Cloudflare resources changed.'
+            )
+
+            print(
+                f"Cloudflare Billable Usage Summary: ✅ {result.rows_upserted} rows | "
+                f"⚠️  {self.results['cloudflare_billable_usage']['skipped']} | "
+                f"❌ {result.accounts_failed} accounts"
+            )
+            print()
+
+        except Exception as e:
+            print(f'   ⚠️  Cloudflare billable usage unavailable: {e}')
+            self.results['cloudflare_billable_usage']['failed'] = 1
+            self.results['errors'].append({
+                'property': 'Cloudflare Account',
+                'collector': 'Cloudflare Billable Usage',
+                'error': str(e)[:100]
+            })
+            if collection_id is not None:
+                try:
+                    self.db.complete_data_collection(
+                        collection_id=collection_id,
+                        properties_collected=0,
+                        properties_failed=1,
+                        properties_total=1,
+                        status='partial',
+                        error_message=str(e)[:500],
+                        notes='Cloudflare billable usage failed gracefully; daily collection continues.'
+                    )
+                except Exception:
+                    pass
+            print()
+
     def print_final_summary(self):
         """Print final collection summary"""
         duration = datetime.now() - self.start_time
@@ -3418,6 +3515,7 @@ class PortfolioDataCollector:
         print(f'  Ahrefs:       ✅ {self.results["ahrefs"]["success"]} | ⚠️  {self.results["ahrefs"]["skipped"]} | ❌ {self.results["ahrefs"]["failed"]}')
         print(f'  CF Cache:     ✅ {self.results["cloudflare_cache_audit"]["success"]} | ⚠️  {self.results["cloudflare_cache_audit"]["skipped"]} | ❌ {self.results["cloudflare_cache_audit"]["failed"]}')
         print(f'  CF Edge:      ✅ {self.results["cloudflare_edge_analytics"]["success"]} | ⚠️  {self.results["cloudflare_edge_analytics"]["skipped"]} | ❌ {self.results["cloudflare_edge_analytics"]["failed"]}')
+        print(f'  CF Billing:   ✅ {self.results["cloudflare_billable_usage"]["success"]} | ⚠️  {self.results["cloudflare_billable_usage"]["skipped"]} | ❌ {self.results["cloudflare_billable_usage"]["failed"]}')
         print(f'  D1 Mirror:    ✅ {self.results["d1_mirror"]["success"]} | ⚠️  {self.results["d1_mirror"]["skipped"]} | ❌ {self.results["d1_mirror"]["failed"]}')
         print()
 
@@ -3442,6 +3540,7 @@ class PortfolioDataCollector:
                 'ahrefs',
                 'cloudflare_cache_audit',
                 'cloudflare_edge_analytics',
+                'cloudflare_billable_usage',
                 'd1_mirror'
             ]
         )
@@ -3673,6 +3772,12 @@ class PortfolioDataCollector:
 
             # Collect Cloudflare edge-delivery analytics as additive source facts
             self.collect_cloudflare_edge_analytics()
+
+            # Small pause
+            time.sleep(2)
+
+            # Collect Cloudflare account usage/cost as read-only FinOps facts
+            self.collect_cloudflare_billable_usage()
 
             # Skip SEMRush and GTMetrix in quick mode
             if not self.quick_mode:

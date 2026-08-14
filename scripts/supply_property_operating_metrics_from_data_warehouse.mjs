@@ -136,7 +136,7 @@ function sqlLiteral(value) {
 }
 
 function sqliteExec(dbPath, sqlText) {
-  const result = spawnSync("sqlite3", [path.resolve(dbPath)], {
+  const result = spawnSync("sqlite3", ["-cmd", ".timeout 300000", path.resolve(dbPath)], {
     input: sqlText,
     encoding: "utf8",
     stdio: ["pipe", "pipe", "pipe"],

@@ -1,0 +1,400 @@
+{
+  "schema_version": "resi_edge_manifest_v1",
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "target": {
+    "property_code": "GA4CG",
+    "source_property_code": "GA4CG",
+    "domain": "championsgreen-ga.com",
+    "property_name": "Champions Green",
+    "city": "Alpharetta",
+    "state": "GA",
+    "community_id": "18ec38d1-b4ec-4cf4-aba8-23ee58c99d8c",
+    "ga4_property_id": "378404769",
+    "ga4_measurement_id": "G-N9YHM93HRV",
+    "gsc_property": "sc-domain:championsgreen-ga.com",
+    "canonical_url": "https://championsgreen-ga.com/",
+    "governed_reference_url": "https://championsgreen-ga.com/"
+  },
+  "routing": {
+    "cloudflare_zone_name": "championsgreen-ga.com",
+    "route_pattern": "championsgreen-ga.com/*",
+    "existing_worker_script": "resi-edge-canonical-championsgreen-ga-com",
+    "mutation_policy": "selected_target_current_user_approved_champions_08_13_2026"
+  },
+  "mobile_shell": {
+    "layout_contract": {
+      "source_reference": "Champions Green fresh source audit from live origin plus governed identity/feed lookup, verified 08/10/2026",
+      "mobile_only": true,
+      "desktop_topper_allowed": false,
+      "property_specific_variants_allowed": false,
+      "standalone_edge_owned_initial_response_required": true,
+      "promo_bar_height_px": 60,
+      "header_height_px": 80,
+      "full_height_mobile_hero_required": true,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false
+    },
+    "brand_theme": {
+      "source": "Champions Green live theme tokens, not copied from prior Champion prototype Worker",
+      "promo_background": "#15284B",
+      "promo_text": "#FFFFFF",
+      "promo_surface": "#F6F6F5",
+      "promo_panel_text": "#15284B",
+      "primary_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "body_text": "#15284B",
+      "panel_background": "#F6F6F5"
+    },
+    "fonts": [
+      {
+        "family": "Lato",
+        "url": "https://championsgreen-ga.com/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400,
+        "style": "normal"
+      },
+      {
+        "family": "Lato",
+        "url": "https://championsgreen-ga.com/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700,
+        "style": "normal"
+      },
+      {
+        "family": "Noto Serif",
+        "url": "https://championsgreen-ga.com/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700,
+        "style": "normal"
+      },
+      {
+        "family": "Brittany Signature",
+        "url": "https://championsgreen-ga.com/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400,
+        "style": "normal"
+      }
+    ],
+    "body_font": "Lato",
+    "heading_font": "Noto Serif",
+    "title_font": "Brittany Signature",
+    "awards": {
+      "present": true,
+      "source": "Champion source audit requires award badge when the native first content block exposes it; missing award is a stop gate",
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg",
+          "alt": "Kingsley Excellence resident satisfaction award badge"
+        }
+      ]
+    },
+    "promo": {
+      "present": true,
+      "source": "feed_backed_cloudflare_browser_rendered_current_offer_verified_08_13_2026",
+      "bar_label": "Up to 1 Month Free",
+      "title": "Up to ONE MONTH FREE for a limited time!",
+      "title_case_required": true,
+      "body": "Stop in today and get up to one month free for a limited time!",
+      "disclaimer": "*Select Homes – Limited Time Offer",
+      "primary_cta_label": "See Availability",
+      "primary_cta_url": "https://championsgreen-ga.com/apartments/?has_specials=true",
+      "secondary_cta_label": "Contact Us",
+      "secondary_cta_url": "https://championsgreen-ga.com/contact/"
+    },
+    "hero": {
+      "source_image": "https://dam.getresi.co/10397/conversions/Champions-Green-Home-Hero_WEB-full.jpg",
+      "image_mobile": "/assets/resi-edge-assets/GA4CG/home/hero-mobile-750x1000.avif",
+      "tm_allowed": false,
+      "headline": "1, 2, and 3 Bedroom Apartments in Alpharetta, GA",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://championsgreen-ga.com/apartments/",
+      "title_text": "Live Better. Live Easy."
+    },
+    "reviews": {
+      "present": true,
+      "source": "live origin review row, verified 08/10/2026",
+      "rating": 4.3,
+      "count": 284,
+      "url": "https://championsgreen-ga.com/reviews/",
+      "last_verified": "08/10/2026",
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "link_required": true
+    },
+    "navigation": {
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/GA4CG",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/GA4CG",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://championsgreen-ga.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://championsgreen-ga.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://championsgreen-ga.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://championsgreen-ga.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://championsgreen-ga.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://championsgreen-ga.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://championsgreen-ga.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://championsgreen-ga.com/contact/"
+        },
+        {
+          "label": "Specials",
+          "url": "https://championsgreen-ga.com/specials/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://championsgreen-ga.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ]
+    },
+    "content_blocks": [
+      {
+        "sequence": 1,
+        "kind": "welcome",
+        "heading": "Welcome to Champions Green",
+        "subheading": "Choose the perfect layout for your lifestyle.",
+        "body": "In Alpharetta, Champions Green offers a welcoming sense of space, light, and comfort in a city known for its energy and innovation. Thoughtfully designed homes create room to spread out and settle in, while the surrounding Alpharetta lifestyle keeps you close to what matters-making every day feel easy and connected.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://championsgreen-ga.com/apartments/",
+        "source_image_url": "https://dam.getresi.co/10398/conversions/Champions-Green-Home-Welcome_WEB-full.jpg",
+        "image_url": "/assets/resi-edge-assets/GA4CG/home/welcome-640.avif",
+        "image_alt": "Pool and clubhouse at Champions Green"
+      },
+      {
+        "sequence": 2,
+        "kind": "features",
+        "eyebrow": "Apartment Features",
+        "heading": "Stylish Living Spaces",
+        "body": "Spread out in spacious interiors with full appliance packages, full-size washers and dryers, abundant natural light, bonus storage, and massive walk-in closets-plus select features like fireplaces, digital thermostats, sunrooms, and extra outdoor storage for added flexibility.",
+        "bullets": [
+          "Full-Size Washer/Dryer",
+          "Massive Walk-In Closets",
+          "Sunrooms",
+          "Digital Thermostats"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://championsgreen-ga.com/features/",
+        "source_image_url": "https://dam.getresi.co/10395/conversions/Champions-Green-Home-Features_WEB-full.jpg",
+        "image_url": "/assets/resi-edge-assets/GA4CG/home/features-900.avif",
+        "image_alt": "Apartment kitchen at Champions Green"
+      }
+    ],
+    "native_continuation": {
+      "required_after_edge_shell": true,
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true
+    }
+  },
+  "desktop": {
+    "mode": "native_passthrough_with_analytics_guards",
+    "desktop_topper_allowed": false,
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "phone_attribution": {
+    "default_source": "VWS",
+    "default_display_phone": "(470) 999-7208",
+    "office_phone_must_not_be_default": "default display is the VWS attribution phone from the governed source lookup",
+    "lookup_trigger": "incoming URL source/id string",
+    "source_lookup": [
+      {
+        "code": "GA4CG30L",
+        "source": "VWS",
+        "phone": "(470) 999-7208"
+      },
+      {
+        "code": "GA4CGAH",
+        "source": "AH",
+        "phone": "(470) 999-7208"
+      },
+      {
+        "code": "GA4CGALIST",
+        "source": "APL",
+        "phone": "(877) 237-1364"
+      },
+      {
+        "code": "GA4CGAR",
+        "source": "APR",
+        "phone": "(470) 999-7208"
+      },
+      {
+        "code": "GA4CGAPT",
+        "source": "ADC-VL",
+        "phone": "(470) 999-7251"
+      },
+      {
+        "code": "GA4CGBNG",
+        "source": "BNG",
+        "phone": "(470) 536-8564"
+      },
+      {
+        "code": "GA4CGGOO",
+        "source": "GOO-VL",
+        "phone": "(470) 536-8564"
+      },
+      {
+        "code": "GA4CGGOA",
+        "source": "GOA",
+        "phone": "(770) 574-4050"
+      },
+      {
+        "code": "GA4CGPOP",
+        "source": "POP",
+        "phone": "(470) 999-7208"
+      },
+      {
+        "code": "GA4CGSOC",
+        "source": "SOC",
+        "phone": "(470) 664-5950"
+      },
+      {
+        "code": "GA4CGUNA",
+        "source": "UNA",
+        "phone": "(470) 999-7208"
+      },
+      {
+        "code": "GA4CGYAH",
+        "source": "YHO",
+        "phone": "(470) 536-8564"
+      },
+      {
+        "code": "GA4CGZI",
+        "source": "ZIL-VL",
+        "phone": "(470) 999-7208"
+      }
+    ]
+  },
+  "analytics": {
+    "owner": "cloudflare_zaraz",
+    "ga4": {
+      "owner": "cloudflare_zaraz",
+      "property_id": "378404769",
+      "measurement_id": "G-N9YHM93HRV",
+      "measurement_id_status": "configured_preview_scoped_in_zaraz",
+      "zaraz_tool_name": "GA4CG"
+    },
+    "heap": {
+      "owner": "cloudflare_zaraz",
+      "app_id": "286627304",
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "passive_timer_allowed": false,
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1",
+        "expected_status": 204
+      },
+      "zaraz_tool_name": "HCG"
+    },
+    "ahrefs": {
+      "owner": "cloudflare_zaraz",
+      "project_policy": "lookup_existing_project_before_create",
+      "existing_project_id": "10125259",
+      "target": "championsgreen-ga.com/",
+      "verified": true,
+      "data_key_status": "must_be_confirmed_in_existing_project_before_apply",
+      "zaraz_tool_name": "AHCG"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "promo_open",
+        "promo_cta_click",
+        "menu_open"
+      ]
+    }
+  },
+  "consent": {
+    "owner": "cloudflare_zaraz_consent",
+    "mode": "finalized_cmp_required",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_finalized_pill_v27_2026_08_12"
+  },
+  "seo": {
+    "llms_url": "https://championsgreen-ga.com/llms.txt",
+    "sitemap_url": "https://championsgreen-ga.com/sitemap_index.xml",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Champions Green Apartments in Alpharetta, GA",
+    "meta_description": "Welcome home to Champions Green in Alpharetta, GA. Discover 1, 2, and 3 bedroom apartments with spacious layouts and convenient amenities.",
+    "og_image": "https://dam.getresi.co/10397/conversions/Champions-Green-Home-Hero_WEB-full.jpg",
+    "stale_identity_scan_required": true,
+    "gsc_indexing_record": "reports/gsc_indexing/championsgreen/2026-08-13/championsgreen_gsc_indexing_evidence_2026-08-13.json"
+  },
+  "captain": {
+    "id": "GA4CG-captain",
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4cg_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/copy_change_alerts/ga4cg_resi_edge_preapply_captain_handoff_2026-08-13.json"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source."
+    }
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/resi_edge_performance/2026-07-10/championsgreen-visual-v3-final/VISUAL_V3_READOUT.md",
+      "reports/resi_edge_performance/2026-07-10/championsgreen-visual-v3-final/psi/psi-summary.json",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+      "reports/ahrefs_admin/20260806_confirm_setup_readonly/ahrefs_project_plan_20260806T203530Z.json",
+      "ATLAS_WORKING_MEMORY.md#2026-07-16-Resi-Portfolio-Edge-Analytics-On-Topper-Baseline"
+    ]
+  },
+  "rollback": {
+    "strategy": "base_reference_only_no_live_mutation; restore previous worker script if an explicit future apply target uses this manifest incorrectly",
+    "previous_worker_script": "portfolio-resi-edge-prototype",
+    "reference_restore_worker_script": "portfolio-resi-edge-prototype",
+    "reference_restore_worker_dir": "ops/cloudflare/portfolio-resi-edge-prototype",
+    "reference_restore_wrangler_config": "ops/cloudflare/portfolio-resi-edge-prototype/wrangler.toml",
+    "no_wordpress_mutation_required": true
+  }
+}

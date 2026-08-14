@@ -10,6 +10,9 @@ set -euo pipefail
 ROOT="/Users/mark/Property_Analytics"
 cd "$ROOT"
 
+# shellcheck source=/Users/mark/Property_Analytics/scripts/lib/python_runtime.sh
+source "$ROOT/scripts/lib/python_runtime.sh"
+PYTHON_BIN="$(pa_select_python_runtime)"
 # shellcheck source=/Users/mark/Property_Analytics/scripts/lib/keeper_runtime.sh
 source "$ROOT/scripts/lib/keeper_runtime.sh"
 pa_load_marketingops_keeper_runtime
@@ -44,17 +47,17 @@ trap cleanup_lock EXIT
   echo
 
   echo "[1/3] Running canonical retry worker..."
-  python3 "$ROOT/Data_Collection/orchestration/retry_incomplete_collections.py"
+  "$PYTHON_BIN" "$ROOT/Data_Collection/orchestration/retry_incomplete_collections.py"
   echo "Retry worker complete"
   echo
 
   echo "[2/3] Regenerating morning full report from current DB state..."
-  python3 "$ROOT/generate_morning_full_report.py"
+  "$PYTHON_BIN" "$ROOT/generate_morning_full_report.py"
   echo "Morning full report generation complete"
   echo
 
   echo "[3/3] Attempting morning full report delivery if closure gates allow..."
-  python3 "$ROOT/send_morning_full_report.py"
+  "$PYTHON_BIN" "$ROOT/send_morning_full_report.py"
   echo "Morning full report send step complete"
   echo
 

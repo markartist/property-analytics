@@ -1,0 +1,18 @@
+name = "resi-edge-canonical-pilot"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+account_id = "5a5a60afaad00085864fe6bab7eb2882"
+workers_dev = false
+
+routes = [
+  { pattern = "pilot.venterradev.com/*", zone_name = "venterradev.com" }
+]
+
+[[d1_databases]]
+binding = "POP_BRIEF_DB"
+database_name = "pop-brief-db"
+database_id = "dad3e7d1-147b-438d-8cd0-2cbf537a87b2"
+
+[[r2_buckets]]
+binding = "RESI_EDGE_ASSETS"
+bucket_name = "resi-edge-assets"

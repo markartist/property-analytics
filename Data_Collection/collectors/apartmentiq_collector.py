@@ -13,12 +13,14 @@ import tempfile
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
 import requests
 import yaml
+
+UTC = timezone.utc
 
 ROOT = Path("/Users/mark/Property_Analytics")
 if str(ROOT) not in sys.path:

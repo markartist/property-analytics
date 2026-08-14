@@ -34,6 +34,7 @@ from Data_Collection.utils.daily_collection_closure import (
     SOURCE_LEVEL_PROPERTY_ID,
     evaluate_daily_collection_closure,
     local_now,
+    reconcile_completed_source_retry_markers,
 )
 from Data_Collection.utils.source_freshness_policy import (
     evaluate_source_freshness,
@@ -374,8 +375,18 @@ def _archive_historical_retry_debt(db: DatabaseManager, now: datetime) -> List[D
 
 def _retry_ga4(db: DatabaseManager, collection_date, now: datetime, collector: PortfolioDataCollector) -> List[Dict[str, object]]:
     queue_items = db.get_retry_queue_items(collection_date, unresolved_only=True, data_source="ga4")
+    source_item = next((item for item in queue_items if str(item.get("property_id") or "") == SOURCE_LEVEL_PROPERTY_ID), None)
     property_items = [item for item in queue_items if str(item.get("property_id") or "") != SOURCE_LEVEL_PROPERTY_ID]
+    latest_run = next((row for row in db.get_latest_collection_runs(collection_date) if str(row.get("data_source") or "").lower() == "ga4"), None)
     if not property_items:
+        if source_item and str((latest_run or {}).get("status") or "").lower() == "completed":
+            db.resolve_collection_retry_queue(
+                collection_date,
+                "ga4",
+                None,
+                notes="Stale source-level GA4 retry marker cleared; latest GA4 run is completed.",
+            )
+            return [{"source": "ga4", "action": "resolved_stale_source_marker"}]
         return []
 
     properties = collector.load_properties()
@@ -386,7 +397,6 @@ def _retry_ga4(db: DatabaseManager, collection_date, now: datetime, collector: P
     }
     end_date = datetime.now() - timedelta(days=1)
     start_date = end_date - timedelta(days=29)
-    latest_run = next((row for row in db.get_latest_collection_runs(collection_date) if str(row.get("data_source") or "").lower() == "ga4"), None)
     collection_id = int(latest_run["collection_id"]) if latest_run else db.start_data_collection(collection_date, "daily", "ga4")
     if latest_run:
         db.update_data_collection_status(collection_id, "in_progress", notes="GA4 targeted retry worker is running.")
@@ -445,6 +455,13 @@ def _retry_ga4(db: DatabaseManager, collection_date, now: datetime, collector: P
         "completed" if remaining == 0 else "retry_scheduled",
         notes="GA4 retry worker cleared all queued properties." if remaining == 0 else f"GA4 retry worker ran; {remaining} property retry item(s) still queued.",
     )
+    if remaining == 0 and source_item:
+        db.resolve_collection_retry_queue(
+            collection_date,
+            "ga4",
+            None,
+            notes="GA4 retry worker cleared all queued properties and source-level work.",
+        )
     return actions
 
 
@@ -1294,6 +1311,7 @@ def run_retry_worker(dry_run: bool = False) -> Dict[str, object]:
         actions.extend(_retry_d1_mirror(db, collection_date, now))
         actions.extend(_retry_psi(db, collection_date, now))
         actions.extend(_retry_property_operating_metrics(db, collection_date, now))
+        actions.extend(reconcile_completed_source_retry_markers(DB_PATH, target_date=collection_date, now=now))
 
     closure = evaluate_daily_collection_closure(DB_PATH, target_date=collection_date, now=now)
     return {

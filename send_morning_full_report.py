@@ -7,7 +7,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from Data_Collection.utils.daily_collection_closure import evaluate_daily_collection_closure
+from Data_Collection.utils.daily_collection_closure import (
+    evaluate_daily_collection_closure,
+    reconcile_completed_source_retry_markers,
+)
 from utils.email_sender import EmailSender
 from utils.summary_email_guard import successful_delivery_exists
 
@@ -85,6 +88,7 @@ def main() -> int:
         print(f"Closure state: {closure['state']} ({closure['summary_reason']})")
         return 0
 
+    reconcile_completed_source_retry_markers(ROOT / "data" / "portfolio_analytics.db", target_date=report_date.date())
     closure = evaluate_daily_collection_closure(ROOT / "data" / "portfolio_analytics.db", target_date=report_date.date())
     if not args.force and not closure.get("ready_for_summary"):
         _write_status(

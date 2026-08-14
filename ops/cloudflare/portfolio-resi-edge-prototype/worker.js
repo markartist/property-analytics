@@ -2,13 +2,13 @@ import OFFICIAL_LBLE_SVG from "./lble.svg";
 import BUNDLED_HERO_MOBILE_AVIF from "./hero-mobile-750x1000.avif";
 
 // Portfolio Resi Edge Stabilization — Champion's Green (GA4CG)
-// Architecture: query-gated performance topper calibrated from native geometry.
-// Gated homepage: edge-owned topper with lazy native continuation.
-// Ungated traffic: passes through to Kinsta origin unchanged.
+// Architecture: production mobile standalone shell calibrated from native geometry.
+// Mobile homepage: edge-owned topper with lazy native continuation.
+// Desktop/other traffic: native clean pass-through with Zaraz CMP.
 // Template input is intentionally concentrated in PROPERTY, ASSET_KEYS, and ANALYTICS.
 // Future properties should change data/config only, then pass /health config validation.
 //
-// Gate: championsgreen-ga.com/?edge_preview=1
+// Preview gate: championsgreen-ga.com/?edge_preview=1
 // Rollback: set EDGE_SHELL_ENABLED="false" in wrangler.toml [vars] + redeploy.
 
 const PROPERTY = {
@@ -30,7 +30,7 @@ const PROPERTY = {
   email: "venterra_championsgreen_website@leads.anyonehome.com",
   // Dynamic — read from native on cache miss; fallback values below
   phoneLabel: "(470) 999-7208",
-  phoneHref: "tel:(470) 999-7208",
+  phoneHref: "tel:+14709997208",
   tourHref: "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/GA4CG",
   applyHref: "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/GA4CG",
   apartmentsHref: "/apartments/",
@@ -45,14 +45,14 @@ const PROPERTY = {
   aboutHref: "/about/",
   smartHubHref: "https://online.venterraliving.com/smarthub/login",
   promoEnabled: true,
-  promoText: "$1,000 off for a limited time!",
+  promoText: "Up to $1,000 off for a limited time!",
   promoDetail: "*Select Homes \u2013 Limited Time Offer",
-  promoImageUrl: "https://dam.getresi.co/3489/conversions/Apex-West-Midtown-Amenities-Amenity-1-full.jpg",
+  promoImageUrl: "/assets/resi-edge-assets/GA4CG/home/amenities-900.avif",
   promoAvailabilityHref: "/apartments/?has_specials=true",
   heroHeadline: "1, 2, and 3 Bedroom Apartments in Alpharetta, GA",
   rating: "4.3",
   reviewCount: "284",
-  kingsleyAwardUrl: "https://dam.getresi.co/2949/Kingsley_Award.svg",
+  kingsleyAwardUrl: "/assets/resi-edge-assets/shared/kingsley-award.svg",
   // Welcome section — from native site
   welcomeTitle: "Welcome to Champions Green",
   welcomeKicker: "Choose the perfect layout for your lifestyle.",
@@ -87,6 +87,27 @@ const PROPERTY = {
   appleTouchIconHref: "/wp-content/uploads/2026/01/apple-touch-icon.png"
 };
 
+const SOURCE_ATTRIBUTION = {
+  source: "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+  generatedRunId: "resi_source_lookup_0995b04ee0a8",
+  externalSourceField: "id",
+  defaultTrackingId: "GA4CG30L",
+  sources: {
+    GA4CG30L: {
+      trackingId: "GA4CG30L",
+      marketingSourceCd: "VWS",
+      phone: "(470) 999-7208",
+      email: "venterra_championsgreen_website_vl@leads.anyonehome.com"
+    },
+    GA4CGGOA: {
+      trackingId: "GA4CGGOA",
+      marketingSourceCd: "GOA",
+      phone: "(770) 574-4050",
+      email: "venterra_championsgreen_google_ads_vl@leads.anyonehome.com"
+    }
+  }
+};
+
 const ASSET_KEYS = {
   heroMobile: "resi-edge-assets/GA4CG/home/hero-mobile-750x1000.avif",
   heroDesktop: "resi-edge-assets/GA4CG/home/hero-desktop-1600.avif",
@@ -115,6 +136,7 @@ const NEIGHBORHOOD_IMAGES = [
 
 const CARE_IMAGE_URL = "https://dam.getresi.co/10519/conversions/96b12eba-0ed5-4bf9-bc62-1e7fec9a6d71-full.jpg";
 const NATIVE_HERO_IMAGE_URL = "https://dam.getresi.co/10397/conversions/Champions-Green-Home-Hero_WEB-full.jpg";
+const KINGSLEY_AWARD_DAM_URL = "https://dam.getresi.co/2949/Kingsley_Award.svg";
 const TRANSPARENT_PIXEL =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3C/svg%3E";
 
@@ -123,14 +145,16 @@ const ANALYTICS = {
   communityId: "18ec38d1-b4ec-4cf4-aba8-23ee58c99d8c",
   propertyName: "Champions Green",
   source: "resi_edge_shell",
-  schemaVersion: "2026-07-23.performance-topper-v16-q36-mobile-hero"
+  schemaVersion: "champions-locked-mobile-upgrade-contract"
 };
 
 const TEMPLATE = {
-  version: "2026-07-23.performance-topper-v16-q36-mobile-hero",
+  version: "champions-locked-mobile-upgrade-contract",
   mode: "performance-topper",
   propertyCode: PROPERTY.code
 };
+
+const ORIGIN_PASSTHROUGH_RESET = false;
 
 const EXACT_NATIVE_PERFORMANCE = {
   heroSourceIncludes: "Champions-Green-Home-Hero",
@@ -157,7 +181,7 @@ const EXACT_NATIVE_PERFORMANCE = {
 };
 
 const DESKTOP_GUARDS = {
-  enabled: true,
+  enabled: false,
   heroSourceIncludes: "Champions-Green-Home-Hero",
   mode: "native-desktop-guards-v2",
   removeScriptSrcIncludes: [
@@ -172,11 +196,31 @@ const DESKTOP_GUARDS = {
 const GATE_PARAM = "edge_preview";
 const GATE_VALUE = "1";
 const NATIVE_CONTINUATION_PATH = "/__resi-edge/native-continuation";
+const ZARAZ_CONSENT_UI_PATH = "/__vtr/zaraz-consent-ui.js";
+const TOPPER_ANALYTICS_PATH = "/__vtr/topper-analytics.js";
+const CONTENTSQUARE_VERIFY_SUPPRESS_PATH = "/__vtr/contentsquare-verify-suppressed.json";
 const CACHE_BYPASS_PARAMS = ["edge_shell_rest", "preview", "preview_id", "static_hero_poc"];
 const RUNTIME_PROPERTY_CACHE_PATH = "/__vtr-edge-runtime-property/GA4CG/home";
-const RUNTIME_PROPERTY_CACHE_VERSION = "2026-07-22-native-specials-v1";
+const RUNTIME_PROPERTY_CACHE_VERSION = "2026-08-08-native-specials-v3";
 const RUNTIME_PROPERTY_CACHE_TTL_SECONDS = 300;
 const NATIVE_PROMO_FETCH_TIMEOUT_MS = 1200;
+const NATIVE_DESKTOP_REQUIRED_STYLESHEETS = [
+  {
+    id: "resi-utility-css-css",
+    href: "https://championsgreen-ga.com/wp-content/plugins/resi-elements-v2/assets/utility.css?ver=7.0.3",
+    media: "all"
+  },
+  {
+    id: "resi-custom-css-css",
+    href: "https://championsgreen-ga.com/wp-content/themes/resi-child-theme/css/custom.css?ver=1763505492",
+    media: "all"
+  },
+  {
+    id: "theme-style-css",
+    href: "https://championsgreen-ga.com/wp-content/themes/resi-child-theme/css/theme.1.css?ver=1774529571",
+    media: "all"
+  }
+];
 
 const MIME_TYPES = {
   avif: "image/avif", webp: "image/webp", svg: "image/svg+xml",
@@ -255,6 +299,9 @@ function escapeHtml(v) {
 function escapeJsonForHtml(value) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
+function compactHtml(html) {
+  return String(html || "").replace(/>\s+</g, "><");
+}
 function propertyAddress() {
   return {
     "@type": "PostalAddress",
@@ -272,10 +319,20 @@ function propertyGeo() {
     longitude: PROPERTY.longitude
   };
 }
-function renderHeadMeta() {
+function renderHeadMeta(options = {}) {
+  const preview = options.preview === true;
   const canonical = PROPERTY.canonicalHref || `${PROPERTY.origin}/`;
   const description = PROPERTY.metaDescription || `${PROPERTY.pageTitle}.`;
   const ogImage = PROPERTY.ogImage || NATIVE_HERO_IMAGE_URL;
+  const ratingValue = Number(PROPERTY.rating);
+  const reviewCount = parseInt(String(PROPERTY.reviewCount || "").replace(/\D+/g, ""), 10);
+  const aggregateRating = Number.isFinite(ratingValue) && reviewCount > 0 ? {
+    "@type": "AggregateRating",
+    ratingValue,
+    bestRating: 5,
+    worstRating: 1,
+    reviewCount
+  } : null;
   const schema = [
     {
       "@context": "https://schema.org",
@@ -284,18 +341,6 @@ function renderHeadMeta() {
       alternateName: PROPERTY.pageTitle,
       description,
       url: PROPERTY.origin
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      name: PROPERTY.name,
-      url: PROPERTY.origin,
-      image: ogImage,
-      telephone: PROPERTY.phoneLabel,
-      email: PROPERTY.email,
-      address: propertyAddress(),
-      geo: propertyGeo(),
-      priceRange: "$$"
     },
     {
       "@context": "https://schema.org",
@@ -309,22 +354,13 @@ function renderHeadMeta() {
       hasMap: PROPERTY.mapsHref,
       petsAllowed: true,
       tourBookingPage: PROPERTY.tourHref,
+      ...(aggregateRating ? { aggregateRating } : {}),
       amenityFeature: PROPERTY.amenityBullets.map((name) => ({ "@type": "LocationFeatureSpecification", name }))
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      name: PROPERTY.name,
-      url: PROPERTY.origin,
-      email: PROPERTY.email,
-      telephone: PROPERTY.phoneLabel,
-      image: ogImage,
-      address: propertyAddress()
     }
   ];
   return `<title>${escapeHtml(PROPERTY.pageTitle)}</title>
   <meta name="description" content="${escapeHtml(description)}">
-  <meta name="robots" content="noindex,nofollow">
+  <meta name="robots" content="${preview ? "noindex,nofollow" : "index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1"}">
   <link rel="canonical" href="${escapeHtml(canonical)}">
   <link rel="shortcut icon" href="${assetAbsolute(PROPERTY.faviconPngHref)}">
   <link rel="icon" href="${assetAbsolute(PROPERTY.faviconPngHref)}" sizes="any" type="image/png">
@@ -377,8 +413,124 @@ function jsonResponse(payload) {
     headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }
   });
 }
+function renderZarazConsentPillScript() {
+  return `<script data-vtr-zaraz-consent-pill="1">(function(w,d){if(w.__vtrZarazConsentPill)return;w.__vtrZarazConsentPill=true;var storageKey="vtr_zaraz_consent_notice_done_v2";var rootId="vtr-cookie-notice";function ready(fn){d.readyState==="loading"?d.addEventListener("DOMContentLoaded",fn,{once:true}):fn()}function z(){return w.zaraz&&w.zaraz.consent}function choices(){var c=z();return c&&typeof c.getAll==="function"?c.getAll():null}function done(){try{return localStorage.getItem(storageKey)==="1"}catch(e){return false}}function mark(){try{localStorage.setItem(storageKey,"1")}catch(e){}}function shouldShow(){if(done()||/(?:^|; )zaraz-consent=/.test(d.cookie||""))return false;var c=choices();return !c||Object.values(c).every(function(v){return v===false})}function remove(){var el=d.getElementById(rootId);if(el)el.remove()}function setAll(value){var c=z();if(!c)return false;if(typeof c.setAll==="function")c.setAll(value);else if(typeof c.set==="function"){var all=choices()||{};var payload={};Object.keys(all).forEach(function(k){payload[k]=value});c.set(payload)}if(value&&typeof c.sendQueuedEvents==="function")c.sendQueuedEvents();d.dispatchEvent(new Event("zarazConsentChoicesUpdated"));mark();remove();return true}function openPrefs(){remove();if(w.zaraz&&typeof w.zaraz.showConsentModal==="function")w.zaraz.showConsentModal()}function show(){if(!shouldShow()||d.getElementById(rootId))return;var style=d.createElement("style");style.id="vtr-cookie-notice-style";style.textContent="#vtr-cookie-notice{position:fixed;left:50%;right:auto;bottom:28px;z-index:2147482500;display:flex;align-items:center;gap:22px;box-sizing:border-box;width:max-content;max-width:calc(100vw - 32px);min-height:84px;margin:0;padding:10px 18px 10px 20px;border:1px solid #EBECEA;border-radius:999px;background:#FFFFFF;color:#15284B;box-shadow:0 18px 32px rgba(0,0,0,.18),0 3px 8px rgba(21,40,75,.08);font-family:Lato,Arial,sans-serif;transform:translateX(-50%)}#vtr-cookie-icon{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:48px;height:48px;color:#15284B}#vtr-cookie-icon svg{display:block;width:40px;height:40px}#vtr-cookie-notice p{flex:0 0 auto;margin:0;color:#1f2937;font-size:24px;font-weight:400;line-height:1.2;white-space:nowrap}#vtr-cookie-notice-actions{display:flex;align-items:center;gap:10px;flex:0 0 auto}#vtr-cookie-notice button{box-sizing:border-box;height:60px;margin:0;padding:0 32px;border-radius:999px;font-family:Lato,Arial,sans-serif;font-size:24px;font-weight:900;letter-spacing:0;line-height:58px;white-space:nowrap;cursor:pointer}#vtr-cookie-manage{min-width:198px;border:2px solid rgba(125,202,194,.24);background:#FFFFFF;color:#2B2B2B;box-shadow:none}#vtr-cookie-manage:hover{border-color:rgba(125,202,194,.44);background:#F6F6F5}#vtr-cookie-accept{min-width:144px;border:2px solid #7DCAC2;background:#7DCAC2;color:#15284B;box-shadow:none}#vtr-cookie-accept:hover{border-color:#3B9189;background:#3B9189;color:#FFFFFF}#vtr-cookie-notice button:focus{outline:3px solid #7DCAC2;outline-offset:2px}@media(max-width:740px){#vtr-cookie-notice{left:10px;right:10px;bottom:10px;width:auto;max-width:none;min-height:0;display:grid;grid-template-columns:auto 1fr;gap:10px 12px;padding:12px;border-radius:24px;transform:none}#vtr-cookie-icon{width:36px;height:36px}#vtr-cookie-icon svg{width:32px;height:32px}#vtr-cookie-notice p{align-self:center;font-size:16px;white-space:normal}#vtr-cookie-notice-actions{grid-column:1/3;display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}#vtr-cookie-notice button{width:100%;height:44px;padding:0 12px;font-size:15px;line-height:42px}#vtr-cookie-manage,#vtr-cookie-accept{min-width:0}}";var wrap=d.createElement("section");wrap.id=rootId;wrap.setAttribute("role","region");wrap.setAttribute("aria-label","Cookie preferences");wrap.innerHTML='<span id="vtr-cookie-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M42 25.5A17.5 17.5 0 1 1 22.5 6c.2 2.7 2.1 5 4.8 5.6-.5 3.3 2.1 6.2 5.4 6.1.7 3.4 4.1 5.5 7.4 4.6 1.1.3 1.9 1.5 1.9 3.2Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="17" r="2" fill="currentColor"/><circle cx="27" cy="25" r="2" fill="currentColor"/><circle cx="17" cy="31" r="2" fill="currentColor"/><circle cx="31" cy="35" r="1.8" fill="currentColor"/></svg></span><p>This website uses cookies</p><div id="vtr-cookie-notice-actions"><button id="vtr-cookie-manage" type="button">Preferences</button><button id="vtr-cookie-accept" type="button">Accept</button></div>';d.head.appendChild(style);d.body.appendChild(wrap);wrap.querySelector("#vtr-cookie-accept").addEventListener("click",function(){setAll(true)});wrap.querySelector("#vtr-cookie-manage").addEventListener("click",openPrefs)}function boot(){var tries=0;var timer=setInterval(function(){tries++;if(z()||tries>=20){clearInterval(timer);show()}},250)}d.addEventListener("zarazConsentChoicesUpdated",function(){mark();remove()});ready(boot)})(window,document);</script>`;
+}
+function stripNativeAnalytics(html) {
+  return html
+    .replace(/\s*<script\b[^>]*src=["'][^"']*googletagmanager\.com\/gtag\/js[^"']*["'][^>]*><\/script>\s*/gi, "\n")
+    .replace(/\s*<script\b[^>]*>[\s\S]*?googletagmanager\.com\/gtm\.js[\s\S]*?<\/script>\s*/gi, "\n")
+    .replace(/\s*<noscript\b[^>]*>[\s\S]*?googletagmanager\.com\/ns\.html[\s\S]*?<\/noscript>\s*/gi, "\n")
+    .replace(/\s*<script\b[^>]*>[\s\S]*?gtag\(['"]config['"][\s\S]*?<\/script>\s*/gi, "\n")
+    .replace(/\s*<!-- Heap Script -->[\s\S]*?<!-- End Heap Script -->\s*/gi, "\n")
+    .replace(/\s*<script\b[^>]*>[\s\S]*?tcvsapi\.contentsquare\.com\/v2\/projects\/[^"']*verify-installation\/auto[\s\S]*?<\/script>\s*/gi, "\n")
+    .replace(/\s*<script[^>]*id=["']resi-pixel-js["'][^>]*><\/script>\s*/gi, "\n");
+}
+function normalizeNativeIdentityHtml(html) {
+  return String(html || "")
+    .replace(/https:\/\/championsgreen\.kinsta\.cloud\/?/gi, PROPERTY.origin + "/")
+    .replace(/http:\/\/championsgreen\.kinsta\.cloud\/?/gi, PROPERTY.origin + "/");
+}
+function injectZarazConsentPill(html) {
+  if (html.includes("data-vtr-zaraz-consent-pill")) return html;
+  const script = renderZarazConsentUiScriptTag();
+  if (html.includes("</body>")) return html.replace("</body>", `${script}</body>`);
+  return `${html}${script}`;
+}
+function renderNativeDesktopVisualRepairStyle() {
+  return `<style data-vtr-native-desktop-visual-repair="1">
+@media (min-width:768px){
+  sup.tm{display:none!important}
+  .popup-element[data-page-section="promo_bar"] .tm-popdown:not(.uk-open){display:none!important}
+}
+</style>`;
+}
+function repairNativeDesktopStylesheets(html) {
+  const style = html.includes("data-vtr-native-desktop-visual-repair") ? "" : renderNativeDesktopVisualRepairStyle();
+  const links = NATIVE_DESKTOP_REQUIRED_STYLESHEETS
+    .filter((item) => !html.includes(item.href.split("?")[0]))
+    .map((item) => `<link rel="stylesheet" id="${item.id}" href="${item.href}" media="${item.media}">`)
+    .join("\n");
+  if (!links && !style) return html;
+  const marker = "<!-- vtr native desktop css repair -->";
+  if (html.includes("</head>")) return html.replace("</head>", `${marker}\n${links}\n${style}\n</head>`);
+  return `${links}\n${style}\n${html}`;
+}
+function renderZarazConsentViewportFixScript() {
+  return `<script data-vtr-zaraz-consent-viewport-fix="1">(function(w,d){if(w.__vtrZarazConsentViewportFix)return;w.__vtrZarazConsentViewportFix=true;function fit(){var el=d.getElementById("vtr-cookie-notice");if(!el||!w.visualViewport||w.visualViewport.width>740)return;el.style.left="10px";el.style.right="10px";el.style.bottom="auto";el.style.width="auto";el.style.maxWidth="none";el.style.transform="none";el.style.top=Math.max(10,Math.floor(w.visualViewport.height-el.offsetHeight-10))+"px";}function watch(){fit();if(w.visualViewport){w.visualViewport.addEventListener("resize",fit,{passive:true});w.visualViewport.addEventListener("scroll",fit,{passive:true});}var observer=new MutationObserver(fit);observer.observe(d.documentElement,{childList:true,subtree:true});setTimeout(fit,0);setTimeout(fit,500);setTimeout(fit,1500);}d.readyState==="loading"?d.addEventListener("DOMContentLoaded",watch,{once:true}):watch();})(window,document);</script>`;
+}
+function scriptBody(scriptTag) {
+  return String(scriptTag || "").replace(/^<script\b[^>]*>/i, "").replace(/<\/script>$/i, "");
+}
+function renderZarazConsentUiScriptTag() {
+  return `<script src="${ZARAZ_CONSENT_UI_PATH}?v=${encodeURIComponent(TEMPLATE.version)}" defer data-vtr-zaraz-consent-ui="1"></script>`;
+}
+function serveZarazConsentUiScript() {
+  const js = `${scriptBody(renderZarazConsentPillScript())}\n${scriptBody(renderZarazConsentViewportFixScript())}`;
+  return new Response(js, {
+    headers: {
+      "content-type": "application/javascript; charset=utf-8",
+      "cache-control": "public, max-age=31536000, immutable"
+    }
+  });
+}
+function serveContentsquareVerifySuppressed() {
+  return new Response('{"ok":true,"suppressed":"contentsquare_verify"}\n', {
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "public, max-age=3600",
+      "x-resi-edge-template-version": TEMPLATE.version
+    }
+  });
+}
+async function passThroughNativeCleanHtml(request) {
+  const originResponse = await fetch(request, { cf: { cacheEverything: false, cacheTtl: 0 } });
+  const contentType = originResponse.headers.get("content-type") || "";
+  if (request.method !== "GET" || originResponse.status !== 200 || !contentType.includes("text/html")) {
+    return originResponse;
+  }
+  const headers = new Headers(originResponse.headers);
+  headers.delete("content-length");
+  headers.delete("set-cookie");
+  headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("x-resi-edge-prototype", "champions-green");
+  headers.set("x-resi-edge-mode", "native-clean-cmp");
+  headers.set("x-resi-edge-template-version", TEMPLATE.version);
+  headers.append("server-timing", 'vtr_champions_native_clean_cmp;desc="native-pass-through"');
+  const html = repairNativeDesktopStylesheets(injectZarazConsentPill(normalizeNativeIdentityHtml(stripNativeAnalytics(await originResponse.text()))));
+  return new Response(html, { status: originResponse.status, statusText: originResponse.statusText, headers });
+}
 function isMobile(request) {
   return /Android|iPhone|iPod|IEMobile|Mobile/i.test(request.headers.get("user-agent") || "");
+}
+function formatPhoneHref(phone) {
+  const digits = String(phone || "").replace(/\D+/g, "");
+  if (digits.length === 10) return `tel:+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `tel:+${digits}`;
+  return digits ? `tel:${digits}` : PROPERTY.phoneHref;
+}
+function resolveContact(request) {
+  const url = new URL(request.url);
+  const requestedTrackingId =
+    url.searchParams.get(SOURCE_ATTRIBUTION.externalSourceField) || url.searchParams.get("trackingId");
+  const selected =
+    (requestedTrackingId && SOURCE_ATTRIBUTION.sources[requestedTrackingId]) ||
+    SOURCE_ATTRIBUTION.sources[SOURCE_ATTRIBUTION.defaultTrackingId];
+  const phone = selected.phone || PROPERTY.phoneLabel;
+  return {
+    phoneLabel: phone,
+    phoneHref: formatPhoneHref(phone),
+    email: selected.email || PROPERTY.email,
+    requestedTrackingId: requestedTrackingId || null,
+    selectedTrackingId: selected.trackingId,
+    selectedMarketingSourceCd: selected.marketingSourceCd,
+    sourceSelection: requestedTrackingId && SOURCE_ATTRIBUTION.sources[requestedTrackingId] ? "source" : "default"
+  };
+}
+function ratingFillPercent(value) {
+  const rating = Number(value);
+  if (!Number.isFinite(rating)) return 100;
+  return Math.max(0, Math.min(100, Math.round((rating / 5) * 100)));
 }
 function contentTypeForKey(key) {
   const ext = (key.split(".").pop() || "").toLowerCase();
@@ -468,11 +620,11 @@ function extractSectionByNeedle(html, needle) {
 
 function extractNativeRuntimeProperty(html) {
   const promoSection = extractSectionByNeedle(html, 'data-page-section="promo_bar"') || extractSectionByNeedle(html, "has_specials=true");
-  const promoTextFromSection = firstRegex(promoSection, /(\$[^<]{1,120}(?:limited time|off|special)[^<]{0,80})/i);
-  const promoTextFromPage = firstRegex(html, /(\$[^<]{1,120}(?:limited time|off|special)[^<]{0,80})/i);
+  const promoTextFromSection = firstRegex(promoSection, /((?:Up to\s+)?\$[^<]{1,120}(?:limited time|off|special)[^<]{0,80})/i);
+  const promoTextFromPage = firstRegex(html, /((?:Up to\s+)?\$[^<]{1,120}(?:limited time|off|special)[^<]{0,80})/i);
   const promoText = normalizeText(promoTextFromSection || promoTextFromPage || PROPERTY.promoText);
   const availabilityHref = absolutizeHref(firstRegex(promoSection || html, /href=["']([^"']*has_specials=true[^"']*)["']/i)) || PROPERTY.promoAvailabilityHref;
-  const promoImageUrl = firstRegex(promoSection, /(?:src|data-src)=["']([^"']*(?:dam\.getresi\.co|wp-content)[^"']*)["']/i) || PROPERTY.promoImageUrl;
+  const promoImageUrl = PROPERTY.promoImageUrl;
   const promoEnabled = Boolean(promoSection && (promoText || /has_specials=true|special/i.test(promoSection)));
   const phoneLabel = normalizeText(firstRegex(html, /href=["']tel:([^"']+)["'][^>]*>(.*?)<\/a>/is) || firstRegex(html, /\((\d{3})\)\s*\d{3}-\d{4}/));
   const phoneHref = firstRegex(html, /href=["'](tel:[^"']+)["']/i);
@@ -506,7 +658,7 @@ async function fetchNativeRuntimeProperty(request, env) {
     return {
       ok: true,
       source: "native-fetch",
-      property: { ...PROPERTY, ...extractNativeRuntimeProperty(html) },
+      property: extractNativeRuntimeProperty(html),
       checkedAt: new Date().toISOString()
     };
   } finally {
@@ -552,6 +704,7 @@ async function resolveRuntimeProperty(request, env, ctx) {
 async function serveR2Object(env, key, request) {
   if (key === ASSET_KEYS.lble) return serveBundledLbleAsset(request);
   if (key === ASSET_KEYS.heroMobile) return serveBundledHeroMobileAsset(request);
+  if (key === "resi-edge-assets/shared/kingsley-award.svg") return serveKingsleyAwardAsset(request);
   if (!env.RESI_EDGE_ASSETS) return new Response("R2 binding missing", { status: 500 });
   const obj = await env.RESI_EDGE_ASSETS.get(key);
   if (!obj) {
@@ -567,6 +720,27 @@ async function serveR2Object(env, key, request) {
   headers.set("access-control-allow-origin", "*");
   if (request.method === "HEAD") return new Response(null, { headers });
   return new Response(obj.body, { headers });
+}
+
+async function serveKingsleyAwardAsset(request) {
+  const originResponse = await fetch(KINGSLEY_AWARD_DAM_URL, {
+    headers: {
+      accept: "image/svg+xml,image/*,*/*;q=0.8",
+      "user-agent": request.headers.get("user-agent") || "Venterra WebOps Edge Asset Fetch"
+    },
+    cf: {
+      cacheEverything: true,
+      cacheTtl: 31536000
+    }
+  });
+  if (!originResponse.ok) return new Response("Not found", { status: 404 });
+  const headers = new Headers(originResponse.headers);
+  headers.set("content-type", "image/svg+xml; charset=utf-8");
+  headers.set("cache-control", "public, max-age=31536000, immutable");
+  headers.set("access-control-allow-origin", "*");
+  headers.delete("set-cookie");
+  if (request.method === "HEAD") return new Response(null, { headers });
+  return new Response(originResponse.body, { status: originResponse.status, statusText: originResponse.statusText, headers });
 }
 
 function serveBundledLbleAsset(request) {
@@ -626,9 +800,14 @@ function buildShellCacheKey(request, env, variant = "mobile") {
     if (CACHE_BYPASS_PARAMS.includes(name.toLowerCase())) return null;
   }
   const version = env.EDGE_HTML_CACHE_VERSION ?? "default";
+  const sourceId =
+    url.searchParams.get(SOURCE_ATTRIBUTION.externalSourceField) ||
+    url.searchParams.get("trackingId") ||
+    SOURCE_ATTRIBUTION.defaultTrackingId;
+  const previewMode = url.searchParams.get(env.EDGE_PREVIEW_PARAM ?? GATE_PARAM) === (env.EDGE_PREVIEW_VALUE ?? GATE_VALUE) ? "preview" : "production";
   const cacheUrl = new URL(request.url);
   cacheUrl.pathname = "/__vtr-edge-shell-cache/GA4CG/home";
-  cacheUrl.search = `?variant=${encodeURIComponent(variant)}&v=${encodeURIComponent(version)}`;
+  cacheUrl.search = `?variant=${encodeURIComponent(variant)}&source=${encodeURIComponent(sourceId)}&mode=${encodeURIComponent(previewMode)}&v=${encodeURIComponent(version)}`;
   return new Request(cacheUrl.toString(), { method: "GET" });
 }
 
@@ -651,11 +830,17 @@ function storeInCache(cacheKey, response, env, ctx) {
 
 export default {
   async fetch(request, env, ctx) {
+    if (ORIGIN_PASSTHROUGH_RESET) {
+      return fetch(request);
+    }
+
     const url = new URL(request.url);
     const shellEnabled = (env.EDGE_SHELL_ENABLED ?? "true") !== "false";
     const gateParam = env.EDGE_PREVIEW_PARAM ?? GATE_PARAM;
     const gateValue = env.EDGE_PREVIEW_VALUE ?? GATE_VALUE;
     const isGated = shellEnabled && url.searchParams.get(gateParam) === gateValue;
+    const isHomepage = url.pathname === "/" || url.pathname === "";
+    const isMobileHomepageShell = shellEnabled && isHomepage && isMobile(request);
     const configStatus = validateShellConfig();
 
     if (url.pathname === "/health") {
@@ -667,6 +852,15 @@ export default {
     if (url.pathname.startsWith("/assets/")) {
       return serveR2Object(env, decodeURIComponent(url.pathname.replace(/^\/assets\//, "")), request);
     }
+    if (url.pathname === ZARAZ_CONSENT_UI_PATH) {
+      return serveZarazConsentUiScript();
+    }
+    if (url.pathname === TOPPER_ANALYTICS_PATH) {
+      return serveTopperAnalyticsScript(request);
+    }
+    if (url.pathname === CONTENTSQUARE_VERIFY_SUPPRESS_PATH) {
+      return serveContentsquareVerifySuppressed();
+    }
     if (url.pathname === "/favicon.ico") {
       return serveNativeFavicon(request);
     }
@@ -674,13 +868,14 @@ export default {
       return serveNativeContinuation(request, env);
     }
 
-    // Query-gated homepage: serve the edge-owned topper for the high-score
-    // first viewport, calibrated from the measured native geometry contract.
-    if (isGated && (url.pathname === "/" || url.pathname === "")) {
+    // Production mobile homepage: serve the edge-owned shell for the high-score
+    // first viewport. Desktop and non-homepage traffic stay native clean.
+    if (isMobileHomepageShell) {
       if (!configStatus.ok) {
         return jsonResponse({ ok: false, error: "edge_shell_config_invalid", config: configStatus });
       }
-      const variant = isMobile(request) ? "mobile" : "desktop";
+      const variant = "mobile";
+      const preview = isGated;
       const cacheKey = buildShellCacheKey(request, env, variant);
       const cached = await getFromCache(cacheKey);
       if (cached) {
@@ -690,11 +885,19 @@ export default {
         headers.set("x-resi-edge-mode", TEMPLATE.mode);
         headers.set("x-resi-edge-template-version", TEMPLATE.version);
         headers.set("x-resi-edge-device", variant);
-        headers.set("x-robots-tag", "noindex, nofollow");
+        headers.set("x-resi-edge-production", preview ? "preview-mobile-shell" : "mobile-shell");
+        if (preview) headers.set("x-robots-tag", "noindex, nofollow");
+        else headers.delete("x-robots-tag");
         headers.append("server-timing", 'vtr_performance_topper;desc="cache-hit"');
         return new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers });
       }
       const runtime = await resolveRuntimeProperty(request, env, ctx);
+      const contact = resolveContact(request);
+      const runtimeProperty = {
+        ...runtime.property,
+        ...contact,
+        telephoneSchema: formatPhoneHref(contact.phoneLabel).replace(/^tel:/, "")
+      };
       const headers = new Headers({
         "content-type": "text/html; charset=utf-8",
         "cache-control": "public, max-age=0, s-maxage=300",
@@ -704,13 +907,16 @@ export default {
         "x-resi-edge-template-version": TEMPLATE.version,
         "x-resi-edge-device": variant,
         "x-resi-edge-runtime-property": runtime.source,
-        "x-resi-edge-promo-state": runtime.property.promoEnabled ? "enabled" : "disabled",
-        "x-robots-tag": "noindex, nofollow"
+        "x-resi-edge-promo-state": runtimeProperty.promoEnabled ? "enabled" : "disabled",
+        "x-resi-edge-source-selection": runtimeProperty.sourceSelection,
+        "x-resi-edge-tracking-id": runtimeProperty.selectedTrackingId,
+        "x-resi-edge-production": preview ? "preview-mobile-shell" : "mobile-shell"
       });
+      if (preview) headers.set("x-robots-tag", "noindex, nofollow");
       headers.append("server-timing", 'vtr_performance_topper;desc="measured-geometry"');
       headers.append("server-timing", `vtr_runtime_property;desc="${runtime.source}"`);
       headers.append("link", `<${assetAbsolute(assetUrl(variant === "mobile" ? ASSET_KEYS.heroMobile : ASSET_KEYS.heroDesktop))}>; rel=preload; as=image; fetchpriority=high; type=image/avif`);
-      const response = new Response(renderPerformanceHybridDocument(variant, runtime.property), { status: 200, headers });
+      const response = new Response(compactHtml(renderPerformanceHybridDocument(variant, runtimeProperty, { preview })), { status: 200, headers });
       storeInCache(cacheKey, response, env, ctx);
       return response;
     }
@@ -767,7 +973,8 @@ async function serveExactNativeHomepage(request, variant = "desktop") {
   headers.append("link", `<${exactNativeHeroAbsolute(variant)}>; rel=preload; as=image; fetchpriority=high${variant === "mobile" ? "; type=image/avif" : ""}`);
   headers.delete("set-cookie");
 
-  const response = new Response(originResponse.body, {
+  const html = normalizeNativeIdentityHtml(stripNativeAnalytics(await originResponse.text()));
+  const response = new Response(html, {
     status: originResponse.status,
     statusText: originResponse.statusText,
     headers
@@ -862,6 +1069,7 @@ class NativeContinuationHeadRewriter {
 
   element(element) {
     element.prepend(`<base href="${PROPERTY.origin}/">`, { html: true });
+    element.prepend(`<script data-vtr-cs-verify-suppress="1">(function(w){var p=/tcvsapi\\.contentsquare\\.com\\/v2\\/projects\\/[^/]+\\/verify-installation\\/auto/i;var local="${CONTENTSQUARE_VERIFY_SUPPRESS_PATH}";if(w.fetch){var f=w.fetch;w.fetch=function(input,init){var u=typeof input==="string"?input:input&&input.url;if(p.test(String(u||"")))return f.call(this,local,{credentials:"same-origin",cache:"force-cache"});return f.apply(this,arguments)}}if(w.XMLHttpRequest){var open=w.XMLHttpRequest.prototype.open;w.XMLHttpRequest.prototype.open=function(method,url){if(p.test(String(url||"")))url=local;return open.apply(this,[method,url].concat([].slice.call(arguments,2)))}}})(window);</script>`, { html: true });
     element.append(`<style data-vtr-native-continuation="1">
 ${hiddenNativeSectionCss()}
 html{margin:0!important;padding:0!important;overflow:hidden}
@@ -1170,6 +1378,7 @@ function renderNeighborhoodTiles() {
 }
 
 function renderVenterraLotusMark() {
+  return `<a class="vtr-shell-drawer-logo" href="${PROPERTY.origin}/" aria-label="Venterra home">VENTERRA</a>`;
   return `<a class="vtr-shell-drawer-logo" href="${PROPERTY.origin}/" aria-label="Venterra home">
     <svg xmlns="http://www.w3.org/2000/svg" width="70.34" height="41.6" viewBox="0 0 70.34 41.6" aria-hidden="true" focusable="false"><path d="M28.24 10.31l6.91 7.17 6.91-7.17-6.91-7.17-6.91 7.17Zm6.91 10.33c-.35 0-.69-.14-.93-.4l-8.71-9.04c-.48-.5-.48-1.3 0-1.8L34.21.38c.49-.51 1.38-.51 1.86 0l8.71 9.04c.48.5.48 1.3 0 1.8l-8.71 9.04c-.24.25-.58.4-.92.4" fill="currentColor"/><path d="M66.24 27.18c-.04.04-.07.08-.11.12-.08.1-.17.19-.26.29-.05.06-.11.12-.16.18-.08.09-.16.18-.24.27-.06.06-.12.13-.18.19-.09.09-.17.18-.26.28-.07.07-.14.14-.21.21-.09.09-.17.18-.26.27-.07.07-.15.15-.22.22-.09.09-.18.19-.28.28-.08.08-.16.15-.23.23-.1.1-.19.19-.3.29-.08.08-.17.16-.26.24-.1.1-.2.19-.3.29-.09.08-.18.16-.27.25-.11.1-.21.19-.32.29-.09.08-.19.17-.28.25-.11.1-.22.19-.34.29-.1.08-.2.17-.3.25-.11.1-.23.19-.35.29-.1.08-.21.17-.31.25-.12.1-.24.19-.36.29-.11.08-.22.17-.32.25-.12.1-.25.19-.38.29-.11.08-.23.17-.34.25-.13.09-.26.19-.39.28-.12.08-.23.17-.35.25-.13.09-.27.18-.4.27-.12.08-.24.16-.36.24-.14.09-.27.18-.41.27-.13.08-.25.16-.38.24-.14.09-.28.17-.42.26-.13.08-.26.15-.39.23-.14.08-.29.17-.44.25-.13.07-.27.15-.4.22-.15.08-.3.16-.45.24-.14.07-.27.14-.41.21-.15.08-.31.15-.46.22-.14.07-.28.13-.42.2-.16.07-.32.14-.48.21-.14.06-.28.12-.43.18-.16.07-.33.13-.49.19-.14.06-.29.11-.44.16-.17.06-.34.12-.5.18-.15.05-.3.1-.45.15-.17.05-.34.1-.52.16-.15.04-.3.09-.45.13-.18.05-.35.09-.53.14-.15.04-.3.08-.46.11-.18.04-.37.08-.55.11-.15.03-.3.06-.45.09-.19.03-.38.06-.57.09-.15.02-.3.05-.45.07-.2.03-.4.04-.6.06-.15.02-.29.03-.44.05-.22.02-.44.03-.66.04-.13 0-.27.02-.4.02-.27 0-.54 0-.81 0h-.27c-.14 0-.28-.01-.42-.02h0c5.39-2.83 8.94-7.4 11.26-11.99.17-.02.34-.04.51-.06.63-.07 1.25-.12 1.87-.16.2-.01.41-.03.61-.04 1.14-.07 2.25-.1 3.29-.12h.88c1.65 0 3.11.06 4.28.13.19.01.38.02.56.04-.11.13-.22.26-.34.39M3.78 26.78c2.64-.18 7.2-.34 12 .21 2.33 4.61 5.9 9.19 11.32 12.02-5.1.25-10.24-1.38-15.33-4.9-3.66-2.53-6.43-5.48-7.99-7.33m10.54-12.74c.09.05.19.1.28.14 4.93 2.56 16.05 9.08 19.21 17.32-.76 2.37-.9 4.74-.43 7.07-7.13-1.65-12.52-6.39-16-14.13-1.82-4.06-2.67-8.01-3.05-10.4m41.71.01c-.97 6-4.93 21.86-19.96 24.74-3.14-11.71 13.86-21.61 19.96-24.74m14.23 11.13c-.18-.41-.57-.7-1.02-.76-.28-.04-6.34-.79-13.41-.17 2.64-6.44 3.07-12.21 3.08-12.33.03-.45-.18-.89-.55-1.14-.37-.26-.85-.31-1.27-.12-.29.13-7.3 3.25-13.7 8.41-3.77 3.04-6.51 6.15-8.21 9.28-1.71-3.13-4.45-6.24-8.21-9.28-6.4-5.16-13.4-8.28-13.7-8.41-.41-.18-.89-.14-1.27.12-.37.26-.58.69-.55 1.14 0 .12.44 5.89 3.08 12.33-7.07-.62-13.13.14-13.41.17-.45.06-.84.35-1.02.76-.18.41-.1.89.16 1.27.13.18 10.52 15.11 25.93 15.16h18.1c15.42-.2 25.63-14.98 25.75-15.16.26-.37.39-.85.21-1.27" fill="currentColor"/></svg>
   </a>`;
@@ -1195,12 +1404,48 @@ function renderDrawerSocialIcon(type) {
   return `<span aria-hidden="true">G</span>`;
 }
 
-function renderTopperAnalyticsRecorder() {
-  const analyticsJson = JSON.stringify(ANALYTICS).replace(/</g, "\\u003c");
+function currentTopperAnalytics() {
+  return {
+    ...ANALYTICS,
+    trackingId: PROPERTY.selectedTrackingId || SOURCE_ATTRIBUTION.defaultTrackingId,
+    marketingSourceCd: PROPERTY.selectedMarketingSourceCd || SOURCE_ATTRIBUTION.sources[SOURCE_ATTRIBUTION.defaultTrackingId].marketingSourceCd,
+    sourceSelection: PROPERTY.sourceSelection || "default",
+    requestedTrackingId: PROPERTY.requestedTrackingId || null
+  };
+}
+function renderTopperAnalyticsScriptTag() {
+  const analytics = currentTopperAnalytics();
+  const params = new URLSearchParams({
+    v: TEMPLATE.version,
+    tracking_id: analytics.trackingId,
+    marketing_source_cd: analytics.marketingSourceCd,
+    source_selection: analytics.sourceSelection,
+    requested_tracking_id: analytics.requestedTrackingId || ""
+  });
+  return `<script src="${TOPPER_ANALYTICS_PATH}?${params.toString()}" data-vtr-topper-analytics="1"></script>`;
+}
+function serveTopperAnalyticsScript(request) {
+  const url = new URL(request.url);
+  const analytics = {
+    ...ANALYTICS,
+    trackingId: url.searchParams.get("tracking_id") || SOURCE_ATTRIBUTION.defaultTrackingId,
+    marketingSourceCd: url.searchParams.get("marketing_source_cd") || SOURCE_ATTRIBUTION.sources[SOURCE_ATTRIBUTION.defaultTrackingId].marketingSourceCd,
+    sourceSelection: url.searchParams.get("source_selection") || "default",
+    requestedTrackingId: url.searchParams.get("requested_tracking_id") || null
+  };
+  return new Response(renderTopperAnalyticsRecorder(analytics), {
+    headers: {
+      "content-type": "application/javascript; charset=utf-8",
+      "cache-control": "public, max-age=31536000, immutable"
+    }
+  });
+}
+function renderTopperAnalyticsRecorder(analytics = currentTopperAnalytics()) {
+  const analyticsJson = JSON.stringify(analytics).replace(/</g, "\\u003c");
   return `var A=${analyticsJson};
     var DK='vtr_edge_pv_'+A.propertyCode;
     var heapReplayAllowed=false;
-    function vtrPayload(x){return Object.assign({property_code:A.propertyCode,community_id:A.communityId,property_name:A.propertyName,source:A.source,schema_version:A.schemaVersion,path:location.pathname},x||{})}
+    function vtrPayload(x){return Object.assign({property_code:A.propertyCode,community_id:A.communityId,property_name:A.propertyName,source:A.source,schema_version:A.schemaVersion,path:location.pathname,tracking_id:A.trackingId,marketing_source_cd:A.marketingSourceCd,source_selection:A.sourceSelection,requested_tracking_id:A.requestedTrackingId},x||{})}
     function vtrHeapReady(){return !!(window.heap&&typeof window.heap.track==='function'&&!Array.isArray(window.heap))}
     function vtrReplayHeap(){if(!vtrHeapReady()||!window.__vtrHeapEventQueue||!window.__vtrHeapEventQueue.length)return false;var q=window.__vtrHeapEventQueue.splice(0);q.forEach(function(item){try{window.heap.track(item.event,item.payload)}catch(e){window.__vtrHeapEventQueue.unshift(item)}});return true}
     function vtrAllowHeapReplay(reason){heapReplayAllowed=true;window.__vtrHeapReplayReason=reason||'allowed';vtrReplayHeap()}
@@ -1294,7 +1539,7 @@ function renderHybridShell() {
       </picture>
       <div class="vtr-shell-hero-content">
         <a class="vtr-shell-rating" href="${PROPERTY.reviewsHref}" aria-label="${PROPERTY.rating} star rating from ${PROPERTY.reviewCount} reviews">
-          <span class="vtr-shell-stars" aria-hidden="true">\u2605\u2605\u2605\u2605\u2605</span>
+          <span class="vtr-shell-stars" style="--rating-percent:${ratingFillPercent(PROPERTY.rating)}%" aria-hidden="true">\u2605\u2605\u2605\u2605\u2605</span>
           <span>(${PROPERTY.rating}) ${PROPERTY.reviewCount} Reviews</span>
         </a>
         <div class="vtr-shell-kicker" role="img" aria-label="Live Better. Live Easy.">
@@ -1337,6 +1582,7 @@ function renderHybridShell() {
     </section>
   </main>
 
+  ${renderTopperAnalyticsScriptTag()}
   <script data-vtr-edge-hybrid-shell="interaction">(function(){
     var root=document.currentScript&&document.currentScript.closest?document.currentScript.closest('.vtr-edge-hybrid-shell'):document;
     var menu=root.querySelector('.vtr-shell-menu');
@@ -1346,16 +1592,14 @@ function renderHybridShell() {
     if(menu)menu.addEventListener('click',function(){setDrawer(true)});
     if(close)close.addEventListener('click',function(){setDrawer(false)});
     document.addEventListener('keydown',function(e){if(e.key==='Escape')setDrawer(false)});
-    ${renderTopperAnalyticsRecorder()}
     document.addEventListener('click',function(e){var el=e.target&&e.target.closest?e.target.closest('a[href],button'):null;if(!el||!root.contains(el))return;var h=el.getAttribute('href')||'',t=(el.textContent||'').trim(),promo=el.getAttribute('data-vtr-promo-cta');if(promo){vtrPush('promo_cta_click',{cta_label:t,cta_href:h,promo_cta:promo})}if(h.indexOf('/apartments/')!==-1||t==='Find Your Home'){vtrPush('find_your_home_click',{cta_label:t,cta_href:h})}else if(h.indexOf('scheduleTour')!==-1||t.indexOf('Tour')!==-1){vtrPush('schedule_tour_click',{cta_label:t,cta_href:h})}else if(h.indexOf('createPipelineApplication')!==-1||t.indexOf('Apply')!==-1){vtrPush('apply_now_click',{cta_label:t,cta_href:h})}},{passive:true});
 	    var promoOpened=false;var promo=root.querySelector('.vtr-shell-promo');var promoToggle=root.querySelector('.vtr-shell-promo-toggle');var promoClose=root.querySelector('.vtr-shell-promo-close');function setPromo(open){if(!promo||!promoToggle)return;promo.dataset.open=open?'true':'false';promoToggle.setAttribute('aria-expanded',open?'true':'false');if(open&&!promoOpened){promoOpened=true;vtrPush('promo_open',{promo_text:promoToggle.textContent.trim()})}}if(promoToggle)promoToggle.addEventListener('click',function(){setPromo(!(promo.dataset.open==='true'))});if(promoClose)promoClose.addEventListener('click',function(){setPromo(false)});document.addEventListener('click',function(e){if(!promo||promo.dataset.open!=='true')return;if(e.target&&e.target.closest&&e.target.closest('.vtr-shell-promo'))return;setPromo(false)},{passive:true});
 	    if(menu)menu.addEventListener('click',function(){vtrPush('menu_open',{menu:'mobile'})});
-	    var reveals=[].slice.call(root.querySelectorAll('.vtr-shell-reveal'));if(reveals.length){root.setAttribute('data-reveal-ready','true');if(!('IntersectionObserver'in window)){reveals.forEach(function(el){el.dataset.visible='true'})}else{var io=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){entry.target.dataset.visible='true';io.unobserve(entry.target)}})},{rootMargin:'0px 0px -12% 0px',threshold:.18});reveals.forEach(function(el){io.observe(el)})}}
 	  })();</script>
 </div>`;
 }
 
-function renderPerformanceHybridDocument(variant = "desktop", property = PROPERTY) {
+function renderPerformanceHybridDocument(variant = "desktop", property = PROPERTY, options = {}) {
   return renderWithRuntimeProperty(property, () => {
     const heroMobileUrl = assetUrl(ASSET_KEYS.heroMobile);
     const heroDesktopUrl = assetUrl(ASSET_KEYS.heroDesktop);
@@ -1364,7 +1608,7 @@ function renderPerformanceHybridDocument(variant = "desktop", property = PROPERT
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  ${renderHeadMeta()}
+  ${renderHeadMeta({ preview: options.preview === true })}
   <link rel="preload" as="image" href="${heroMobileUrl}" type="image/avif" media="(max-width: 767px)" fetchpriority="high">
   <link rel="preload" as="image" href="${heroDesktopUrl}" type="image/avif" media="(min-width: 768px)" fetchpriority="high">
   <style>${shellCss()}
@@ -1374,6 +1618,7 @@ function renderPerformanceHybridDocument(variant = "desktop", property = PROPERT
 <body data-vtr-performance-shell="${escapeHtml(variant)}">
   ${renderHybridShell()}
   ${renderLazyNativeContinuation(variant)}
+  ${renderZarazConsentUiScriptTag()}
 </body>
 </html>`;
   });
@@ -1518,7 +1763,7 @@ function renderShell() {
       </picture>
       <div class="vtr-shell-hero-content">
         <a class="vtr-shell-rating" href="${PROPERTY.reviewsHref}" aria-label="${PROPERTY.rating} star rating from ${PROPERTY.reviewCount} reviews">
-          <span class="vtr-shell-stars" aria-hidden="true">\u2605\u2605\u2605\u2605\u2605</span>
+          <span class="vtr-shell-stars" style="--rating-percent:${ratingFillPercent(PROPERTY.rating)}%" aria-hidden="true">\u2605\u2605\u2605\u2605\u2605</span>
           <span>(${PROPERTY.rating}) ${PROPERTY.reviewCount} Reviews</span>
         </a>
         <div class="vtr-shell-kicker" role="img" aria-label="Live Better. Live Easy.">
@@ -1635,6 +1880,7 @@ function renderShell() {
     </section>
   </main>
 
+  ${renderTopperAnalyticsScriptTag()}
   <script data-vtr-edge-static-shell="interaction">(function(){
     var menu=document.querySelector('.vtr-shell-menu');
     var drawer=document.getElementById('vtr-shell-drawer');
@@ -1644,7 +1890,6 @@ function renderShell() {
     if(close)close.addEventListener('click',function(){setDrawer(false)});
     document.addEventListener('keydown',function(e){if(e.key==='Escape')setDrawer(false)});
 
-    ${renderTopperAnalyticsRecorder()}
     document.addEventListener('click',function(e){var el=e.target&&e.target.closest?e.target.closest('a[href],button'):null;if(!el)return;var h=el.getAttribute('href')||'',t=(el.textContent||'').trim(),promo=el.getAttribute('data-vtr-promo-cta');if(promo){vtrPush('promo_cta_click',{cta_label:t,cta_href:h,promo_cta:promo})}if(h.indexOf('/apartments/')!==-1||t==='Find Your Home'){vtrPush('find_your_home_click',{cta_label:t,cta_href:h})}else if(h.indexOf('scheduleTour')!==-1||t.indexOf('Tour')!==-1){vtrPush('schedule_tour_click',{cta_label:t,cta_href:h})}else if(h.indexOf('createPipelineApplication')!==-1||t.indexOf('Apply')!==-1){vtrPush('apply_now_click',{cta_label:t,cta_href:h})}},{passive:true});
     var promoOpened=false;var promo=document.querySelector('.vtr-shell-promo');if(promo)promo.addEventListener('toggle',function(){if(promo.open&&!promoOpened){promoOpened=true;vtrPush('promo_open',{promo_text:promo.querySelector('summary').textContent.trim()})}});
     if(menu)menu.addEventListener('click',function(){vtrPush('menu_open',{menu:'mobile'})});
@@ -1661,19 +1906,13 @@ function shellCss() {
 body.vtr-edge-static-shell-body{margin:0;min-width:320px;max-width:100%;background:#fff;color:#15284B;overflow-x:hidden}
 .vtr-shell-skip{position:absolute;left:12px;top:-60px;z-index:10;background:#fff;color:#15284B;padding:8px 10px;border-radius:4px;text-decoration:none;font-weight:700}.vtr-shell-skip:focus{top:12px}
 	.vtr-shell-promo{position:relative;z-index:60;background:#15284B;color:#fff}.vtr-shell-promo-toggle{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;height:46px;padding:0 20px;box-sizing:border-box;border:0;background:#15284B;color:#fff;cursor:pointer;font-family:Lato,Arial,Helvetica,sans-serif;font-size:13px;font-weight:900;line-height:46px;letter-spacing:1.5px;text-align:center}.vtr-shell-promo-toggle span{width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px)}.vtr-shell-promo[data-open="true"] .vtr-shell-promo-toggle span{transform:rotate(225deg) translateY(-2px)}.vtr-shell-promo-panel{display:none;position:absolute;left:0;right:0;top:100%;z-index:70;min-height:391px;padding:40px 40px 39px;box-sizing:border-box;background:#F6F6F5;color:#15284B;text-align:center;box-shadow:0 16px 30px rgba(21,40,75,.18)}.vtr-shell-promo[data-open="true"] .vtr-shell-promo-panel{display:block}.vtr-shell-promo-close{position:absolute;right:36px;top:38px;width:36px;height:36px;border:0;background:transparent;color:#9B9B96;cursor:pointer;font-size:0;line-height:1}.vtr-shell-promo-close:before,.vtr-shell-promo-close:after{content:"";position:absolute;left:6px;top:17px;width:26px;height:2px;background:currentColor}.vtr-shell-promo-close:before{transform:rotate(45deg)}.vtr-shell-promo-close:after{transform:rotate(-45deg)}.vtr-shell-promo-inner{display:grid;grid-template-columns:416px minmax(320px,1fr);gap:116px;align-items:center;max-width:900px;margin:0 auto}.vtr-shell-promo-inner img{display:block;width:416px;height:312px;object-fit:cover}.vtr-shell-promo-panel h2{margin:0 0 24px;color:#15284B;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:28px;font-weight:700;line-height:1.18;letter-spacing:0;white-space:nowrap}.vtr-shell-promo-panel p{margin:0 0 24px;color:#15284B;font-size:18px;font-weight:400;line-height:1.45}.vtr-shell-promo-panel em{display:block;margin:0 0 42px;color:#15284B;font-size:17px;font-style:italic;font-weight:400;line-height:1.45}.vtr-shell-promo-actions{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap}.vtr-shell-promo-panel a{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 28px;border:2px solid transparent;border-radius:50px;color:#15284B;background:#fff;text-decoration:none;font-size:13px;font-weight:900;line-height:46px;letter-spacing:1.5px}.vtr-shell-promo-panel a:first-child{background:#3D66B9;color:#fff;border-color:#3D66B9}.vtr-shell-promo-panel a:last-child{background:transparent;border-color:transparent}
-.vtr-shell-header{height:80px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:#fff;color:#15284B;border-bottom:1px solid rgba(21,40,75,.08)}.vtr-shell-logo{font-size:10px;font-weight:600;line-height:16.25px;letter-spacing:2px;text-transform:uppercase;color:#15284B;text-decoration:none;white-space:nowrap}.vtr-shell-actions{display:flex;align-items:center;gap:18px}.vtr-shell-phone{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:#15284B;text-decoration:none}.vtr-shell-phone svg{display:block;width:20px;height:20px;fill:currentColor}.vtr-shell-apply{display:none;color:#15284B;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:1.5px}.vtr-shell-tour{display:none;align-items:center;justify-content:center;min-height:44px;padding:0 19px;border:2px solid #15284B;border-radius:50px;color:#15284B;background:#fff;text-decoration:none;font-size:11.5px;font-weight:900;letter-spacing:1.5px;line-height:40px}.vtr-shell-menu{position:relative;width:40px;height:32px;border:0;background:transparent;color:#15284B;font-size:0;line-height:1;cursor:pointer}.vtr-shell-menu:before,.vtr-shell-menu:after,.vtr-shell-menu span{content:"";position:absolute;left:5px;right:5px;height:3px;background:#15284B}.vtr-shell-menu:before{top:7px}.vtr-shell-menu span{top:15px}.vtr-shell-menu:after{top:23px}
+.vtr-shell-header{height:80px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;padding:0 15px;background:#fff;color:#15284B;border-bottom:1px solid rgba(21,40,75,.08)}.vtr-shell-logo{height:80px;display:flex;align-items:center;font-size:10px;font-weight:700;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:#15284B;text-decoration:none;white-space:nowrap}.vtr-shell-actions{height:80px;display:flex;align-items:center;gap:20px}.vtr-shell-phone{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:#15284B;text-decoration:none}.vtr-shell-phone svg{display:block;width:20px;height:20px;fill:currentColor}.vtr-shell-apply{display:none;color:#15284B;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:1.5px}.vtr-shell-tour{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:2px solid #15284B;border-radius:50px;color:#15284B;background:#fff;text-decoration:none;font-size:0;font-weight:900;letter-spacing:1.5px;line-height:40px}.vtr-shell-tour:after{content:"Tour";font-size:11.5px}.vtr-shell-menu{position:relative;width:20px;height:80px;padding:0;border:0;background:transparent;color:#15284B;font-size:0;line-height:1;cursor:pointer}.vtr-shell-menu:before,.vtr-shell-menu:after,.vtr-shell-menu span{content:"";position:absolute;left:0;right:0;height:2px;background:#15284B}.vtr-shell-menu:before{top:31px}.vtr-shell-menu span{top:39px}.vtr-shell-menu:after{top:47px}
 .vtr-shell-drawer{position:fixed;top:0;right:auto;bottom:0;left:calc(100vw - 270px);z-index:90;width:270px;height:100svh;min-height:100vh;padding:50px 25px 34px;background:#15284B;color:#fff;box-shadow:-20px 0 60px rgba(21,40,75,.22);transform:translateX(105%);transition:transform .18s ease;box-sizing:border-box;overflow:auto}.vtr-shell-drawer[data-open="true"]{transform:translateX(0)}.vtr-shell-drawer-close{position:absolute;top:5px;right:5px;display:flex;align-items:center;justify-content:center;width:37px;height:37px;margin:0;border:0;background:transparent;color:#fff;border-radius:0;font-size:30px;line-height:1;cursor:pointer}.vtr-shell-drawer .vtr-shell-drawer-logo{display:block;width:40px;height:24px;margin:0 0 20px;padding:0;color:#fff}.vtr-shell-drawer-logo svg{display:block;width:40px;height:auto}.vtr-shell-drawer nav{display:grid;gap:0;margin-top:0}.vtr-shell-drawer nav a{display:block;padding:8px 0;color:#fff;text-decoration:none;font-size:15px;font-weight:700;line-height:24.375px;letter-spacing:.75px;border-bottom:0}.vtr-shell-drawer-actions{display:flex;align-items:center;gap:10px;margin:20px 0 17px}.vtr-shell-drawer-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 20px;border:2px solid rgba(255,255,255,.72);border-radius:50px;font-size:14px;font-weight:900;line-height:46px;letter-spacing:1.5px;white-space:nowrap;color:#fff;text-decoration:none}.vtr-shell-drawer-actions a:first-child{background:#fff;color:#15284B;border-color:#fff}.vtr-shell-drawer .vtr-shell-drawer-phone{display:block;padding:0;color:#fff;font-size:14px;font-weight:900;line-height:28px;letter-spacing:1.5px;text-decoration:none}.vtr-shell-socials{display:flex;gap:22px;margin-top:20px}.vtr-shell-socials a{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;border:2px solid #fff;border-radius:50%;font-size:18px;font-weight:900;line-height:1;letter-spacing:0;color:#fff;text-decoration:none;box-sizing:border-box}.vtr-shell-socials svg{display:block;width:16px;height:16px;fill:currentColor}.vtr-shell-socials span{display:block;font-size:18px;font-weight:900;line-height:1}
-.vtr-shell-hero{position:relative;display:flex;align-items:center;justify-content:center;height:calc(100svh - 126px);min-height:584px;max-height:none;overflow:hidden;background:#15284B;color:#fff;text-align:center;contain:layout paint}.vtr-shell-hero picture{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden}.vtr-shell-hero picture>img{position:absolute;inset:0;width:100%;height:100%;min-width:100%;min-height:100%;max-width:none;display:block;object-fit:cover;object-position:center center}.vtr-shell-hero:after{content:"";position:absolute;inset:0;background:rgba(21,40,75,.36)}.vtr-shell-hero-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:920px;padding:0 24px;box-sizing:border-box}.vtr-shell-rating{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 30px;color:#fff;font-size:13px;font-weight:900;line-height:18.2px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;cursor:pointer}.vtr-shell-rating:focus-visible{outline:2px solid #fff;outline-offset:4px}.vtr-shell-stars{font-size:31px;line-height:1;letter-spacing:3px}.vtr-shell-kicker{display:block;width:clamp(360px,48vw,700px);max-width:calc(100vw - 48px);aspect-ratio:374.75/92.57;height:auto;margin:0 0 18px;filter:drop-shadow(0 2px 14px rgba(0,0,0,.26))}.vtr-shell-kicker img{position:static;inset:auto;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;object-fit:contain;object-position:center}.vtr-shell-title{width:min(640px,100%);margin:0;color:#fff;font-size:19px;font-weight:700;line-height:1.4;letter-spacing:.5px;text-shadow:0 1px 10px rgba(0,0,0,.34)}.vtr-shell-cta{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:50px;margin-top:34px;padding:0 20px;border:2px solid #fff;border-radius:50px;background:#fff;color:#14294B;font-size:14px;font-weight:900;letter-spacing:1.5px;line-height:46px;text-decoration:none;box-shadow:none;transition:color .1s ease-in-out,background-color .1s ease-in-out,border-color .1s ease-in-out,box-shadow .1s ease-in-out}.vtr-shell-cta:hover,.vtr-shell-cta:focus-visible{background:rgba(255,255,255,0);color:#fff;border-color:#fff;text-decoration:none}.vtr-shell-cta:focus-visible{outline:2px solid #fff;outline-offset:4px}.vtr-shell-cta:after{content:"\u2192";position:relative;top:-1px;margin-left:6px;font-size:13px;line-height:1}
+.vtr-shell-hero{position:relative;display:flex;align-items:center;justify-content:center;height:calc(100svh - 126px);min-height:584px;max-height:none;overflow:hidden;background:#15284B;color:#fff;text-align:center;contain:layout paint}.vtr-shell-hero picture{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden}.vtr-shell-hero picture>img{position:absolute;inset:0;width:100%;height:100%;min-width:100%;min-height:100%;max-width:none;display:block;object-fit:cover;object-position:center center}.vtr-shell-hero:after{content:"";position:absolute;inset:0;background:rgba(21,40,75,.36)}.vtr-shell-hero-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;width:100%;max-width:920px;padding:0 24px;box-sizing:border-box}.vtr-shell-rating{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 30px;color:#fff;font-size:13px;font-weight:900;line-height:18.2px;letter-spacing:2px;text-transform:uppercase;text-decoration:none;cursor:pointer}.vtr-shell-rating:focus-visible{outline:2px solid #fff;outline-offset:4px}.vtr-shell-stars{font-size:31px;line-height:1;letter-spacing:3px;background:linear-gradient(90deg,#fff var(--rating-percent,100%),rgba(255,255,255,.35) var(--rating-percent,100%));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}.vtr-shell-kicker{display:block;width:clamp(360px,48vw,700px);max-width:calc(100vw - 48px);aspect-ratio:374.75/92.57;height:auto;margin:0 0 18px;filter:drop-shadow(0 2px 14px rgba(0,0,0,.26))}.vtr-shell-kicker img{position:static;inset:auto;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;object-fit:contain;object-position:center}.vtr-shell-title{width:min(640px,100%);margin:0;color:#fff;font-size:19px;font-weight:700;line-height:1.4;letter-spacing:.5px;text-shadow:0 1px 10px rgba(0,0,0,.34)}.vtr-shell-cta{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:50px;margin-top:34px;padding:0 20px;border:2px solid #fff;border-radius:50px;background:#fff;color:#14294B;font-size:14px;font-weight:900;letter-spacing:1.5px;line-height:46px;text-decoration:none;box-shadow:none;transition:color .1s ease-in-out,background-color .1s ease-in-out,border-color .1s ease-in-out,box-shadow .1s ease-in-out}.vtr-shell-cta:hover,.vtr-shell-cta:focus-visible{background:rgba(255,255,255,0);color:#fff;border-color:#fff;text-decoration:none}.vtr-shell-cta:focus-visible{outline:2px solid #fff;outline-offset:4px}.vtr-shell-cta:after{content:"\u2192";position:relative;top:-1px;margin-left:6px;font-size:13px;line-height:1}
 .vtr-shell-main{background:#fff}.vtr-shell-panel{padding:70px 15px;background:#F6F6F5;color:#15284B;box-sizing:border-box;overflow:hidden}.vtr-shell-panel-inner{max-width:1600px;margin:0 auto}.vtr-shell-section-label{display:block;margin:0 0 14px;color:#3D66B9;font-size:11px;font-weight:900;line-height:1.4;letter-spacing:1.5px;text-transform:uppercase}.vtr-shell-panel h2{margin:0 0 20px;color:#15284B;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:27px;line-height:35.1px;font-weight:700;letter-spacing:.5px}.vtr-shell-panel p{margin:0 0 20px;color:#15284B;font-size:18px;line-height:29.25px}.vtr-shell-panel-kicker{display:block;margin:0 0 14px;color:#15284B;font-size:18px;font-weight:700;line-height:29.25px}.vtr-shell-bullets{display:grid;grid-template-columns:1fr;gap:10px 26px;margin:18px 0 0;padding:0;list-style:none;color:#15284B}.vtr-shell-bullets li{position:relative;padding-left:16px;font-size:14px;line-height:1.5}.vtr-shell-bullets li:before{content:"";position:absolute;left:0;top:.7em;width:5px;height:5px;border-radius:50%;background:#3D66B9}.vtr-shell-panel-media-group{margin:26px 0 0}.vtr-shell-panel-media{margin:0;overflow:hidden;border-radius:6px;background:#F6F6F5}.vtr-shell-panel-media img{display:block;width:100%;height:100%;object-fit:cover}.vtr-shell-panel-award{display:block;margin-top:32px;width:64px;max-width:64px;height:auto}.vtr-shell-panel-alt{background:#fff}.vtr-shell-panel-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-top:24px;padding:0 22px;border:2px solid #15284B;border-radius:50px;color:#15284B;text-decoration:none;font-size:13px;font-weight:900;letter-spacing:1.5px;line-height:40px}.vtr-shell-panel:first-of-type .vtr-shell-panel-btn{background:#3D66B9;color:#fff;border-color:#3D66B9}
-	.vtr-edge-hybrid-shell[data-reveal-ready="true"] .vtr-shell-reveal{opacity:0;transform:translate3d(0,34px,0);transition:opacity .72s cubic-bezier(.22,1,.36,1),transform .72s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}.vtr-edge-hybrid-shell[data-reveal-ready="true"] .vtr-shell-reveal-right{transform:translate3d(48px,0,0)}.vtr-edge-hybrid-shell[data-reveal-ready="true"] .vtr-shell-reveal-left{transform:translate3d(-48px,0,0)}.vtr-edge-hybrid-shell[data-reveal-ready="true"] .vtr-shell-reveal[data-visible="true"]{opacity:1;transform:translate3d(0,0,0)}@media (prefers-reduced-motion:reduce){.vtr-edge-hybrid-shell[data-reveal-ready="true"] .vtr-shell-reveal{opacity:1!important;transform:none!important;transition:none!important}}
-.vtr-shell-review{padding:54px 18px;background:#F6F6F5;color:#15284B;text-align:center}.vtr-shell-review-card{max-width:820px;margin:0 auto;padding:30px 28px;background:#fff;border-radius:4px;box-shadow:0 1px 0 rgba(21,40,75,.08)}.vtr-shell-review-card p{margin:0 0 12px;color:#15284B;font-size:15px;line-height:1.6}.vtr-shell-review-stars{color:#E02472;font-size:18px;letter-spacing:2px;line-height:1.2}.vtr-shell-review-card strong{display:block;margin:8px 0 12px;color:#15284B;font-size:13px}.vtr-shell-review-card a{color:#15284B;font-size:12px;font-weight:900;text-decoration:none}
-.vtr-shell-benefits{padding:78px 24px;background:#fff;color:#15284B}.vtr-shell-benefits-inner{max-width:1120px;margin:0 auto}.vtr-shell-benefits h2{max-width:560px;margin:0 auto 26px;color:#15284B;text-align:center;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:34px;line-height:1.05;font-weight:700;letter-spacing:.5px}.vtr-shell-benefit-tabs{display:flex;align-items:center;justify-content:center;gap:0;border-bottom:1px solid #D6D6D2;margin:0 0 32px;color:#15284B}.vtr-shell-benefit-tabs span{display:block;min-width:150px;padding:0 16px 12px;text-align:center;font-size:12px;font-weight:900;letter-spacing:.6px}.vtr-shell-benefit-tabs span:first-child{border-bottom:3px solid #3D66B9}.vtr-shell-benefit-feature{display:grid;grid-template-columns:1fr;gap:28px;align-items:center}.vtr-shell-benefit-feature img{display:block;width:100%;height:auto;border-radius:3px}.vtr-shell-benefit-feature h3{margin:0 0 16px;color:#15284B;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:26px;line-height:1.2}.vtr-shell-benefit-feature p{margin:0 0 18px;color:#15284B;font-size:16px;line-height:1.65}.vtr-shell-text-link{display:inline-flex;margin-top:18px;color:#15284B;font-size:12px;font-weight:900;text-decoration:none}
-.vtr-shell-neighborhood{padding:76px 24px;background:#fff;color:#15284B}.vtr-shell-neighborhood-head{max-width:1120px;margin:0 auto 28px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px}.vtr-shell-neighborhood h2{margin:0;color:#15284B;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:34px;line-height:1.15}.vtr-shell-neighborhood-grid{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:16px}.vtr-shell-neighborhood-tile{position:relative;display:block;min-height:260px;overflow:hidden;color:#fff;text-decoration:none;background:#15284B}.vtr-shell-neighborhood-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.vtr-shell-neighborhood-tile:after{content:"";position:absolute;inset:auto 0 0;height:44%;background:linear-gradient(180deg,rgba(21,40,75,0),rgba(21,40,75,.72))}.vtr-shell-neighborhood-tile span{position:absolute;left:16px;bottom:14px;z-index:1;color:#fff;font-size:11px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase}
-.vtr-shell-care{position:relative;display:flex;align-items:center;justify-content:center;min-height:260px;overflow:hidden;background:#15284B;color:#fff;text-align:center}.vtr-shell-care img{display:none}.vtr-shell-care div{position:relative;z-index:1}.vtr-shell-care h2{margin:0 0 18px;color:#fff;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:34px;line-height:1.15}.vtr-shell-care a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 22px;border-radius:50px;background:#fff;color:#15284B;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:1.2px}
-.vtr-shell-final-cta{padding:54px 24px;background:#15284B;color:#15284B;text-align:center}.vtr-shell-final-cta h2{max-width:760px;margin:0 auto 22px;color:#15284B;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:28px;line-height:1.15;font-weight:700;letter-spacing:.5px}.vtr-shell-final-cta{position:relative}.vtr-shell-final-cta:before{content:"";position:absolute;left:50%;top:-34px;transform:translateX(-50%);width:min(84vw,820px);height:calc(100% - 30px);background:#fff;border-radius:4px;box-shadow:0 12px 34px rgba(21,40,75,.2)}.vtr-shell-final-cta h2,.vtr-shell-final-actions{position:relative;z-index:1}.vtr-shell-final-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}.vtr-shell-final-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 16px;border:0;border-radius:50px;color:#fff;background:#3D66B9;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:.8px;line-height:34px}
 .vtr-shell-native-continuation{padding:58px 20px;background:#F6F6F5;color:#15284B;text-align:center}.vtr-shell-native-continuation-card{max-width:760px;margin:0 auto}.vtr-shell-native-continuation h2{margin:0 0 12px;color:#15284B;font-family:'Noto Serif',Georgia,"Times New Roman",serif;font-size:30px;line-height:1.15}.vtr-shell-native-continuation p{max-width:680px;margin:0 auto 22px;font:500 16px/1.65 Lato,Arial,Helvetica,sans-serif}.vtr-shell-native-continuation-button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 22px;border:2px solid #15284B;border-radius:50px;color:#15284B;background:#fff;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:1.4px;line-height:38px;cursor:pointer}.vtr-shell-native-continuation-status{min-height:22px;margin-top:12px;color:#15284B;font:700 12px/1.4 Lato,Arial,Helvetica,sans-serif;letter-spacing:1px;text-transform:uppercase}.vtr-shell-native-continuation-frame{display:block;width:100%;min-height:640px;margin:36px auto 0;border:0;background:#fff}.vtr-shell-native-continuation-frame[hidden]{display:none}.vtr-shell-native-continuation[data-vtr-native-continuation-state="loaded"]{padding:0;background:#fff}.vtr-shell-native-continuation[data-vtr-native-continuation-state="loaded"] .vtr-shell-native-continuation-card,.vtr-shell-native-continuation[data-vtr-native-continuation-state="loaded"] .vtr-shell-native-continuation-status{display:none}.vtr-shell-native-continuation[data-vtr-native-continuation-state="loaded"] .vtr-shell-native-continuation-frame{margin:0 auto}
 @media (min-width:768px){.vtr-shell-apply,.vtr-shell-tour{display:inline-flex}.vtr-shell-header{height:80px;padding:0 max(40px,calc((100vw - 1600px)/2))}.vtr-shell-logo{font-size:18px;line-height:24px;letter-spacing:3px}.vtr-shell-phone{width:auto;font-size:13px;font-weight:900;line-height:1;letter-spacing:1.5px}.vtr-shell-phone svg{display:none}.vtr-shell-phone:after{content:"${escapeHtml(PROPERTY.phoneLabel)}"}.vtr-shell-tour{min-height:44px;padding:0 25px;font-size:12px;line-height:40px}.vtr-shell-menu{width:38px}.vtr-shell-drawer{left:calc(100vw - 450px);width:450px;padding:45px 30px 45px}.vtr-shell-drawer-close{top:10px;right:10px}.vtr-shell-drawer nav a{font-size:18px;line-height:29.25px;padding:8px 0}.vtr-shell-hero{height:calc(100svh - 126px);min-height:640px;max-height:none}.vtr-shell-hero-content{transform:translateY(10px)}.vtr-shell-rating{margin-bottom:12px}.vtr-shell-stars{font-size:18px;letter-spacing:2px}.vtr-shell-kicker{width:clamp(420px,48vw,700px);max-width:calc(100vw - 96px);margin-bottom:14px}.vtr-shell-title{width:auto;max-width:760px;font-size:17px;line-height:1.25}.vtr-shell-cta{margin-top:20px}.vtr-shell-panel{min-height:740px;padding:120px 40px}.vtr-shell-panel h2{font-size:34px;line-height:1.15}.vtr-shell-panel-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:70px;align-items:center;justify-content:center;max-width:1600px}.vtr-shell-panel-media-group{margin:0}.vtr-shell-panel-media{height:500px}.vtr-shell-panel-alt .vtr-shell-panel-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.vtr-shell-panel-alt .vtr-shell-panel-media{order:-1}.vtr-shell-bullets{grid-template-columns:1fr 1fr}.vtr-shell-benefit-feature{grid-template-columns:1fr 1fr;gap:54px}.vtr-shell-benefits h2{font-size:38px}.vtr-shell-neighborhood-grid{grid-template-columns:1fr 2fr 1fr}.vtr-shell-neighborhood h2{font-size:36px}.vtr-shell-final-cta h2{font-size:30px}}
 	@media (max-width:767px){.vtr-shell-promo-panel{min-height:300px;padding:44px 18px 38px}.vtr-shell-promo-inner{display:block;max-width:354px}.vtr-shell-promo-inner img{display:none}.vtr-shell-promo-close{right:16px;top:16px}.vtr-shell-promo-panel h2{margin-bottom:18px;font-size:27px;line-height:1.2;white-space:normal}.vtr-shell-promo-panel p{margin-bottom:14px;font-size:18px;line-height:1.4}.vtr-shell-promo-panel em{margin-bottom:30px;font-size:15px;line-height:1.45}.vtr-shell-promo-actions{gap:12px}.vtr-shell-promo-panel a{min-height:44px;padding:0 20px;font-size:12px;line-height:40px}.vtr-shell-hero picture>img{object-position:center top}.vtr-shell-hero-content{position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);padding:0 18px}.vtr-shell-rating{flex-wrap:wrap;gap:8px;margin:0 0 12px;font-size:12px;line-height:1.2;letter-spacing:1.9px}.vtr-shell-stars{font-size:22px;letter-spacing:2px}.vtr-shell-kicker{width:clamp(240px,58vw,360px);max-width:calc(100vw - 36px);margin-bottom:24px}.vtr-shell-title{width:min(92vw,520px);font-size:18px;line-height:1.35}.vtr-shell-cta{margin-top:24px}.vtr-shell-panel-award{width:clamp(52px,12vw,64px);max-width:64px}}
 @media (min-width:1200px){.vtr-shell-hero{height:calc(100svh - 126px);min-height:640px;max-height:none}.vtr-shell-hero picture>img{object-position:center center}.vtr-shell-kicker{width:clamp(560px,48vw,700px)}.vtr-shell-title{font-size:19px;line-height:1.4}}
-@media (max-width:520px){.vtr-shell-header{padding:0 15px}.vtr-shell-actions{gap:20px}.vtr-shell-tour{display:inline-flex;width:72px;min-height:44px;height:44px;padding:0;font-size:0;line-height:40px}.vtr-shell-tour:after{content:"Tour";font-size:12px}.vtr-shell-apply{display:none}.vtr-shell-drawer-actions{gap:10px}.vtr-shell-drawer-actions a{box-sizing:border-box;padding:0;font-size:0}.vtr-shell-drawer-actions a:first-child{width:79px}.vtr-shell-drawer-actions a:last-child{width:90px}.vtr-shell-drawer-actions a:first-child:after{content:"Tour";font-size:14px}.vtr-shell-drawer-actions a:last-child:after{content:"Apply";font-size:14px}.vtr-shell-hero{height:calc(100svh - 80px);min-height:584px;max-height:none}.vtr-shell-hero picture>img{object-position:center top}.vtr-shell-hero-content{position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);padding:0 15px}.vtr-shell-rating{margin:0 0 14px;font-size:12px;line-height:1.2}.vtr-shell-stars{font-size:22px;letter-spacing:2px}.vtr-shell-kicker{width:clamp(220px,62vw,300px);max-width:calc(100vw - 30px);margin-bottom:30px}.vtr-shell-title{width:min(92vw,365px);font-size:18px;line-height:1.35}.vtr-shell-cta{margin-top:24px}.vtr-shell-panel:not(.vtr-shell-panel-alt) .vtr-shell-panel-media-group{display:none}.vtr-shell-panel-media{margin-top:30px}.vtr-shell-benefits{padding:64px 18px}.vtr-shell-final-cta{padding:62px 18px}}`;
+@media (max-width:520px){.vtr-shell-header{padding:0 15px}.vtr-shell-actions{gap:20px}.vtr-shell-tour{display:inline-flex;width:auto;min-height:44px;height:auto;padding:0 20px;font-size:0;line-height:40px}.vtr-shell-tour:after{content:"Tour";font-size:11.5px}.vtr-shell-apply{display:none}.vtr-shell-drawer-actions{gap:10px}.vtr-shell-drawer-actions a{box-sizing:border-box;padding:0;font-size:0}.vtr-shell-drawer-actions a:first-child{width:79px}.vtr-shell-drawer-actions a:last-child{width:90px}.vtr-shell-drawer-actions a:first-child:after{content:"Tour";font-size:14px}.vtr-shell-drawer-actions a:last-child:after{content:"Apply";font-size:14px}.vtr-shell-hero{height:calc(100svh - 126px);min-height:584px;max-height:none}.vtr-shell-hero picture>img{object-position:center top}.vtr-shell-hero-content{position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);padding:0 15px}.vtr-shell-rating{margin:0 0 14px;font-size:12px;line-height:1.2}.vtr-shell-stars{font-size:22px;letter-spacing:2px}.vtr-shell-kicker{width:clamp(220px,62vw,300px);max-width:calc(100vw - 30px);margin-bottom:30px}.vtr-shell-title{width:min(92vw,365px);font-size:18px;line-height:1.35}.vtr-shell-cta{margin-top:24px}.vtr-shell-panel:not(.vtr-shell-panel-alt) .vtr-shell-panel-media-group{display:none}.vtr-shell-panel-media{margin-top:30px}.vtr-shell-benefits{padding:64px 18px}.vtr-shell-final-cta{padding:62px 18px}}`;
 }

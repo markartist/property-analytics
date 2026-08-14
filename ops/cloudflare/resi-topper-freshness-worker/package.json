@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cloudflare/puppeteer": "^2.1.3"
+  }
+}

@@ -1,0 +1,13 @@
+name = "resi-edge-full-package-worker"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+account_id = "5a5a60afaad00085864fe6bab7eb2882"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "RESI_EDGE_ASSETS"
+bucket_name = "resi-edge-assets"
+
+[vars]
+PACKAGE_VERSION = "2026-08-08.champions-full-package-v1"
+EDGE_HTML_CACHE_TTL_SECONDS = "300"

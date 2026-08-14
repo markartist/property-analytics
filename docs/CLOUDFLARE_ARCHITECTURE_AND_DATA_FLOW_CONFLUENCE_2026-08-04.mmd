@@ -1,0 +1,89 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, Helvetica, sans-serif","primaryColor":"#F6F6F5","primaryTextColor":"#15284B","primaryBorderColor":"#3D66B9","lineColor":"#294782","secondaryColor":"#D6D6D2","tertiaryColor":"#FFFFFF","clusterBkg":"#F6F6F5","clusterBorder":"#3D66B9","edgeLabelBackground":"#FFFFFF"}}}%%
+flowchart TB
+  users["Public users<br/>Search crawlers<br/>Prospects"]
+  operators["Venterra operators<br/>Technology and Marketing Operations"]
+
+  subgraph governance["Governance"]
+    tech["Technology<br/>Account, DNS, Access, security, registrar, credentials"]
+    mops["Marketing Operations<br/>WebOps, SEO, redirects, cache, Workers, analytics"]
+    keeper["Keeper Secrets Manager<br/>credential source of truth"]
+    vendor["Website vendor<br/>Resi / Kinsta / WP Engine origin function"]
+  end
+
+  subgraph edge_control["Domain and Edge Control"]
+    registrar["GoDaddy / registrar portfolio<br/>284-domain snapshot"]
+    cf["Cloudflare account<br/>5a5a60afaad00085864fe6bab7eb2882"]
+    dns["Cloudflare DNS and zone folders<br/>nameservers, records, SSL validation"]
+    edge["Cloudflare edge<br/>proxy, redirects, cache rules, WAF posture"]
+    access["Cloudflare Access<br/>outer app and API admission boundary"]
+    zaraz["Cloudflare Zaraz<br/>analytics tag orchestration"]
+  end
+
+  subgraph delivery["Origins, Applications, and Edge Assets"]
+    origins["Website origins<br/>Resi / Kinsta active property sites<br/>WP Engine-origin path for Cendana"]
+    apps["Platform surfaces<br/>app.venterradev.com<br/>api.venterradev.com"]
+    workers["Workers<br/>pop-brief-api<br/>edge message and Resi Edge pilots"]
+    storage["Cloudflare storage<br/>D1 pop-brief-db<br/>R2 pop-brief-uploads and resi-edge-assets"]
+  end
+
+  subgraph intelligence["Measurement and Operating Intelligence"]
+    sources["External and edge sources<br/>GA4, GSC, Heap / Contentsquare, Ahrefs, DataForSEO, GBP, PageSpeed / CrUX, Cloudflare Analytics, billable usage"]
+    collectors["Data Collection<br/>daily master collection and source collectors"]
+    datapond["Local Data Pond<br/>portfolio_analytics.db"]
+    watchtower["Watchtower<br/>source health, freshness, advisory status"]
+    outputs["Executive and WebOps outputs<br/>PIB, ad hoc reports, audits, run packets"]
+  end
+
+  subgraph workstreams["WebOps Workstreams"]
+    domain_ops["Domain Ops<br/>staging, redirects, nameserver readback"]
+    resi_edge["Resi Edge<br/>performance shells, image rewrites, Workers, R2 assets"]
+    seo_ops["SEO Operations<br/>GSC, Ahrefs, DataForSEO, audits, launch readiness"]
+    content_ops["Content Operations<br/>Site Content Creator, Content Office, VACS"]
+    captain["Captain / property intelligence<br/>property routines, memory, action tracking"]
+  end
+
+  users --> registrar --> cf --> dns --> edge --> origins
+  edge --> apps
+  edge --> workers --> storage
+  access --> apps
+  access --> workers
+  zaraz --> sources
+
+  operators --> tech
+  operators --> mops
+  tech --> registrar
+  tech --> cf
+  tech --> keeper
+  mops --> workstreams
+  vendor --> origins
+  keeper --> collectors
+  keeper --> workers
+
+  cf --> sources
+  origins --> sources
+  apps --> sources
+  sources --> collectors --> datapond
+  datapond --> watchtower
+  datapond --> outputs
+  watchtower --> operators
+  outputs --> operators
+
+  domain_ops --> cf
+  resi_edge --> edge
+  seo_ops --> sources
+  content_ops --> outputs
+  captain --> datapond
+
+  classDef actor fill:#FFFFFF,stroke:#3D66B9,color:#15284B,stroke-width:2px;
+  classDef governanceFill fill:#F6F6F5,stroke:#294782,color:#15284B;
+  classDef control fill:#D6D6D2,stroke:#294782,color:#15284B;
+  classDef cloudflare fill:#15284B,stroke:#3D66B9,color:#FFFFFF,stroke-width:2px;
+  classDef data fill:#7DCAC2,stroke:#3B9189,color:#15284B;
+  classDef output fill:#FFFFFF,stroke:#BD4830,color:#15284B,stroke-width:2px;
+
+  class users,operators actor;
+  class tech,mops,keeper,vendor governanceFill;
+  class registrar,dns,edge,access,zaraz,origins,apps,workers,domain_ops,resi_edge,seo_ops,content_ops,captain control;
+  class cf cloudflare;
+  class storage,sources,collectors,datapond,watchtower data;
+  class outputs output;

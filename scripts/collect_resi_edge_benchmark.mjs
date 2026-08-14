@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { gzipSync } from "node:zlib";
 import {
   mkdirSync,
@@ -10,12 +10,21 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import {
+  buildKeeperBaseEnv,
+  ensureMarketingOpsKeeperRuntimeOrReexec,
+  findKsmBinary
+} from "./lib/keeper_runtime.mjs";
+
+ensureMarketingOpsKeeperRuntimeOrReexec({
+  scriptPath: new URL(import.meta.url).pathname
+});
 
 const CHROME =
   process.env.CHROME_BINARY ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-const TARGETS = [
+const DEFAULT_TARGETS = [
   { key: "home", label: "Homepage", url: "https://pilot.venterradev.com/" },
   { key: "apartments", label: "Apartments", url: "https://pilot.venterradev.com/apartments/" }
 ];
@@ -48,7 +57,8 @@ function parseArgs(argv) {
     runs: 3,
     curlRuns: 5,
     waitMs: 5000,
-    psi: false
+    psi: false,
+    targets: []
   };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -58,6 +68,14 @@ function parseArgs(argv) {
     else if (arg === "--curl-runs") args.curlRuns = Number(argv[++i]);
     else if (arg === "--wait-ms") args.waitMs = Number(argv[++i]);
     else if (arg === "--psi") args.psi = true;
+    else if (arg === "--target") {
+      const value = argv[++i] || "";
+      const [key, label, url] = value.split("|");
+      if (!key || !label || !url) {
+        throw new Error("--target must use key|label|url");
+      }
+      args.targets.push({ key, label, url });
+    }
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!args.outDir) {
@@ -94,6 +112,40 @@ function runCommand(command, args, options = {}) {
       }
     });
   });
+}
+
+function readKeeperNotation(notation, description) {
+  const env = buildKeeperBaseEnv(process.env);
+  const profile = env.KSM_PROFILE || "marketingops";
+  const result = spawnSync(
+    findKsmBinary(env),
+    ["-p", profile, "secret", "notation", notation],
+    {
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+      encoding: "utf8"
+    }
+  );
+
+  if (result.status !== 0) {
+    const detail = String(result.stderr || result.error || "").trim();
+    throw new Error(`Unable to resolve ${description} from Keeper notation: ${detail}`);
+  }
+
+  const value = String(result.stdout || "").trim();
+  if (!value) throw new Error(`Resolved ${description} from Keeper notation but it was empty`);
+  return value;
+}
+
+function loadPagespeedApiKey() {
+  if (process.env.PAGESPEED_API_KEY) return process.env.PAGESPEED_API_KEY;
+
+  const notation = process.env.KSM_PAGESPEED_API_KEY_NOTATION;
+  if (notation) return readKeeperNotation(notation, "PageSpeed API key");
+
+  throw new Error(
+    "PageSpeed API key unavailable. Set KSM_PAGESPEED_API_KEY_NOTATION through the Keeper runtime."
+  );
 }
 
 function median(values) {
@@ -524,7 +576,12 @@ async function collectBrowserRun(target, profile, outDir, runIndex, waitMs) {
     });
   } finally {
     chrome.kill("SIGKILL");
-    rmSync(userDataDir, { recursive: true, force: true });
+    try {
+      rmSync(userDataDir, { recursive: true, force: true });
+    } catch {
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 500));
+      rmSync(userDataDir, { recursive: true, force: true });
+    }
   }
 }
 
@@ -615,10 +672,12 @@ function summarizeBrowserRuns(runs) {
 }
 
 async function collectPsi(target, outDir) {
+  const apiKey = loadPagespeedApiKey();
   const result = {};
   for (const strategy of ["mobile", "desktop"]) {
     const url = new URL("https://www.googleapis.com/pagespeedonline/v5/runPagespeed");
     url.searchParams.set("url", target.url);
+    url.searchParams.set("key", apiKey);
     url.searchParams.set("strategy", strategy);
     for (const category of ["PERFORMANCE", "ACCESSIBILITY", "BEST_PRACTICES", "SEO"]) {
       url.searchParams.append("category", category);
@@ -681,11 +740,10 @@ function buildMarkdown(report) {
   lines.push("");
   lines.push(`Collected: ${report.collectedAt}`);
   lines.push("");
-  for (const target of TARGETS) {
-    const data = report.targets[target.key];
-    lines.push(`## ${target.label}`);
+  for (const [key, data] of Object.entries(report.targets)) {
+    lines.push(`## ${data.label || key}`);
     lines.push("");
-    lines.push(`URL: \`${target.url}\``);
+    lines.push(`URL: \`${data.url}\``);
     lines.push("");
     lines.push("| Area | Metric | Value |");
     lines.push("| --- | --- | ---: |");
@@ -741,7 +799,8 @@ async function main() {
     targets: {}
   };
 
-  for (const target of TARGETS) {
+  const targets = args.targets.length ? args.targets : DEFAULT_TARGETS;
+  for (const target of targets) {
     console.log(`[${args.phase}] ${target.label} curl/html`);
     const curl = await collectCurl(target, args.outDir, args.curlRuns);
     console.log(`[${args.phase}] ${target.label} browser timings`);

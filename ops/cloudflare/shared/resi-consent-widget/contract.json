@@ -1,0 +1,36 @@
+{
+  "package_id": "resi-zaraz-consent-widget",
+  "version": "compact_finalized_pill_v27_2026_08_12",
+  "approved_source": "reports/resi_edge_performance/08-08-2026/champions/live-production-v26/CHAMPIONS_V26_CORRECTION_NOTE.md",
+  "owner": "cloudflare_zaraz_consent",
+  "mode": "finalized_cmp_required",
+  "visible_text": "This website uses cookies",
+  "visible_buttons": ["Preferences", "Accept"],
+  "forbidden_inline_buttons": ["Reject"],
+  "preferences_behavior": "zaraz.showConsentModal",
+  "accept_behavior": "zaraz.consent.setAll(true) or equivalent set-all grant plus sendQueuedEvents",
+  "storage_key": "vtr_zaraz_consent_notice_done_v2",
+  "root_id": "vtr-cookie-notice",
+  "modal": {
+    "owner": "cloudflare_zaraz",
+    "hide_native_modal": true,
+    "intro_html_en": "<p>Choose which cookies this site may use. <a href=\"/privacy-policy/\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a></p>",
+    "purposes": {
+      "analytics_performance": {
+        "id": "AaID",
+        "name_en": "Analytics & Performance",
+        "description_en": "Measures website traffic, performance, and aggregate visitor behavior."
+      },
+      "marketing_leasing_attribution": {
+        "id": "fNmB",
+        "name_en": "Marketing & Leasing Attribution",
+        "description_en": "Measures leasing interest, source attribution, and tour, apply, call, and availability actions."
+      }
+    }
+  },
+  "required_markers": {
+    "script_attribute": "data-vtr-zaraz-consent-pill=\"1\"",
+    "version_attribute": "data-vtr-zaraz-consent-version=\"compact_finalized_pill_v27_2026_08_12\"",
+    "runtime_window_value": "window.__vtrZarazConsentPillVersion"
+  }
+}

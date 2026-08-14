@@ -7,6 +7,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,28 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from apps.api.scripts.wrangler_auth import build_runtime_env, npx_wrangler_prefix
+
+
+IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable"
+UPLOAD_ATTEMPTS = 3
+UPLOAD_RETRY_SECONDS = 5
+
+
+def content_type_for_path(path: str) -> str:
+    lower = path.split("?", 1)[0].lower()
+    if lower.endswith(".avif"):
+        return "image/avif"
+    if lower.endswith(".webp"):
+        return "image/webp"
+    if lower.endswith(".svg"):
+        return "image/svg+xml; charset=utf-8"
+    if lower.endswith(".woff2"):
+        return "font/woff2"
+    if lower.endswith(".png"):
+        return "image/png"
+    if lower.endswith((".jpg", ".jpeg")):
+        return "image/jpeg"
+    return "application/octet-stream"
 
 
 def load_packet(path: Path) -> dict[str, Any]:
@@ -58,6 +81,10 @@ def main(argv: list[str]) -> int:
             f"{item['bucket']}/{item['r2Key']}",
             "--file",
             str(local_path),
+            "--content-type",
+            content_type_for_path(item["r2Key"]),
+            "--cache-control",
+            IMMUTABLE_CACHE_CONTROL,
         ]
         if not args.local:
             command.append("--remote")
@@ -65,11 +92,18 @@ def main(argv: list[str]) -> int:
             print(f"DRY RUN: {item['bucket']}/{item['r2Key']} <- {local_path}")
             continue
 
-        result = subprocess.run(command, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
-        if result.returncode == 0:
-            uploaded += 1
-            print(f"UPLOADED: {item['bucket']}/{item['r2Key']}")
-        else:
+        result = None
+        for attempt in range(1, UPLOAD_ATTEMPTS + 1):
+            result = subprocess.run(command, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+            if result.returncode == 0:
+                uploaded += 1
+                suffix = "" if attempt == 1 else f" after {attempt} attempts"
+                print(f"UPLOADED: {item['bucket']}/{item['r2Key']}{suffix}")
+                break
+            if attempt < UPLOAD_ATTEMPTS:
+                time.sleep(UPLOAD_RETRY_SECONDS)
+
+        if result is not None and result.returncode != 0:
             failures.append(
                 {
                     "localPath": str(local_path),

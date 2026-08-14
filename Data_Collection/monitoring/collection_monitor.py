@@ -9,6 +9,7 @@ import sqlite3
 import time
 import traceback
 import json
+import html
 from datetime import datetime
 from pathlib import Path
 from contextlib import contextmanager
@@ -278,12 +279,13 @@ class CollectionAlerter:
             for prop_id, error_type, msg in failed_properties
         ])
 
-        body = f"""⚠️ Real-time Collection Alert
+        generated_at = datetime.now().strftime('%m/%d/%Y %I:%M %p')
+        body = f"""Real-time Collection Alert
 
 Data Source: {data_source.upper()}
 Error Count: {error_count}
 Error Types: {error_types}
-Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Timestamp: {generated_at}
 
 Failed Properties:
 {props_list}
@@ -296,9 +298,10 @@ Database: {self.db_path}
         try:
             email_sender = EmailSender(verbose=False)
             email_sender.send_email(
-                to_address='mlaufhutte@venterraliving.com',
                 subject=subject,
-                body=body
+                html_body=f"<pre>{html.escape(body)}</pre>",
+                plain_text=body,
+                recipients=['mlaufhutte@venterraliving.com'],
             )
             print(f"✅ Immediate alert sent for {error_count} {data_source} errors")
         except Exception as e:

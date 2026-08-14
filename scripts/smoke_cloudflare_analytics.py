@@ -8,8 +8,10 @@ import json
 import os
 import sqlite3
 import sys
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+
+UTC = timezone.utc
 
 ROOT = Path("/Users/mark/Property_Analytics")
 if str(ROOT) not in sys.path:

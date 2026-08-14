@@ -1,0 +1,14 @@
+name = "cendana-native-optimizer"
+main = "worker.js"
+compatibility_date = "2024-12-01"
+account_id = "5a5a60afaad00085864fe6bab7eb2882"
+workers_dev = true
+
+[[rules]]
+type = "Data"
+globs = ["**/*.webp", "**/*.jpg"]
+fallthrough = true
+
+[vars]
+OPTIMIZER_ENABLED = "true"
+OPTIMIZER_VERSION = "2026-08-05.cendana-native-uikit-guard-v8"

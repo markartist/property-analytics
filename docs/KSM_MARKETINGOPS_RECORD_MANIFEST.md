@@ -72,6 +72,27 @@ Related env var / notation target:
 
 - `KSM_CLOUDFLARE_TOKEN_NOTATION`
 
+### 3a. Cloudflare Billing Token
+
+Suggested record title:
+
+- `Cloudflare Billing Token`
+
+Suggested usage in repo:
+
+- Cloudflare Billable Usage collector
+- Watchtower Cloudflare FinOps diagnostic freshness
+
+Related env var / notation target:
+
+- `KSM_CLOUDFLARE_BILLING_TOKEN_NOTATION`
+- Active helper notation: `keeper://LttlGLhno7Ddd-GYZPWFTw/field/password`
+
+Required minimum scope:
+
+- Cloudflare account `5a5a60afaad00085864fe6bab7eb2882`
+- `Billing Read`
+
 ### 4. SEMrush API Key
 
 Suggested record title:
@@ -87,7 +108,28 @@ Related env var / notation target:
 
 - `KSM_SEMRUSH_API_KEY_NOTATION`
 
-### 5. GTmetrix API Key
+### 5. GoDaddy DNS Token
+
+Suggested record title:
+
+- `GoDaddy DNS Token`
+
+Suggested usage in repo:
+
+- Domain Ops GoDaddy v3 nameserver cutover
+- GoDaddy domain-management mutations after explicit approval
+
+Related env var / notation target:
+
+- `KSM_GODADDY_PAT_NOTATION`
+- Default helper notation: `keeper://LNDz2zPtN7y_P_mFpRRPug/field/password`
+
+Required minimum scope:
+
+- `domains.domain:read`
+- `domains.nameserver:update`
+
+### 6. GTmetrix API Key
 
 Suggested record title:
 
@@ -191,6 +233,7 @@ Current Keeper notation targets:
 - `KSM_GTMETRIX_API_KEY_NOTATION=keeper://lkluImtpQHpBWcldViKfiQ/field/password`
 - `KSM_SEMRUSH_API_KEY_NOTATION=keeper://q1dizD20qVFSS1ZCYoRPEw/field/password`
 - `KSM_CLOUDFLARE_TOKEN_NOTATION=keeper://sBtNdBG1I4n0mjvKcSC3MA/field/password`
+- `KSM_CLOUDFLARE_BILLING_TOKEN_NOTATION=keeper://LttlGLhno7Ddd-GYZPWFTw/field/password`
 - `KSM_BROWSERSTACK_USERNAME_NOTATION=keeper://y6GUrHJgXsSxybHruXcVWg/field/login`
 - `KSM_BROWSERSTACK_ACCESS_KEY_NOTATION=keeper://y6GUrHJgXsSxybHruXcVWg/field/password`
 - `KSM_OPENAI_API_KEY_NOTATION=keeper://fsL4Qd2Q_9CPadtyeBr7-Q/field/password`

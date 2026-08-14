@@ -1,3 +1,2 @@
 # SPA fallback for PIB property detail pages
-/ /steps 302
 /pib/property/* /pib/property.html 200

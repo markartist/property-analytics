@@ -8,11 +8,13 @@ import json
 import sqlite3
 import sys
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
+
+UTC = timezone.utc
 
 ROOT = Path("/Users/mark/Property_Analytics")
 DB_PATH = ROOT / "data" / "portfolio_analytics.db"

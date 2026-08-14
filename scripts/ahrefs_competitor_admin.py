@@ -9,12 +9,14 @@ import sqlite3
 import sys
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import requests
+
+UTC = timezone.utc
 
 ROOT = Path("/Users/mark/Property_Analytics")
 if str(ROOT) not in sys.path:

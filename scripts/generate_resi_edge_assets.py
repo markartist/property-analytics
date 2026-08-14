@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import re
 import ssl
@@ -18,8 +19,29 @@ from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont, features
 
+try:
+    from fontTools.pens.svgPathPen import SVGPathPen
+    from fontTools.pens.transformPen import TransformPen
+    from fontTools.ttLib import TTFont
+except Exception:
+    SVGPathPen = None
+    TransformPen = None
+    TTFont = None
+
+try:
+    import pillow_avif  # noqa: F401
+except Exception:
+    pillow_avif = None
+
 
 USER_AGENT = "PropertyAnalytics-ResiEdgeAssetPrototype/2026-07-09"
+MOBILE_HERO_AVIF_MAX_BYTES = 80_000
+MOBILE_HERO_WEBP_MAX_BYTES = 80_000
+CONTENT_BLOCK_AVIF_MAX_BYTES = 55_000
+MIN_AVIF_QUALITY = 42
+MIN_WEBP_QUALITY = 24
+SHARED_LBLE_SVG = Path(__file__).resolve().parents[1] / "ops/cloudflare/shared/resi-edge-package/lble.svg"
+FALLBACK_TAGLINE_FONT = Path("/System/Library/Fonts/Supplemental/Georgia Italic.ttf")
 
 
 def slugify(value: str) -> str:
@@ -88,11 +110,29 @@ def save_webp(image: Image.Image, path: Path, quality: int) -> None:
 
 
 def save_avif(image: Image.Image, path: Path, quality: int) -> bool:
-    if not features.check("avif"):
+    try:
+        ensure_parent(path)
+        image.save(path, "AVIF", quality=quality)
+        return True
+    except Exception:
         return False
-    ensure_parent(path)
-    image.save(path, "AVIF", quality=quality)
-    return True
+
+
+def save_avif_to_budget(image: Image.Image, path: Path, quality: int, max_bytes: int) -> tuple[bool, int]:
+    for candidate_quality in range(quality, MIN_AVIF_QUALITY - 1, -4):
+        if not save_avif(image, path, candidate_quality):
+            return False, candidate_quality
+        if path.stat().st_size <= max_bytes:
+            return True, candidate_quality
+    return True, MIN_AVIF_QUALITY
+
+
+def save_webp_to_budget(image: Image.Image, path: Path, quality: int, max_bytes: int) -> tuple[bool, int]:
+    for candidate_quality in range(quality, MIN_WEBP_QUALITY - 1, -4):
+        save_webp(image, path, candidate_quality)
+        if path.stat().st_size <= max_bytes:
+            return True, candidate_quality
+    return True, MIN_WEBP_QUALITY
 
 
 def file_record(path: Path, public_url: str | None, source_url: str, role: str, variant: str, transform: dict[str, Any]) -> dict[str, Any]:
@@ -125,6 +165,138 @@ def r2_key_from_public_url(public_url: str, fallback_key_prefix: str) -> str:
     if marker in parsed_path:
         return marker + parsed_path.split(marker, 1)[1]
     return fallback_key_prefix + public_url.rsplit("/", 1)[-1]
+
+
+def same_origin_public_asset(public_url: str) -> bool:
+    return public_url.startswith("/assets/resi-edge-assets/") and public_url.endswith(".svg")
+
+
+def first_font_url(manifest: dict[str, Any], family: str) -> str | None:
+    wanted = family.lower()
+    for font in manifest.get("mobile_shell", {}).get("fonts", []):
+        if str(font.get("family", "")).lower() == wanted and font.get("url"):
+            return str(font["url"])
+    return None
+
+
+def load_tagline_font(manifest: dict[str, Any], out_dir: Path) -> tuple[Any, str]:
+    hero = manifest.get("mobile_shell", {}).get("hero", {})
+    title_family = str(manifest.get("mobile_shell", {}).get("title_font") or "").strip()
+    font_url = hero.get("title_svg_font_url") or (first_font_url(manifest, title_family) if title_family else None) or first_font_url(manifest, "Merriweather")
+    if TTFont is None or SVGPathPen is None or TransformPen is None:
+        raise RuntimeError("fontTools is required to generate path-backed tagline SVGs")
+    if font_url:
+        blob = download(str(font_url))
+        font_path = out_dir / "sources" / f"title-font-{hashlib.sha256(blob).hexdigest()[:10]}.woff2"
+        ensure_parent(font_path)
+        font_path.write_bytes(blob)
+        return TTFont(str(font_path)), str(font_url)
+    if FALLBACK_TAGLINE_FONT.exists():
+        return TTFont(str(FALLBACK_TAGLINE_FONT)), str(FALLBACK_TAGLINE_FONT)
+    raise RuntimeError("No tagline SVG font source is available")
+
+
+def glyph_advance(font: Any, glyph_name: str) -> int:
+    metrics = font["hmtx"].metrics
+    return int(metrics.get(glyph_name, (font["head"].unitsPerEm // 2, 0))[0])
+
+
+def line_width(font: Any, glyph_names: list[str], scale: float, letter_spacing: float) -> float:
+    if not glyph_names:
+        return 0.0
+    width_units = sum(glyph_advance(font, glyph) for glyph in glyph_names)
+    return width_units * scale + max(0, len(glyph_names) - 1) * letter_spacing
+
+
+def glyph_names_for_text(font: Any, text: str) -> list[str]:
+    cmap = font.getBestCmap()
+    return [cmap.get(ord(char), ".notdef") for char in text]
+
+
+def render_svg_text_paths(
+    font: Any,
+    lines: list[str],
+    width: int,
+    height: int,
+    font_size: float,
+    line_gap: float,
+    letter_spacing: float,
+    horizontal_padding: float,
+    viewbox_bleed: float = 0,
+    fill: str = "#FFFFFF",
+) -> str:
+    glyph_set = font.getGlyphSet()
+    units_per_em = font["head"].unitsPerEm
+    scale = font_size / units_per_em
+    total_height = len(lines) * font_size + max(0, len(lines) - 1) * line_gap
+    first_baseline = (height - total_height) / 2 + font_size * 0.82
+    paths: list[str] = []
+    layout_width = max(1.0, width - horizontal_padding * 2)
+    for index, line in enumerate(lines):
+        glyph_names = glyph_names_for_text(font, line)
+        x = horizontal_padding + (layout_width - line_width(font, glyph_names, scale, letter_spacing)) / 2
+        baseline = first_baseline + index * (font_size + line_gap)
+        for glyph_name in glyph_names:
+            glyph = glyph_set[glyph_name]
+            pen = SVGPathPen(glyph_set)
+            transform_pen = TransformPen(pen, (scale, 0, 0, -scale, x, baseline))
+            glyph.draw(transform_pen)
+            path_data = pen.getCommands()
+            if path_data:
+                paths.append(f'<path d="{path_data}"/>')
+            x += glyph_advance(font, glyph_name) * scale + letter_spacing
+    body = "".join(paths)
+    safe_bleed = max(0.0, viewbox_bleed)
+    viewbox_x = -safe_bleed
+    viewbox_width = width + safe_bleed * 2
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox_x:g} 0 {viewbox_width:g} {height}" '
+        f'width="{width}" height="{height}" role="img" aria-label="{html.escape(" ".join(lines))}">'
+        f'<g fill="{fill}" transform="skewX(-7 {width / 2:.1f} {height / 2:.1f})">{body}</g></svg>\n'
+    )
+
+
+def generate_property_tagline_svg(manifest: dict[str, Any], out_dir: Path, assets_root: Path, public_base: str) -> dict[str, Any] | None:
+    hero = manifest.get("mobile_shell", {}).get("hero", {})
+    if hero.get("title_mode") != "property_tagline_svg":
+        return None
+    public_url = str(hero.get("title_svg") or "")
+    if not same_origin_public_asset(public_url):
+        raise RuntimeError("property tagline SVG must use /assets/resi-edge-assets/.../*.svg")
+    title_text = str(hero.get("title_text") or "").strip()
+    lines = hero.get("title_svg_lines")
+    if not isinstance(lines, list) or not all(isinstance(line, str) and line.strip() for line in lines):
+        lines = [line.strip() for line in re.split(r"\s*/\s*|\n", title_text) if line.strip()]
+    if not lines:
+        raise RuntimeError("property tagline SVG requires title_text or title_svg_lines")
+    width = int(hero.get("title_svg_width") or 680)
+    height = int(hero.get("title_svg_height") or 210)
+    font_size = float(hero.get("title_svg_font_size") or (78 if len(lines) == 1 else 68))
+    line_gap = float(hero.get("title_svg_line_gap") or -8)
+    letter_spacing = float(hero.get("title_svg_letter_spacing") or -1.5)
+    horizontal_padding = float(hero.get("title_svg_horizontal_padding") or 56)
+    viewbox_bleed = float(hero.get("title_svg_viewbox_bleed") or 0)
+    font, font_source = load_tagline_font(manifest, out_dir)
+    svg = render_svg_text_paths(font, [line.strip() for line in lines], width, height, font_size, line_gap, letter_spacing, horizontal_padding, viewbox_bleed)
+    path = path_from_public_url(public_url, public_base, assets_root)
+    ensure_parent(path)
+    path.write_text(svg, encoding="utf-8")
+    return file_record(
+        path,
+        public_url,
+        f"manifest://mobile_shell.hero.title_text#{font_source}",
+        "hero-title",
+        "property-tagline-svg",
+        {
+            "strategy": "text-to-svg-paths",
+            "width": width,
+            "height": height,
+            "lines": lines,
+            "fontSource": font_source,
+            "fontDependencyRuntime": False,
+            "horizontalPadding": horizontal_padding,
+        },
+    )
 
 
 def draw_label(draw: ImageDraw.ImageDraw, xy: tuple[int, int], text: str) -> None:
@@ -167,8 +339,64 @@ def planned_width_from_url(url: str, default_width: int) -> int:
     return int(match.group(1)) if match else default_width
 
 
+def with_extension(url: str, extension: str) -> str:
+    return re.sub(r"\.(?:avif|webp|jpg|jpeg|png)$", f".{extension}", url)
+
+
+def normalize_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
+    if manifest.get("schema_version") != "resi_edge_manifest_v1":
+        return manifest
+
+    target = manifest["target"]
+    property_code = target["property_code"]
+    public_base = f"https://assets.venterradev.com/resi-edge-assets/{property_code}/"
+    mobile_shell = manifest["mobile_shell"]
+    hero = mobile_shell["hero"]
+    hero_mobile_avif = hero["image_mobile"]
+
+    image_rewrites = []
+    for block in mobile_shell.get("content_blocks", []):
+        source = block.get("source_image_url")
+        planned_avif = block.get("image_url")
+        if not source or not planned_avif:
+            continue
+        image_rewrites.append(
+            {
+                "role": block.get("kind") or f"content-block-{block.get('sequence', len(image_rewrites) + 1)}",
+                "source": source,
+                "plannedAvif": planned_avif,
+                "plannedWebp": with_extension(planned_avif, "webp"),
+            }
+        )
+
+    return {
+        **manifest,
+        "property": {
+            "propertyCode": property_code,
+            "name": target["property_name"],
+        },
+        "r2": {
+            "bucket": "resi-edge-assets",
+            "publicBaseUrl": public_base,
+            "keyPrefix": f"resi-edge-assets/{property_code}/",
+        },
+        "hero": {
+            "source": hero["source_image"],
+            "mobileCrop": {
+                "targetWidth": 750,
+                "targetHeight": 1000,
+            },
+            "plannedAssets": {
+                "mobileAvif": hero_mobile_avif,
+                "mobileWebp": with_extension(hero_mobile_avif, "webp"),
+            },
+        },
+        "imageRewrites": image_rewrites,
+    }
+
+
 def generate(manifest_path: Path, out_dir: Path, quality: int) -> dict[str, Any]:
-    manifest = load_manifest(manifest_path)
+    manifest = normalize_manifest(load_manifest(manifest_path))
     property_code = manifest["property"]["propertyCode"]
     public_base = manifest["r2"]["publicBaseUrl"]
     assets_root = out_dir / "assets"
@@ -212,7 +440,13 @@ def generate(manifest_path: Path, out_dir: Path, quality: int) -> dict[str, Any]
     hero_mobile_webp_url = hero["plannedAssets"]["mobileWebp"]
     hero_mobile_avif_path = path_from_public_url(hero_mobile_avif_url, public_base, assets_root)
     hero_mobile_webp_path = path_from_public_url(hero_mobile_webp_url, public_base, assets_root)
-    if save_avif(center_crop, hero_mobile_avif_path, quality):
+    hero_mobile_avif_saved, hero_mobile_avif_quality = save_avif_to_budget(
+        center_crop,
+        hero_mobile_avif_path,
+        quality,
+        MOBILE_HERO_AVIF_MAX_BYTES,
+    )
+    if hero_mobile_avif_saved:
         inventory.append(
             file_record(
                 hero_mobile_avif_path,
@@ -220,49 +454,40 @@ def generate(manifest_path: Path, out_dir: Path, quality: int) -> dict[str, Any]
                 hero["source"],
                 "hero",
                 "mobile-avif",
-                {"cropBox": center_box, "width": target_width, "height": target_height, "strategy": "center-out"},
+                {
+                    "cropBox": center_box,
+                    "width": target_width,
+                    "height": target_height,
+                    "strategy": "center-out",
+                    "quality": hero_mobile_avif_quality,
+                    "maxBytes": MOBILE_HERO_AVIF_MAX_BYTES,
+                },
             )
         )
-    save_webp(center_crop, hero_mobile_webp_path, quality)
-    inventory.append(
-        file_record(
-            hero_mobile_webp_path,
-            hero_mobile_webp_url,
-            hero["source"],
-            "hero",
-            "mobile-webp",
-            {"cropBox": center_box, "width": target_width, "height": target_height, "strategy": "center-out"},
-        )
+    hero_mobile_webp_saved, hero_mobile_webp_quality = save_webp_to_budget(
+        center_crop,
+        hero_mobile_webp_path,
+        quality,
+        MOBILE_HERO_WEBP_MAX_BYTES,
     )
-
-    desktop_width = planned_width_from_url(hero["plannedAssets"]["desktopAvif"], 1600)
-    desktop = resize_to_width(hero_source, desktop_width)
-    hero_desktop_avif_url = hero["plannedAssets"]["desktopAvif"]
-    hero_desktop_webp_url = hero["plannedAssets"]["desktopWebp"]
-    hero_desktop_avif_path = path_from_public_url(hero_desktop_avif_url, public_base, assets_root)
-    hero_desktop_webp_path = path_from_public_url(hero_desktop_webp_url, public_base, assets_root)
-    if save_avif(desktop, hero_desktop_avif_path, quality):
+    if hero_mobile_webp_saved:
         inventory.append(
             file_record(
-                hero_desktop_avif_path,
-                hero_desktop_avif_url,
+                hero_mobile_webp_path,
+                hero_mobile_webp_url,
                 hero["source"],
                 "hero",
-                "desktop-avif",
-                {"width": desktop.width, "height": desktop.height, "strategy": "resize-width"},
+                "mobile-webp",
+                {
+                    "cropBox": center_box,
+                    "width": target_width,
+                    "height": target_height,
+                    "strategy": "center-out",
+                    "quality": hero_mobile_webp_quality,
+                    "maxBytes": MOBILE_HERO_WEBP_MAX_BYTES,
+                },
             )
         )
-    save_webp(desktop, hero_desktop_webp_path, quality)
-    inventory.append(
-        file_record(
-            hero_desktop_webp_path,
-            hero_desktop_webp_url,
-            hero["source"],
-            "hero",
-            "desktop-webp",
-            {"width": desktop.width, "height": desktop.height, "strategy": "resize-width"},
-        )
-    )
 
     for rewrite in manifest.get("imageRewrites", []):
         role = rewrite["role"]
@@ -274,10 +499,15 @@ def generate(manifest_path: Path, out_dir: Path, quality: int) -> dict[str, Any]
         avif_path = path_from_public_url(avif_url, public_base, assets_root)
         webp_path = path_from_public_url(webp_url, public_base, assets_root)
         transform = {"width": resized.width, "height": resized.height, "strategy": "resize-width"}
-        if save_avif(resized, avif_path, quality):
-            inventory.append(file_record(avif_path, avif_url, rewrite["source"], role, "avif", transform))
+        avif_saved, avif_quality = save_avif_to_budget(resized, avif_path, quality, CONTENT_BLOCK_AVIF_MAX_BYTES)
+        if avif_saved:
+            inventory.append(file_record(avif_path, avif_url, rewrite["source"], role, "avif", {**transform, "quality": avif_quality, "maxBytes": CONTENT_BLOCK_AVIF_MAX_BYTES}))
         save_webp(resized, webp_path, quality)
         inventory.append(file_record(webp_path, webp_url, rewrite["source"], role, "webp", transform))
+
+    property_tagline = generate_property_tagline_svg(manifest, out_dir, assets_root, public_base)
+    if property_tagline:
+        inventory.append(property_tagline)
 
     run_packet = {
         "schemaVersion": "2026-07-09.prototype",
@@ -286,7 +516,7 @@ def generate(manifest_path: Path, out_dir: Path, quality: int) -> dict[str, Any]
         "propertyCode": property_code,
         "propertyName": manifest["property"]["name"],
         "encoder": {
-            "pillowAvif": bool(features.check("avif")),
+            "pillowAvif": any(record["variant"].endswith("avif") or record["variant"] == "avif" for record in inventory),
             "pillowWebp": bool(features.check("webp")),
             "quality": quality,
         },
@@ -310,6 +540,15 @@ def generate(manifest_path: Path, out_dir: Path, quality: int) -> dict[str, Any]
         ],
         "liveTrafficChanged": False,
     }
+    if SHARED_LBLE_SVG.exists():
+        run_packet["uploadPlan"].append(
+            {
+                "localPath": str(SHARED_LBLE_SVG),
+                "bucket": manifest["r2"]["bucket"],
+                "r2Key": "resi-edge-assets/shared/lble.svg",
+                "publicUrl": "/assets/resi-edge-assets/shared/lble.svg",
+            }
+        )
     ensure_parent(out_dir / "generated-assets.json")
     (out_dir / "generated-assets.json").write_text(json.dumps(run_packet, indent=2), encoding="utf-8")
     return run_packet
