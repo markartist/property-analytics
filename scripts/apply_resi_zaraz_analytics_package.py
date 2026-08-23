@@ -2,7 +2,8 @@
 """Apply the governed Resi Zaraz analytics package for one property.
 
 This tool is intentionally narrow:
-- preserve existing Zaraz tools
+- preserve unrelated Zaraz tools
+- retire superseded managed Resi Edge analytics tools for the same zone
 - upsert GA4, Heap v6, Ahrefs, and the Resi event bridge from the manifest
 - emit redacted before/after evidence
 """
@@ -11,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import http.client
 import json
 import re
 import socket
@@ -46,7 +48,7 @@ def _api(token: str, path: str, *, method: str = "GET", payload: dict | None = N
         method=method,
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
     )
-    transient_errors = (TimeoutError, socket.timeout, URLError)
+    transient_errors = (TimeoutError, socket.timeout, URLError, http.client.RemoteDisconnected, ConnectionResetError)
     last_error: Exception | None = None
     for attempt in range(1, API_RETRIES + 1):
         try:
@@ -63,7 +65,7 @@ def _api(token: str, path: str, *, method: str = "GET", payload: dict | None = N
 
 
 def _urlopen_json_with_retry(request: Request, *, label: str) -> dict:
-    transient_errors = (TimeoutError, socket.timeout, URLError)
+    transient_errors = (TimeoutError, socket.timeout, URLError, http.client.RemoteDisconnected, ConnectionResetError)
     last_error: Exception | None = None
     for attempt in range(1, API_RETRIES + 1):
         try:
@@ -563,6 +565,26 @@ def _redact(config: dict) -> dict:
     }
 
 
+def _is_managed_resi_edge_tool(tool: dict) -> bool:
+    name = str(tool.get("name") or "")
+    if name.startswith(
+        (
+            "Google Analytics 4 - ",
+            "Heap Analytics - ",
+            "Resi Event Bridge - ",
+            "Ahrefs Web Analytics - ",
+        )
+    ):
+        return True
+    text = json.dumps(tool, sort_keys=True)
+    managed_tokens = (
+        "vtr_cs_verify_suppressed",
+        "zaraz-ga4-resi-bridge-v1",
+        EXPECTED_HEAP_MODE,
+    )
+    return any(token in text for token in managed_tokens)
+
+
 def _apply(manifest: dict, *, apply: bool) -> dict:
     target = manifest["target"]
     analytics = manifest["analytics"]
@@ -602,6 +624,14 @@ def _apply(manifest: dict, *, apply: bool) -> dict:
     if ahrefs_key.get("resolved"):
         proposed_tools[ahrefs_id] = _ahrefs_tool(property_name, ahrefs_key["data_key"])
     changes = []
+    retired_tool_ids = []
+    for tool_id, tool in sorted(list((updated.get("tools") or {}).items())):
+        if tool_id in proposed_tools:
+            continue
+        if _is_managed_resi_edge_tool(tool):
+            retired_tool_ids.append(tool_id)
+            updated["tools"].pop(tool_id, None)
+            changes.append(f"retire_superseded_tool:{tool_id}:{tool.get('name')}")
     for tool_id, tool in proposed_tools.items():
         if updated["tools"].get(tool_id) != tool:
             updated["tools"][tool_id] = tool
@@ -629,7 +659,10 @@ def _apply(manifest: dict, *, apply: bool) -> dict:
             "ahrefs_resolution_reason": ahrefs_key.get("reason"),
             "heap_mode": EXPECTED_HEAP_MODE,
             "contentsquare_same_origin_path": CS_VERIFY_SUPPRESS_PATH,
-            "preserved_existing_tool_ids": sorted(set((config.get("tools") or {}).keys()) - set(proposed_tools.keys())),
+            "retired_superseded_tool_ids": retired_tool_ids,
+            "preserved_existing_tool_ids": sorted(
+                set((config.get("tools") or {}).keys()) - set(proposed_tools.keys()) - set(retired_tool_ids)
+            ),
         },
     }
     if not changes:

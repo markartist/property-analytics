@@ -294,7 +294,7 @@
       "preferences_behavior",
       "no_pre_consent_leakage"
     ],
-    "widget_version": "compact_finalized_pill_v27_2026_08_12"
+    "widget_version": "compact_shell_pill_v28_2026_08_18"
   },
   "seo": {
     "llms_url": "https://pilot.venterradev.com/llms.txt",

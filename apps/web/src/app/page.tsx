@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ClearwaterBadge,
   ClearwaterKicker,
@@ -11,12 +12,13 @@ import {
 } from "@/components/shared/clearwater-glass";
 import { getPondInsights, type PondInsight, type PondSurface } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
-import { getFeaturedOfferings, getRoleTitle, type AppRole, type SurfaceId } from "@/lib/permissions";
+import { IS_LAUNCH_ROOM_AUTH, getFeaturedOfferings, getRoleTitle, type AppRole, type SurfaceId } from "@/lib/permissions";
 import {
   Anchor, Eye, Fish,
   TrendingUp, TrendingDown, AlertTriangle, Trophy, Zap, BarChart3,
   Loader2, Waves, Clock, Database, Gauge, FlaskConical, Route,
   BriefcaseBusiness, ClipboardCheck, FileText, ShieldCheck, ListChecks,
+  MonitorCheck,
 } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
@@ -200,6 +202,15 @@ const FEATURED_ZONE_DECOR: Record<
     gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
     iconBg: "bg-white/[0.18]",
     icon: BarChart3,
+  },
+  resiEdgeLaunch: {
+    kicker: "Launch",
+    title: "Resi Edge Launch",
+    subtitle: "Open the launch room",
+    description: "Review protected launch readiness, blockers, evidence posture, and batch progress.",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#7DCAC2]/12",
+    iconBg: "bg-white/[0.18]",
+    icon: MonitorCheck,
   },
   routingOps: {
     kicker: "Route",
@@ -393,7 +404,25 @@ const ROLE_EXPERIENCE: Record<AppRole, {
 // Page
 // ────────────────────────────────────────────────────────────────
 
+function LaunchRoomRootRedirect() {
+  const router = useRouter();
+
+  React.useEffect(() => {
+    router.replace("/resi-edge/launch");
+  }, [router]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#F6F6F5]">
+      <Loader2 className="h-8 w-8 animate-spin text-[#3D66B9]" aria-label="Opening launch dashboard" />
+    </div>
+  );
+}
+
 export default function DataPondLanding() {
+  if (IS_LAUNCH_ROOM_AUTH) {
+    return <LaunchRoomRootRedirect />;
+  }
+
   const { user } = useAuth();
   const [insights, setInsights] = React.useState<PondInsight[]>([]);
   const [surface, setSurface] = React.useState<PondSurface | null>(null);

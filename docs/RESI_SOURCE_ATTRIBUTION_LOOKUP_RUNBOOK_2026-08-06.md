@@ -2,18 +2,45 @@
 
 Status: Active foundation
 Owner: WebOps / MarketingOps
-Last updated: 08/06/2026
+Last updated: 08/20/2026
 
 ## Rule
 
-The visible default phone is the VWS attribution number from the Resi/ThirtyLines `trackingCodes` feed.
+The visible default phone is the VWS attribution number from the Resi lead-source feed.
 
-Incoming source URLs use the matching `trackingId` row from that same feed. The actual office phone must not be used as a generated display fallback. Missing or blank VWS attribution is a warning and a fix condition.
+Incoming source URLs use the matching source-code row from that same feed. The actual office phone must not be used as a generated display fallback. Missing or blank VWS attribution is a warning and a fix condition.
+
+## Source Of Truth
+
+Preferred current source:
+
+- Resi V2 management API: `https://v2.getresi.com/api/v2`
+- Endpoint: `GET /lead-sources`
+- Join: `lead_sources.property_id` to `properties.id`; then `properties.reference_id` to the governed property identity matrix
+- Credential: Keeper record `Resi Server API Token`
+- Notation: `KSM_RESI_API_TOKEN_NOTATION=keeper://2tuAKQVuBYqp0PCipUQUyw/field/password`
+
+Legacy supported source:
+
+- ThirtyLines snapshot rows in `thirtylines_feed_snapshots`
+- Still available as the default builder path for backward compatibility
 
 ## Build
 
 ```bash
 python3 scripts/build_resi_source_lookup_table.py
+```
+
+Build from Resi V2:
+
+```bash
+python3 scripts/build_resi_source_lookup_table.py --source resi-v2
+```
+
+Build again from the latest local Resi V2 snapshot without contacting the Resi host:
+
+```bash
+python3 scripts/build_resi_source_lookup_table.py --source resi-v2 --use-latest-snapshot
 ```
 
 Outputs:
@@ -31,7 +58,7 @@ node scripts/test_resi_source_attribution.mjs
 Required checks:
 
 - default URL resolves to VWS
-- source-coded `?id=<trackingId>` resolves to that source row
+- source-coded `?id=<sourceCode>` resolves to that source row
 - invalid id falls back to VWS
 - office phone does not appear as a display fallback
 

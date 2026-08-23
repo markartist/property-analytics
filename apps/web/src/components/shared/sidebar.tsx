@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
-import { getRoleTitle, getSidebarOfferings, canAccessOffering, type SurfaceId } from "@/lib/permissions";
+import { IS_LAUNCH_ROOM_AUTH, getRoleTitle, getSidebarOfferings, canAccessOffering, type SurfaceId } from "@/lib/permissions";
 import {
   BarChart3,
   Search,
@@ -33,6 +33,7 @@ import {
   FlaskConical,
   BriefcaseBusiness,
   ClipboardCheck,
+  MonitorCheck,
 } from "lucide-react";
 
 const SURFACE_ICONS: Record<SurfaceId, React.ElementType> = {
@@ -52,6 +53,7 @@ const SURFACE_ICONS: Record<SurfaceId, React.ElementType> = {
   intelligenceOffice: BookOpenText,
   directiveControlCenter: Shield,
   siteContent: FileSearch,
+  resiEdgeLaunch: MonitorCheck,
   routingOps: Route,
   experiments: FlaskConical,
   vacs: Bot,
@@ -97,7 +99,7 @@ export function Sidebar() {
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-hidden transition-transform lg:static lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ background: "linear-gradient(180deg, #15284B 0%, #0D3B4F 40%, #0D5E6D 80%, #1A7A5A 100%)" }}
+        style={{ background: "linear-gradient(180deg, #15284B 0%, #294782 50%, #3B9189 100%)" }}
       >
         {/* Branding header */}
         <div className="px-5 py-4">
@@ -183,7 +185,9 @@ export function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="min-w-0">
                 <p className="truncate text-xs font-medium text-white/90">{user.email}</p>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">{getRoleTitle(user.role)}</p>
+                {!IS_LAUNCH_ROOM_AUTH && (
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">{getRoleTitle(user.role)}</p>
+                )}
               </div>
               <button
                 onClick={logout}
@@ -197,14 +201,16 @@ export function Sidebar() {
         )}
 
         {/* Footer branding */}
-        <div className="border-t border-white/15 px-5 py-3">
-          <div className="flex items-center gap-2">
-            <Image src="/velo-current.svg" alt="" width={14} height={8} className="shrink-0 opacity-50" />
-            <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
-              Produced by WebOps
-            </p>
+        {!IS_LAUNCH_ROOM_AUTH && (
+          <div className="border-t border-white/15 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <Image src="/velo-current.svg" alt="" width={14} height={8} className="shrink-0 opacity-50" />
+              <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+                Produced by WebOps
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </aside>
     </>
   );

@@ -47,9 +47,7 @@ function isWordPressControlRequest(request, url) {
 }
 
 function fetchOriginTransparent(request) {
-  return fetch(new Request(request, { redirect: "manual" }), {
-    cf: { cacheEverything: false, cacheTtl: 0 },
-  });
+  return fetch(new Request(request, { redirect: "manual" }));
 }
 
 export default {

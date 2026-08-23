@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Loader2 } from "lucide-react";
 import LoginClient from "./login-client";
 import {
+  AUTH_PRIMARY,
   CLOUDFLARE_BOOTSTRAP_MARKER,
   CLOUDFLARE_LOGGED_OUT_STORAGE_KEY,
   LOGGED_OUT_MARKER,
@@ -15,6 +16,9 @@ function buildBootstrapRedirectScript() {
   return `
     (function () {
       try {
+        if (window.location.hostname === "launch.venterrawebops.com") {
+          return;
+        }
         var params = new URLSearchParams(window.location.search);
         if (
           window.location.pathname === "/login" &&
@@ -36,13 +40,13 @@ export default function LoginPage() {
   return (
     <>
       <Script id="login-bootstrap-redirect" strategy="beforeInteractive">
-        {buildBootstrapRedirectScript()}
+        {AUTH_PRIMARY === "magic" ? "" : buildBootstrapRedirectScript()}
       </Script>
       <Suspense
         fallback={
           <div
             className="flex min-h-screen items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #15284B 0%, #0D5E6D 50%, #15803D 100%)" }}
+            style={{ background: "linear-gradient(135deg, #15284B 0%, #3B9189 50%, #7DCAC2 100%)" }}
           >
             <Loader2 className="h-8 w-8 animate-spin text-white/50" />
           </div>

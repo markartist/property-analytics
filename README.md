@@ -78,6 +78,30 @@ Key implementation areas:
 - GraphQL analytics client: `/Users/mark/Property_Analytics/Data_Collection/queries/cloudflare_graphql_cache_metrics.py`
 - Rollout tooling: `/Users/mark/Property_Analytics/ops/cloudflare/`
 
+## Ops Watch And Cloudflare Mirror/Push
+
+Ops Watch is the governed cross-system monitoring layer for Jira, Confluence, Microsoft 365, internal source packets, and Captain-facing operational signals.
+
+Start here:
+
+- `/Users/mark/Property_Analytics/docs/OPS_WATCH_RUNBOOK_2026-08-22.md`
+- `/Users/mark/Property_Analytics/docs/OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md`
+- `/Users/mark/Property_Analytics/docs/OPS_WATCH_CLOUDFLARE_OFFLOAD_PLAN_2026-08-22.md`
+
+Live Cloudflare mirror/push ingest:
+
+- Health: `https://ops-watch.venterrawebops.com/health`
+- Worker: `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/`
+- D1 tables: `ops_watch_ingest_runs`, `ops_watch_signals`, `ops_watch_action_queue`
+- R2 prefix: `ops-watch/ingest/`
+
+Credential source:
+
+- Keeper record: `Ops Watch Ingest Shared Secret`
+- Worker secret: `OPS_WATCH_INGEST_SHARED_SECRET`
+
+Boundary: Cloudflare receives signed sanitized packets only. It does not crawl inward to intranet/private systems, and Captain-facing actions remain review-required.
+
 ## Unified Foundation
 
 The platform now has an explicit foundation layer for capability awareness, security posture, repo boundaries, and migration planning.

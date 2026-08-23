@@ -18,6 +18,7 @@ export type SurfaceId =
   | "intelligenceOffice"
   | "directiveControlCenter"
   | "siteContent"
+  | "resiEdgeLaunch"
   | "routingOps"
   | "experiments"
   | "vacs"
@@ -50,6 +51,12 @@ export interface SurfaceAccessDefinition {
   audience: SurfaceAudience;
   summary: string;
 }
+
+export const IS_LAUNCH_ROOM_AUTH =
+  process.env.NEXT_PUBLIC_AUTH_PRIMARY === "magic" ||
+  (typeof window !== "undefined" && window.location.hostname === "launch.venterrawebops.com");
+const LAUNCH_ROOM_OFFERINGS = new Set<SurfaceId>(["resiEdgeLaunch"]);
+const LAUNCH_ROOM_PATH_PREFIXES = ["/resi-edge/launch"];
 
 export const ROLE_LEVEL: Record<AppRole, number> = {
   viewer: 0,
@@ -244,6 +251,21 @@ export const OFFERING_ACCESS: Record<SurfaceId, SurfaceAccessDefinition> = {
     audience: "steward",
     summary: "Governed crawl, mapping, assessment, and rewrite workflow.",
   },
+  resiEdgeLaunch: {
+    id: "resiEdgeLaunch",
+    href: "/resi-edge/launch",
+    label: "Resi Edge Launch",
+    category: "Routing Ops",
+    minRole: "viewer",
+    actionRole: "admin",
+    actions: {
+      view: "viewer",
+      decide: "admin",
+      administer: "admin",
+    },
+    audience: "observer",
+    summary: "Protected read-only Data Pond launch room for Resi Edge readiness, blockers, evidence, and batch posture.",
+  },
   routingOps: {
     id: "routingOps",
     href: "/routing-ops/portfolio-launch",
@@ -357,6 +379,7 @@ export const OFFERING_ORDER: SurfaceId[] = [
   "contentOffice",
   "intelligenceOffice",
   "siteContent",
+  "resiEdgeLaunch",
   "experiments",
   "vacs",
   "evs",
@@ -399,6 +422,9 @@ export function canAccessSurface(userRole: AppRole | undefined | null, minRole: 
 }
 
 export function canAccessOffering(userRole: AppRole | undefined | null, surfaceId: SurfaceId): boolean {
+  if (IS_LAUNCH_ROOM_AUTH && !LAUNCH_ROOM_OFFERINGS.has(surfaceId)) {
+    return false;
+  }
   if (userRole === "editor") {
     return EDITOR_ALLOWED_OFFERINGS.has(surfaceId);
   }
@@ -416,6 +442,9 @@ export function canPerformOfferingAction(
   surfaceId: SurfaceId,
   action: SurfaceAction
 ): boolean {
+  if (IS_LAUNCH_ROOM_AUTH && !LAUNCH_ROOM_OFFERINGS.has(surfaceId)) {
+    return false;
+  }
   if (userRole === "editor" && !EDITOR_ALLOWED_OFFERINGS.has(surfaceId)) {
     return false;
   }
@@ -424,10 +453,19 @@ export function canPerformOfferingAction(
 
 export function canAccessPath(userRole: AppRole | undefined | null, pathname: string | null | undefined): boolean {
   if (!pathname) return false;
-  if (userRole !== "editor") return true;
-  return EDITOR_ALLOWED_PATH_PREFIXES.some((prefix) =>
-    prefix === "/" ? pathname === "/" || pathname === "/pond" : pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
+  if (IS_LAUNCH_ROOM_AUTH) {
+    return LAUNCH_ROOM_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  }
+  if (userRole === "admin") return true;
+  if (userRole === "editor") {
+    return EDITOR_ALLOWED_PATH_PREFIXES.some((prefix) =>
+      prefix === "/" ? pathname === "/" || pathname === "/pond" : pathname === prefix || pathname.startsWith(`${prefix}/`)
+    ) || getVisibleOfferings(userRole).some((offering) => pathname === offering.href || pathname.startsWith(`${offering.href}/`));
+  }
+  if (userRole === "viewer") {
+    return pathname === "/" || getVisibleOfferings(userRole).some((offering) => pathname === offering.href || pathname.startsWith(`${offering.href}/`));
+  }
+  return false;
 }
 
 export function getSidebarOfferings(userRole: AppRole | undefined | null): SurfaceAccessDefinition[] {

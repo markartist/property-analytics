@@ -339,6 +339,93 @@ test("GET /v1/auth/access-bootstrap returns the browser to the requesting fronte
   }
 });
 
+test("GET /v1/auth/access-bootstrap supports the Data Pond venterrawebops host", async () => {
+  const { db, close } = await createTestD1Database();
+  const originalFetch = globalThis.fetch;
+
+  try {
+    await run(
+      db,
+      `CREATE TABLE users (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL,
+        full_name TEXT,
+        password_hash TEXT,
+        role TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        last_login_at TEXT,
+        deleted_at TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT
+      )`
+    );
+    await run(
+      db,
+      `CREATE TABLE sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        session_token_hash TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        revoked_at TEXT,
+        created_at TEXT,
+        created_by TEXT,
+        updated_at TEXT,
+        updated_by TEXT
+      )`
+    );
+    await run(
+      db,
+      `INSERT INTO users (id, email, full_name, role, is_active, created_at, updated_at)
+       VALUES ('user_venterrawebops', 'mlaufhutte@venterraliving.com', 'Mark', 'admin', 1, datetime('now'), datetime('now'))`
+    );
+
+    const env = createPlatformRouteEnv(db);
+    const teamDomain = "https://pond-bootstrap-test.cloudflareaccess.com";
+    env.CLOUDFLARE_ACCESS_TEAM_DOMAIN = teamDomain;
+    const { token, jwk } = buildCloudflareAccessJwt({
+      teamDomain,
+      commonName: "mlaufhutte@venterraliving.com",
+      email: "mlaufhutte@venterraliving.com",
+    });
+
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.endsWith("/cdn-cgi/access/certs")) {
+        return new Response(JSON.stringify({ keys: [jwk] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return originalFetch(input);
+    }) as typeof fetch;
+
+    const response = await app.request(
+      "https://api.venterrawebops.com/v1/auth/access-bootstrap?next=%2Fpond%3Fcf_bootstrapped%3D1",
+      {
+        headers: {
+          referer: "https://pond.venterrawebops.com/login",
+          "cf-access-jwt-assertion": token,
+          "cf-access-authenticated-user-email": "mlaufhutte@venterraliving.com",
+        },
+        redirect: "manual",
+      },
+      env
+    );
+
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get("Location"), "https://pond.venterrawebops.com/pond?cf_bootstrapped=1");
+
+    const setCookie = response.headers.get("Set-Cookie");
+    assert.ok(setCookie?.includes("pop_session="));
+    assert.ok(setCookie?.includes("Domain=.venterrawebops.com"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    close();
+  }
+});
+
 test("GET /v1/auth/me auto-provisions a viewer from Cloudflare Access when enabled", async () => {
   const { db, close } = await createTestD1Database();
   const originalFetch = globalThis.fetch;

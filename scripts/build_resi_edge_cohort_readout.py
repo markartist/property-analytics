@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 REPO_ROOT = Path(__file__).resolve().parents[1]
 REPORT_ROOT = REPO_ROOT / "reports/resi_edge_performance/08-09-2026"
 REGISTER_PATH = REPO_ROOT / "config/portfolio_resi_edge_stabilization/resi-edge-pilot-rollout-register.json"
+CONTRACT_PATH = REPO_ROOT / "ops/cloudflare/shared/resi-edge-package/contract.json"
 READOUT_ROOT = REPO_ROOT / "reports/resi_edge_performance/cohort-readouts"
 LOCAL_TZ = ZoneInfo("America/Chicago")
 MOBILE_TARGET = 98
@@ -88,6 +89,11 @@ def gate_summary_text(summary: dict[str, Any] | None) -> str:
     )
 
 
+def current_required_gates() -> list[str]:
+    contract = load_json(CONTRACT_PATH)
+    return list(contract.get("required_gates") or [])
+
+
 def latest_passing_apply_dir(property_id: str) -> Path | None:
     root = REPORT_ROOT / property_id
     if not root.exists():
@@ -138,6 +144,13 @@ def summarize_property(row: dict[str, Any], *, prefer_latest: bool) -> dict[str,
     zaraz_payload = load_json(zaraz_path) if zaraz_path.exists() else {}
 
     ledger = apply_payload.get("contract_gate_ledger") or {}
+    required_gates = current_required_gates()
+    proven_gate_names = {
+        gate.get("name")
+        for gate in ledger.get("gates") or []
+        if gate.get("status") in {"pass", "not_applicable"} and gate.get("name")
+    }
+    missing_current_gates = [gate for gate in required_gates if gate not in proven_gate_names]
     gate_summary = ledger.get("summary") or packet_payload.get("gate_summary")
     mandatory_failures = ledger.get("mandatory_failures") or []
     packet_failures = packet_payload.get("mandatory_failures") or []
@@ -151,6 +164,8 @@ def summarize_property(row: dict[str, Any], *, prefer_latest: bool) -> dict[str,
         summary["issues"].append("Apply readout is not passing.")
     if mandatory_failures:
         summary["issues"].append(f"Mandatory gate failures: {', '.join(mandatory_failures)}.")
+    if missing_current_gates:
+        summary["issues"].append(f"Evidence packet is missing current required gates: {', '.join(missing_current_gates)}.")
     if packet_failures and not mandatory_failures:
         summary["issues"].append(f"Evidence packet has historical/self-index artifact: {', '.join(packet_failures)}.")
     if mobile_score is None or float(mobile_score) < MOBILE_TARGET:
@@ -170,6 +185,8 @@ def summarize_property(row: dict[str, Any], *, prefer_latest: bool) -> dict[str,
             "duration_minutes": duration_minutes(evidence_dir, apply_payload.get("generated_at")),
             "gate_summary": gate_summary,
             "gate_summary_text": gate_summary_text(gate_summary),
+            "current_contract_gate_count": len(required_gates),
+            "current_contract_missing_gates": missing_current_gates,
             "mandatory_failures": mandatory_failures,
             "packet_file_count": packet_payload.get("file_count"),
             "packet_mandatory_failures": packet_failures,

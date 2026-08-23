@@ -27,6 +27,7 @@ from utils.config_manager import Config
 DEFAULT_URLS = ["https://thevinekyle.com/", "https://thevinekyle.com/apartments/"]
 ANALYTICS_REQUEST_RE = r"cdn-cgi/zaraz|google-analytics|googletagmanager|heap|contentsquare|getresi|ahrefs|vtr_cs_verify_suppressed"
 DESKTOP_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36"
+HEAP_APP_ID_RE = re.compile(r"(?:cdn\.us\.heap-api\.com/config/|heap\.load\([\"']|[?&]a=)(\d{6,})", re.I)
 HEAP_DELAY_STATE_JS = """
 function findHeapDelay() {
   const key = Object.keys(window).find((candidate) => /^__vtrHeapDelay/.test(candidate));
@@ -41,6 +42,14 @@ function findHeapMarker() {
 """
 
 
+def _extract_heap_app_ids(values: list[str]) -> list[str]:
+    ids: set[str] = set()
+    for value in values:
+        for match in HEAP_APP_ID_RE.finditer(value or ""):
+            ids.add(match.group(1))
+    return sorted(ids)
+
+
 def _add_query_flag(url: str, flag: str) -> str:
     parts = urlsplit(url)
     query = parse_qsl(parts.query, keep_blank_values=True)
@@ -48,7 +57,7 @@ def _add_query_flag(url: str, flag: str) -> str:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
-async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_check: bool) -> dict:
+async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_check: bool, expected_heap_app_id: str) -> dict:
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(viewport={"width": 1365, "height": 900}, user_agent=DESKTOP_UA)
@@ -94,6 +103,14 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
                 heapTrackType: window.heap && typeof window.heap.track,
                 heapDelay,
                 heapMarker,
+                heapScriptIds: Array.from(document.scripts).flatMap(script => {
+                  const text = [script.src || '', script.textContent || ''].join('\\n');
+                  const ids = [];
+                  const re = /(?:cdn\\.us\\.heap-api\\.com\\/config\\/|heap\\.load\\(["']|[?&]a=)(\\d{6,})/gi;
+                  let match;
+                  while ((match = re.exec(text))) ids.push(match[1]);
+                  return ids;
+                }),
                 hasAhrefsScript: Array.from(document.scripts).some(script => /ahrefs/i.test(script.src || script.textContent || '')),
                 dataLayerLength: Array.isArray(window.dataLayer) ? window.dataLayer.length : null,
                 dataLayerEvents: Array.isArray(window.dataLayer) ? window.dataLayer.map(x => x && x.event).filter(Boolean) : []
@@ -124,7 +141,15 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
                 heapIsArray: Array.isArray(window.heap),
                 heapTrackType: window.heap && typeof window.heap.track,
                 heapDelay,
-                heapMarker
+                heapMarker,
+                heapScriptIds: Array.from(document.scripts).flatMap(script => {
+                  const text = [script.src || '', script.textContent || ''].join('\\n');
+                  const ids = [];
+                  const re = /(?:cdn\\.us\\.heap-api\\.com\\/config\\/|heap\\.load\\(["']|[?&]a=)(\\d{6,})/gi;
+                  let match;
+                  while ((match = re.exec(text))) ids.push(match[1]);
+                  return ids;
+                })
               });
             }"""
         )
@@ -161,6 +186,14 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
                   return ({
                     hasHeap: typeof window.heap !== 'undefined',
                     heapDelay,
+                    heapScriptIds: Array.from(document.scripts).flatMap(script => {
+                      const text = [script.src || '', script.textContent || ''].join('\\n');
+                      const ids = [];
+                      const re = /(?:cdn\\.us\\.heap-api\\.com\\/config\\/|heap\\.load\\(["']|[?&]a=)(\\d{6,})/gi;
+                      let match;
+                      while ((match = re.exec(text))) ids.push(match[1]);
+                      return ids;
+                    }),
                     hasAhrefsScript: Array.from(document.scripts).some(script => /ahrefs/i.test(script.src || script.textContent || ''))
                   });
                 }"""
@@ -173,6 +206,13 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
     interaction_requests = requests[interaction_start_count:interaction_request_count] if interaction_request_count is not None else []
     passive_bad_responses = bad_responses[:passive_bad_response_count]
     delayed_bad_responses = bad_responses[:delayed_bad_response_count]
+    observed_heap_app_ids = _extract_heap_app_ids(
+        [item["url"] for item in requests]
+        + list(passive.get("heapScriptIds") or [])
+        + list(delayed.get("heapScriptIds") or [])
+        + list((interaction or {}).get("heapScriptIds") or [])
+    )
+    unexpected_heap_app_ids = [item for item in observed_heap_app_ids if item != expected_heap_app_id]
 
     return {
         "url": url,
@@ -198,6 +238,8 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
                 "analytics_passive_bad_response_count": len(passive_bad_responses),
                 "ahrefs_request_count": sum("ahrefs" in item["url"].lower() for item in delayed_requests),
                 "ahrefs_interaction_request_count": sum("ahrefs" in item["url"].lower() for item in interaction_requests) if interaction_check else None,
+                "observed_heap_app_ids": observed_heap_app_ids,
+                "unexpected_heap_app_ids": unexpected_heap_app_ids,
             "ahrefs_script_present": bool(passive.get("hasAhrefsScript") or ((interaction or {}).get("hasAhrefsScript"))),
         },
     }
@@ -237,7 +279,7 @@ async def _main_async(args: argparse.Namespace) -> int:
 
     browser_checks = []
     for url in urls:
-        browser_checks.append(await _check_url(url, args.passive_ms, args.delayed_ms, args.expect_heap_after_interaction))
+        browser_checks.append(await _check_url(url, args.passive_ms, args.delayed_ms, args.expect_heap_after_interaction, args.heap_app_id))
 
     if args.ga4_wait_ms:
         await asyncio.sleep(args.ga4_wait_ms / 1000)
@@ -273,6 +315,8 @@ async def _main_async(args: argparse.Namespace) -> int:
             failures.append(f"{check['url']}: Heap/Contentsquare request during late passive window")
         if summary["analytics_bad_response_count"] > 0:
             failures.append(f"{check['url']}: analytics network response >= 400")
+        if summary["unexpected_heap_app_ids"]:
+            failures.append(f"{check['url']}: unexpected Heap app id(s) observed: {', '.join(summary['unexpected_heap_app_ids'])}")
         if summary["contentsquare_vendor_verify_request_count"] > 0:
             failures.append(f"{check['url']}: Contentsquare verify-installation reached vendor endpoint instead of same-origin suppression")
         if args.expect_heap_after_interaction and not summary["heap_interaction_loaded"]:

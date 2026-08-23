@@ -4,6 +4,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import {
   apiFetch,
+  AUTH_PRIMARY,
   buildCloudflareAccessBootstrapUrl,
   buildCloudflareAccessBootstrapRetryUrl,
   buildCloudflareAccessLogoutUrl,
@@ -38,6 +39,18 @@ export function useAuth() {
 
 const PUBLIC_PATHS = ["/login", "/login/verify", "/steps"];
 
+function isPublicPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (AUTH_PRIMARY === "magic" && pathname === "/") return true;
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+function buildMagicLinkLoginUrl(nextPath: string): string {
+  const params = new URLSearchParams();
+  params.set("next", nextPath);
+  return `/login?${params.toString()}`;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<AuthUser | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -45,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     // Don't check auth on public paths
-    if (PUBLIC_PATHS.some((path) => pathname === path || pathname?.startsWith(`${path}/`))) {
+    if (isPublicPath(pathname)) {
       setLoading(false);
       return;
     }
@@ -92,6 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
             const nextPath = window.location.pathname + currentSearch + currentHash;
+            if (AUTH_PRIMARY === "magic") {
+              window.location.href = buildMagicLinkLoginUrl(nextPath);
+              return;
+            }
             window.location.href = buildCloudflareAccessBootstrapUrl(nextPath);
           }
           return;
@@ -113,6 +130,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return;
             }
             const nextPath = window.location.pathname + currentSearch + currentHash;
+            if (AUTH_PRIMARY === "magic") {
+              window.location.href = buildMagicLinkLoginUrl(nextPath);
+              return;
+            }
             window.location.href = buildCloudflareAccessBootstrapUrl(nextPath);
           }
           return;
@@ -139,6 +160,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null);
     markCloudflareLoggedOut();
+    if (AUTH_PRIMARY === "magic") {
+      window.location.href = "/login?logged_out=1";
+      return;
+    }
     window.location.href = buildCloudflareAccessLogoutUrl();
   }, []);
 

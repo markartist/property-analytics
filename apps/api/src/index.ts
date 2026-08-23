@@ -39,13 +39,16 @@ const t30Metrics = createLeasingMetricsRouter("t30_metrics", "t30_metrics");
 
 const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 
-// CORS: allow frontend origin (app.venterradev.com)
+// CORS: allow governed Data Pond frontend origins.
 app.use(
   "*",
   cors({
     origin: [
+      "https://pond.venterrawebops.com",
+      "https://datapond.venterrawebops.com",
       "https://app.venterradev.com",
       "https://app.venterraliving.com",
+      "https://launch.venterrawebops.com",
       "http://localhost:3000",
       "http://localhost:3001",
       "http://127.0.0.1:3000",

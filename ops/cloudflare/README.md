@@ -67,3 +67,20 @@ Phase 1 homepage-only rollout assets live here:
 - Dry-run/apply CLI: `/Users/mark/Property_Analytics/ops/cloudflare/apply_pilot_full_page_cache.py`
 - Purge helper: `/Users/mark/Property_Analytics/ops/cloudflare/purge_cloudflare_cache.py`
 - Rollout doc: `/Users/mark/Property_Analytics/docs/CLOUDFLARE_FULL_PAGE_CACHE_PHASE1.md`
+
+## Ops Watch Mirror/Push Ingest
+
+The Ops Watch mirror/push receiving lane is live as a dedicated Cloudflare Worker:
+
+- Worker folder: `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/`
+- Production health: `https://ops-watch.venterrawebops.com/health`
+- Production ingest: `POST https://ops-watch.venterrawebops.com/v1/ops-watch/ingest`
+- Runbook: `/Users/mark/Property_Analytics/docs/OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md`
+
+Credential boundary:
+
+- Keeper record: `Ops Watch Ingest Shared Secret`
+- Active notation: `keeper://w2b3ipQrf1DXfZ53Gpz9aw/field/password`
+- Worker secret: `OPS_WATCH_INGEST_SHARED_SECRET`
+
+Do not put the shared secret in local files, `.env`, shell history, tickets, screenshots, or source code. The Worker accepts only HMAC-signed sanitized packets and does not reach into intranet systems.

@@ -25,6 +25,7 @@ const LoginBody = z.object({
 
 const MagicLinkBody = z.object({
   email: z.string().email().transform((v) => v.toLowerCase().trim()),
+  next: z.string().optional(),
 });
 
 const RedeemBody = z.object({
@@ -40,7 +41,7 @@ auth.post("/login", async (c) => {
   // Rate limit by IP to protect against brute force (dev-only in-memory; TODO: Durable Objects for prod)
   const clientIp = c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for") ?? "unknown";
   const rl = await loginLimiter.check(c.env.POP_BRIEF_DB, clientIp);
-  if (!rl.allowed) {
+  if (rl.allowed === false) {
     c.header("Retry-After", String(rl.retryAfterSeconds));
     return c.json(errJson("RATE_LIMITED", "Too many login attempts. Try again later."), 429);
   }
@@ -101,22 +102,59 @@ auth.post("/magic-link", async (c) => {
   const parse = MagicLinkBody.safeParse(await c.req.json());
   if (!parse.success) return c.json(errJson("VALIDATION_ERROR", parse.error.issues[0].message), 400);
   const { email } = parse.data;
+  const nextPath = safeFrontendPath(parse.data.next);
 
   // Rate limit by email
   const rl = await magicLinkLimiter.check(c.env.POP_BRIEF_DB, email);
-  if (!rl.allowed) {
+  if (rl.allowed === false) {
     c.header("Retry-After", String(rl.retryAfterSeconds));
     return c.json(errJson("RATE_LIMITED", "Too many requests. Try again later."), 429);
   }
 
-  // Check user exists and is active
-  const user = await queryFirst<{ id: string; email: string; is_active: number }>(
+  const emailAllowed = isMagicLinkEmailAllowed(c, email);
+  const autoProvisionAllowed = isMagicLinkAutoProvisionAllowed(c, nextPath);
+
+  // Check user exists and is active. If configured, allowed company domains can
+  // be auto-provisioned only for configured protected read-only launch paths,
+  // without granting broad steward permissions.
+  let user = await queryFirst<{ id: string; email: string; is_active: number }>(
     c.env.POP_BRIEF_DB,
     "SELECT id, email, is_active FROM users WHERE email = ? AND deleted_at IS NULL",
     [email]
   );
+
+  if (!user && emailAllowed && autoProvisionAllowed) {
+    const role = resolveMagicLinkDefaultRole(c);
+    const userId = newId();
+    const now = nowISO();
+    const fullName = email.split("@")[0]?.replace(/[._-]+/g, " ").trim().slice(0, 255) || null;
+
+    await run(
+      c.env.POP_BRIEF_DB,
+      `INSERT INTO users (id, email, full_name, role, is_active, created_at, created_by, updated_at, updated_by)
+       VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)`,
+      [userId, email, fullName, role, now, userId, now, userId]
+    );
+
+    await writeAuditLog(c.env.POP_BRIEF_DB, {
+      actorUserId: userId,
+      action: "user.magic_link_auto_provision",
+      entityType: "user",
+      entityId: userId,
+      after: {
+        email,
+        full_name: fullName,
+        role,
+        source: "magic_link_allowed_domain",
+        next_path: nextPath,
+      },
+    });
+
+    user = { id: userId, email, is_active: 1 };
+  }
+
   // Always return success to avoid email enumeration
-  if (!user || !user.is_active) {
+  if (!emailAllowed || !user || !user.is_active) {
     return c.json({ ok: true, message: "If that email exists, a login link has been sent." });
   }
 
@@ -132,7 +170,7 @@ auth.post("/magic-link", async (c) => {
   );
 
   // Build verify URL pointing to frontend (not API) to defeat email link scanners
-  const verifyUrl = `${frontendUrl(c)}/login/verify?token=${raw}`;
+  const verifyUrl = `${frontendUrl(c)}/login/verify?token=${raw}&next=${encodeURIComponent(nextPath)}`;
 
   // Send email
   if (c.env.ENABLE_EMAIL_SEND === "true") {
@@ -173,12 +211,13 @@ auth.get("/verify", async (c) => {
   const complete = c.req.query("complete");
   if (complete === "1") {
     const result = await consumeMagicLinkToken(c.env.POP_BRIEF_DB, raw);
-    if (!result.ok) return c.redirect(`${frontendUrl(c)}/login?error=${result.errorCode}`);
+    if (result.ok === false) return c.redirect(`${frontendUrl(c)}/login?error=${result.errorCode}`);
     c.header("Set-Cookie", `pop_session=${result.sessionRaw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
-    return c.redirect(frontendUrl(c) + "/");
+    return c.redirect(frontendUrl(c) + safeFrontendPath(c.req.query("next")));
   }
   // Default: redirect to frontend verify page — does NOT consume the token
-  return c.redirect(frontendUrl(c) + `/login/verify?token=${raw}`);
+  const nextPath = safeFrontendPath(c.req.query("next"));
+  return c.redirect(frontendUrl(c) + `/login/verify?token=${raw}&next=${encodeURIComponent(nextPath)}`);
 });
 
 /** POST /v1/auth/verify — consume magic link token and create session (requires user click) */
@@ -186,7 +225,7 @@ auth.post("/verify", async (c) => {
   const body = z.object({ token: z.string().min(1) }).safeParse(await c.req.json());
   if (!body.success) return c.json(errJson("VALIDATION_ERROR", "Missing token"), 400);
   const result = await consumeMagicLinkToken(c.env.POP_BRIEF_DB, body.data.token);
-  if (!result.ok) return c.json(errJson(result.errorCode.toUpperCase(), result.message), result.status as 400 | 403);
+  if (result.ok === false) return c.json(errJson(result.errorCode.toUpperCase(), result.message), result.status as 400 | 403);
 
   c.header("Set-Cookie", `pop_session=${result.sessionRaw}; ${cookieOpts(c)}; Max-Age=${SESSION_TTL_HOURS * 3600}`);
   return c.json({ user: { id: result.user.id, email: result.user.email, role: result.user.role } });
@@ -329,6 +368,38 @@ function resolveAutoProvisionRole(c: { env: Env }, email: string): AppRole | nul
   }
 
   const configuredDefaultRole = (c.env.CLOUDFLARE_ACCESS_DEFAULT_ROLE ?? "viewer").trim().toLowerCase();
+  return VALID_APP_ROLES.has(configuredDefaultRole as AppRole) ? (configuredDefaultRole as AppRole) : "viewer";
+}
+
+function isMagicLinkEmailAllowed(c: { env: Env }, email: string): boolean {
+  const allowedDomains = new Set(parseCsvList(c.env.MAGIC_LINK_ALLOWED_DOMAINS));
+  if (allowedDomains.size === 0) {
+    return true;
+  }
+  const emailDomain = email.trim().toLowerCase().split("@")[1] ?? "";
+  return allowedDomains.has(emailDomain);
+}
+
+function isMagicLinkAutoProvisionAllowed(c: { env: Env }, nextPath: string): boolean {
+  if (!normalizeBoolean(c.env.MAGIC_LINK_AUTO_PROVISION_ENABLED)) {
+    return false;
+  }
+
+  const allowedPathPrefixes = parseCsvList(c.env.MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES);
+  if (allowedPathPrefixes.length === 0) {
+    return false;
+  }
+
+  return allowedPathPrefixes.some((prefix) => {
+    if (!prefix.startsWith("/") || prefix.startsWith("//")) {
+      return false;
+    }
+    return nextPath === prefix || nextPath.startsWith(`${prefix}/`);
+  });
+}
+
+function resolveMagicLinkDefaultRole(c: { env: Env }): AppRole {
+  const configuredDefaultRole = (c.env.MAGIC_LINK_DEFAULT_ROLE ?? "viewer").trim().toLowerCase();
   return VALID_APP_ROLES.has(configuredDefaultRole as AppRole) ? (configuredDefaultRole as AppRole) : "viewer";
 }
 

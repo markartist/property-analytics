@@ -1,5 +1,17 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
-export const API_BASE_URL = API_BASE;
+const STATIC_API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787";
+const LAUNCH_MAGIC_LINK_HOSTS = new Set(["launch.venterrawebops.com"]);
+
+function isLaunchMagicLinkHost(): boolean {
+  return typeof window !== "undefined" && LAUNCH_MAGIC_LINK_HOSTS.has(window.location.hostname.toLowerCase());
+}
+
+export function resolveApiBase(): string {
+  if (isLaunchMagicLinkHost()) return window.location.origin;
+  return STATIC_API_BASE;
+}
+
+export const API_BASE_URL = resolveApiBase();
+export const AUTH_PRIMARY = isLaunchMagicLinkHost() ? "magic" : process.env.NEXT_PUBLIC_AUTH_PRIMARY ?? "cloudflare";
 export const SITE_CONTENT_DEBUG_FLAG = process.env.NEXT_PUBLIC_SITE_CONTENT_DEBUG === "true";
 export const CLOUDFLARE_BOOTSTRAP_MARKER = "cf_bootstrapped";
 export const CLOUDFLARE_BOOTSTRAP_RETRY_MARKER = "cf_bootstrap_retry";
@@ -9,8 +21,9 @@ const APP_ORIGIN_FALLBACK = "https://app.local";
 const CLOUDFLARE_ACCESS_TEAM_DOMAIN =
   (process.env.NEXT_PUBLIC_CLOUDFLARE_ACCESS_TEAM_DOMAIN ?? "https://macxs.cloudflareaccess.com").replace(/\/$/, "");
 
-function normalizeSafeNextPath(nextPath: string): string {
-  return nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/";
+export function normalizeSafeNextPath(nextPath: string | null | undefined, fallback = "/"): string {
+  if (!nextPath) return fallback;
+  return nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : fallback;
 }
 
 function appendBootstrapMarker(nextPath: string): string {
@@ -61,7 +74,7 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
     headers.delete("Content-Type");
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${resolveApiBase()}${path}`, {
     ...init,
     credentials: "include",
     headers,
@@ -71,13 +84,13 @@ export async function apiFetch(path: string, init?: RequestInit): Promise<Respon
 }
 
 export function buildCloudflareAccessBootstrapUrl(nextPath: string): string {
-  const url = new URL("/v1/auth/access-bootstrap", API_BASE);
+  const url = new URL("/v1/auth/access-bootstrap", resolveApiBase());
   url.searchParams.set("next", appendBootstrapMarker(nextPath));
   return url.toString();
 }
 
 export function buildCloudflareAccessBootstrapRetryUrl(nextPath: string): string {
-  const url = new URL("/v1/auth/access-bootstrap", API_BASE);
+  const url = new URL("/v1/auth/access-bootstrap", resolveApiBase());
   url.searchParams.set("next", appendBootstrapRetryMarker(nextPath));
   return url.toString();
 }
@@ -993,7 +1006,7 @@ export async function importWeeklyMetricsText(tsv: string): Promise<{ import_run
 export async function uploadWeeklyMetricsFile(file: File): Promise<{ import_run_id: string; status: string; rows_applied: number }> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_BASE}/v1/metrics/import/upload`, {
+  const res = await fetch(`${resolveApiBase()}/v1/metrics/import/upload`, {
     method: "POST",
     credentials: "include",
     body: form,
@@ -2132,8 +2145,8 @@ export async function getAuditLog(params?: { action?: string; limit?: number; of
   return (await res.json()).items;
 }
 
-export async function requestMagicLink(email: string): Promise<{ ok: boolean; message: string }> {
-  const res = await apiFetch("/v1/auth/magic-link", { method: "POST", body: JSON.stringify({ email }) });
+export async function requestMagicLink(email: string, next?: string): Promise<{ ok: boolean; message: string }> {
+  const res = await apiFetch("/v1/auth/magic-link", { method: "POST", body: JSON.stringify({ email, next }) });
   return res.json();
 }
 

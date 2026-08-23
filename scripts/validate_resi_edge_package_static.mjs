@@ -7,6 +7,8 @@ const root = resolve(new URL("..", import.meta.url).pathname);
 const runtimePath = resolve(root, "ops/cloudflare/shared/resi-edge-package/runtime.mjs");
 const workerPath = resolve(root, "ops/cloudflare/resi-edge-canonical-worker/worker.js");
 const runnerPath = resolve(root, "scripts/run_resi_edge_upgrade.py");
+const mobileShellByteForecastPath = resolve(root, "scripts/forecast_resi_edge_mobile_shell_bytes.mjs");
+const mobileValidatorPath = resolve(root, "scripts/validate_resi_mobile_shell_contract.mjs");
 const generatorPath = resolve(root, "scripts/generate_resi_edge_assets.py");
 const uploaderPath = resolve(root, "scripts/upload_resi_edge_assets_to_r2.py");
 const deployAdapterPath = resolve(root, "scripts/resi_edge_deploy_adapter.py");
@@ -30,6 +32,8 @@ function fail(message) {
 const runtime = readFileSync(runtimePath, "utf8");
 const worker = readFileSync(workerPath, "utf8");
 const runner = readFileSync(runnerPath, "utf8");
+const mobileShellByteForecast = readFileSync(mobileShellByteForecastPath, "utf8");
+const mobileValidator = readFileSync(mobileValidatorPath, "utf8");
 const generator = readFileSync(generatorPath, "utf8");
 const uploader = readFileSync(uploaderPath, "utf8");
 const deployAdapter = readFileSync(deployAdapterPath, "utf8");
@@ -71,8 +75,104 @@ if (!worker.includes("../shared/resi-edge-package/runtime.mjs")) {
 if (!worker.includes("serveResiEdgeAsset") || !worker.includes("isResiEdgeAssetRequest")) {
   fail("Worker does not expose the canonical R2 asset route");
 }
+if (
+  !runtime.includes("isYooThemeUploadThumbnailRepairRequest") ||
+  !runtime.includes('x-vtr-native-asset-repair", "yootheme-upload-src') ||
+  !runtime.includes('url.searchParams.get("src")')
+) {
+  fail("Runtime does not repair same-origin YooTheme generated upload thumbnail misses");
+}
 if (!runtime.includes("CONTENTSQUARE_VERIFY_SUPPRESS_PATH") || !runtime.includes("data-vtr-cs-verify-suppress")) {
   fail("Runtime does not include the canonical Contentsquare verify suppression guard");
+}
+if (
+  !runtime.includes("function renderHeapEnvironmentScript") ||
+  !runtime.includes("data-vtr-heap-environment") ||
+  !runtime.includes("__vtrHeapEnvironment") ||
+  !runtime.includes("HEAP_APP_ID") ||
+  !runtime.includes("HEAP_ENVIRONMENT") ||
+  !runtime.includes("HEAP_MODE") ||
+  !runtime.includes("HEAP_JS_DEBUG") ||
+  !runtime.includes('<script data-vtr-edge-analytics="1" data-vtr-heap-environment="1">') ||
+  !runtime.includes('html.replace("</head>", `${renderHeapEnvironmentScript(manifest)}</head>`)') ||
+  !runtime.includes("element.prepend(renderHeapEnvironmentScript(this.manifest)")
+) {
+  fail("Runtime must preserve Heap environment variables in the canonical header without reintroducing a direct Heap loader");
+}
+if (
+  !runtime.includes("function trackingAttrs") ||
+  !runtime.includes("data-vtr-action") ||
+  !runtime.includes("data-vtr-surface") ||
+  !runtime.includes("data-vtr-element") ||
+  !runtime.includes("data-vtr-destination") ||
+  !runtime.includes("vtrEdgeElementPayload") ||
+  !runtime.includes("drawer_nav_${slug(label)}_${index + 1}") ||
+  !runtime.includes("data-vtr-track")
+) {
+  fail("Runtime must render differentiated Heap/Zaraz tracking attributes for all mobile shell/topper actions");
+}
+if (
+  !runtime.includes("function compactSameOriginUrl") ||
+  !runtime.includes("function renderNavLinks(manifest)") ||
+  !runtime.includes("manifest.mobile_shell.navigation?.links") ||
+  !runtime.includes("filter((link) => link?.label && link?.url)") ||
+  runtime.includes("DEFAULT_DRAWER_LINK_LIMIT") ||
+  runtime.includes("DRAWER_LINK_PRIORITIES") ||
+  runtime.includes(".slice(0, DEFAULT_DRAWER_LINK_LIMIT)") ||
+  !runtime.includes('trackingAttrs(linkAction(label, href), "mobile_drawer", element, label, href)') ||
+  !runtime.includes("function minifyShellHtml") ||
+  !runtime.includes("return minifyShellHtml(shellHtml)") ||
+  !runtime.includes("pathOrAbsolute(link.url, manifest)") ||
+  !runtime.includes("renderReviewLink(rating, manifest)") ||
+  !runtime.includes("pathOrAbsolute(block.cta_url, manifest)") ||
+  !runtime.includes("pathOrAbsolute(hero.primary_cta_url, manifest)")
+) {
+  fail("Runtime must render the full manifest drawer nav with per-link tracking attributes, compact same-origin shell URLs, and minify the canonical mobile shell before live byte gates");
+}
+if (
+  !runtime.includes("max-width:calc(100% - 174px)") ||
+  !runtime.includes("white-space:normal") ||
+  runtime.includes(".brand{height:var(--header-height);display:flex;align-items:center;font-size:10px;font-weight:700;line-height:16px;letter-spacing:var(--header-letter-spacing);text-transform:uppercase;white-space:nowrap")
+) {
+  fail("Runtime mobile header brand must wrap long property names inside the reserved action width instead of clipping");
+}
+if (
+  !runtime.includes("function buildOriginRequest(request, options = {})") ||
+  !runtime.includes("options.forceHomepage !== false") ||
+  !runtime.includes('headers.set("accept-language", source.get("accept-language") || "en-US,en;q=0.9")') ||
+  !runtime.includes('headers.set("sec-fetch-mode", source.get("sec-fetch-mode") || "navigate")') ||
+  !runtime.includes("fetch(buildOriginRequest(request, { forceHomepage: false }), { cf: { cacheEverything: false, cacheTtl: 0 } })")
+) {
+  fail("Runtime desktop pass-through must use the canonical normalized origin request with browser-like navigation headers and no Cloudflare caching");
+}
+if (
+  !runner.includes("MOBILE_SHELL_BYTE_FORECAST") ||
+  !runner.includes("MOBILE_SHELL_INITIAL_HTML_MAX_BYTES = 40_000") ||
+  !runner.includes("mobile_shell_byte_forecast") ||
+  !runner.includes("--max-bytes") ||
+  !runner.includes("existing_worker_no_delete") ||
+  !runner.includes("audit_source_page") ||
+  !runner.includes("mobile_browser_equivalent_fetch") ||
+  !runner.includes("Resi Website Management Firewall") ||
+  !mobileShellByteForecast.includes("renderMobileShell(request, manifest)") ||
+  !mobileShellByteForecast.includes("initial_html_bytes") ||
+  !mobileShellByteForecast.includes("drawer_links_rendered") ||
+  !mobileShellByteForecast.includes("same_domain_absolute_url_count")
+) {
+  fail("Runner must forecast generated mobile shell bytes from the deploy bundle before live byte gates");
+}
+if (
+  !runner.includes("heapEnvironmentScriptPresent") ||
+  !runner.includes("trackedShellElements") ||
+  !runner.includes("drawerNavLinks") ||
+  !runner.includes("expected_drawer_labels") ||
+  !runner.includes("mobile drawer nav labels missing from manifest order") ||
+  !runner.includes("mobile drawer nav links have incomplete Heap/Zaraz attributes") ||
+  !runner.includes("tracked_shell_event_proof") ||
+  !runner.includes("mobile menu open event payload is not differentiated") ||
+  !runner.includes("mobile shell tracked elements missing")
+) {
+  fail("Runner must browser-prove Heap environment preservation, full manifest drawer nav, and differentiated mobile shell/topper event payloads");
 }
 if (
   !runtime.includes("resi-edge-release-tokens.v1.json") ||
@@ -113,6 +213,35 @@ if (
   fail("Runtime does not consume the shared finalized consent widget contract");
 }
 if (
+  !consentWidget.includes("function compact()") ||
+  !consentWidget.includes("function markCompact(el)") ||
+  !consentWidget.includes("[data-vtr-edge-mobile-shell='1']") ||
+  !consentWidget.includes("el.dataset.vtrCompact=\"1\"") ||
+  !consentWidget.includes("#vtr-cookie-notice[data-vtr-compact='1']") ||
+  !consentWidget.includes("#vtr-cookie-notice[data-vtr-compact='1'] #vtr-cookie-icon{width:26px;height:26px}") ||
+  !consentWidget.includes("#vtr-cookie-notice[data-vtr-compact='1'] #vtr-cookie-icon svg{width:22px;height:22px}") ||
+  !consentWidget.includes("#vtr-cookie-manage{min-width:198px;border:2px solid rgba(125,202,194,.24);background:#FFFFFF;color:#3D66B9") ||
+  !consentWidget.includes("gap:8px") ||
+  !consentWidget.includes("height:36px") ||
+  !consentWidget.includes("flex:1 1 0;min-width:0;font-size:14px") ||
+  !consentWidget.includes("flex:0 1 auto;gap:6px;max-width:51%;min-width:164px") ||
+  !consentWidget.includes("#vtr-cookie-notice[data-vtr-compact='1'] #vtr-cookie-manage{width:92px;min-width:0;max-width:92px;color:#3D66B9}") ||
+  !consentWidget.includes("#vtr-cookie-notice[data-vtr-compact='1'] #vtr-cookie-accept{width:66px;min-width:0;max-width:66px}") ||
+  consentWidget.includes("body[data-vtr-edge-mobile-shell='1'] #vtr-cookie-notice") ||
+  consentWidget.includes("#vtr-cookie-icon{display:none}") ||
+  consentWidget.includes("grid-template-columns:auto 1fr")
+) {
+  fail("Shared consent widget must use the responsive compact mobile-shell layout with cookie icon, subdued Preferences label, and bounded action controls; stale tall mobile consent is forbidden");
+}
+if (
+  !consentWidget.includes("visualViewport") ||
+  !consentWidget.includes("__vtrZarazConsentViewportFit") ||
+  !consentWidget.includes('el.style.bottom="auto"') ||
+  !consentWidget.includes("offsetHeight")
+) {
+  fail("Shared consent widget must fit to the real mobile visual viewport so the Preferences control remains visible and provable");
+}
+if (
   runtime.includes("vtr-cookie-reject") ||
   runtime.includes("We use cookies to improve site performance and measure leasing activity") ||
   consentWidget.includes("vtr-cookie-reject") ||
@@ -123,9 +252,14 @@ if (
 if (
   !runner.includes("CONSENT_CONTRACT_PATH") ||
   !runner.includes("EXPECTED_CONSENT_WIDGET_VERSION") ||
+  !runner.includes("CONSENT_WIDGET_GEOMETRY") ||
+  !runner.includes("consent-widget-geometry.json") ||
   !runner.includes("vtr-cookie-manage") ||
   !runner.includes("showConsentModal") ||
-  !runner.includes("rejectButtonPresent")
+  !runner.includes("rejectButtonPresent") ||
+  !runner.includes("proofViewportHeight") ||
+  !runner.includes("buttonHitTargetOk") ||
+  !runner.includes('document.querySelector("#vtr-cookie-manage")?.click()')
 ) {
   fail("Runner does not enforce the shared finalized consent widget proof contract");
 }
@@ -136,7 +270,8 @@ if (
   !runtime.includes("function renderAwards") ||
   !runtime.includes("data-vtr-shell-awards") ||
   !runtime.includes("panel-awards") ||
-  !runtime.includes("/assets/resi-edge-assets/shared/kingsley-award.svg")
+  !runtime.includes("/assets/resi-edge-assets/shared/kingsley-award.svg") ||
+  !runtime.includes("asset?.src")
 ) {
   fail("Runtime does not render sourced awards/badges through the shared same-origin award contract");
 }
@@ -232,6 +367,13 @@ if (
 if (!worker.includes("serveContentsquareVerifySuppressed") || !worker.includes("isContentsquareVerifySuppressionRequest")) {
   fail("Worker does not expose the canonical same-origin Contentsquare verify suppression endpoint");
 }
+if (
+  !mobileValidator.includes("isStandaloneHeapDebugFlag") ||
+  !mobileValidator.includes("HEAP_JS_DEBUG") ||
+  !mobileValidator.includes("direct_native_analytics_blockers")
+) {
+  fail("Mobile shell validator must allow standalone Heap debug environment flags while still blocking direct native analytics loaders");
+}
 const wpBypassBranchIndex = worker.indexOf("if (isTargetHost(url) && isWordPressControlRequest(request, url))");
 const mobileShellBranchIndex = worker.indexOf("isHomepage(url) && isMobileRequest(request)");
 const nativeContinuationBranchIndex = worker.indexOf("if (isNativeContinuation(url))");
@@ -247,11 +389,16 @@ if (
   !worker.includes('url.pathname === "/wp-json"') ||
   !worker.includes('url.pathname.startsWith("/wp-json/")') ||
   !worker.includes("function fetchOriginTransparent") ||
-  !worker.includes('redirect: "manual"') ||
-  !worker.includes("cacheEverything: false") ||
-  !worker.includes("cacheTtl: 0")
+  !worker.includes('redirect: "manual"')
 ) {
   fail("Worker does not enforce the transparent WordPress control-path bypass contract");
+}
+const transparentFetchBody = worker.slice(
+  worker.indexOf("function fetchOriginTransparent"),
+  worker.indexOf("export default")
+);
+if (transparentFetchBody.includes("cacheEverything") || transparentFetchBody.includes("cacheTtl")) {
+  fail("WordPress control-path bypass must not apply Cloudflare cache overrides");
 }
 if (
   wpBypassBranchIndex < 0 ||

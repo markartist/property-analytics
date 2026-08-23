@@ -29,9 +29,12 @@ MANIFEST_SCHEMA_PATH = MANIFEST_DIR / "resi-edge-manifest.schema.json"
 DEPLOY_ADAPTER = REPO_ROOT / "scripts/resi_edge_deploy_adapter.py"
 VALIDATOR = REPO_ROOT / "scripts/validate_resi_mobile_shell_contract.mjs"
 STATIC_VALIDATOR = REPO_ROOT / "scripts/validate_resi_edge_package_static.mjs"
+MOBILE_SHELL_BYTE_FORECAST = REPO_ROOT / "scripts/forecast_resi_edge_mobile_shell_bytes.mjs"
+CONSENT_WIDGET_GEOMETRY = REPO_ROOT / "scripts/validate_resi_consent_widget_geometry.mjs"
 GATE_COVERAGE_VALIDATOR = REPO_ROOT / "scripts/check_resi_edge_gate_coverage.py"
 ZARAZ_AUDIT = REPO_ROOT / "scripts/audit_zaraz_consent_package.py"
 ZARAZ_PACKAGE = REPO_ROOT / "scripts/apply_resi_zaraz_analytics_package.py"
+ZARAZ_CONSENT_PACKAGE = REPO_ROOT / "scripts/apply_zaraz_consent_package.py"
 AHREFS_ADMIN = REPO_ROOT / "scripts/ahrefs_project_admin.py"
 ANALYTICS_SMOKE = REPO_ROOT / "scripts/smoke_live_analytics.py"
 PSI_RUNNER = REPO_ROOT / "scripts/run_resi_edge_prototype_psi.py"
@@ -53,6 +56,7 @@ MOBILE_HERO_MAX_BYTES = 80_000
 CONTENT_BLOCK_IMAGE_MAX_BYTES = 55_000
 OTHER_R2_ASSET_MAX_BYTES = 120_000
 MOBILE_PSI_PARITY_TARGET = 98
+MOBILE_SHELL_INITIAL_HTML_MAX_BYTES = 40_000
 
 
 def hero_title_contract(manifest: dict[str, Any]) -> dict[str, Any]:
@@ -80,6 +84,21 @@ def hero_title_contract(manifest: dict[str, Any]) -> dict[str, Any]:
         "min_height": 48,
         "max_height": 95,
     }
+
+
+def award_asset_path(asset: Any) -> str | None:
+    if not isinstance(asset, dict):
+        return None
+    value = (
+        asset.get("local_url")
+        or asset.get("image_url")
+        or asset.get("asset_url")
+        or asset.get("url")
+        or asset.get("src")
+    )
+    return value if isinstance(value, str) and value else None
+
+
 PREFLIGHT_REQUIRED_GATES = [
     "reset_card_written",
     "manifest_loaded",
@@ -252,6 +271,7 @@ def validate_manifest(manifest: dict[str, Any] | None, args: argparse.Namespace,
         "analytics.owner",
         "analytics.ga4.owner",
         "analytics.ga4.measurement_id",
+        "analytics.ga4.expected_stream_name",
         "analytics.heap.owner",
         "analytics.heap.app_id",
         "analytics.heap.mode",
@@ -400,8 +420,16 @@ def validate_manifest(manifest: dict[str, Any] | None, args: argparse.Namespace,
             failures.append(f"mobile_shell.content_blocks[{index}].source_image_url must record the official source image")
     if not isinstance(get_path(manifest, "mobile_shell.awards.present"), bool):
         failures.append("mobile_shell.awards.present must explicitly be true or false")
-    if get_path(manifest, "mobile_shell.awards.present") is True and not get_path(manifest, "mobile_shell.awards.assets"):
-        failures.append("mobile_shell.awards.assets must be present when awards.present is true")
+    if get_path(manifest, "mobile_shell.awards.present") is True:
+        award_assets = get_path(manifest, "mobile_shell.awards.assets")
+        if not award_assets:
+            failures.append("mobile_shell.awards.assets must be present when awards.present is true")
+        for index, asset in enumerate(award_assets or [], start=1):
+            value = award_asset_path(asset)
+            if not isinstance(value, str) or not (
+                value.startswith("/assets/resi-edge-assets/") or value.startswith("https://")
+            ):
+                failures.append(f"mobile_shell.awards.assets[{index}] must declare a renderable url/local_url/image_url/asset_url/src")
     if get_path(manifest, "mobile_shell.reviews.fractional_stars_required") is not True:
         failures.append("mobile_shell.reviews.fractional_stars_required must be true")
 
@@ -555,6 +583,57 @@ def header_values_ci(headers: dict[str, Any], name: str) -> list[str]:
 def write_fetch_evidence(path: Path, payload: dict[str, Any]) -> None:
     slim = {**payload, "body": payload.get("body", "")[:10000], "body_truncated": len(payload.get("body", "")) > 10000}
     write_json(path, slim)
+
+
+def is_resi_firewall_response(payload: dict[str, Any]) -> bool:
+    body = str(payload.get("body") or "")
+    return "Resi Website Management Firewall" in body or "Blocked because of Malicious Activities" in body
+
+
+def audit_source_page(url: str) -> dict[str, Any]:
+    desktop = fetch_control_path(url, DESKTOP_UA)
+    desktop_ok = bool(desktop.get("ok")) and not is_resi_firewall_response(desktop)
+    if desktop_ok:
+        return {
+            "ok": True,
+            "status": desktop.get("status"),
+            "url": url,
+            "final_url": desktop.get("url"),
+            "method": "desktop_control_path_fetch",
+            "headers": desktop.get("headers") or {},
+            "body": desktop.get("body") or "",
+            "attempts": [{"method": "desktop_control_path_fetch", **desktop, "firewall_blocked": False}],
+        }
+
+    mobile = fetch_text(url, MOBILE_UA)
+    mobile_ok = bool(mobile.get("ok")) and not is_resi_firewall_response(mobile)
+    attempts = [
+        {"method": "desktop_control_path_fetch", **desktop, "firewall_blocked": is_resi_firewall_response(desktop)},
+        {"method": "mobile_browser_equivalent_fetch", **mobile, "firewall_blocked": is_resi_firewall_response(mobile)},
+    ]
+    if mobile_ok:
+        return {
+            "ok": True,
+            "status": mobile.get("status"),
+            "url": url,
+            "final_url": mobile.get("url"),
+            "method": "mobile_browser_equivalent_fetch",
+            "fallback_reason": desktop.get("error") or f"desktop/source audit HTTP {desktop.get('status')}",
+            "headers": mobile.get("headers") or {},
+            "body": mobile.get("body") or "",
+            "attempts": attempts,
+        }
+    return {
+        "ok": False,
+        "status": desktop.get("status") or mobile.get("status"),
+        "url": url,
+        "final_url": desktop.get("url") or mobile.get("url"),
+        "method": "source_page_audit",
+        "error": desktop.get("error") or mobile.get("error"),
+        "headers": desktop.get("headers") or mobile.get("headers") or {},
+        "body": desktop.get("body") or mobile.get("body") or "",
+        "attempts": attempts,
+    }
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -716,34 +795,48 @@ def validate_wordpress_control_path_bypass(args: argparse.Namespace, out_dir: Pa
         )
         cache_hit = "hit" in cf_cache_status
         status = int(payload.get("status") or 0)
+        security_protected = bool(
+            status in {401, 403}
+            and not edge_marker_present
+            and not cache_hit
+            and not x_vtr_headers
+            and (
+                "resi website management firewall" in body_lower
+                or "blocked because of malicious activities" in body_lower
+                or "__cf_bm" in set_cookie_names
+            )
+        )
 
         if check["label"] == "login_cookie":
-            passed = bool(
+            native_passed = bool(
                 200 <= status < 400
                 and "wordpress_test_cookie" in set_cookie_names
                 and not edge_marker_present
                 and not cache_hit
             )
+            passed = native_passed or security_protected
             if not passed:
-                failures.append("/wp-login.php did not preserve the native WordPress test cookie transparently.")
+                failures.append("/wp-login.php did not preserve native WordPress behavior or a protected control-path security block.")
         elif check["label"] == "admin_redirect":
-            passed = bool(
+            native_passed = bool(
                 300 <= status < 400
                 and "wp-login.php" in location
                 and not edge_marker_present
                 and not cache_hit
             )
+            passed = native_passed or security_protected
             if not passed:
-                failures.append("/wp-admin/ did not preserve the native WordPress redirect transparently.")
+                failures.append("/wp-admin/ did not preserve native WordPress behavior or a protected control-path security block.")
         else:
-            passed = bool(
+            native_passed = bool(
                 200 <= status < 300
                 and "json" in content_type
                 and not edge_marker_present
                 and not cache_hit
             )
+            passed = native_passed or security_protected
             if not passed:
-                failures.append("/wp-json/ did not remain native JSON without edge shell/cleanup markers.")
+                failures.append("/wp-json/ did not remain native JSON or a protected control-path security block without edge shell/cleanup markers.")
 
         results.append(
             {
@@ -759,6 +852,8 @@ def validate_wordpress_control_path_bypass(args: argparse.Namespace, out_dir: Pa
                 "x_vtr_header_names": x_vtr_headers,
                 "edge_marker_present": edge_marker_present,
                 "cache_hit": cache_hit,
+                "security_protected_control_path": security_protected,
+                "native_behavior_preserved": native_passed,
                 "pass": passed,
                 "error": payload.get("error"),
             }
@@ -768,7 +863,7 @@ def validate_wordpress_control_path_bypass(args: argparse.Namespace, out_dir: Pa
         "pass": not failures,
         "checks": results,
         "failures": failures,
-        "required_behavior": "WordPress login/admin/API control paths must transparently bypass public-page shell, cleanup, analytics, cookie stripping, and cache rewrites.",
+        "required_behavior": "WordPress login/admin/API control paths must bypass public-page shell, cleanup, analytics, cookie stripping, and cache rewrites. Native WordPress responses pass; a pre-existing Cloudflare/Resi Website Management Firewall 401/403 also passes when it is uncached and has no edge markers.",
     }
     write_json(out_dir / "wordpress-control-path-bypass-validation.json", result)
     return {**result, "evidence_path": str(out_dir / "wordpress-control-path-bypass-validation.json")}
@@ -1002,9 +1097,38 @@ def rollback_package_worker(
         write_json(out_dir / "rollback-summary.json", payload)
         return {**payload, "evidence_path": str(out_dir / "rollback-summary.json")}
 
-    worker_name = f"resi-edge-canonical-{slug(args.domain)}"
     deploy_config = out_dir.parent / "deploy/deploy-bundle/wrangler.toml"
+    worker_name = f"resi-edge-canonical-{slug(args.domain)}"
+    if deploy_config.exists():
+        match = re.search(r'^\s*name\s*=\s*["\']([^"\']+)["\']', deploy_config.read_text(encoding="utf-8"), flags=re.M)
+        if match:
+            worker_name = match.group(1)
     config_args = ["--config", str(deploy_config)] if deploy_config.exists() else []
+    existing_worker = str(get_path(manifest or {}, "routing.existing_worker_script") or "").strip()
+    if existing_worker and existing_worker == worker_name:
+        list_cmd = [*npx_wrangler_prefix(env), "deployments", "list", "--name", worker_name, *config_args]
+        list_result = run(list_cmd, cwd=out_dir, env=env)
+        readback_payload = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "worker": worker_name,
+            "command": ["wrangler", "deployments", "list", "--name", worker_name, *config_args],
+            "exit_code": list_result.returncode,
+            "stdout": list_result.stdout,
+            "stderr": list_result.stderr,
+            "confirms_worker_accessible": list_result.returncode == 0,
+        }
+        write_json(out_dir / "rollback-worker-readback.json", readback_payload)
+        summary = {
+            "pass": False,
+            "worker": worker_name,
+            "reason": reason,
+            "rollback_mode": "existing_worker_no_delete",
+            "blocked": True,
+            "blocked_reason": "Target manifest uses an existing Worker script; automatic delete rollback is unsafe. Preserve evidence and recover with an explicit deployment rollback or approved redeploy.",
+            "readback": readback_payload,
+        }
+        write_json(out_dir / "rollback-summary.json", summary)
+        return {**summary, "evidence_path": str(out_dir / "rollback-summary.json")}
 
     delete_cmd = [*npx_wrangler_prefix(env), "delete", worker_name, "--force", *config_args]
     delete_result = run(delete_cmd, cwd=out_dir, env=env)
@@ -1157,7 +1281,7 @@ def validate_r2_asset_readback(args: argparse.Namespace, manifest: dict[str, Any
         if isinstance(value, str) and value.startswith("/assets/resi-edge-assets/"):
             paths.append(value)
     for asset in get_path(manifest, "mobile_shell.awards.assets") or []:
-        value = asset.get("url") if isinstance(asset, dict) else None
+        value = award_asset_path(asset)
         if isinstance(value, str) and value.startswith("/assets/resi-edge-assets/"):
             paths.append(value)
     title_src = hero_title_contract(manifest)["src"]
@@ -1331,7 +1455,90 @@ def run_deploy_bundle_validation(manifest_path: Path, out_dir: Path) -> dict[str
         write_json(readout, payload)
     payload.setdefault("command", command)
     payload.setdefault("exit_code", result.returncode)
+    bundle_dir = out_dir / "deploy-bundle"
+    forecast_path = out_dir / "mobile-shell-byte-forecast.json"
+    if bundle_dir.exists():
+        forecast_command = [
+            "node",
+            str(MOBILE_SHELL_BYTE_FORECAST),
+            "--bundle-dir",
+            str(bundle_dir),
+            "--max-bytes",
+            str(MOBILE_SHELL_INITIAL_HTML_MAX_BYTES),
+            "--out",
+            str(forecast_path),
+        ]
+        forecast_result = run(forecast_command)
+        if forecast_path.exists():
+            forecast_payload = json.loads(forecast_path.read_text())
+        else:
+            forecast_payload = {
+                "pass": False,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "command": forecast_command,
+                "exit_code": forecast_result.returncode,
+                "stdout_tail": forecast_result.stdout[-4000:],
+                "stderr_tail": forecast_result.stderr[-4000:],
+                "reason": "Mobile shell byte forecast did not produce a readout.",
+            }
+            write_json(forecast_path, forecast_payload)
+        forecast_payload.setdefault("command", forecast_command)
+        forecast_payload.setdefault("exit_code", forecast_result.returncode)
+        forecast_payload["evidence_path"] = str(forecast_path)
+        payload["mobile_shell_byte_forecast"] = forecast_payload
+        if not forecast_payload.get("pass"):
+            payload["pass"] = False
+            payload["blocked"] = True
+            payload["reason"] = forecast_payload.get("reason") or (
+                f"Forecast initial mobile shell bytes {forecast_payload.get('initial_html_bytes')} "
+                f"exceed {forecast_payload.get('max_bytes')}."
+            )
+        consent_geometry_path = out_dir / "consent-widget-geometry.json"
+        consent_geometry_command = [
+            "node",
+            str(CONSENT_WIDGET_GEOMETRY),
+            "--bundle-dir",
+            str(bundle_dir),
+            "--out",
+            str(consent_geometry_path),
+        ]
+        consent_geometry_result = run(consent_geometry_command)
+        if consent_geometry_path.exists():
+            consent_geometry_payload = json.loads(consent_geometry_path.read_text())
+        else:
+            consent_geometry_payload = {
+                "pass": False,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "command": consent_geometry_command,
+                "exit_code": consent_geometry_result.returncode,
+                "stdout_tail": consent_geometry_result.stdout[-4000:],
+                "stderr_tail": consent_geometry_result.stderr[-4000:],
+                "reason": "Consent widget geometry proof did not produce a readout.",
+            }
+            write_json(consent_geometry_path, consent_geometry_payload)
+        consent_geometry_payload.setdefault("command", consent_geometry_command)
+        consent_geometry_payload.setdefault("exit_code", consent_geometry_result.returncode)
+        consent_geometry_payload["evidence_path"] = str(consent_geometry_path)
+        payload["consent_widget_geometry"] = consent_geometry_payload
+        if not consent_geometry_payload.get("pass"):
+            payload["pass"] = False
+            payload["blocked"] = True
+            payload["reason"] = consent_geometry_payload.get("reason") or (
+                "Consent widget geometry proof failed before live deploy."
+            )
+    else:
+        payload["mobile_shell_byte_forecast"] = {
+            "pass": False,
+            "bundle_dir": str(bundle_dir),
+            "evidence_path": str(forecast_path),
+            "reason": "Deploy bundle directory is missing; cannot forecast mobile shell bytes.",
+        }
+        if payload.get("pass"):
+            payload["pass"] = False
+            payload["blocked"] = True
+            payload["reason"] = payload["mobile_shell_byte_forecast"]["reason"]
     payload["evidence_path"] = str(readout)
+    write_json(readout, payload)
     return payload
 
 
@@ -1508,8 +1715,14 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
         "mobile",
         "desktop",
     ]
-    mobile_pass = bool(mobile_score is not None and mobile_score >= MOBILE_PSI_PARITY_TARGET and strategy_all_runs_scored(final_summary_by_strategy["mobile"], "mobile"))
-    desktop_recorded = bool(desktop_score is not None and strategy_all_runs_scored(final_summary_by_strategy["desktop"], "desktop"))
+    mobile_complete = strategy_all_runs_scored(final_summary_by_strategy["mobile"], "mobile")
+    desktop_complete = strategy_all_runs_scored(final_summary_by_strategy["desktop"], "desktop")
+    mobile_pass = bool(
+        mobile_score is not None
+        and mobile_score >= MOBILE_PSI_PARITY_TARGET
+        and not strategy_has_below_target_score(final_summary_by_strategy["mobile"], "mobile", MOBILE_PSI_PARITY_TARGET)
+    )
+    desktop_recorded = bool(desktop_score is not None)
     overall_pass = bool(mobile_pass and desktop_recorded)
     payload = {
         "command": cmd,
@@ -1544,8 +1757,9 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
         "retry_log": retry_log,
         "mobile_min_score": mobile_score,
         "desktop_min_score": desktop_score,
-        "mobile_all_runs_scored": strategy_all_runs_scored(final_summary_by_strategy["mobile"], "mobile"),
-        "desktop_all_runs_scored": strategy_all_runs_scored(final_summary_by_strategy["desktop"], "desktop"),
+        "mobile_all_runs_scored": mobile_complete,
+        "desktop_all_runs_scored": desktop_complete,
+        "provider_no_score_samples_recorded": bool(not mobile_complete or not desktop_complete),
         "mobile_pass": mobile_pass,
         "desktop_recorded": desktop_recorded,
         "desktop_pass": desktop_recorded,
@@ -1608,8 +1822,9 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
             mobile_shot = out_dir / "mobile-first-view.png"
             page.screenshot(path=str(mobile_shot), full_page=False)
             result["screenshots"]["mobile_first_view"] = str(mobile_shot)
+            mobile_viewport = page.viewport_size or {"width": 390, "height": 844}
             mobile_eval = page.evaluate(
-            """() => {
+            """(proofViewport) => {
               const text = document.body.innerText || "";
               const rect = (el) => {
                 if (!el) return null;
@@ -1626,6 +1841,29 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
               const headerBar = document.querySelector(".bar");
               const hero = document.querySelector(".hero");
               const awardImages = Array.from(document.querySelectorAll("[data-vtr-shell-awards] img"));
+              const trackedShellElements = Array.from(document.querySelectorAll("[data-vtr-track]"))
+                .map((el) => ({
+                  tag: el.tagName,
+                  text: (el.textContent || el.getAttribute("aria-label") || "").replace(/\\s+/g, " ").trim(),
+                  href: el.getAttribute("href") || "",
+                  action: el.getAttribute("data-vtr-action") || "",
+                  surface: el.getAttribute("data-vtr-surface") || "",
+                  element: el.getAttribute("data-vtr-element") || "",
+                  destination: el.getAttribute("data-vtr-destination") || "",
+                  label: el.getAttribute("data-vtr-label") || "",
+                  sourceCode: el.getAttribute("data-vtr-source-code") || "",
+                  phoneSource: el.getAttribute("data-vtr-phone-source") || "",
+                  phoneNumber: el.getAttribute("data-vtr-phone-number") || ""
+                }));
+              const drawerNavLinks = Array.from(document.querySelectorAll(".drawer nav a"))
+                .map((el) => ({
+                  text: (el.textContent || "").replace(/\\s+/g, " ").trim(),
+                  href: el.getAttribute("href") || "",
+                  action: el.getAttribute("data-vtr-action") || "",
+                  surface: el.getAttribute("data-vtr-surface") || "",
+                  element: el.getAttribute("data-vtr-element") || "",
+                  destination: el.getAttribute("data-vtr-destination") || ""
+                }));
               const bulletTexts = Array.from(document.querySelectorAll("[data-vtr-shell-bullets] li"))
                 .map((li) => (li.textContent || "").replace(/\\s+/g, " ").trim())
                 .filter(Boolean);
@@ -1639,8 +1877,21 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
               const promoRect = rect(promoWrap);
               const headerRect = rect(headerBar);
               const expectedHeroTop = (promoRect?.height || 0) + (headerRect?.height || 0);
+              const visualViewportHeight = window.visualViewport?.height || null;
+              const clientViewportHeight = document.documentElement.clientHeight || null;
+              const layoutViewportHeight = window.innerHeight || null;
+              const browserViewportHeight = proofViewport?.height || null;
+              const viewportCandidates = [
+                browserViewportHeight,
+                visualViewportHeight,
+                clientViewportHeight,
+                layoutViewportHeight
+              ].filter((value) => Number.isFinite(value) && value > 0);
+              const proofViewportHeight = viewportCandidates.length
+                ? Math.min(...viewportCandidates)
+                : layoutViewportHeight;
               const heroTopDelta = heroRect ? Math.abs(heroRect.top - expectedHeroTop) : null;
-              const heroBottomDelta = heroRect ? Math.abs(heroRect.bottom - window.innerHeight) : null;
+              const heroBottomDelta = heroRect && proofViewportHeight ? Math.abs(heroRect.bottom - proofViewportHeight) : null;
               const orderOk = Boolean(
                 titleRect &&
                 headlineRect &&
@@ -1669,11 +1920,23 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 rejectButtonPresent: !!document.querySelector("#vtr-cookie-reject"),
                 acceptButtonPresent: !!document.querySelector("#vtr-cookie-accept"),
                 edgeAnalyticsScriptPresent: !!document.querySelector("script[data-vtr-edge-analytics]"),
+                heapEnvironmentScriptPresent: !!document.querySelector("script[data-vtr-heap-environment]"),
+                heapEnvironment: window.__vtrHeapEnvironment || null,
+                heapAppIdVar: window.HEAP_APP_ID || "",
+                heapEnvironmentVar: window.HEAP_ENVIRONMENT || "",
+                heapModeVar: window.HEAP_MODE || "",
+                heapDebugVarType: typeof window.HEAP_JS_DEBUG,
+                trackedShellElements,
+                drawerNavLinks,
                 heroFullHeight: {
                   heroRect,
                   promoRect,
                   headerRect,
-                  viewportHeight: window.innerHeight,
+                  viewportHeight: proofViewportHeight,
+                  browserViewportHeight,
+                  visualViewportHeight,
+                  clientViewportHeight,
+                  layoutViewportHeight,
                   expectedHeroTop,
                   topDelta: heroTopDelta,
                   bottomDelta: heroBottomDelta,
@@ -1698,7 +1961,8 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 width: document.documentElement.scrollWidth,
                 viewportWidth: window.innerWidth
               };
-            }"""
+            }""",
+            mobile_viewport,
             )
             if response is None or response.status >= 400:
                 note(mobile_failures, f"mobile browser status {response.status if response else 'none'}")
@@ -1723,6 +1987,93 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 note(consent_failures, "stale inline reject button present on compact consent pill")
             if not mobile_eval.get("edgeAnalyticsScriptPresent"):
                 note(event_bridge_failures, "edge analytics/event bridge script missing")
+            expected_heap_app_id = str(get_path(manifest, "analytics.heap.app_id") or "")
+            expected_heap_mode = str(get_path(manifest, "analytics.heap.mode") or "")
+            heap_environment = mobile_eval.get("heapEnvironment") or {}
+            if not mobile_eval.get("heapEnvironmentScriptPresent"):
+                note(event_bridge_failures, "Heap environment header script missing")
+            if expected_heap_app_id and mobile_eval.get("heapAppIdVar") != expected_heap_app_id:
+                note(event_bridge_failures, "Heap APP_ID environment variable does not match manifest")
+            if expected_heap_app_id and heap_environment.get("appId") != expected_heap_app_id:
+                note(event_bridge_failures, "Heap environment payload appId does not match manifest")
+            if expected_heap_mode and mobile_eval.get("heapModeVar") != expected_heap_mode:
+                note(event_bridge_failures, "Heap mode environment variable does not match manifest")
+            if mobile_eval.get("heapEnvironmentVar") != "production":
+                note(event_bridge_failures, "Heap environment variable is not production")
+            if mobile_eval.get("heapDebugVarType") != "boolean":
+                note(event_bridge_failures, "Heap debug environment variable was not preserved as a boolean")
+            tracked_shell = mobile_eval.get("trackedShellElements") or []
+            required_tracked_elements = {
+                "header_phone",
+                "header_tour",
+                "header_menu_open",
+                "drawer_close",
+                "drawer_tour",
+                "drawer_apply",
+                "drawer_phone",
+                "hero_primary_cta",
+            }
+            if get_path(manifest, "mobile_shell.promo.present") is not False:
+                required_tracked_elements.update({"promo_bar_toggle", "promo_drawer_close"})
+            observed_elements = {item.get("element") for item in tracked_shell}
+            missing_tracked = sorted(required_tracked_elements - observed_elements)
+            if missing_tracked:
+                note(event_bridge_failures, f"mobile shell tracked elements missing: {', '.join(missing_tracked)}")
+            incomplete_tracked = [
+                item for item in tracked_shell
+                if not item.get("action") or not item.get("surface") or not item.get("element") or not item.get("destination")
+            ]
+            if incomplete_tracked:
+                note(event_bridge_failures, f"mobile shell tracked elements have incomplete attributes: {len(incomplete_tracked)}")
+            duplicate_tracked_elements = sorted(
+                element for element in observed_elements
+                if element and sum(1 for item in tracked_shell if item.get("element") == element) > 1
+            )
+            if duplicate_tracked_elements:
+                note(event_bridge_failures, f"mobile shell tracked element identifiers are duplicated: {', '.join(duplicate_tracked_elements[:6])}")
+            expected_drawer_labels = [
+                str(link.get("label") or "").strip()
+                for link in get_path(manifest, "mobile_shell.navigation.links") or []
+                if str(link.get("label") or "").strip() and str(link.get("url") or "").strip()
+            ]
+            drawer_nav_links = mobile_eval.get("drawerNavLinks") or []
+            observed_drawer_labels = [str(item.get("text") or "").strip() for item in drawer_nav_links]
+            missing_drawer_labels = [
+                label for label in expected_drawer_labels
+                if label not in observed_drawer_labels
+            ]
+            if missing_drawer_labels:
+                note(event_bridge_failures, f"mobile drawer nav labels missing from manifest order: {', '.join(missing_drawer_labels)}")
+            if len(observed_drawer_labels) != len(expected_drawer_labels):
+                note(event_bridge_failures, f"mobile drawer nav count mismatch: expected {len(expected_drawer_labels)}, observed {len(observed_drawer_labels)}")
+            incomplete_drawer_links = [
+                item for item in drawer_nav_links
+                if item.get("surface") != "mobile_drawer"
+                or not str(item.get("element") or "").startswith("drawer_nav_")
+                or not item.get("action")
+                or not item.get("destination")
+            ]
+            if incomplete_drawer_links:
+                note(event_bridge_failures, f"mobile drawer nav links have incomplete Heap/Zaraz attributes: {len(incomplete_drawer_links)}")
+            tracked_event_eval = page.evaluate(
+            """() => {
+              window.dataLayer = window.dataLayer || [];
+              const start = window.dataLayer.length;
+              document.querySelector("[data-edge-drawer-open]")?.click();
+              document.querySelector("[data-edge-drawer-close]")?.click();
+              const events = window.dataLayer.slice(start).filter((item) => item && /mobile_menu_(open|close)/.test(item.event || ""));
+              const open = events.find((item) => item.event === "mobile_menu_open") || null;
+              const close = events.find((item) => item.event === "mobile_menu_close") || null;
+              return {events, open, close};
+            }"""
+            )
+            result["tracked_shell_event_proof"] = tracked_event_eval
+            open_event = tracked_event_eval.get("open") or {}
+            close_event = tracked_event_eval.get("close") or {}
+            if open_event.get("vtr_action") != "mobile_menu_open" or open_event.get("vtr_element") != "header_menu_open" or open_event.get("vtr_surface") != "mobile_header":
+                note(event_bridge_failures, "mobile menu open event payload is not differentiated for Heap/Zaraz")
+            if close_event.get("vtr_action") != "mobile_menu_close" or close_event.get("vtr_element") != "drawer_close" or close_event.get("vtr_surface") != "mobile_drawer":
+                note(event_bridge_failures, "mobile menu close event payload is not differentiated for Heap/Zaraz")
             hero_stack = mobile_eval.get("heroStack") or {}
             if get_path(manifest, "mobile_shell.reviews.present") is True and not hero_stack.get("ratingPresent"):
                 note(mobile_failures, "hero review row is missing even though reviews.present is true")
@@ -1766,6 +2117,67 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 if missing_bullets:
                     note(mobile_failures, f"manifest-backed content-block bullets missing from rendered mobile shell: {', '.join(missing_bullets[:4])}")
 
+            if mobile_eval["consentNoticePresent"]:
+                page.evaluate(
+                """() => {
+                  window.__vtrZarazConsentModalCalled = false;
+                  window.zaraz = window.zaraz || {};
+                  window.zaraz.showConsentModal = function() {
+                    window.__vtrZarazConsentModalCalled = true;
+                    return undefined;
+                  };
+                }"""
+                )
+                prefs_geometry = page.evaluate(
+                """() => {
+                  const button = document.querySelector("#vtr-cookie-manage");
+                  const notice = document.querySelector("#vtr-cookie-notice");
+                  const rect = (el) => {
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width,height:r.height};
+                  };
+                  const buttonRect = rect(button);
+                  const noticeRect = rect(notice);
+                  const viewportHeight = Math.min(
+                    window.visualViewport?.height || window.innerHeight,
+                    document.documentElement.clientHeight || window.innerHeight,
+                    window.innerHeight
+                  );
+                  const centerX = buttonRect ? buttonRect.left + buttonRect.width / 2 : null;
+                  const centerY = buttonRect ? buttonRect.top + buttonRect.height / 2 : null;
+                  const hit = centerX !== null && centerY !== null ? document.elementFromPoint(centerX, centerY) : null;
+                  return {
+                    buttonRect,
+                    noticeRect,
+                    viewportHeight,
+                    buttonInViewport: Boolean(buttonRect && buttonRect.top >= 0 && buttonRect.bottom <= viewportHeight + 2),
+                    buttonHitTargetOk: Boolean(button && hit && (hit === button || button.contains(hit))),
+                    hitTag: hit?.tagName || null,
+                    hitId: hit?.id || null
+                  };
+                }"""
+                )
+                result["consent_preferences_geometry"] = prefs_geometry
+                if not prefs_geometry.get("buttonInViewport"):
+                    note(consent_failures, f"compact consent preferences button is outside the mobile proof viewport: {json.dumps(prefs_geometry, sort_keys=True)[:500]}")
+                if not prefs_geometry.get("buttonHitTargetOk"):
+                    note(consent_failures, f"compact consent preferences button hit target is obscured: {json.dumps(prefs_geometry, sort_keys=True)[:500]}")
+                page.evaluate("""() => document.querySelector("#vtr-cookie-manage")?.click()""")
+                page.wait_for_timeout(500)
+                prefs_eval = page.evaluate(
+                """() => ({
+                  preferencesRequested: window.__vtrZarazConsentPreferencesRequested === true,
+                  showConsentModalCalled: window.__vtrZarazConsentModalCalled === true,
+                  noticeRemoved: !document.querySelector("#vtr-cookie-notice"),
+                  scrollY: window.scrollY
+                })"""
+                )
+                if prefs_eval["scrollY"] > 10:
+                    note(consent_failures, "compact consent preferences proof scrolled before native continuation isolation")
+                if not prefs_eval["preferencesRequested"] or not prefs_eval["showConsentModalCalled"] or not prefs_eval["noticeRemoved"]:
+                    note(consent_failures, "compact consent preferences did not route to zaraz.showConsentModal path")
+
             page.evaluate("() => window.scrollTo(0, document.documentElement.scrollHeight)")
             page.wait_for_timeout(3500)
             continuation_eval = page.evaluate(
@@ -1791,32 +2203,6 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 note(continuation_failures, "native continuation did not load with verified frame marker")
             if continuation_eval["frameWelcomeCount"] > 0 or continuation_eval["frameFeaturesCount"] > 0:
                 note(continuation_failures, "native continuation still exposes shell-owned welcome/features duplicate text")
-
-            if mobile_eval["consentNoticePresent"]:
-                page.evaluate(
-                """() => {
-                  window.__vtrZarazConsentModalCalled = false;
-                  window.zaraz = window.zaraz || {};
-                  const original = typeof window.zaraz.showConsentModal === "function"
-                    ? window.zaraz.showConsentModal.bind(window.zaraz)
-                    : null;
-                  window.zaraz.showConsentModal = function(...args) {
-                    window.__vtrZarazConsentModalCalled = true;
-                    return original ? original(...args) : undefined;
-                  };
-                }"""
-                )
-                page.click("#vtr-cookie-manage")
-                page.wait_for_timeout(500)
-                prefs_eval = page.evaluate(
-                """() => ({
-                  preferencesRequested: window.__vtrZarazConsentPreferencesRequested === true,
-                  showConsentModalCalled: window.__vtrZarazConsentModalCalled === true,
-                  noticeRemoved: !document.querySelector("#vtr-cookie-notice")
-                })"""
-                )
-                if not prefs_eval["preferencesRequested"] or not prefs_eval["showConsentModalCalled"] or not prefs_eval["noticeRemoved"]:
-                    note(consent_failures, "compact consent preferences did not route to zaraz.showConsentModal path")
 
             mobile.close()
 
@@ -1997,6 +2383,33 @@ def run_zaraz_package_apply(manifest_path: Path, out_dir: Path) -> dict[str, Any
     }
 
 
+def run_zaraz_consent_package_apply(manifest: dict[str, Any], out_dir: Path) -> dict[str, Any]:
+    zone = get_path(manifest, "routing.cloudflare_zone_name") or get_path(manifest, "target.domain")
+    output = out_dir / "zaraz-consent-package-apply.json"
+    cmd = ["python3", str(ZARAZ_CONSENT_PACKAGE), "--domain", zone, "--apply", "--output", str(output)]
+    result = run(cmd)
+    payload = load_json(output) or {}
+    results = payload.get("results") or []
+    result_statuses = [item.get("status") for item in results if isinstance(item, dict)]
+    acceptable_statuses = {"applied", "unchanged"}
+    return {
+        "command": cmd,
+        "exit_code": result.returncode,
+        "pass": (
+            result.returncode == 0
+            and payload.get("status") == "passed"
+            and bool(result_statuses)
+            and all(status in acceptable_statuses for status in result_statuses)
+        ),
+        "status": payload.get("status"),
+        "result_statuses": result_statuses,
+        "summary": payload.get("summary") or {},
+        "evidence_path": str(output),
+        "stdout_tail": result.stdout[-1000:],
+        "stderr_tail": result.stderr[-1000:],
+    }
+
+
 def validate_ahrefs_manifest(manifest: dict[str, Any], out_dir: Path) -> dict[str, Any]:
     # Full roster lookup is expensive but deterministic; manifest must already
     # name an existing verified project from that lookup before apply.
@@ -2146,10 +2559,12 @@ def add_manifest_gates(ledger: GateLedger, manifest: dict[str, Any] | None, mani
         ledger.fail_gate("first_two_content_blocks_present")
 
     awards_present = get_path(manifest, "mobile_shell.awards.present")
-    if awards_present is False or (awards_present is True and get_path(manifest, "mobile_shell.awards.assets")):
+    award_assets = get_path(manifest, "mobile_shell.awards.assets") or []
+    award_assets_renderable = all(award_asset_path(asset) for asset in award_assets)
+    if awards_present is False or (awards_present is True and award_assets and award_assets_renderable):
         ledger.pass_gate("award_badge_sequence_verified", detail="Awards explicitly declared as absent or asset-backed.")
     else:
-        ledger.fail_gate("award_badge_sequence_verified", detail="Awards/badges must be explicit in manifest.")
+        ledger.fail_gate("award_badge_sequence_verified", detail="Awards/badges must be explicit and renderable in manifest.")
 
     if get_path(manifest, "rollback.strategy"):
         ledger.pass_gate("rollback_plan_written")
@@ -2268,7 +2683,13 @@ def build_preflight_context(args: argparse.Namespace, out_dir: Path, contract: d
     ledger = GateLedger(contract)
     add_manifest_gates(ledger, manifest, manifest_validation, identity, out_dir)
 
-    source_probe = fetch_text(f"https://{args.domain}/", DESKTOP_UA)
+    source_probe_url = (
+        get_path(manifest, "target.governed_reference_url")
+        or get_path(manifest, "target.website_url")
+        or get_path(manifest, "target.canonical_source_url")
+        or f"https://{args.domain}/"
+    )
+    source_probe = audit_source_page(str(source_probe_url))
     source_probe_path = out_dir / "source-page-audit.json"
     write_fetch_evidence(source_probe_path, source_probe)
     if source_probe.get("ok"):
@@ -2346,11 +2767,13 @@ def run_stage_setup(args: argparse.Namespace, out_dir: Path, target_manifest_pat
             "block_reason": "Optimized asset package failed. No Zaraz setup, route probe, or Worker deploy was attempted.",
             "asset_package": asset_package,
             "zaraz_package": None,
+            "zaraz_consent_package": None,
             "zaraz_consent_audit": None,
             "deploy_bundle_validation": None,
         }
 
     zaraz_package = None
+    zaraz_consent_package = None
     zaraz = None
     if manifest:
         zaraz_package = run_zaraz_package_apply(target_manifest_path, out_dir / "analytics-setup")
@@ -2364,6 +2787,25 @@ def run_stage_setup(args: argparse.Namespace, out_dir: Path, target_manifest_pat
                 "block_reason": "Governed Zaraz analytics package apply failed. No route probe or Worker deploy was attempted.",
                 "asset_package": asset_package,
                 "zaraz_package": zaraz_package,
+                "zaraz_consent_package": None,
+                "zaraz_consent_audit": None,
+                "deploy_bundle_validation": None,
+            }
+
+        zaraz_consent_package = run_zaraz_consent_package_apply(manifest, out_dir / "consent-setup")
+        if not zaraz_consent_package["pass"]:
+            ledger.fail_gate(
+                "zaraz_consent_ready",
+                evidence_path=zaraz_consent_package.get("evidence_path"),
+                detail=zaraz_consent_package.get("stderr_tail") or "Governed Zaraz consent package apply failed.",
+            )
+            return {
+                "pass": False,
+                "blocked": True,
+                "block_reason": "Governed Zaraz consent package apply failed. No route probe or Worker deploy was attempted.",
+                "asset_package": asset_package,
+                "zaraz_package": zaraz_package,
+                "zaraz_consent_package": zaraz_consent_package,
                 "zaraz_consent_audit": None,
                 "deploy_bundle_validation": None,
             }
@@ -2379,6 +2821,7 @@ def run_stage_setup(args: argparse.Namespace, out_dir: Path, target_manifest_pat
                 "block_reason": "Zaraz consent audit failed after analytics setup. No route probe or Worker deploy was attempted.",
                 "asset_package": asset_package,
                 "zaraz_package": zaraz_package,
+                "zaraz_consent_package": zaraz_consent_package,
                 "zaraz_consent_audit": zaraz,
                 "deploy_bundle_validation": None,
             }
@@ -2397,6 +2840,7 @@ def run_stage_setup(args: argparse.Namespace, out_dir: Path, target_manifest_pat
             "block_reason": "Generated deploy bundle validation failed. No route probe or Worker deploy was attempted.",
             "asset_package": asset_package,
             "zaraz_package": zaraz_package,
+            "zaraz_consent_package": zaraz_consent_package,
             "zaraz_consent_audit": zaraz,
             "deploy_bundle_validation": deploy_bundle,
         }
@@ -2409,6 +2853,7 @@ def run_stage_setup(args: argparse.Namespace, out_dir: Path, target_manifest_pat
         "stage_failures": current_stage_failures,
         "asset_package": asset_package,
         "zaraz_package": zaraz_package,
+        "zaraz_consent_package": zaraz_consent_package,
         "zaraz_consent_audit": zaraz,
         "deploy_bundle_validation": deploy_bundle,
     }

@@ -4,12 +4,12 @@ import React, { Suspense } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, Loader2, LogIn, Waves } from "lucide-react";
-import { clearCloudflareLoggedOutFlag } from "@/lib/api";
+import { clearCloudflareLoggedOutFlag, normalizeSafeNextPath, resolveApiBase } from "@/lib/api";
 
 export default function VerifyPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center" style={{ background: "linear-gradient(135deg, #15284B 0%, #0D5E6D 50%, #15803D 100%)" }}>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "linear-gradient(135deg, #15284B 0%, #3B9189 50%, #7DCAC2 100%)" }}>
         <Loader2 className="h-8 w-8 animate-spin text-white/50" />
       </div>
     }>
@@ -21,6 +21,7 @@ export default function VerifyPage() {
 function VerifyContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const nextPath = normalizeSafeNextPath(searchParams.get("next"), "/resi-edge/launch");
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(!token ? "No login token provided." : "");
@@ -31,8 +32,8 @@ function VerifyContent() {
     setLoading(true);
     try {
       clearCloudflareLoggedOutFlag();
-      const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8787").replace(/\/$/, "");
-      window.location.href = `${apiBase}/v1/auth/verify?token=${encodeURIComponent(token)}&complete=1`;
+      const apiBase = resolveApiBase().replace(/\/$/, "");
+      window.location.href = `${apiBase}/v1/auth/verify?token=${encodeURIComponent(token)}&complete=1&next=${encodeURIComponent(nextPath)}`;
     } catch {
       setError("Unable to connect to the server.");
       setLoading(false);
@@ -44,7 +45,7 @@ function VerifyContent() {
       {/* Full-screen gradient background */}
       <div
         className="absolute inset-0"
-        style={{ background: "linear-gradient(135deg, #15284B 0%, #0D5E6D 50%, #15803D 100%)" }}
+        style={{ background: "linear-gradient(135deg, #15284B 0%, #3B9189 50%, #7DCAC2 100%)" }}
       />
 
       {/* Pond scene at bottom */}
@@ -62,7 +63,7 @@ function VerifyContent() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[20%] left-[10%] w-64 h-64 rounded-full bg-white/[0.03] animate-pulse" style={{ animationDuration: "4s" }} />
         <div className="absolute top-[60%] right-[5%] w-96 h-96 rounded-full bg-white/[0.02] animate-pulse" style={{ animationDuration: "6s" }} />
-        <div className="absolute bottom-[10%] left-[30%] w-80 h-80 rounded-full bg-[#0D5E6D]/20 animate-pulse" style={{ animationDuration: "5s" }} />
+        <div className="absolute bottom-[10%] left-[30%] w-80 h-80 rounded-full bg-[#3B9189]/20 animate-pulse" style={{ animationDuration: "5s" }} />
       </div>
 
       {/* Card */}
@@ -106,7 +107,7 @@ function VerifyContent() {
               <button
                 onClick={handleVerify}
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0D5E6D] to-[#15803D] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#0D5E6D]/30 transition-all hover:shadow-xl hover:shadow-[#0D5E6D]/40 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3D66B9] to-[#3B9189] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15284B]/30 transition-all hover:shadow-xl hover:shadow-[#15284B]/40 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
                 Complete Sign In

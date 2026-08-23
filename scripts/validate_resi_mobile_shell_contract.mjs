@@ -80,13 +80,31 @@ function linesFor(html, regex, limit = 12) {
     .slice(0, limit);
 }
 
+function isStandaloneHeapDebugFlag(entry) {
+  return /^window\.HEAP_JS_DEBUG\s*=\s*(?:true|false);?$/i.test(entry.text);
+}
+
 function isAllowedEdgeAnalyticsGuard(entry) {
-  return (
+  if (isStandaloneHeapDebugFlag(entry)) {
+    return true;
+  }
+  if (
     /<script\b[^>]*data-vtr-cs-verify-suppress=["']1["']/i.test(entry.text) &&
     entry.text.includes("tcvsapi") &&
     entry.text.includes("contentsquare") &&
     entry.text.includes("verify-installation") &&
     /vtr_cs_verify_suppressed=1/i.test(entry.text)
+  ) {
+    return true;
+  }
+  return (
+    /<script\b[^>]*data-vtr-heap-environment=["']1["']/i.test(entry.text) &&
+    entry.text.includes("__vtrHeapEnvironment") &&
+    entry.text.includes("HEAP_APP_ID") &&
+    entry.text.includes("HEAP_ENVIRONMENT") &&
+    entry.text.includes("HEAP_MODE") &&
+    entry.text.includes("HEAP_JS_DEBUG") &&
+    !/\bheap\.load\b/i.test(entry.text)
   );
 }
 

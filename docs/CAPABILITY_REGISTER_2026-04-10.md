@@ -1,5 +1,283 @@
 # Capability Register
 
+## 08/22/2026 Ops Watch Mirror/Push Cloudflare Ingest
+
+- Added dedicated Cloudflare Worker `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/worker.js` and Wrangler config `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/wrangler.toml`.
+- Production endpoint: `https://ops-watch.venterrawebops.com/v1/ops-watch/ingest`; health endpoint: `https://ops-watch.venterrawebops.com/health`.
+- Applied D1 schema `/Users/mark/Property_Analytics/apps/api/migrations/0065_create_ops_watch_ingest_tables.sql` and mirrored infra migration `/Users/mark/Property_Analytics/infra/migrations/042_create_ops_watch_ingest_tables.sql` for `ops_watch_ingest_runs`, `ops_watch_signals`, and `ops_watch_action_queue`.
+- The Worker accepts sanitized mirror/push packets from approved source systems, stores the packet evidence in R2 under `ops-watch/ingest/`, and upserts normalized signal rows into D1 with stable source/signal idempotency.
+- Added `/Users/mark/Property_Analytics/scripts/build_ops_watch_ingest_sample_packet.py` and `/Users/mark/Property_Analytics/scripts/push_ops_watch_ingest_packet.py` for internal exporter packet shaping and Keeper-only signing/push.
+- Added runbook `/Users/mark/Property_Analytics/docs/OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md` and documented Keeper record requirement `KSM_OPS_WATCH_INGEST_SHARED_SECRET_NOTATION` in `/Users/mark/Property_Analytics/docs/KSM_MARKETINGOPS_RECORD_MANIFEST.md`.
+- Created Keeper/KSM record `Ops Watch Ingest Shared Secret`, active notation `keeper://w2b3ipQrf1DXfZ53Gpz9aw/field/password`, and set Cloudflare Worker secret `OPS_WATCH_INGEST_SHARED_SECRET` from Keeper.
+- Deployed Worker version `1f5e4ff5-a7fd-43c0-9a25-77bf72c413ba`. Health smoke passed. Unsigned ingest fails closed. Live signed canary `ops-watch-ingest-canary-20260822-keeper` returned `ok:true`, wrote R2 evidence, and produced accepted D1 run/signal readback.
+- Reconciled documentation outlets after canary proof: root README, docs index, Cloudflare ops README, Worker README, Ops Watch runbook, Cloudflare offload plan, mirror/push ingest runbook, Keeper manifest, working memory, capability register, and full system audit now point to the live endpoint, Keeper-backed secret, D1/R2 storage contract, canary proof, and internal-exporter boundary.
+- Disposition: live receiving lane, schema, Keeper secret, Worker secret, and canary proof are complete. Cloudflare still does not reach into intranet systems; the remaining build step is the internal scheduled exporter that pushes approved sanitized source packets.
+
+## 08/22/2026 Data Pond VenterraWebOps Migration And Cloudflare Offload Plan
+
+- Prepared Data Pond for migration to `https://pond.venterrawebops.com` with API target `https://api.venterrawebops.com`.
+- Updated `/Users/mark/Property_Analytics/apps/api/src/lib/frontend-origin.ts` so the new Data Pond hosts are accepted frontend origins and use `.venterrawebops.com` session cookies.
+- Updated `/Users/mark/Property_Analytics/apps/api/src/index.ts` CORS allowlist for the new corporate Data Pond hosts.
+- Updated `/Users/mark/Property_Analytics/apps/web/.env.production` to point production web traffic at `https://api.venterrawebops.com` with Cloudflare primary auth.
+- Added Cloudflare Access auto-provision domain allowlist in `/Users/mark/Property_Analytics/apps/api/wrangler.toml`, preserving default role `viewer`.
+- Added `/Users/mark/Property_Analytics/apps/api/test/auth/cloudflare-bootstrap.test.ts` coverage for the new host redirect and `.venterrawebops.com` cookie boundary.
+- Created Cloudflare Access applications for the new `pond.venterrawebops.com` and `api.venterrawebops.com` surfaces. Main app and API bootstrap allow `venterraliving.com` and `venterra.com` email domains; admin and protected API service paths mirror the Mark-only policy used by legacy admin surfaces.
+- Deployed API Worker `pop-brief-api` version `d533ebfc-a599-4920-b50a-3e3de572bfea` with both `api.venterradev.com` and `api.venterrawebops.com` custom domains.
+- Deployed web Pages project `property-analytics` to `https://4dec4d06.property-analytics.pages.dev` and attached `pond.venterrawebops.com` with a proxied CNAME to `property-analytics.pages.dev`.
+- Added runbook `/Users/mark/Property_Analytics/docs/DATA_POND_VENTERRAWEBOPS_MIGRATION_RUNBOOK_2026-08-22.md`.
+- Added architecture plan `/Users/mark/Property_Analytics/docs/OPS_WATCH_CLOUDFLARE_OFFLOAD_PLAN_2026-08-22.md` for moving recurring harvest work to Cloudflare Workers Cron Triggers, Queues, Durable Objects, D1, and R2 while keeping first-phase harvest read-only.
+- Disposition: initial Cloudflare cutover prep deployed. HTTP smoke confirms both API domains return `/health` and the new web/API bootstrap hosts are Cloudflare Access protected. Browser Entra login, app-session creation, and first-time viewer auto-provision remain open validation.
+
+## 08/22/2026 Ops Watch Monitoring Layer
+
+- Added `/Users/mark/Property_Analytics/config/ops_watch_sources.json` as the governed source contract for cross-system operational monitoring across Jira, Confluence, Microsoft 365 Outlook, Teams, SharePoint/OneDrive, and Captain Runtime publish.
+- Added `/Users/mark/Property_Analytics/scripts/build_ops_watch_packet.py` as the non-mutating local packet assembler that consumes source-specific packets, starting with Jira Captain Watch, and emits a portfolio Ops Watch JSON/Markdown/CSV readout.
+- Added `/Users/mark/Property_Analytics/scripts/build_confluence_ops_watch_packet.py` as the non-mutating Confluence/Rovo search packet builder for ITSM/IAM/Microsoft 365/access process source signals, with governed property mention resolution when a page references a property.
+- Added `/Users/mark/Property_Analytics/docs/OPS_WATCH_RUNBOOK_2026-08-22.md` documenting source boundaries, Microsoft Graph/Keeper credential requirements, recurring harvest shape, and default no-mutation policy.
+- Added `/Users/mark/Property_Analytics/utils/ms365_graph_auth.py`, `/Users/mark/Property_Analytics/scripts/smoke_ms365_graph_oauth.py`, and `/Users/mark/Property_Analytics/docs/MS365_GRAPH_OAUTH_SETUP_RUNBOOK_2026-08-22.md` as the Keeper-first Microsoft Graph OAuth scaffold. The helper uses client-credentials OAuth, resolves tenant/client/secret/mailbox material only through Keeper notation env vars, and does not create local token files.
+- Sanitized Keeper title/folder scan found no existing Microsoft 365 / Graph / Outlook / Teams / SharePoint record mapped for this lane. Current smoke fails closed at missing `KSM_MS365_TENANT_ID_NOTATION`.
+- First packet `/Users/mark/Property_Analytics/reports/ops_watch/ops-watch-20260822-current/` reports `6` contracted source lanes, `1` active harvest source, `1` connector-ready not-yet-harvested Confluence lane, `3` Microsoft 365 lanes blocked pending Keeper/Graph setup, and `14` current Captain records from Jira across `12` properties.
+- First Confluence packet `/Users/mark/Property_Analytics/reports/ops_watch/confluence_ops_watch/confluence-ops-watch-20260822-current/` reviewed `10` Confluence source pages and produced `10` source signals, including `6` high identity/access signals and `0` property-linked Captain records.
+- Current combined packet `/Users/mark/Property_Analytics/reports/ops_watch/ops-watch-20260822-atlassian-current/` reports `2` active Atlassian harvest sources, `10` source signals, and `14` current Captain records from Jira across `12` properties.
+- Disposition: active local monitoring layer with Jira and Confluence active first. Microsoft 365 harvesters remain blocked until Keeper/KSM Graph credentials exist; Captain Runtime publish remains review-required. No Jira, Confluence, Microsoft 365, remote D1, Captain Runtime, Cloudflare, or PIB mutation was performed.
+
+## 08/22/2026 Jira Captain Watch Bridge
+
+- Added `/Users/mark/Property_Analytics/scripts/build_jira_captain_watch_packet.py` as the governed non-mutating bridge from Jira issue search output to Captain watch/action packets.
+- Added `/Users/mark/Property_Analytics/docs/JIRA_CAPTAIN_WATCH_RUNBOOK_2026-08-22.md` documenting the query shape, property-resolution policy, classification rules, output artifacts, and approval boundary.
+- The bridge uses Jira property field `customfield_10106` as the primary property value, resolves through the governed property identity matrix, and also recognizes explicit property mentions in the ticket summary/description so multi-property tickets can surface to every affected or referenced Captain.
+- Output artifacts are JSON, Markdown, CSV, and optional reviewed SQL upserts targeting the existing Captain Runtime tables `captain_watch_items` and `captain_actions`.
+- First local packet `/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch/jira-captain-watch-20260822-current/` reviewed `12` active Jira issues assigned to Mark and produced `14` Captain records across `12` properties, with `0` unresolved property records.
+- Disposition: active local packet builder. No Jira mutation, remote D1 publish, Captain Runtime mutation, Cloudflare deploy, recurring automation, or PIB changes were performed. SQL upsert application and scheduled monitoring remain separate approval steps.
+
+## 08/22/2026 Resi Partner Feedback And Bridge Roadmap Alignment
+
+- Resi/Grady confirmed the API is still beta but available for continued exploration and partner ideation. The existing Resi Content Bridge remains an active guarded capability, not a broad mutation surface.
+- Confirmed cache posture: website cache clearing is currently available through the V1 API and is not yet present in V2. Keep V2 as the management/content API layer and V1 as the cache/public-delivery proof layer.
+- Strengthened media boundary: media should remain read-only for now because Resi media syncs from Venterra feeds and Resi is still defining API behavior against external syncing rules.
+- Roadmap alignment: incremental/change-detection support is in development, while webhooks/event callbacks and activity logging are on the roadmap, likely paired with broader Resi app activity logging.
+- Next collaboration focus: cache semantics, public-delivery ids, incremental sync, nested content-block update semantics, media/feed sync rules, activity logging, and safe next canary content object types.
+- Added `/Users/mark/Property_Analytics/docs/RESI_CONTENT_BRIDGE_AGENT_PRIMER_2026-08-22.md` as the internal future-agent primer for heavy Pond integration. It is now linked from the Resi Content Bridge runbook and content inventory integration doc and should be read before expanding bridge writes, Data Pond UI routes, Captain/group/supervisor workflows, or VACS/Site Content change-request flows.
+
+## 08/21/2026 Resi Heap Production-ID Guard
+
+- Mark shared the Resi-provided production Heap native reference snippet. Its app id is `286627304`, loading `https://cdn.us.heap-api.com/config/286627304/heap_config.js`.
+- Current Resi Edge manifests and analytics smoke defaults already use production Heap app id `286627304`.
+- The snippet is recorded as a production-id audit reference, not as permission to paste a direct native Heap loader into the Resi Edge package.
+- `/Users/mark/Property_Analytics/scripts/smoke_live_analytics.py` now extracts observed Heap app ids from script and network evidence and fails when any observed id differs from the expected `--heap-app-id`, default `286627304`.
+- `/Users/mark/Property_Analytics/docs/RESI_PROPERTY_UPGRADE_RUNBOOK_2026-08-08.md` now records that any native Heap id other than `286627304` is a cleanup finding unless Mark approves a current-task exception.
+- Disposition: active analytics QA guard. Zaraz remains the Resi Edge analytics owner; Heap/Contentsquare remains interaction-gated with passive proof requiring zero Heap/Contentsquare network before user intent.
+
+## 08/21/2026 Resi Edge Launch Dashboard QA-Backed Test Run
+
+- Refreshed the protected launch dashboard from read-only vanity QA evidence instead of stale hardcoded readiness assumptions.
+- The first 08/21/2026 QA packet at `/Users/mark/Property_Analytics/reports/domain_ops/20260821_091852_vanity_qa/` is superseded because it checked the legacy redirect-import shape (`root`, `/reviews/`, `/gallery/`) rather than the actual new Resi site page surface.
+- Current expanded packet `/Users/mark/Property_Analytics/reports/domain_ops/20260821_143906_vanity_qa/` reports `19` green, `1` yellow, `0` red; root routing, vanity hold, vanity canonical, page indexability, robots general-search indexability, mobile smoke, and legacy redirects are green for `20/20`.
+- Expanded QA discovers same-domain homepage/core navigation links and checks every discovered core vanity page for `200`, vanity-host hold, vanity canonical, title, and indexability. Current proof checked `251` core vanity pages: `250` clean and `1` yellow.
+- `/Users/mark/Property_Analytics/scripts/build_resi_edge_launch_dashboard_snapshot.py` now loads the latest `*_vanity_qa/vanity-qa-summary.json` and exports those values through the launch snapshot consumed by `apps/web`.
+- `/Users/mark/Property_Analytics/apps/web/src/app/resi-edge/launch/launch-dashboard-client.tsx` now shows dashboard-backed `VANITY QA 19/20`, `CORE PAGES 250/251`, `0` red QA issues, `1` QA open, a plain executive portfolio truth band, and a separate yellow `Promo Bars` watch item for the Resi promo-app rendering follow-up.
+- Dashboard-only Cloudflare Pages deployment `https://75056d4e.resi-edge-launch.pages.dev` is live behind `https://launch.venterrawebops.com/`. Live mocked-auth proof confirmed `VANITY QA 19/20`, `CORE PAGES 250/251`, `RED ISSUES 0`, and the updated current-truth statement.
+- Added `/Users/mark/Property_Analytics/reports/domain_ops/20260821_143906_vanity_qa/NEXT_TEST_RUN_PACKET.md` as the superseding repeatable local test-run checklist.
+- Anatole full canary evidence `/Users/mark/Property_Analytics/reports/domain_ops/20260821_143825_anatole_full_vanity_qa/ANATOLE_FULL_CANARY_READOUT.md` passed `12/12` discovered core vanity pages. Live dashboard proof screenshot: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-expanded-qa-live-20260821.png`.
+- Open automated item: Axial Buckhead `/contact/` returns `200` but has `follow, noindex` and no canonical.
+- Disposition: active dashboard/evidence capability. No property DNS, redirects, WordPress/Kinsta, GA4, Ahrefs, Zaraz, R2, cache, property Worker, or locked PIB mutation was performed by this pass.
+
+## 08/21/2026 Resi Edge Common Topper Full-Nav Contract
+
+- Added `/Users/mark/Property_Analytics/docs/RESI_EDGE_COMMON_TOPPER_TEMPLATE_PLAN_2026-08-21.md` as the morning execution plan for the common topper model: one canonical template with all property-specific behavior supplied through manifest tokens.
+- Superseded the five-link drawer limiter from the 08/20 payload optimizer. The canonical runtime at `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-edge-package/runtime.mjs` now renders the full `mobile_shell.navigation.links[]` manifest list in order. `DEFAULT_DRAWER_LINK_LIMIT`, drawer priority slicing, and `.slice(0, DEFAULT_DRAWER_LINK_LIMIT)` are forbidden by static validation.
+- The mobile shell now uses the compact-only Zaraz consent payload so the cookie icon remains visible while preserving byte budget; desktop/native consent injection keeps the full consent widget path.
+- `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py` now browser-proves drawer label/count parity with the manifest and verifies every rendered drawer link has differentiated Heap/Zaraz `data-vtr-action`, `data-vtr-surface`, `data-vtr-element`, and `data-vtr-destination` attributes.
+- District (`FL4DU`, `thedistrictuniversal.com`) was re-staged after fixing the runner helper-call typo, then applied successfully via the governed `apply --require-live-proof` path. Final packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thedistrictuniversal-com/apply-20260821T135707Z/` passed `55/55` gates with no rollback, `11` drawer links rendered, byte forecast `39,399`, mobile PSI `100`, desktop native passthrough PSI `84`, and `70` evidence files.
+- Disposition: active governed common-template contract for the current seven pilot/lease-up sites. Property-specific Worker rebuilds remain forbidden; property differences belong in manifests/tokens.
+
+## 08/21/2026 Resi Content Bridge
+
+- Added `/Users/mark/Property_Analytics/scripts/resi_content_bridge.py` as the named governed bridge from Data Pond content systems to live Resi content operations.
+- The bridge reuses the existing Resi/Data Pond schema: `resi_v2_api_snapshots`, `resi_content_inventory_runs`, `resi_content_objects`, `resi_content_property_links`, `resi_content_fields`, `pond_content_system_bindings`, and `pond_content_change_requests`.
+- Supported commands are `show-faq` for local inventory, `read-v2-faq` for live V2 readback, `apply-faq-answer` for guarded approved FAQ answer changes, `clear-property-cache` for Resi V1 property cache clear, and `verify-public-faq` for public delivery verification.
+- Live write commands require exact confirmation phrases: `APPLY_RESI_CONTENT_CHANGE` for content updates and `CLEAR_RESI_CONTENT_CACHE` for Resi cache clearing. Credentials resolve through Keeper/KSM via `/Users/mark/Property_Analytics/utils/resi_auth.py`, and raw secrets are not printed.
+- Added `/Users/mark/Property_Analytics/docs/RESI_CONTENT_BRIDGE_RUNBOOK_2026-08-21.md` and updated `/Users/mark/Property_Analytics/docs/RESI_CONTENT_INVENTORY_DATA_POND_INTEGRATION_2026-08-20.md` so the bridge is the official apply/readback lane for VACS, Site Content, Content Office, and Captain/Navigator integrations.
+- First validated live proof: The Vine Kyle Parkway (`TX4EK`) FAQ `Can I tour The Vine?`, Resi FAQ id `019ebdff-c18d-7195-80cc-e1e61b42e2df`, change request `resi_faq_hard_hat_tx4ek_3d1e27857b7e`. V2 readback and V1 public delivery verification both contain the approved Hard Hat Tours answer. Mark also confirmed the public site rendered the change in browser.
+- Disposition: active guarded bridge. Current bridge applies FAQ answers only; broader object-type apply commands remain future extensions. No Resi host/admin, WordPress/Kinsta, Cloudflare, DNS, Resi Edge Worker, D1/KV, or PIB mutation is part of this capability.
+
+## 08/20/2026 Resi Content Inventory Data Pond Foundation
+
+- Added `/Users/mark/Property_Analytics/Data_Collection/collectors/resi_v2_content_inventory_collector.py` as a Keeper-backed, read-only Resi V2 content inventory collector. It captures live Resi content objects into local Data Pond tables, supports `--skip-media`, `--endpoint`, `--verbose`, and `--resolve-property-links`, and uses only GET requests.
+- Added content inventory and governance schema in `/Users/mark/Property_Analytics/apps/api/migrations/0064_create_resi_content_inventory_tables.sql` plus `/Users/mark/Property_Analytics/infra/migrations/041_create_resi_content_inventory_tables.sql`. The tables model inventory runs, content objects, property impact links, field-level facts, changeability rules, system bindings, and future draft/change requests.
+- Resolved proof run `resi_content_3fb41752b3aa` captured `52,472` non-media Resi content objects and `140,673` field facts for account `Venterra`, using latest property snapshot `resi_v2_bdf1c63ebece` and `795` read-only GET requests. Property-link coverage now maps content blocks, content items, FAQs, amenities, galleries, announcements, neighborhood places, and reviews to governed property codes where Resi exposes property-filtered membership.
+- Added `/Users/mark/Property_Analytics/docs/RESI_CONTENT_INVENTORY_DATA_POND_INTEGRATION_2026-08-20.md` as the integration contract for VACS, Site Content, Content Office, Captain/Navigator, and future Resi live-edit workflows. Resi is treated as the external live CMS/source system; Data Pond owns readback, mapping, draft requests, approval, and future readback proof.
+- Disposition: active local read/map foundation. No Resi writes, host/admin changes, Cloudflare/D1/KV publish, production Data Pond deploy, or PIB changes were performed. Media inventory and protected UI/API browsing remain next steps.
+
+## 08/20/2026 TowneStone Inventory Reinstatement And Current Package Apply
+
+- Townestone at 359 (`TX4FC`, `townestoneat359.com`) is no longer treated as the protected example/reference manifest. `/Users/mark/Property_Analytics/config/portfolio_resi_edge_stabilization/townestoneat359-com.manifest.json` now uses a live inventory mutation policy and the current consent widget `compact_shell_pill_v29_2026_08_20`.
+- Added fresh inventory evidence records for the required preflight gates: `/Users/mark/Property_Analytics/reports/gsc_indexing/townestone/2026-08-20/townestone_gsc_indexing_evidence_2026-08-20.json` and `/Users/mark/Property_Analytics/reports/captains_log/copy_change_alerts/tx4fc_resi_edge_inventory_captain_handoff_2026-08-20.json`.
+- Stage packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/townestoneat359-com/stage-20260821T000103Z/` passed with `apply_allowed:true`.
+- Final apply packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/townestoneat359-com/apply-20260821T000224Z/` passed `55/55` gates with no rollback, mobile PSI `100`, desktop native passthrough PSI `97`, native WordPress/admin/API control-path behavior, Zaraz-owned analytics and consent proof, Heap/Contentsquare interaction-only proof, R2/cache/SEO/source-phone proof, and `70` evidence files.
+
+## 08/20/2026 Resi Edge Consent V29 Responsive Geometry Gate
+
+- Upgraded the shared consent widget contract to `compact_shell_pill_v29_2026_08_20` in `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-consent-widget/widget.mjs` and propagated that governed version through the manifest schema, seven active pilot/lease-up manifests, and shared standards registry.
+- Fixed the compact pill so it is genuinely responsive: the cookie icon remains visible, `Preferences` uses subdued Venterra blue, and both `Preferences` and `Accept` have bounded compact widths so they cannot push outside the mobile viewport.
+- Corrected `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-edge-package/runtime.mjs` inline JS minification after District proved the old punctuation minifier damaged CSS descendant selectors inside the consent script string.
+- Added `/Users/mark/Property_Analytics/scripts/validate_resi_consent_widget_geometry.mjs` and wired it into `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py` deploy-bundle validation. The runner now blocks before live deploy if the generated bundle's compact consent pill is not visible, in-viewport, and hit-testable.
+- Non-live v29 bundle preflight passed for Champions, Ventana, Harrison, District, Calais, Vine, and TowneStone with byte forecast plus consent geometry green. District remains externally blocked for full stage by the Resi/Kinsta source-page firewall `403`; no live Worker deploy was attempted after that failed gate.
+
+## 08/20/2026 Resi Edge Shell Payload Optimizer And Pre-Live Byte Forecast
+
+- Upgraded the canonical Resi Edge runtime to `2026-08-20.shell-payload-optimizer-v1` in `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-edge-package/runtime.mjs`.
+- The shared package now compacts same-origin manifest URLs to relative shell links, constrains the mobile drawer to the governed five essential links, and safely minifies tag-boundary whitespace before returning the mobile shell. External leasing/tour/apply URLs remain absolute.
+- Added `/Users/mark/Property_Analytics/scripts/forecast_resi_edge_mobile_shell_bytes.mjs` and wired it into `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py` deploy-bundle validation. Stage/apply packets now forecast rendered mobile shell bytes from the generated Worker bundle and block the deploy-bundle gate before live apply if the forecast exceeds `40,000` bytes.
+- Harrison stage proof `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/theharrisonsandysprings-com/stage-20260820T201306Z/` passed with forecast `37,425` initial HTML bytes, `5` rendered drawer links, and runtime `2026-08-20.shell-payload-optimizer-v1`.
+- Static package validation now fails if same-origin URL compaction, drawer payload limiting, shell minification, or deploy-bundle byte forecasting is removed. Verification passed for seven current rollout manifests, runner `py_compile`, gate coverage, PIB guardrails, context discipline, and property identity governance.
+
+## 08/20/2026 Resi Edge Calais Closeout And Zaraz Managed-Tool Retirement
+
+- Calais Midtown (`TX4MI`, `calaismidtownapartments.com`) is now a current-package live pilot. Final apply packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/calaismidtownapartments-com/apply-20260820T190514Z/` passed `55/55` required gates with no rollback, mobile PSI `100`, desktop native passthrough PSI recorded at `81`, GA4/Zaraz proof, Heap/Contentsquare interaction-only proof, Ahrefs proof, WordPress control-path bypass, consent proof, R2/cache/SEO/source-phone proof, and evidence packet `68` files.
+- Hardened `/Users/mark/Property_Analytics/scripts/apply_resi_zaraz_analytics_package.py` so the governed Zaraz package preserves unrelated/manual tools but retires superseded managed Resi Edge GA4, Heap, Resi bridge, and Ahrefs Web Analytics tools before upserting the manifest-owned current tools. This prevents older managed Heap loaders from shadowing the current v6 interaction-only loader in live smoke.
+- Hardened the package around the Calais findings: `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-edge-package/runtime.mjs` now supports award assets declared as `src`, repairs safe same-origin YooTheme upload-thumbnail cache URLs back to the original upload source, and `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py` plus `/Users/mark/Property_Analytics/scripts/validate_resi_edge_package_static.mjs` enforce renderable award asset fields and the repair guard.
+- Verification: static package validation passed, manual Zaraz cleanup smoke passed at `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/calaismidtownapartments-com/manual-live-analytics-smoke-after-zaraz-cleanup-20260820T190425.json`, and final full apply passed. No locked PIB files were touched.
+
+## 08/20/2026 Resi V2 API Read-Only Source Lookup Lane
+
+- Added Keeper-backed Resi API credential resolution in `/Users/mark/Property_Analytics/utils/resi_auth.py`, defaulting to `KSM_RESI_API_TOKEN_NOTATION=keeper://2tuAKQVuBYqp0PCipUQUyw/field/password`.
+- Added `/Users/mark/Property_Analytics/Data_Collection/collectors/resi_v2_collector.py` as a read-only Resi V2 collector for `GET /api/v2/me`, `GET /api/v2/properties`, and `GET /api/v2/lead-sources`. Raw local snapshot storage is governed by `/Users/mark/Property_Analytics/apps/api/migrations/0063_create_resi_v2_api_snapshots.sql` and `/Users/mark/Property_Analytics/infra/migrations/040_create_resi_v2_api_snapshots.sql`.
+- Extended `/Users/mark/Property_Analytics/scripts/build_resi_source_lookup_table.py` with `--source resi-v2` while preserving the default ThirtyLines path. The Resi V2 path joins `lead_sources.property_id` to `properties.id`, then resolves `properties.reference_id` through the property identity matrix before generating the existing source lookup artifact shape.
+- Local proof run `resi_source_lookup_f6d22473bea2` from snapshot `resi_v2_bdf1c63ebece` produced `1,142` de-duplicated lookup rows across `93` properties. Resolver tests passed against the generated KV artifact, and `/Users/mark/Property_Analytics/apps/api/scripts/resi_source_lookup_to_d1.py --run-id resi_source_lookup_f6d22473bea2` passed in dry-run mode only.
+- Disposition: active read-only source-ingestion extension. No Resi API writes, no host/admin changes, no D1/KV publish, no Cloudflare/Worker/DNS/deploy/cache mutation, and no PIB changes were performed.
+
+## 08/20/2026 Resi Edge Launch Dashboard Performance Progression
+
+- Updated `/Users/mark/Property_Analytics/apps/web/src/app/resi-edge/launch/launch-dashboard-client.tsx` so the protected executive dashboard tells a visual four-stage story per property: Legacy starting point, Kinsta staging, Live Vanity current site, and Optimized future target.
+- Mobile and desktop PSI scores now sit prominently under each stage link. Legacy and Kinsta use the captured launch baseline scores; live vanity displays captured post-move scores; optimized is shown only as a future target lane (`90+` mobile, `95+` desktop).
+- Cleaned `/Users/mark/Property_Analytics/apps/web/src/lib/resi-edge-launch/generated-snapshot.ts` and `/Users/mark/Property_Analytics/scripts/build_resi_edge_launch_dashboard_snapshot.py` so final vanity PSI is no longer described as `held_until_switch`; the current status is `captured`.
+- Published dashboard-only Cloudflare Pages deployment `https://771de74d.resi-edge-launch.pages.dev` behind `https://launch.venterrawebops.com/` using the Keeper-backed Wrangler path. Verification passed with `NEXT_PUBLIC_API_BASE_URL=https://launch.venterrawebops.com npm --prefix apps/web run build`, PIB guardrails, context discipline, and Playwright live render proof. Screenshot: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-performance-journey-live-scores-custom-host-20260820.png`.
+- No property DNS, forwarding, Worker, WordPress/admin path, Zaraz, GA4, Ahrefs, R2, cache rule, or live property domain mutation was performed by this dashboard pass.
+
+## 08/22/2026 Resi Edge Optimization Prep Readiness Packet
+
+- Extended `/Users/mark/Property_Analytics/scripts/build_resi_edge_optimization_prep_readiness.py` as the canonical read-only prep surface for the first `20` live vanity-domain optimization candidates.
+- The builder now combines Phase 2 draft manifests, active manifests, source/prep gap labels, Ahrefs vanity project readback, live root analytics signals, GET-based expected-page checks, expanded vanity QA, and PSI progression across legacy, Kinsta staging, and live vanity stages.
+- Latest proof packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/optimization-prep/optimization-prep-20260822T200317Z/` reports expected page shape `20/20`, Ahrefs Web Analytics data key presence `20/20`, vanity QA green `19/20`, active manifest/static pass `1/20`, old Heap `676880719` still present `20/20`, expected Heap `286627304` present `19/20`, and `HEAP_JS_DEBUG=true` present `20/20`.
+- Disposition: active non-mutating operator prep lane. It prepares ready/blocked/needs-review state and does not mutate DNS, forwarding, WordPress/Kinsta, Resi API, Cloudflare Workers, Zaraz, GA4, Ahrefs, R2, cache, or locked PIB files.
+
+## 08/19/2026 Resi Edge Vanity QA Collector And Dashboard Status Guard
+
+- Added `/Users/mark/Property_Analytics/scripts/domain_ops/build_resi_edge_vanity_qa.py` as a reusable, read-only launch QA collector for the first `20` Resi Edge vanity domains. It consumes the governed launch snapshot, checks root/www routing, vanity canonical, page robots, robots.txt general-search posture, sitemap availability, metadata, CTA/tel signals, placeholder text, Kinsta leakage, and Playwright mobile smoke screenshots.
+- Final evidence packet `/Users/mark/Property_Analytics/reports/domain_ops/20260819_120423_vanity_qa/` reports `19/20` green, `1/20` yellow, and `0` red. The only open automated issue is Axial Buckhead's title placeholder. Earlier robots over-flags were corrected by scoping `Disallow: /` evaluation to general/search crawler groups instead of Cloudflare-managed AI/bot crawler groups.
+- `/Users/mark/Property_Analytics/apps/web/src/app/resi-edge/launch/launch-dashboard-client.tsx` now presents `Vanity QA 19/20` in the executive command row and launch pipeline, while keeping public move/legacy redirect completion separate. Deployment `https://da33fc4c.resi-edge-launch.pages.dev` updated the protected launch dashboard only; no property DNS, forwarding, Worker, WordPress, Zaraz, GA4, Ahrefs, R2, or cache mutation was performed by this QA/dashboard pass.
+
+## 08/18/2026 Resi Edge Mobile Shell Heap Attribution Guard
+
+- Hardened `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-edge-package/runtime.mjs` to version `2026-08-18.heap-env-tracked-shell-v3` after Mark caught that mobile menu/topper links were missing differentiated Heap-ready attributes.
+- The shared runtime now emits stable `data-vtr-*` tracking metadata for promo, header, drawer, drawer nav, hero, review, and content-block CTAs, including source-code and phone attribution fields where applicable. Drawer nav links use stable slug/index element IDs so links are distinguishable downstream.
+- Added a canonical `data-vtr-heap-environment` header script for mobile shell, desktop native passthrough, and native continuation. It preserves/supplies `window.__vtrHeapEnvironment`, `HEAP_APP_ID`, `HEAP_ENVIRONMENT`, `HEAP_MODE`, and `HEAP_JS_DEBUG` while direct native `heap.load(...)` remains stripped so Zaraz retains analytics ownership.
+- Runner/browser proof now validates the Heap environment header, required tracked shell elements, complete attributes, unique element IDs, and real mobile drawer open/close event payloads. Static validation fails if this runtime/runner proof is removed.
+- Verification: runtime syntax check, runner `py_compile`, static validation across governed pilot manifests, gate coverage, and a non-mutating District plan passed. No live domain, Worker route, WordPress/admin/control path, Zaraz tool, Ahrefs, GA4, R2, or cache mutation was performed by this hardening pass.
+
+## 08/18/2026 Resi Edge District Live Proof And GA4 Stream Preflight Guard
+
+- The District Universal Boulevard (`FL4DU`, `thedistrictuniversal.com`) final apply packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thedistrictuniversal-com/apply-20260818T220039Z/` passed `55/55` gates with no rollback, mobile PSI `100`, desktop PSI `95`, GA4/Zaraz proof, Heap/Contentsquare interaction-only proof, Ahrefs proof, WordPress control-path bypass, consent browser proof, R2/cache/SEO/source-phone proof, and evidence packet `68` files.
+- The shared consent widget now fits the mobile pill to the real `window.visualViewport`; static validation fails if the visual-viewport fitting guard is removed. This is a shared package correction, not a District-specific Worker rebuild.
+- Resi Edge live-capable manifests now must declare `analytics.ga4.expected_stream_name`. Existing pilot/canary manifests were backfilled from successful GA4 realtime evidence so stream-label drift is discovered during preflight instead of during live apply.
+
+## 08/18/2026 Resi Edge Stage Consent Setup And Control-Path Transparency Guard
+
+- Updated `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py` so governed stage setup now applies/confirms the shared Zaraz consent package before running the `zaraz_consent_ready` audit. This closes the gap where consent was planned and gated but not activated by the stage runner for newly prepared domains.
+- Stage/readout packets now record `zaraz_consent_package` evidence separately from `zaraz_consent_audit`, making it clear whether Cloudflare Zaraz consent was applied, unchanged, or failed before any route probe or Worker deploy.
+- The Harrison (`GA4TH`, `theharrisonsandysprings.com`) was the proving failure: initial apply after corrected consent setup stopped at `wordpress_control_path_bypass_proven` and rolled back. Evidence lives at `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/theharrisonsandysprings-com/apply-20260818T195246Z/`; rollback readback confirmed Worker deletion.
+- Corrected `/Users/mark/Property_Analytics/ops/cloudflare/resi-edge-canonical-worker/worker.js` so WordPress/admin/API/control paths use a truly transparent origin fetch with `redirect:"manual"` only. No Cloudflare `cacheEverything` or `cacheTtl` override is allowed on protected control paths.
+- Hardened `/Users/mark/Property_Analytics/scripts/validate_resi_edge_package_static.mjs` to fail if the transparent WordPress/control-path helper contains Cloudflare cache override options. This makes the Harrison failure a static package guard before the 08/19/2026 batch workflow.
+- Hardened `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py` PSI scoring so a below-target scored live sample still blocks, while a Google PSI provider no-score sample does not override a successful fresh/live mobile score at or above the `98` parity target. No-score provider samples remain recorded in the PSI retry log and `provider_no_score_samples_recorded`.
+- Final Harrison apply packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/theharrisonsandysprings-com/apply-20260818T201647Z/` passed `55/55` gates with no rollback, mobile PSI `100`, desktop PSI `91`, WordPress control-path bypass, consent browser proof, analytics proof, R2/cache, SEO, source phone, and desktop native/no-topper proof.
+- Disposition: active governed runner/package correction and live Harrison pilot proof. Use this path before scaling to the next property.
+
+## 08/17/2026 Resi Edge Launch Dashboard Phase 0 Prototype
+
+- Added `/Users/mark/Property_Analytics/apps/web/src/app/resi-edge/launch/page.tsx` and `/Users/mark/Property_Analytics/apps/web/src/app/resi-edge/launch/launch-dashboard-client.tsx` as the governed static UI prototype for the Resi Edge portfolio launch dashboard.
+- Added `/Users/mark/Property_Analytics/apps/web/src/lib/resi-edge-launch/types.ts` and `/Users/mark/Property_Analytics/apps/web/src/lib/resi-edge-launch/mock-data.ts` for the mocked Phase 2 launch snapshot contract. This data is prototype-only and must later be replaced by a read-only evidence snapshot generated from governed launch packets.
+- The prototype supports Executive and Operator modes: presentation-ready readiness/timeline/proof posture and property-level readiness/blocker/evidence detail. It uses the official Venterra palette and deliberately omits deploy controls, mutation controls, canonical Worker changes, Hono routes, and PIB changes.
+- Protected host is live at `https://launch.venterrawebops.com/` on Cloudflare Pages project `resi-edge-launch`; there is no anonymous public version. Unauthenticated users are routed to the Data Pond magic-link login for `/resi-edge/launch`.
+- `/resi-edge/launch` is configured as a protected Data Pond route with the normal app sidebar after authentication. It is registered as a `Resi Edge Launch` sidebar surface under Routing Ops so the launch dashboard can introduce the Pond framework while unrelated surfaces remain audience-scoped.
+- Kinsta staging URLs are intentionally excluded from the client-side mock payload; staging appears only as a high-level readiness gate.
+- Verification: `npm run build` passed in `/Users/mark/Property_Analytics/apps/web`; Playwright screenshots were written under `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase0-dashboard-*.png`.
+- Disposition: active prototype / extend inside `apps/web`. Future data service should use existing Hono-backed `apps/api` read-only patterns only after the static prototype contract is approved.
+- 08/17/2026 command-layer polish: the dashboard snapshot now includes command-board fields for the Wednesday objective, protected audience, approval posture, next required actions, and hard stop rules. The first viewport now presents the launch as an approval gate rather than a deploy surface.
+- Added `/Users/mark/Property_Analytics/docs/RESI_EDGE_PORTFOLIO_LAUNCH_WEDNESDAY_COMMAND_PACKET_2026-08-17.md` as the paired non-mutating command packet for 08/19/2026 planning. It captures completed setup evidence, open gates, operating sequence, dashboard scope, and stop conditions without authorizing live mutation.
+- Fresh visual proof for the command layer: `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase0-dashboard-command-executive-desktop.png`, `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase0-dashboard-command-operator-desktop.png`, and `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase0-dashboard-command-executive-mobile.png`.
+- Added `/Users/mark/Property_Analytics/scripts/build_resi_edge_wednesday_readiness_queue.py` as a local evidence-synthesis builder for the Wednesday launch-room board. It reads existing Phase 2 packets only and writes JSON/CSV/Markdown under `/Users/mark/Property_Analytics/reports/resi_edge_performance/wednesday-readiness/`.
+- First queue packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/wednesday-readiness/phase2-wednesday-readiness-20260817T204109Z/` reports `20` total, `0` ready, `0` ready for approval gate, `20` needs evidence, and `0` blocked. Setup is `20/20` across Cloudflare, Kinsta staging, Ahrefs vanity projects, GA4 default URIs, draft manifests, and source-phone lookup; open pre-approval gates are source manifest closeout, GSC/Captain/Data Pond, and rollback snapshot for all `20`.
+- 08/17/2026 launch-host deployment: Mark explicitly approved taking the dashboard host live. Deployed static `apps/web` output to Cloudflare Pages project `resi-edge-launch`, attached `launch.venterrawebops.com`, and added the proxied CNAME to `resi-edge-launch.pages.dev`. Final Pages deployment URL is `https://f03ead74.resi-edge-launch.pages.dev`.
+- API support deploy: `pop-brief-api` version `cb84a31a-0193-4363-bfeb-9bfeef8a65dc` includes launch-host CORS/cookie support and magic-link auto-provision path scoping. This did not touch Resi Edge property Workers, WordPress/admin paths, Zaraz, Ahrefs, GA4, R2 assets, cache, property DNS, or property live-domain cutovers.
+- Live proof: Cloudflare custom domain status `active`; HTTP redirects to HTTPS; `/resi-edge/launch` returns `200`; launch-origin CORS preflight to `/v1/auth/magic-link` returns `204`; Playwright proves `/` and `/resi-edge/launch` both resolve to `/login?next=%2Fresi-edge%2Flaunch` with `MAGIC LINK PROTECTED`, `Company email required for access.`, and `Send Magic Link`.
+- Same-origin session fix: added Cloudflare Worker route `launch.venterrawebops.com/v1/* -> pop-brief-api` and redeployed the launch Pages build with `NEXT_PUBLIC_API_BASE_URL=https://launch.venterrawebops.com`. Final fixed deployment is `https://57beb60b.resi-edge-launch.pages.dev`. Browser proof showed launch auth calls only to `https://launch.venterrawebops.com/v1/auth/me`, eliminating the cross-site `api.venterradev.com` cookie handoff that caused post-magic-link return to login.
+- Executive cleanup: replaced the overloaded launch dashboard with a one-column property move monitor using drawers. The visible surface now uses red/yellow/green status, original/new URL links, domain status, routing status, indexing conditions, analytics history, and launch prep. It intentionally hides package/topper/proof/gate/Worker/R2/Zaraz/GSC/Captain/static-prototype wording from the executive view. Final cleaned deployment is `https://6ff5beb8.resi-edge-launch.pages.dev`.
+- Evidence note: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-host-deployment/launch-host-deployment-20260817T230925Z/summary.md`.
+
+## 08/17/2026 Phase 2 GA4 Credential Refresh Readback
+
+- Refreshed `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_analytics_profile_plan.py` after Mark updated the Google API token/credential path. Packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-analytics-profile-plan/phase-2-analytics-profile-plan-20260817T174839Z/` reports `20/20` GA4 profiles patch-ready, `0` GA4 blockers, `20/20` Ahrefs vanity projects present, and `18` remaining legacy Ahrefs projects.
+- Refreshed `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_ga4_default_uri_plan.py` in dry-run mode. Packet `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T174757Z/` read all `20` live GA4 streams successfully and reports `20` planned `web_stream_data.default_uri` patches, `0` already-current, and `0` blocked.
+- OK4AN canary dry-run packet `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T174905Z/` reports `1` planned patch and `0` blockers, with no mutation.
+- A non-mutating edit-scope sanity check initialized the Keeper-backed GA4 service account with `analytics.edit` scope and read OK4AN stream `properties/383878732/dataStreams/5413338486`. This confirms edit-scope client initialization, not update permission.
+- Initial OK4AN apply canary evidence `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T181257Z/` stopped with GA4 `PermissionDenied`, message `403 The caller does not have permission`; read-only refresh `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T181434Z/` confirmed no change.
+- After Mark granted top-level GA4 Admin access to `venterra-query@venterra-property-analytics.iam.gserviceaccount.com`, OK4AN dry-run `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T182543Z/` reported one planned patch and `0` blockers.
+- Mark approved the OK4AN apply canary. Evidence `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T182603Z/` reports `patch_proven:true`, changing stream `properties/383878732/dataStreams/5413338486` from the Venterra apartment URL to `https://anatoleatnorman.com/`.
+- Read-only post-check `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T182742Z/` reports OK4AN `ready_no_ga4_url_change_needed`; full dry-run `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T182756Z/` reports `1` already current, `19` planned patches, and `0` blocked.
+- Mark approved the remaining GA4 bulk apply. Fresh dry-run `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185452Z/` confirmed `1` already current, `19` planned, and `0` blocked.
+- Bulk apply evidence `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185510Z/` patched the remaining `19` default URIs, with every apply result reporting `patch_proven:true` and no failures.
+- Full read-only post-check `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185637Z/` reports `20` already current, `0` planned, `0` blocked, and no non-current rows.
+- Refreshed analytics profile packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-analytics-profile-plan/phase-2-analytics-profile-plan-20260817T185845Z/` reports `20/20` GA4 no-change-needed/current, `20/20` Ahrefs vanity projects found, and `18` remaining legacy Ahrefs projects.
+- Disposition: Phase 2 GA4 default URI setup is complete. The lane changed only existing GA4 web stream `web_stream_data.default_uri` values; it did not create/delete GA4 properties or streams, change events/conversions, update Ahrefs/Zaraz/WordPress/Cloudflare/DNS, purge cache, or deploy Workers.
+
+## 08/15/2026 Ahrefs Legacy Folder Housekeeping Plan
+
+- Added `/Users/mark/Property_Analytics/scripts/build_ahrefs_legacy_folder_plan.py` as the non-mutating/guarded housekeeping control for Phase 2 Ahrefs legacy projects.
+- The planner consumes the latest Phase 2 analytics profile packet, refreshes Ahrefs through Keeper-backed credentials, masks raw Web Analytics data keys, and produces JSON/Markdown/CSV evidence under `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/`.
+- Dry-run evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T180425Z/` found `20` legacy Venterra-path projects, `0` blockers, and `20` rows waiting for Mark's manually created Ahrefs Legacy folder ID. Canary-scoped dry run `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T180433Z/` proved `--only-project-id` filtering.
+- After Mark created the Ahrefs Legacy folder, dry-run evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T200829Z/` parsed folder ID `32616` and planned all `20` legacy moves with `0` blockers and `0` mutations. Canary dry run `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T200839Z/` planned only Anatole at Norman (`10125566`) with `0` blockers and `0` mutations.
+- Mark approved the one-project canary apply. Evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T201848Z/` moved Anatole at Norman (`10125566`) to folder `32616` with HTTP `200` and readback `move_proven:true`. Refreshed full dry run `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T201903Z/` reports `1` already in Legacy, `19` planned moves, and `0` blockers. No bulk move has been performed.
+- Mark then approved the bulk move. Evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T205455Z/` moved the remaining `19` legacy projects into folder `32616`; every apply result read back `move_proven:true` and no failures were recorded. Final full dry-run readback `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_folder/ahrefs-legacy-folder-plan-20260815T205630Z/` reports `20` already in Legacy, `0` planned moves, and `0` blockers.
+- Folder moves are a future mutation and require both a folder ID or Ahrefs folder URL and `--apply --confirm MOVE_AHREFS_LEGACY_PROJECTS`; the script supports `--only-project-id` canaries and stops on the first failed Ahrefs readback.
+
+## 08/15/2026 Phase 2 Ahrefs Vanity Project Creation Stop
+
+- Added `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_ahrefs_vanity_project_plan.py` as the Phase 2-scoped Ahrefs vanity project planner/creator. It reads the Phase 2 analytics profile packet, supports `--only-property-code` canaries, masks raw Ahrefs Web Analytics data keys, requires `--apply --confirm CREATE_PHASE2_AHREFS_VANITY_PROJECTS`, and stops on the first failed create/readback.
+- Dry-run evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T233416Z/` planned `20` vanity project creates with `0` blockers. Canary apply evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T233429Z/` created Anatole at Norman (`OK4AN`) vanity project `10240452`, with `create_proven:true`.
+- Bulk apply evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T233545Z/` created `17` additional vanity projects, then stopped on Balmoral Village (`GA4BV`) with Ahrefs HTTP `403`, response `Projects limit reached`. The Whitney (`GA4TW`) was not attempted after that stop.
+- Final read-only evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T233835Z/` reports `18` existing vanity projects, `2` planned creates (`GA4BV`, `GA4TW`), and `0` duplicate blockers. Ahrefs vanity creation should not continue until the project-limit decision is resolved.
+
+## 08/15/2026 Ahrefs Capacity Test And Phase 2 Vanity Completion
+
+- Added `/Users/mark/Property_Analytics/scripts/build_ahrefs_legacy_project_purge_plan.py` as the guarded deletion lane for Ahrefs Legacy-folder projects. It uses Ahrefs `DELETE /v3/management/projects` with `project_ids`, scopes targets to the configured Legacy folder, masks raw Web Analytics data keys, requires `--apply --confirm PURGE_AHREFS_LEGACY_PROJECTS`, and proves deletion by absence from readback.
+- Capacity test dry run `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_project_purge/ahrefs-legacy-project-purge-20260815T234611Z/` planned deleting only two Legacy-folder projects, `10125566` and `10125770`. Apply evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_project_purge/ahrefs-legacy-project-purge-20260815T234619Z/` deleted both with HTTP `200` and `delete_proven:true`.
+- Remaining Phase 2 vanity create evidence `/Users/mark/Property_Analytics/reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234658Z/` created Balmoral Village (`GA4BV`) project `10240483` and The Whitney (`GA4TW`) project `10240484`, both with `create_proven:true`.
+- Final readbacks: `/Users/mark/Property_Analytics/reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234731Z/` reports `20/20` Phase 2 vanity projects present, `0` planned creates, and `0` blockers; `/Users/mark/Property_Analytics/reports/ahrefs_admin/legacy_project_purge/ahrefs-legacy-project-purge-20260815T234731Z/` reports `18` Legacy-folder projects still available to purge. Live roster count after the test is `123` total projects, `18` in Legacy folder `32616`, and `20/20` Phase 2 vanity projects present.
+
+## 08/15/2026 Phase 2 GA4 Default URI Dry-Run
+
+- Refreshed `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_analytics_profile_plan.py` output after Ahrefs capacity cleanup. Packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-analytics-profile-plan/phase-2-analytics-profile-plan-20260816T000844Z/` reports `20/20` Ahrefs vanity projects found, `0` new Ahrefs projects planned, `18` remaining legacy source projects, and `20/20` GA4 web streams patch-ready.
+- Added `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_ga4_default_uri_plan.py` as the guarded GA4 web stream default URI planner/apply lane. It reads the Phase 2 analytics profile packet, refreshes live GA4 stream state with Keeper-backed read scope, supports `--only-property-code` canaries, and applies only with `--apply --confirm PATCH_PHASE2_GA4_DEFAULT_URIS`.
+- Full dry-run evidence `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260816T001028Z/` reports `20` planned default URI patches, `0` already-current, and `0` blockers. Canary dry run `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260816T001029Z/` scopes to OK4AN only with `1` planned patch and `0` blockers.
+- Mark approved the OK4AN canary apply. Evidence `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260816T003544Z/` stopped with GA4 `PermissionDenied`, message `403 The caller does not have permission`; `patch_proven:false`, `after:null`. Read-only refresh `/Users/mark/Property_Analytics/reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260816T003710Z/` confirms OK4AN remains unchanged and planned. Do not continue GA4 patching until the service account has edit permission or an approved alternate Keeper-backed GA4 Admin credential is added.
+
+## 08/15/2026 Calais Public Noindex Header Mitigation
+
+- Calais Midtown exposed an upstream WordPress/Kinsta SEO-header defect: public subpages returned `x-robots-tag: noindex, nofollow, nosnippet, noarchive` even though page HTML rendered `index, follow`.
+- The Calais Worker now carries a temporary public-page mitigation in `/Users/mark/Property_Analytics/ops/cloudflare/calais-resi-edge-candidate/worker.js`: `passThroughNativeCleanHtml()` strips the upstream `x-robots-tag` only for public indexable HTML and marks the response with `x-vtr-calais-origin-robots-stripped: 1`.
+- The mitigation does not alter preview, native continuation, WordPress admin/login/API/control paths, or non-`GET`/`HEAD` requests. Those paths retain noindex/control behavior and transparent origin semantics.
+- Live deployed marker: `2026-08-15.calais-mobile-shell-v28-strip-origin-noindex`; Worker version ID `a9ced6ec-681f-4379-b2ff-8fcfdd506883`. Upstream source fix is still required in WordPress/Kinsta so the edge strip can later be removed.
+
+## 08/14/2026 Resi Edge Phase 2 Launch Prep And Batch Readout Current-Contract Guard
+
+- Added `/Users/mark/Property_Analytics/docs/RESI_EDGE_PORTFOLIO_LAUNCH_PHASE_2_PREP_2026-08-14.md` as the planning and non-mutating preparation record for the next Resi Edge portfolio launch phase.
+- Formal Worker/cache policy is now documented by path class: edge-owned internal routes, transparent WordPress/admin/control bypass, non-`GET`/`HEAD` protected requests, no-store mobile shell, native/no-topper desktop passthrough, and private/no-store native continuation.
+- Non-mutating validation on 08/14/2026 passed for release control, gate coverage, PIB guardrails, and static package validation across Townestone, Champions Green, Ventana, The Vine, and District.
+- Hardened `/Users/mark/Property_Analytics/scripts/build_resi_edge_cohort_readout.py` so cohort/batch readouts compare evidence ledgers to the current contract before marking a row ready. This prevents older green packets from being treated as batch-current when they lack newly added gates such as `wordpress_control_path_bypass_proven`.
+- Generated current-contract cohort readout `/Users/mark/Property_Analytics/reports/resi_edge_performance/cohort-readouts/resi-edge-cohort-readout-20260814T234845Z.md` and `.json`; it reports `0` ready and `4` needing attention because current live pilot evidence predates the WordPress control-path proof gate.
+- Rollout decision captured: keep launch capped at the pilot set until fresh current-contract proof exists; when live mutation is explicitly approved, refresh Townestone first, then Champions, Ventana, and The Vine before District or any 20-property batch.
+
 ## 08/14/2026 Resi Edge WordPress Control-Path Bypass Gate
 
 - Calais Midtown exposed a WordPress admin/login boundary that is now a package-level gate: edge optimization can touch public marketing pages, but WordPress control paths must transparently bypass shell rendering, native HTML cleanup, analytics injection, cookie stripping, cache rewriting, and Worker-followed redirect rewriting.
@@ -119,6 +397,8 @@
 
 - Added a shared standards layer for the Resi Edge package. `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-standards/registry.json` now records the property-agnostic standards that property manifests consume. This is the durable template boundary: shared runtime, consent, source attribution, asset budgets, analytics, SEO/AI, and Ahrefs policy must be standardized centrally rather than copied into property-specific Workers.
 - Extracted the finalized compact consent UX into `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-consent-widget/contract.json` and `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-consent-widget/widget.mjs`, version `compact_finalized_pill_v27_2026_08_12`. The visible pill is `This website uses cookies` with `Preferences` and `Accept`; inline `Reject` is forbidden, and `Preferences` must call `zaraz.showConsentModal()`. The Zaraz consent applier now reads the same contract for purpose IDs/copy so the pill and Cloudflare modal cannot drift independently.
+- Current consent standard is `compact_shell_pill_v28_2026_08_18`. It supersedes v27 for new/live package applies by binding compact consent rendering to the Resi Edge mobile shell marker, restoring the small cookie icon, and styling `Preferences` as the subdued secondary action while preserving the two-button Zaraz-owned consent route. Ventana proof `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/apply-20260819T014351Z/` passed `55/55` after byte-budget optimization; the prior v28 packet stopped and rolled back on `initial_html_bytes 40449 exceeds 40000`.
+- Added Domain Ops Kinsta DNS switch prep tooling for the 08/19/2026 portfolio launch. `/Users/mark/Property_Analytics/scripts/domain_ops/build_kinsta_dns_switch_prep.py` is read-only and produces Cloudflare zone/DNS/SSL snapshots plus reviewed delete/add queues from the Resi/Kinsta CNAME CSV. `/Users/mark/Property_Analytics/scripts/domain_ops/apply_kinsta_dns_switch.py` defaults to dry-run and requires explicit `--apply` for DNS mutation. Initial prep packet `/Users/mark/Property_Analytics/reports/domain_ops/20260819_141920_kinsta_dns_switch_prep/` covers `20` zones, `46` website-record delete candidates, `40` Kinsta CNAME adds, Universal SSL not disabled, and `4` apex MX preserve/review records.
 - Consent v27 also governs the Cloudflare Zaraz preferences modal itself: the modal must be a bounded centered desktop panel, not a full-width bottom sheet, and must use compact intro copy. Cohort evidence on 08/11/2026 passed for TowneStone, The Vine, District, Ventana, Champions, and Calais. Calais exposed a stale Worker-level consent fork and was corrected to import the shared consent widget directly before redeploy; future local consent forks are not approved implementation surfaces.
 - Updated validators and runner proof so stale consent fails: missing version marker, stale large copy, inline reject, or non-Zaraz-modal preferences route now fail `zaraz_consent_browser_proof_passed`. Reference replay now maps shell proof failures into named ledger gates instead of hiding them under a generic `pass:false` readout.
 - Tightened `/Users/mark/Property_Analytics/docs/RESI_PROPERTY_UPGRADE_RUNBOOK_2026-08-08.md` to make it the non-freestyle operator contract instead of a stale historical checklist. The runbook now aligns with the 08/11/2026 execution truth: fresh Champions manifest is protected base, old Champions/Pilot language is superseded, desktop asset generation and desktop visual rewriting are forbidden without explicit approval, and the enhancement ledger from TowneStone, The Vine, Calais, Champions, District, and Ventana is mandatory package scope.
@@ -2445,6 +2725,10 @@ The next high-value documents to create from this register are:
   - implementation:
     - `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py`
     - `/Users/mark/Property_Analytics/scripts/resi_edge_deploy_adapter.py`
+    - `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_preflight.py`
+    - `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_manifest_prep.py`
+    - `/Users/mark/Property_Analytics/scripts/build_resi_edge_phase2_analytics_profile_plan.py`
+    - `/Users/mark/Property_Analytics/scripts/ahrefs_project_target_update.py`
     - `/Users/mark/Property_Analytics/config/portfolio_resi_edge_stabilization/resi-edge-manifest.schema.json`
     - `/Users/mark/Property_Analytics/config/portfolio_resi_edge_stabilization/championsgreen-ga-com.manifest.json`
     - `/Users/mark/Property_Analytics/config/portfolio_resi_edge_stabilization/pilot-ga4ax.manifest.json`
@@ -2456,9 +2740,14 @@ The next high-value documents to create from this register are:
     - treats TowneStone, Champions, Calais, District, Ventana, Pilot, and all other properties as normalization targets unless Mark explicitly promotes a new golden source
     - validates a property manifest for identity, routing, mobile shell, review row, first content blocks, phone attribution, analytics ownership, consent ownership, SEO/AI files, evidence, and rollback
     - treats pre-upgrade live shell failures as baseline evidence in `plan` mode instead of a reason to mutate or improvise
+    - enforces normalized desktop native pass-through through the shared origin request helper so Worker-origin desktop fetches present as browser-like navigation requests while keeping Cloudflare cache overrides disabled and desktop topper absent
     - uses `BASE` as the fresh Champions base plan and blocks live mutation because a base reference is not an apply target
     - blocks `apply` until a non-base target is explicitly selected and every preflight/live proof gate passes
     - supports explicit no-special/no-review/no-award concessions without rendering placeholders
+    - builds non-mutating phase preflight queue/readout packets from the vanity rollout spreadsheet, QA Pastel/Kinsta staging document, governed property identity matrix, current Resi Edge contract, manifest inventory, and read-only Keeper-backed Cloudflare zone inventory
+    - builds report-scoped draft manifest prep packets from governed identity, rollout/Kinsta staging rows, GA4 landscape audit measurement IDs, Resi source-phone lookup rows, Cloudflare zone inventory, and the current Resi Edge contract, while keeping unresolved source/evidence items as `required_before_apply`
+    - builds non-mutating GA4/Ahrefs analytics profile migration packets from the Phase 2 cohort, Keeper-backed GA4 Admin data-stream reads, and Keeper-backed Ahrefs project roster reads; reports GA4 default URI patch readiness, Ahrefs vanity-project create/reuse planning, and legacy source-project retention without writing raw Ahrefs data keys
+    - provides a guarded one-project Ahrefs target-update probe/apply CLI requiring `--apply --confirm UPDATE_AHREFS_PROJECT_TARGET`; evidence masks raw Web Analytics data keys and must prove readback before any target-update claim
   - boundary:
     - no property-specific Worker rebuilds
     - no desktop topper
@@ -2478,3 +2767,160 @@ The next high-value documents to create from this register are:
     - 08/13/2026 follow-up corrected the shared mobile hero height contract after live visual proof showed fixed-height drift. The runtime now derives hero height from the viewport minus promo/header, static validation blocks fixed `704px` hero drift, and browser acceptance measures full-height first-viewport alignment. Final Townestone canary apply passed live gates with mobile PSI `100`, desktop native PSI `96`, and browser proof measured `topDelta: 0` / `bottomDelta: 0`. Evidence packet: `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/townestoneat359-com/apply-20260814T000535Z/evidence-packet.json`.
     - 08/14/2026 The Vine Kyle Parkway was level-set as a lease-up target through the governed package with `property_tagline_svg` rendered as one same-origin SVG line: `Live Better. Live Easy.` This was a manifest-only property-data change using the canonical Worker/runtime, not a fork. Live apply passed 54/54 gates with no rollback, mobile PSI `100`, desktop native PSI `96`, full-height mobile geometry, compact consent proof, analytics proof, two continuation blocks, and no desktop mobile-shell marker. Evidence packet: `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thevinekyle-com/apply-20260814T173240Z/evidence-packet.json`.
     - 08/14/2026 Calais Midtown control-path correction: the legacy Calais Worker now bypasses public-page optimization for WordPress login/admin/API/control paths and all non-`GET`/`HEAD` requests. This preserves WordPress cookies, redirects, and status codes while leaving marketing-page optimization intact. The canonical launch Worker and runbook now require the same transparent bypass rule for future Resi Edge targets.
+    - 08/15/2026 Phase 2 preflight queue generated without live mutation at `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-preflight/phase-2-preflight-20260815T164031Z/` after a Keeper-backed read-only Cloudflare zone inventory refresh. Result: `20` properties, `20/20` Kinsta staging URLs HTTP `200`, `1` `source_ready`, `12` `source_ready_manifest_needed`, `1` `needs_decision`, and `6` blocked by missing Cloudflare zone evidence.
+    - 08/15/2026 preflight manifest matching was corrected to parse active manifest JSON instead of raw text. Corrected Phase 2 packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-preflight/phase-2-preflight-20260815T171327Z/` reports `0` blocked, `0` needs-decision, `0` source-ready, and `20` source-ready-manifest-needed.
+    - 08/15/2026 manifest prep packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-manifest-prep/phase-2-manifest-prep-20260815T171230Z/` wrote `20` report-scoped draft manifests, found `0` active manifest matches, found `0` promote-ready manifests, and confirmed all `20` drafts have GA4 measurement IDs plus governed source-phone rows. No active manifest, Cloudflare, DNS, WordPress, Zaraz, Ahrefs, GSC, Captain, Data Pond, R2, cache, or live-domain mutation was performed.
+    - 08/15/2026 analytics profile plan packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-analytics-profile-plan/phase-2-analytics-profile-plan-20260815T173508Z/` confirmed `20/20` Phase 2 GA4 profiles are programmatically patch-ready for a future approved web data-stream default URI update, and `20/20` Ahrefs source projects exist with Web Analytics data-key presence. Ahrefs target URL retargeting remains needs-decision because the public update-project endpoint does not document target URL changes; no provider mutation was performed.
+    - 08/15/2026 guarded Ahrefs target-update canary on Zang Triangle (`project_id: 10125850`) returned HTTP `200` but did not change target URL, protocol, or mode on response/readback. Evidence: `/Users/mark/Property_Analytics/reports/ahrefs_admin/target_updates/ahrefs-target-update-10125850-20260815T174150Z/ahrefs_target_update_evidence.json`. Status remains `target_update_proven:false`; stop before attempting alternate payloads.
+    - 08/15/2026 analytics profile planning policy updated: GA4 keeps existing properties/streams and patches default URI after approval; Ahrefs creates/reuses a vanity-domain launch project and keeps the Venterra-path project as historical legacy. Current packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-analytics-profile-plan/phase-2-analytics-profile-plan-20260815T175542Z/` reports `20/20` GA4 patch-ready, `20/20` new Ahrefs vanity projects planned, `20/20` legacy source projects found, and `0` needs-decision/blockers. Manifest prep packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/phase2-manifest-prep/phase-2-manifest-prep-20260815T175534Z/` updates the draft profile policy.
+    - 08/18/2026 The Vine Kyle Parkway was live-updated for the Hard Hat Tours promo and Tour CTA through the governed runner. Shared runtime `RESI_EDGE_RUNTIME_VERSION` is now `2026-08-18.external-absolute-cta-v1`, preserving absolute external CTA URLs so prospect-portal links do not collapse to same-origin paths. The protected-control gate now accepts an intentional uncached Cloudflare/Resi Website Management Firewall `401`/`403` only when there are no Resi Edge markers, no `x-vtr` headers, and no cache hit behavior. Corrected final proof `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thevinekyle-com/apply-20260818T170815Z/evidence-packet.json` passed `55/55` gates with mobile PSI `99`, desktop PSI `99`, and direct live readback confirmed `https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/TX4EK` for the promo drawer and header Tour links.
+    - 08/18/2026 Ventana v4 retry cycle hardened the shared Heap/topper tracking package before live proof. Runtime `2026-08-18.heap-env-lean-tracking-v4` folds Heap environment preservation into the existing edge analytics header script, trims redundant tracking markup, keeps differentiated mobile topper/drawer attributes, and updates the mobile-shell validator to allow only the package-owned passive Heap environment marker while still blocking direct `heap.load`. Local render measured `37,117` bytes and `7` scripts. Ventana plan `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/plan-20260818T224607Z/` and stage `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/stage-20260818T224619Z/` passed, but apply `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/apply-20260818T224846Z/` stopped before Worker deploy or route probe when Cloudflare Zaraz API returned `RemoteDisconnected`. The Zaraz analytics helper now retries `RemoteDisconnected` and `ConnectionResetError`.
+    - 08/18/2026 follow-up targeted Zaraz retry `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/zaraz-retry-20260818T2324/zaraz-analytics-package-apply.json` passed as `unchanged`, proving the prior failure was transient. The next governed apply `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/apply-20260819T004833Z/` progressed to browser acceptance, then rolled back because desktop native proof returned `403` and zero stylesheets from the current vanity/origin protection state. Rollback readback confirms Worker `resi-edge-canonical-ventanaapts-com` does not exist. Ventana is not live from this v4 run.
+    - 08/18/2026 after firewall allowlist correction, final Ventana v4 apply `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/apply-20260819T010413Z/` passed `55/55` gates with no rollback. Runtime health reports `2026-08-18.heap-env-lean-tracking-v4`, mobile PSI `100`, desktop native PSI `93`, desktop topper disabled, and evidence packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/ventanaapts-com/apply-20260819T010413Z/evidence-packet.json` recorded `68` files. Post-apply GET probes passed for desktop Chrome, mobile Safari, and Googlebot-style user agents; desktop `HEAD /` still returns the Resi firewall `403`, so vendor firewall cleanup remains open for HEAD requests.
+    - 08/20/2026 District desktop pass-through recovery folded another firewall lesson into the shared package. Direct desktop browsing was healthy, but raw Worker `fetch(request)` in desktop pass-through triggered a Resi firewall `403`; `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-edge-package/runtime.mjs` now uses `buildOriginRequest(request, { forceHomepage: false })` with browser-like navigation headers and no Cloudflare cache override for desktop native pass-through, while native continuation keeps homepage normalization. Static validation now fails if this contract regresses. District stage `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thedistrictuniversal-com/stage-20260821T012705Z/` passed, and final apply `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thedistrictuniversal-com/apply-20260821T012755Z/` passed `55/55` gates with no rollback, mobile PSI `100`, desktop native PSI `97`, and `70` evidence files.
+
+- `Resi Edge Launch Dashboard Access Lane`
+  - disposition: active Phase 0 launch-dashboard security pattern; deployed for dashboard host only
+  - owner: WebOps / MarketingOps
+  - implementation:
+    - `/Users/mark/Property_Analytics/apps/api/src/routes/auth.ts`
+    - `/Users/mark/Property_Analytics/apps/api/src/env.ts`
+    - `/Users/mark/Property_Analytics/apps/api/wrangler.toml`
+    - `/Users/mark/Property_Analytics/apps/web/src/components/auth-provider.tsx`
+    - `/Users/mark/Property_Analytics/apps/web/src/app/login/login-client.tsx`
+    - `/Users/mark/Property_Analytics/apps/web/src/app/login/verify/page.tsx`
+    - `/Users/mark/Property_Analytics/apps/web/src/app/login/page.tsx`
+    - `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx`
+    - `/Users/mark/Property_Analytics/apps/web/src/components/app-shell.tsx`
+    - `/Users/mark/Property_Analytics/apps/web/src/lib/api.ts`
+    - `/Users/mark/Property_Analytics/apps/web/src/lib/permissions.ts`
+  - current capability:
+    - serves `https://launch.venterrawebops.com/` through Cloudflare Pages project `resi-edge-launch`
+    - serves launch API/auth calls same-origin through Worker route `launch.venterrawebops.com/v1/*`
+    - redirects launch-host root to `/resi-edge/launch`, then unauthenticated users to `/login?next=%2Fresi-edge%2Flaunch`
+    - presents launch status as a one-column property move monitor with per-property drawers
+    - supports `NEXT_PUBLIC_AUTH_PRIMARY=magic` for a launch-host deployment where protected-route failures use the Data Pond magic-link login path
+    - restricts public magic-link issuance to `MAGIC_LINK_ALLOWED_DOMAINS`, currently planned as `venterraliving.com,venterra.com`
+    - can auto-provision allowed company-domain users as the configured low-privilege role, currently `viewer`, only when `MAGIC_LINK_AUTO_PROVISION_ENABLED=true` and the requested `next` path matches `MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES`, currently `/resi-edge/launch`
+    - preserves non-enumerating login responses: disallowed domains get a generic success response but no user record and no magic token
+    - limits magic-primary launch-host sidebar/navigation and protected path access to `/resi-edge/launch`
+    - keeps the Resi Edge launch dashboard read-only at viewer level while decision/admin actions remain admin-gated
+  - boundary:
+    - not a public dashboard
+    - not a deploy surface
+    - dashboard-host DNS/Pages deployment is approved and live; property DNS, property Workers, WordPress/admin paths, provider changes, cache, and property live-domain mutation remain out of scope
+    - existing Cloudflare Access bootstrap remains the default unless the launch environment explicitly sets magic-link primary auth
+    - the launch host must not expose the broader viewer-level Pond, Watchtower, Dock, Fishing Hole, or Pilot Tracker surfaces without a future explicit approval
+    - magic-link auto-provisioning must remain path-scoped to the launch dashboard so a company email alone cannot create a general-purpose Data Pond account
+  - proof:
+    - 08/17/2026 `/Users/mark/Property_Analytics/apps/web` production build passed
+    - 08/17/2026 `/Users/mark/Property_Analytics/apps/api` typecheck passed after adding conservative fallback Pond manifest JSONs for previously missing imports
+    - 08/17/2026 targeted API auth hardening test passed `8/8`
+    - 08/17/2026 Cloudflare Pages deployment `https://6ff5beb8.resi-edge-launch.pages.dev` is active behind `https://launch.venterrawebops.com/`
+    - 08/17/2026 Playwright proved launch-host root and `/resi-edge/launch` land on the magic-link login without Cloudflare Access bootstrap
+    - 08/17/2026 Playwright proved the cleaned dashboard has `20` drawers and no visible internal implementation wording from the forbidden dashboard terms scan
+    - 08/17/2026 evidence note written to `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-host-deployment/launch-host-deployment-20260817T230925Z/summary.md`
+- `Resi Edge Wednesday Preapproval Evidence Packets`
+  - disposition: active non-mutating launch approval evidence lane
+  - owner: WebOps / MarketingOps
+  - implementation:
+    - `/Users/mark/Property_Analytics/scripts/build_resi_edge_wednesday_preapproval_packets.py`
+    - `/Users/mark/Property_Analytics/scripts/run_resi_edge_performance_baseline_queue.py`
+  - current capability:
+    - builds source/property review, Google visibility baseline, rollback/recovery snapshot, and Wednesday approval packet artifacts for the 20-property 08/19/2026 batch
+    - reads the latest Wednesday readiness queue, Phase 2 manifest prep packet, governed property identity matrix, and Data Pond GSC tables
+    - reports source signoff categories for content, hero/media, reviews, awards, specials, SEO/meta, phone display, and property details
+    - summarizes pre-move GSC T28/prior-28 clicks and impressions plus latest local URL Inspection evidence
+    - runs the prepared 80-item PSI queue into one packet and stops on the first failed measurement by default
+  - boundary:
+    - non-mutating only; not a launch/deploy surface
+    - does not change Cloudflare, DNS, Workers, WordPress, Zaraz, GA4, Ahrefs, R2, cache, Captain, Data Pond, or property live domains
+    - does not close human content/source approval; it records the exact signoff queue and evidence posture
+    - failed PSI or data-source measurements stop the queue and preserve evidence rather than continuing
+  - latest proof:
+    - 08/18/2026 packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/wednesday-preapproval/wednesday-preapproval-20260818T172525Z/` reports Google current-URL baselines captured for `20/20`, current URL Inspection pass/indexed posture for `20/20`, rollback snapshots prepared for `20/20`, and source/property signoff still open for `20/20`
+    - 08/18/2026 PSI baseline attempt `/Users/mark/Property_Analytics/reports/resi_edge_performance/performance-baselines/performance-baseline-20260818T172533Z/` stopped at measurement `2/80` on an Anatole at Norman desktop PSI Lighthouse HTTP `500`; measurement `1/80` mobile passed with score `76`
+    - 08/18/2026 queue correction holds final vanity PSI until switch because pre-switch vanity domains redirect to legacy. Corrected queue `/Users/mark/Property_Analytics/reports/resi_edge_performance/performance-baseline-queue/performance-baseline-queue-20260818T174343Z/` covers legacy Venterra URL plus staging Kinsta URL only (`80` measurements), with final vanity available only through explicit `--include-final-vanity`.
+    - 08/18/2026 corrected pre-switch PSI capture `/Users/mark/Property_Analytics/reports/resi_edge_performance/performance-baselines/performance-baseline-20260818T174349Z/` stopped at measurement `1/80` after three PSI attempts for Anatole at Norman legacy mobile returned Lighthouse HTTP `500`; direct URL header check returned HTTP `200`
+    - 08/18/2026 after Mark proved the URL in the PSI UI, the Keeper-backed API canary reproduced OK4AN legacy mobile score `63`; full corrected pre-switch PSI run `/Users/mark/Property_Analytics/reports/resi_edge_performance/performance-baselines/performance-baseline-20260818T175339Z/` completed `80/80` with `0` failures
+    - 08/18/2026 dashboard snapshot `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-snapshot/launch-dashboard-snapshot-20260818T183143Z/` now includes per-property legacy Venterra and staging Kinsta PSI scores and marks final vanity PSI `held_until_switch`
+    - 08/18/2026 dashboard drawer presentation now uses one row for launch movement and PSI: Legacy URL scores -> Live Kinsta Staging URL scores -> Vanity Domain `Dead Until Live`; the duplicate PSI card grid and separate Move Map were removed
+
+- `Portfolio Kinsta DNS Switch Prep`
+  - disposition: active guarded launch DNS preparation lane
+  - owner: WebOps / MarketingOps
+  - implementation:
+    - `/Users/mark/Property_Analytics/scripts/domain_ops/build_kinsta_dns_switch_prep.py`
+    - `/Users/mark/Property_Analytics/scripts/domain_ops/apply_kinsta_dns_switch.py`
+  - current capability:
+    - ingests the reviewed Kinsta CNAME CSV for a launch batch and validates that each domain has exactly `@` and `www` CNAME rows pointing to `*.hosting.kinsta.cloud`
+    - resolves Cloudflare credentials through the existing Keeper-backed auth helper
+    - snapshots zone status, current DNS records, SSL mode, Universal SSL state, and Cloudflare dynamic/page-rule forwarding posture
+    - writes planned DNS deletes, planned Kinsta CNAME adds, forwarding review rows, and summary artifacts without mutation
+    - applies only reviewed DNS deletes/adds when explicitly run with `--apply`
+    - removes reviewed Cloudflare dynamic redirect rules only when explicitly run with both `--apply` and `--delete-forwarding-rules`
+  - boundary:
+    - no live mutation by default
+    - no open-ended DNS cleanup; only packet-listed records/rules are eligible
+    - Universal SSL remains engaged
+    - email records on launch vanity domains are deleted only because Mark explicitly confirmed email is not needed for these domains
+    - active vanity forwarding rules must be removed or disabled during switch because they override successful Kinsta DNS routing
+  - latest proof:
+    - 08/19/2026 prep packet `/Users/mark/Property_Analytics/reports/domain_ops/20260819_142621_kinsta_dns_switch_prep/` reports `20/20` active Cloudflare zones, SSL mode `full`, Universal SSL not disabled, `50` planned DNS deletes, `40` planned Kinsta CNAME adds, `0` preserve/review records, and `20` active forwarding rules across `10` domains
+    - 08/19/2026 dry-run apply packet `/Users/mark/Property_Analytics/reports/domain_ops/20260819_143000_kinsta_dns_switch_apply/` reports `planned_deletes:50`, `planned_adds:40`, `planned_forwarding_rule_deletes:20`, and `mutations_performed:false`
+
+- `Resi Edge Analytics Proof And Existing-Worker Rollback Guard`
+  - disposition: active package gate hardening
+  - owner: WebOps / MarketingOps
+  - implementation:
+    - `/Users/mark/Property_Analytics/scripts/validate_resi_mobile_shell_contract.mjs`
+    - `/Users/mark/Property_Analytics/scripts/run_resi_edge_upgrade.py`
+    - `/Users/mark/Property_Analytics/scripts/validate_resi_edge_package_static.mjs`
+  - current capability:
+    - allows standalone native `HEAP_JS_DEBUG` environment/debug flags without treating them as direct analytics loaders
+    - continues to block direct native analytics loaders and snippets, including GTM, `gtag/js`, `heap.load`, Contentsquare, Ahrefs Web Analytics, and Resi pixel scripts
+    - reads the generated deploy bundle `wrangler.toml` worker name for rollback evidence
+    - blocks automatic delete rollback when the manifest intentionally targets an existing Worker script such as `edge-message-worker` or `townestone-native-optimizer`
+  - boundary:
+    - does not allow direct WordPress-owned analytics loaders
+    - does not delete shared/existing Worker scripts during failed-gate recovery
+    - failed source-page or live proof gates still stop the runner and preserve evidence
+  - latest proof:
+    - 08/20/2026 The Vine refined live shell proof passed at `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thevinekyle-com/repair-20260820T225702Z/mobile-shell-proof-refined.json`
+    - 08/20/2026 retry packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thevinekyle-com/apply-20260820T225948Z/` stopped before deploy on Resi Website Management Firewall desktop/source HTTP `403`
+
+- `Resi Edge Indexing Viability Packet`
+  - disposition: active non-mutating launch SEO/indexing evidence lane
+  - owner: WebOps / MarketingOps
+  - implementation:
+    - `/Users/mark/Property_Analytics/scripts/build_resi_edge_indexing_viability.py`
+  - current capability:
+    - reads the latest Phase 2 preflight packet and the governed property identity matrix
+    - checks current legacy URLs and Kinsta staging URLs before switch
+    - holds final vanity URL checks until switch by default; `--include-final-vanity` explicitly enables post-switch checks
+    - records HTTP status, final URL, title, canonical, meta robots, `X-Robots-Tag`, link-level nofollow counts, robots.txt status, and Googlebot/all-agent robots.txt blocking
+    - writes JSON/CSV/Markdown evidence under `/Users/mark/Property_Analytics/reports/resi_edge_performance/indexing-viability/`
+  - boundary:
+    - non-mutating only
+    - does not use GSC URL Inspection, submit URLs, request indexing, edit Kinsta, edit WordPress, alter robots, or mutate Cloudflare/DNS/Workers/Zaraz/GA4/Ahrefs/R2/cache
+    - staging noindex/nofollow is recorded as evidence, not automatically changed
+  - latest proof:
+    - 08/19/2026 packet `/Users/mark/Property_Analytics/reports/resi_edge_performance/indexing-viability/20260819_144122_indexing_viability/` checked `40` URL rows and held `20` final vanity rows until switch
+    - current legacy URLs passed `20/20`
+    - Kinsta staging URLs returned HTTP `200` but `20/20` carried `X-Robots-Tag: noindex, nofollow, nosnippet, noarchive`
+    - robots.txt blocked neither Googlebot nor all agents in the checked pre-switch pass
+    - 08/19/2026 dashboard revision added a first-viewport launch progression board and per-property progression grid using the same readiness facts: Domain Control, Staging Reachable, Old Forwarding, Indexing Release, DNS Switch, and Live Verification
+    - validation passed with `/Users/mark/Property_Analytics/apps/web` `npm run build` and Playwright local render proof under mocked viewer auth
+    - after Mark approved the dashboard refresh, static dashboard-only Pages deployment `https://47097bc2.resi-edge-launch.pages.dev` was published behind `https://launch.venterrawebops.com/`
+    - live proof with mocked viewer auth confirmed hosted `/resi-edge/launch` contains `Launch Progression`, `Benchmark Readiness`, `Work Ahead`, and `20` `Property Progression` rows, with stale `Open Items` absent; screenshot: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-progress-live-20260819.png`
+    - the dashboard-only refresh did not touch property DNS, forwarding, Workers, WordPress/admin paths, Zaraz, GA4, Ahrefs, R2, cache, Kinsta, or property live-domain mutation
+    - 08/19/2026 `anatoleatnorman.com` canary proved the expected two-step vanity-domain handoff: WebOps DNS/forwarding switch first, then Resi/Blue Team primary-domain assignment in Kinsta/WordPress, then WebOps root/`www` vanity readback. The observed `301` from vanity to `https://anatoleatnorman.kinsta.cloud/` is the expected pre-primary state, not a `noindex/nofollow` or Kinsta reachability failure.
+    - after the canary, dashboard-only deployment `https://31a6dd3b.resi-edge-launch.pages.dev` updated the live dashboard to show Anatole as `DNS Pointed, Handoff Pending`, portfolio `DNS Pointed` as `1/20`, and primary-domain handoff pending; live proof screenshot: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-anatole-31a6dd3b-live-20260819.png`
+    - after Mark approved the full run, the remaining `19` DNS/forwarding changes completed in `/Users/mark/Property_Analytics/reports/domain_ops/20260819_160112_kinsta_dns_switch_apply/` with `38` CNAME adds, `48` conflicting DNS deletes, and `18` forwarding-rule deletes; root/`www` readback for all `20` domains classified `40/40` checks as `primary_domain_pending` with `0` edge/origin error, SSL failure, or `403` review classifications
+    - dashboard-only deployment `https://25236727.resi-edge-launch.pages.dev` updated the live dashboard to show `20/20` DNS pointed, `20` primary-domain handoffs open, and every property as `DNS Pointed, Handoff Pending`; live proof screenshot: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-full-dns-25236727-live-20260819.png`
+    - post-primary readback `/Users/mark/Property_Analytics/reports/domain_ops/20260819_162654_post_primary_readback/` found `40/40` root/`www` host checks hold vanity domains, `20/20` vanity canonicals, `20/20` `index, follow` robots posture, and `0` redirects to `*.kinsta.cloud`; the only open issue is Axial title placeholder `[*PROPERTY NAME*]`
+    - dashboard-only deployment `https://39bf5b7d.resi-edge-launch.pages.dev` updated the live dashboard to show `19` `Live Vanity Verified` properties and Axial as `Live, Content Fix Open`; proof screenshot: `/Users/mark/Property_Analytics/reports/resi_edge_performance/launch-dashboard-post-primary-39bf5b7d-live-20260819.png`
+    - 08/19/2026 dashboard-only deployment `https://986be4cf.resi-edge-launch.pages.dev` hardened the launch host to magic-link-only runtime auth, same-origin `/v1/auth/*` API calls, `.venterrawebops.com` session cookie issuance, and no Cloudflare Access bootstrap on `launch.venterrawebops.com`
+    - live proof confirmed unauthenticated `/resi-edge/launch` lands on the Magic Link form, `/v1/auth/me` on the launch domain reaches the API Worker with expected `401`, and the non-company-domain magic-link probe returns the expected non-enumerating response
+    - 08/19/2026 Axial title readback confirmed title `Axial Buckhead`, vanity canonical, `index, follow`, and no placeholder; dashboard-only deployment `https://401e5517.resi-edge-launch.pages.dev` updated the live dashboard to `20` green, `0` yellow, `0` red, with `0` content fixes
+    - 08/19/2026 Mark confirmed all legacy redirects are in place for base, `/reviews/`, and `/gallery` paths across `20` properties (`60` redirects total); dashboard-only deployment `https://a37c12dd.resi-edge-launch.pages.dev` updated the launch room to `Public Moves 20/20`, `Redirects active`, and `60 redirects active`

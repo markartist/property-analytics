@@ -5,7 +5,7 @@ import BUNDLED_WELCOME_AVIF from "./welcome-640.avif";
 import BUNDLED_FEATURES_AVIF from "./features-900.avif";
 import { renderZarazConsentPillScript as renderSharedZarazConsentPillScript } from "../shared/resi-consent-widget/widget.mjs";
 
-const VERSION = "2026-08-11.calais-mobile-shell-v27-shared-consent";
+const VERSION = "2026-08-15.calais-mobile-shell-v28-strip-origin-noindex";
 const GATE_PARAM = "edge_preview";
 const GATE_VALUE = "1";
 const NATIVE_CONTINUATION_PARAM = "edge_native_continuation";
@@ -286,11 +286,14 @@ async function passThroughNativeCleanHtml(request, stripParams = []) {
   }
 
   const headers = new Headers(originResponse.headers);
+  const originRobotsTag = headers.get("x-robots-tag");
   headers.delete("content-length");
   headers.delete("set-cookie");
+  headers.delete("x-robots-tag");
   headers.set("content-type", "text/html; charset=utf-8");
   headers.set("x-vtr-calais-topper", VERSION);
   headers.set("x-vtr-calais-native-analytics-clean", "1");
+  if (originRobotsTag) headers.set("x-vtr-calais-origin-robots-stripped", "1");
   headers.append("server-timing", 'vtr_calais_native_clean;desc="native-pass-through"');
 
   return new Response(injectZarazConsentPill(normalizeNativeHtml(await originResponse.text())), {

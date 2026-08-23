@@ -1,0 +1,126 @@
+{
+  "version": "2026-08-22",
+  "owner": "MarketingOps / Property Analytics",
+  "default_timezone": "America/Chicago",
+  "sources": [
+    {
+      "source_key": "jira_assigned_queue",
+      "display_name": "Jira assigned ticket queue",
+      "system": "Jira",
+      "status": "active_connector_harvest",
+      "credential_source": "Codex Atlassian Rovo connector",
+      "harvest_mode": "Atlassian connector JQL search, then local Captain packet build",
+      "captain_visibility": "property_watch_items_and_actions",
+      "default_cadence": "weekday_morning",
+      "query": "assignee = currentUser() AND statusCategory != Done ORDER BY priority DESC, updated DESC",
+      "required_fields": [
+        "key",
+        "summary",
+        "description",
+        "status",
+        "priority",
+        "created",
+        "updated",
+        "customfield_10106"
+      ],
+      "local_builder": "/Users/mark/Property_Analytics/scripts/build_jira_captain_watch_packet.py",
+      "output_family": "/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch",
+      "action_boundary": "Do not edit, comment on, or transition Jira issues unless a later exact rule is approved."
+    },
+    {
+      "source_key": "confluence_ops_docs",
+      "display_name": "Confluence operating docs",
+      "system": "Confluence",
+      "status": "active_connector_harvest",
+      "credential_source": "Codex Atlassian Rovo connector",
+      "harvest_mode": "Atlassian connector CQL/search, then local Ops Watch evidence packet",
+      "captain_visibility": "documentation_drift_and_decision_watch",
+      "default_cadence": "daily_or_weekly",
+      "candidate_queries": [
+        "recently updated runbooks or source-of-truth pages",
+        "Confluence pages linked to open Jira issues",
+        "new comments or decisions on MarketingOps operating pages"
+      ],
+      "local_builder": "/Users/mark/Property_Analytics/scripts/build_confluence_ops_watch_packet.py",
+      "output_family": "/Users/mark/Property_Analytics/reports/ops_watch/confluence_ops_watch",
+      "action_boundary": "Do not comment on or edit Confluence pages unless a later exact rule is approved."
+    },
+    {
+      "source_key": "ms365_outlook_mailbox",
+      "display_name": "Outlook mailbox watch",
+      "system": "Microsoft 365 Outlook",
+      "status": "blocked_pending_keeper_graph_auth",
+      "credential_source": "Keeper/KSM required",
+      "harvest_mode": "Microsoft Graph message search from approved mailbox/folders",
+      "captain_visibility": "email_to_property_watch_items",
+      "default_cadence": "weekday_morning_plus_afternoon",
+      "keeper_contract": [
+        "KSM_MS365_TENANT_ID_NOTATION",
+        "KSM_MS365_CLIENT_ID_NOTATION",
+        "KSM_MS365_CLIENT_SECRET_NOTATION",
+        "KSM_MS365_MAILBOX_USER_NOTATION"
+      ],
+      "oauth_helper": "/Users/mark/Property_Analytics/utils/ms365_graph_auth.py",
+      "oauth_smoke": "/Users/mark/Property_Analytics/scripts/smoke_ms365_graph_oauth.py --check-mailbox --json",
+      "recommended_graph_scopes": [
+        "Mail.Read"
+      ],
+      "action_boundary": "Read-only harvest first. Do not send, archive, delete, move, or mark messages without explicit approved rules."
+    },
+    {
+      "source_key": "ms365_teams_channels",
+      "display_name": "Teams channel and mention watch",
+      "system": "Microsoft Teams",
+      "status": "blocked_pending_keeper_graph_auth",
+      "credential_source": "Keeper/KSM required",
+      "harvest_mode": "Microsoft Graph channel message and mention read from approved teams/channels",
+      "captain_visibility": "teams_to_property_watch_items",
+      "default_cadence": "weekday_morning",
+      "keeper_contract": [
+        "KSM_MS365_TENANT_ID_NOTATION",
+        "KSM_MS365_CLIENT_ID_NOTATION",
+        "KSM_MS365_CLIENT_SECRET_NOTATION"
+      ],
+      "oauth_helper": "/Users/mark/Property_Analytics/utils/ms365_graph_auth.py",
+      "oauth_smoke": "/Users/mark/Property_Analytics/scripts/smoke_ms365_graph_oauth.py --json",
+      "recommended_graph_scopes": [
+        "ChannelMessage.Read.All",
+        "Chat.Read"
+      ],
+      "action_boundary": "Read-only harvest first. Do not post replies, reactions, or notifications without explicit approved rules."
+    },
+    {
+      "source_key": "ms365_sharepoint_onedrive",
+      "display_name": "SharePoint and OneDrive evidence watch",
+      "system": "Microsoft 365 SharePoint / OneDrive",
+      "status": "blocked_pending_keeper_graph_auth",
+      "credential_source": "Keeper/KSM required",
+      "harvest_mode": "Microsoft Graph drive item delta/list from approved sites and folders",
+      "captain_visibility": "new_file_or_evidence_watch",
+      "default_cadence": "daily",
+      "keeper_contract": [
+        "KSM_MS365_TENANT_ID_NOTATION",
+        "KSM_MS365_CLIENT_ID_NOTATION",
+        "KSM_MS365_CLIENT_SECRET_NOTATION"
+      ],
+      "oauth_helper": "/Users/mark/Property_Analytics/utils/ms365_graph_auth.py",
+      "oauth_smoke": "/Users/mark/Property_Analytics/scripts/smoke_ms365_graph_oauth.py --json",
+      "recommended_graph_scopes": [
+        "Files.Read.All",
+        "Sites.Read.All"
+      ],
+      "action_boundary": "Read-only harvest first. Do not edit, move, delete, or share files without explicit approved rules."
+    },
+    {
+      "source_key": "captain_runtime_publish",
+      "display_name": "Captain Runtime publish",
+      "system": "Captain Runtime",
+      "status": "review_required",
+      "credential_source": "Existing Cloudflare/D1 Keeper-backed helpers",
+      "harvest_mode": "Reviewed SQL/API publish after local packet review",
+      "captain_visibility": "live_captain_office_watch_items_and_actions",
+      "default_cadence": "after_review",
+      "action_boundary": "No D1 write, Cloudflare deploy, or Captain Runtime mutation from harvest jobs unless explicitly approved."
+    }
+  ]
+}

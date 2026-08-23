@@ -1,6 +1,6 @@
 {
   "registry_id": "resi-edge-shared-standards-registry",
-  "updated": "2026-08-11",
+  "updated": "2026-08-20",
   "principle": "Property runs consume shared standards and property manifests. They do not carry local behavior variants.",
   "active_standards": [
     {
@@ -25,18 +25,20 @@
     {
       "id": "resi-zaraz-consent-widget",
       "status": "active_enforced",
-      "version": "compact_finalized_pill_v27_2026_08_12",
+      "version": "compact_shell_pill_v29_2026_08_20",
       "contract": "ops/cloudflare/shared/resi-consent-widget/contract.json",
       "runtime": "ops/cloudflare/shared/resi-consent-widget/widget.mjs",
       "applier": "scripts/apply_zaraz_consent_package.py",
       "validators": [
         "scripts/validate_resi_mobile_shell_contract.mjs",
+        "scripts/validate_resi_consent_widget_geometry.mjs",
         "scripts/validate_resi_edge_package_static.mjs",
         "scripts/check_resi_edge_gate_coverage.py"
       ],
       "scope": [
         "compact first-visit pill",
         "Cloudflare Zaraz modal route",
+        "pre-live mobile viewport fit and hit-target proof",
         "purpose ids",
         "purpose copy",
         "reject lives inside preferences modal, not on the pill"

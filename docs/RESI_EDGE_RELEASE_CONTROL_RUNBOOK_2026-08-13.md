@@ -66,9 +66,10 @@ These gates are mandatory:
 - No continuing after a failed gate.
 - No protected reference mutation without explicit approval.
 - No live apply without a successful stage.
-- No WordPress login/admin/API control path may pass through public-page shell, cleanup, analytics injection, cookie stripping, or cache rewriting. `/wp-login.php`, `/wp-admin/*`, `/wp-json/*`, and non-`GET`/`HEAD` requests require transparent origin pass-through proof.
+- No WordPress login/admin/API control path may pass through public-page shell, cleanup, analytics injection, cookie stripping, or cache rewriting. `/wp-login.php`, `/wp-admin/*`, `/wp-json/*`, and non-`GET`/`HEAD` requests require transparent origin pass-through proof, or an intentional uncached Cloudflare/Resi Website Management Firewall `401`/`403` with no Resi Edge markers.
 - No WordPress GTM, Heap, Ahrefs, or direct analytics scripts when Zaraz owns analytics.
 - No local consent widget forks.
+- No live apply unless deploy-bundle validation passes both the conservative mobile shell byte forecast and the local compact consent geometry proof. The proof must render the generated bundle and confirm the cookie icon, `Preferences`, and `Accept` stay visible, in-viewport, and hit-testable on mobile widths.
 - No promotion without live evidence.
 - No browser-chosen hero headline wrapping where approved composition requires fixed lines.
 - No visible internal phone/source attribution labels. Codes such as `VWS`, `AH`, `GOA`, or channel IDs remain in manifest data, source-phone proof, and evidence only; the customer drawer may show the routed phone number but must not render the source label.
@@ -106,6 +107,7 @@ Runtime behavior update:
 
 - Edit shared runtime only.
 - Re-run static validation and gate coverage.
+- Prove the generated deploy bundle forecasts mobile initial HTML below the `40,000` byte gate before live apply. The governed runner writes this as `mobile_shell_byte_forecast` inside deploy-bundle validation; do not rely on manual manifest trimming as the scale fix.
 - Canary on Townestone.
 - Record evidence before touching any other pilot property.
 
@@ -114,7 +116,7 @@ WordPress control-path update:
 - Read `docs/RESI_EDGE_WORDPRESS_CONTROL_PATH_BYPASS_2026-08-14.md`.
 - Keep the bypass before homepage shell routing, native continuation rendering, desktop native cleanup, analytics cleanup, `Set-Cookie` deletion, and cache rewrites.
 - Preserve native redirects with `redirect: "manual"` and disable cache mutations with `cf: { cacheEverything: false, cacheTtl: 0 }`.
-- Prove `/wp-login.php` returns `wordpress_test_cookie`, `/wp-admin/` preserves the native login redirect, and `/wp-json/` remains native JSON without edge markers.
+- Prove `/wp-login.php` returns `wordpress_test_cookie`, `/wp-admin/` preserves the native login redirect, and `/wp-json/` remains native JSON without edge markers. If the control path is intentionally security-blocked before WordPress is exposed, prove an uncached `401`/`403` with no `x-vtr` headers and no Resi Edge shell/topper/cleanup markers.
 - Future apply packets must include `wordpress_control_path_bypass_proven`; older evidence packets that predate 08/14/2026 do not prove this gate.
 
 Asset pipeline update:
@@ -128,9 +130,17 @@ Analytics or consent update:
 
 - Update shared runtime/token contract.
 - Keep Zaraz as owner for GA4, Heap, Ahrefs Web Analytics, and Cloudflare Web Analytics.
+- Before analytics smoke, retire superseded managed Resi Edge Zaraz tools for the same zone. Preserve unrelated/manual tools, but do not allow older managed GA4, Heap, Resi bridge, or Ahrefs Web Analytics snippets to coexist with the current manifest-owned tool IDs; older Heap loaders can shadow the current interaction-only proof marker.
+- Standalone native Heap environment/debug flags such as `window.HEAP_JS_DEBUG = true;` are allowed as environment preservation only. Do not classify them as direct native analytics loaders unless paired with a real native loader/config path such as GTM, `gtag/js`, `heap.load`, Contentsquare, Ahrefs Web Analytics, or Resi pixel scripts.
 - Keep WordPress scripts removed or blocked.
 - Re-test consent banner and preferences modal.
 - Re-test analytics smoke before promotion.
+
+Existing Worker rollback update:
+
+- If the manifest routes through an existing Worker script, failed-gate recovery must not delete that script. The runner must read the generated `wrangler.toml` worker name, preserve evidence, and mark automatic delete rollback unsafe unless an explicit deployment rollback path has been approved.
+- Per-domain canonical Workers may still use delete/readback rollback when they were created solely for that package target.
+- Any failed gate still stops the rollout. Do not proceed to the next property just because the failed property appears visually healthy.
 
 Freshness update:
 

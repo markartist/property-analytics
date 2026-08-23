@@ -1,7 +1,10 @@
-const DEFAULT_FRONTEND_URL = "https://app.venterradev.com";
+const DEFAULT_FRONTEND_URL = "https://pond.venterrawebops.com";
 const KNOWN_FRONTEND_ORIGINS = new Set([
   DEFAULT_FRONTEND_URL,
+  "https://datapond.venterrawebops.com",
+  "https://app.venterradev.com",
   "https://app.venterraliving.com",
+  "https://launch.venterrawebops.com",
   "http://localhost:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3000",
@@ -90,6 +93,9 @@ export function cookieDomainForFrontend(frontendOrigin: string): string | null {
     if (hostname === "localhost" || hostname === "127.0.0.1") return null;
     if (hostname === "app.venterradev.com") return ".venterradev.com";
     if (hostname === "app.venterraliving.com") return ".venterraliving.com";
+    if (hostname === "pond.venterrawebops.com") return ".venterrawebops.com";
+    if (hostname === "datapond.venterrawebops.com") return ".venterrawebops.com";
+    if (hostname === "launch.venterrawebops.com") return ".venterrawebops.com";
   } catch {
     return null;
   }

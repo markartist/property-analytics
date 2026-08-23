@@ -156,6 +156,29 @@ Add these after the first five are working:
 - `EVS Shared Token`
 - `VACS Shared Token`
 - `PageSpeed API Key`
+- `Resi Server API Token`
+
+### Ops Watch Ingest Shared Secret
+
+Suggested record title:
+
+- `Ops Watch Ingest Shared Secret`
+
+Suggested usage in repo:
+
+- internal Ops Watch mirror/push exporter signing
+- Cloudflare Worker secret `OPS_WATCH_INGEST_SHARED_SECRET`
+
+Related env var / notation target:
+
+- `KSM_OPS_WATCH_INGEST_SHARED_SECRET_NOTATION`
+- Active helper notation: `keeper://w2b3ipQrf1DXfZ53Gpz9aw/field/password`
+
+Storage requirements:
+
+- Generate as a high-entropy random shared secret.
+- Store only in Keeper/KSM and the Cloudflare Worker secret store.
+- Do not place the value in local files, `.env`, ticket comments, screenshots, or shell history.
 
 ## Suggested Record Organization
 
@@ -238,10 +261,28 @@ Current Keeper notation targets:
 - `KSM_BROWSERSTACK_ACCESS_KEY_NOTATION=keeper://y6GUrHJgXsSxybHruXcVWg/field/password`
 - `KSM_OPENAI_API_KEY_NOTATION=keeper://fsL4Qd2Q_9CPadtyeBr7-Q/field/password`
 - `KSM_PAGESPEED_API_KEY_NOTATION=keeper://XTQySA3sVMlwouNIWGCcCg/field/password`
+- `KSM_RESI_API_TOKEN_NOTATION=keeper://2tuAKQVuBYqp0PCipUQUyw/field/password`
 - `KSM_DATAFORSEO_LOGIN_NOTATION=keeper://8xxZUZB5ISyM1BhBrnaI2w/field/login`
 - `KSM_DATAFORSEO_PASSWORD_NOTATION=keeper://8xxZUZB5ISyM1BhBrnaI2w/field/password`
 - `KSM_APARTMENTIQ_API_KEY_NOTATION=keeper://aRP2hTUWhLTCAn-ye7GJ_w/field/password`
 - `KSM_AHREFS_API_KEY_NOTATION=keeper://xbIaayyCqMfrzVFjRei5hA/field/password`
+
+Pending Microsoft 365 / Ops Watch notation targets:
+
+- `KSM_MS365_TENANT_ID_NOTATION`
+- `KSM_MS365_CLIENT_ID_NOTATION`
+- `KSM_MS365_CLIENT_SECRET_NOTATION`
+- `KSM_MS365_MAILBOX_USER_NOTATION`
+
+These are intentionally listed without Keeper UIDs until Microsoft Graph access is approved and represented in Keeper/KSM. Ops Watch must not create local OAuth token files, ad hoc `.env` secrets, or browser-session fallbacks for Outlook, Teams, SharePoint, or OneDrive harvesting.
+
+The local helpers that consume these notation env vars are:
+
+- `/Users/mark/Property_Analytics/utils/ms365_graph_auth.py`
+- `/Users/mark/Property_Analytics/scripts/smoke_ms365_graph_oauth.py`
+
+As of 08/22/2026, a sanitized Keeper title/folder scan found no existing Microsoft 365 / Graph / Outlook / Teams / SharePoint record mapped for this lane.
+
 
 File-backed Keeper UIDs:
 

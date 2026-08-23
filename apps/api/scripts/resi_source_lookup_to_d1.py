@@ -24,6 +24,7 @@ GENERATED_DIR = SCRIPT_DIR / "generated"
 MIGRATION_SQL = API_DIR / "migrations" / "0062_create_resi_source_lookup_tables.sql"
 DEFAULT_D1_NAME = "pop-brief-db"
 DEFAULT_KV_KEY = "resi-source-lookup/latest"
+ALLOWED_DEFAULT_PHONE_SOURCES = {"trackingCodes.VWS", "resi_v2.lead_sources.VWS"}
 
 RUN_COLUMNS = [
     "run_id",
@@ -160,15 +161,15 @@ def build_sql(db_path: Path, run_id: str | None) -> tuple[str, list[str], dict[s
     if not rows:
         raise RuntimeError(f"Run {resolved_run_id} has no lookup rows.")
 
-    non_vws_default = sum(1 for row in rows if row["default_phone_source"] != "trackingCodes.VWS")
+    non_vws_default = sum(1 for row in rows if row["default_phone_source"] not in ALLOWED_DEFAULT_PHONE_SOURCES)
     if non_vws_default:
-        raise RuntimeError(f"Refusing to publish: {non_vws_default} rows do not default to trackingCodes.VWS.")
+        raise RuntimeError(f"Refusing to publish: {non_vws_default} rows do not default to a VWS source.")
 
     statements = [
         "-- Auto-generated: Resi source phone lookup to D1",
         f"-- Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}",
         f"-- Run: {resolved_run_id}",
-        "-- Default visible phone rule: trackingCodes.VWS only. No office-phone display fallback.",
+        "-- Default visible phone rule: VWS source only. No office-phone display fallback.",
         "",
         MIGRATION_SQL.read_text(encoding="utf-8").strip(),
         "",

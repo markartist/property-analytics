@@ -2,7 +2,7 @@ name = "pop-brief-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
-# Custom domain (ADR-0001: api.venterradev.com)
+# Custom domain (ADR-0001: api.venterradev.com; Data Pond target: api.venterrawebops.com)
 # routes = [{ pattern = "api.venterradev.com", custom_domain = true }]
 
 [triggers]
@@ -28,10 +28,15 @@ bucket_name = "pop-brief-uploads"
 # Environment variables
 [vars]
 ENABLE_EMAIL_SEND = "true"
+MAGIC_LINK_ALLOWED_DOMAINS = "venterraliving.com,venterra.com"
+MAGIC_LINK_AUTO_PROVISION_ENABLED = "true"
+MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES = "/resi-edge/launch"
+MAGIC_LINK_DEFAULT_ROLE = "viewer"
 CLOUDFLARE_ACCESS_TEAM_DOMAIN = "https://macxs.cloudflareaccess.com"
-# CLOUDFLARE_ACCESS_AUD = "set-comma-separated-browser-and-api-bootstrap-access-auds"
+CLOUDFLARE_ACCESS_AUD = "fca46340e8500d1e18908389c73c1bf91bcd31cbf646b376cc7253cac34c3c1f,9d4bd18c834cfee63d2b711125dfd84e315d48273646b191d899ca46defaba88,79f44b0772c082deba6c23bf4838b9e86dd7df399071a8b246d68d1ed72e3786,804cbc253d28b46f294e7c7d0012a17c9e2ab6e9201bf608998c32dd34fb2008,1e70e426437fb628f3f23743f00c09e80483bc0c578e78207a470dc12138df4c,78600ac7ffc501b16f4cdf3ae225cfa1c9539f7c10e64084ee02dcc16967bb37,bf3a1b14afb40237d6fa0e3c1d55874932fa13a3d40a7c4d06c22d6fdfe95fc3,761ac42c7ade7aacdd452c5e38534a1e15a61fd094cce44e60758ad0851ec4c3"
 CLOUDFLARE_ACCESS_AUTO_PROVISION_ENABLED = "true"
 CLOUDFLARE_ACCESS_DEFAULT_ROLE = "viewer"
+CLOUDFLARE_ACCESS_ALLOWED_DOMAINS = "venterraliving.com,venterra.com"
 
 # Secrets (set via `wrangler secret put <NAME>`)
 # RESEND_API_KEY

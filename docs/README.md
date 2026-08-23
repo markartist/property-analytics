@@ -26,6 +26,8 @@
 8. **[CONTENT_OPERATIONS_MODEL.md](CONTENT_OPERATIONS_MODEL.md)** - Shared-foundation / separate-workspace model for VACS and Site Content Creator
 9. **[SITE_CONTENT_CREATOR_MODEL.md](SITE_CONTENT_CREATOR_MODEL.md)** - Specs-aware evaluation, harmonization, and rewrite model for property website copy
 10. **[PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md](PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md)** - Governing content strategy artifact for property narrative, site harmonization, VACS drafts, channel derivatives, and AI-readable content trails
+11. **[OPS_WATCH_RUNBOOK_2026-08-22.md](OPS_WATCH_RUNBOOK_2026-08-22.md)** - Governed Jira/Confluence/Microsoft 365/Captain monitoring layer and action boundary
+12. **[OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md](OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md)** - Live Cloudflare mirror/push ingest lane for sanitized internal Ops Watch exports
 
 ### Critical Knowledge
 Before working with this system, **READ THESE FIRST:**
@@ -111,6 +113,14 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 **Script:** `Data_Collection/collectors/cloudflare_cache_audit.py`
 **Frequency:** Daily via `daily_master_collection.py`
 **Artifacts:** JSON + CSV + Markdown + PIB-style HTML in `reports/cloudflare_cache_audit/`
+
+### 6. Ops Watch
+**Purpose:** Monitor Jira, Confluence, Microsoft 365, internal source packets, and Captain-facing operational signals without source-system mutation by default
+**Local runbook:** `docs/OPS_WATCH_RUNBOOK_2026-08-22.md`
+**Cloudflare ingest runbook:** `docs/OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md`
+**Live ingest health:** `https://ops-watch.venterrawebops.com/health`
+**Storage:** D1 tables `ops_watch_ingest_runs`, `ops_watch_signals`, `ops_watch_action_queue`; R2 prefix `ops-watch/ingest/`
+**Credential source:** Keeper record `Ops Watch Ingest Shared Secret`
 
 ---
 

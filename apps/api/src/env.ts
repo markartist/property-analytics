@@ -12,6 +12,10 @@ export interface Env {
   SEMRUSH_API_KEY: string;
   SESSION_SIGNING_SECRET: string;
   ENABLE_EMAIL_SEND: string; // "true" | "false" — feature flag for email delivery
+  MAGIC_LINK_ALLOWED_DOMAINS?: string; // optional comma-separated email-domain allowlist for public magic-link requests
+  MAGIC_LINK_AUTO_PROVISION_ENABLED?: string; // optional toggle to create low-privilege users from allowed magic-link domains
+  MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES?: string; // optional comma-separated safe next-path prefixes where magic-link auto-provisioning is allowed
+  MAGIC_LINK_DEFAULT_ROLE?: string; // optional default role for magic-link auto-provisioned users
   OPENAI_API_KEY: string; // OpenAI API key for The Fishing Hole
   EVS_SHARED_TOKEN?: string; // optional bearer token for workflow-to-EVS result ingestion
   PLATFORM_SHARED_TOKEN?: string; // optional bearer token for Phase 1 platform orchestration endpoints

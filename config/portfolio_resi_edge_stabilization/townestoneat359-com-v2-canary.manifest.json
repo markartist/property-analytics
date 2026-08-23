@@ -292,6 +292,7 @@
       "property_id": "507293675",
       "measurement_id": "G-J582E0V5T5",
       "measurement_id_status": "configured_in_zaraz",
+      "expected_stream_name": "Website",
       "zaraz_tool_name": "GA4T"
     },
     "heap": {
@@ -349,7 +350,7 @@
       "preferences_behavior",
       "no_pre_consent_leakage"
     ],
-    "widget_version": "compact_finalized_pill_v27_2026_08_12"
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
   },
   "seo": {
     "llms_url": "https://townestoneat359.com/llms.txt",

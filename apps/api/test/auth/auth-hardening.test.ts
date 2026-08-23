@@ -1,13 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { Hono } from "hono";
 
-import app from "../../src/index";
-import { run } from "../../src/lib/db";
+import type { Env } from "../../src/env";
+import type { AuthVariables } from "../../src/middleware/auth";
+import { auth } from "../../src/routes/auth";
+import { queryFirst, run } from "../../src/lib/db";
 import { hashPassword, generateToken } from "../../src/lib/crypto";
 import { resolveSession } from "../../src/middleware/auth";
 import { createTestD1Database } from "../helpers/sqlite-d1";
 import { createPlatformRouteEnv } from "../helpers/platform-route-env";
 import { buildCloudflareAccessJwt } from "../helpers/cloudflare-access-jwt";
+
+const app = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
+app.route("/v1/auth", auth);
 
 async function createAuthTables(db: D1Database) {
   await run(
@@ -51,6 +57,34 @@ async function createAuthTables(db: D1Database) {
       used_at TEXT,
       created_at TEXT NOT NULL
     )`
+  );
+  await run(
+    db,
+    `CREATE TABLE audit_log (
+      id TEXT PRIMARY KEY,
+      actor_user_id TEXT,
+      action TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      before_json TEXT,
+      after_json TEXT,
+      request_id TEXT,
+      ip_hash TEXT,
+      created_at TEXT NOT NULL
+    )`
+  );
+  await run(
+    db,
+    `CREATE TABLE auth_rate_limit_events (
+      id TEXT PRIMARY KEY,
+      scope TEXT NOT NULL,
+      key_hash TEXT NOT NULL,
+      created_at_ms INTEGER NOT NULL
+    )`
+  );
+  await run(
+    db,
+    "CREATE INDEX idx_auth_rate_limit_scope_key_created ON auth_rate_limit_events(scope, key_hash, created_at_ms)"
   );
 }
 
@@ -181,6 +215,135 @@ test("POST /v1/auth/verify treats malformed magic-link tokens as invalid instead
     assert.equal(response.status, 400);
     const payload = await response.json();
     assert.equal(payload.error.code, "INVALID_TOKEN");
+  } finally {
+    close();
+  }
+});
+
+test("POST /v1/auth/magic-link auto-provisions allowed company domains as viewers", async () => {
+  const { db, close } = await createTestD1Database();
+
+  try {
+    await createAuthTables(db);
+    const env = createPlatformRouteEnv(db);
+    env.MAGIC_LINK_ALLOWED_DOMAINS = "venterraliving.com,venterra.com";
+    env.MAGIC_LINK_AUTO_PROVISION_ENABLED = "true";
+    env.MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES = "/resi-edge/launch";
+    env.MAGIC_LINK_DEFAULT_ROLE = "viewer";
+
+    const response = await app.request(
+      "http://localhost/v1/auth/magic-link",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "launch.user@venterra.com", next: "/resi-edge/launch" }),
+      },
+      env
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+
+    const user = await queryFirst<{ email: string; role: string; is_active: number }>(
+      db,
+      "SELECT email, role, is_active FROM users WHERE email = ?",
+      ["launch.user@venterra.com"]
+    );
+    assert.equal(user?.email, "launch.user@venterra.com");
+    assert.equal(user?.role, "viewer");
+    assert.equal(user?.is_active, 1);
+
+    const token = await queryFirst<{ email: string }>(
+      db,
+      "SELECT email FROM magic_tokens WHERE email = ?",
+      ["launch.user@venterra.com"]
+    );
+    assert.equal(token?.email, "launch.user@venterra.com");
+  } finally {
+    close();
+  }
+});
+
+test("POST /v1/auth/magic-link does not provision or send tokens to disallowed domains", async () => {
+  const { db, close } = await createTestD1Database();
+
+  try {
+    await createAuthTables(db);
+    const env = createPlatformRouteEnv(db);
+    env.MAGIC_LINK_ALLOWED_DOMAINS = "venterraliving.com,venterra.com";
+    env.MAGIC_LINK_AUTO_PROVISION_ENABLED = "true";
+    env.MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES = "/resi-edge/launch";
+
+    const response = await app.request(
+      "http://localhost/v1/auth/magic-link",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "outsider@example.com" }),
+      },
+      env
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+
+    const user = await queryFirst<{ email: string }>(
+      db,
+      "SELECT email FROM users WHERE email = ?",
+      ["outsider@example.com"]
+    );
+    assert.equal(user, null);
+
+    const token = await queryFirst<{ email: string }>(
+      db,
+      "SELECT email FROM magic_tokens WHERE email = ?",
+      ["outsider@example.com"]
+    );
+    assert.equal(token, null);
+  } finally {
+    close();
+  }
+});
+
+test("POST /v1/auth/magic-link does not auto-provision company domains outside allowed launch paths", async () => {
+  const { db, close } = await createTestD1Database();
+
+  try {
+    await createAuthTables(db);
+    const env = createPlatformRouteEnv(db);
+    env.MAGIC_LINK_ALLOWED_DOMAINS = "venterraliving.com,venterra.com";
+    env.MAGIC_LINK_AUTO_PROVISION_ENABLED = "true";
+    env.MAGIC_LINK_AUTO_PROVISION_PATH_PREFIXES = "/resi-edge/launch";
+
+    const response = await app.request(
+      "http://localhost/v1/auth/magic-link",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "nonlaunch@venterraliving.com", next: "/pond" }),
+      },
+      env
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+
+    const user = await queryFirst<{ email: string }>(
+      db,
+      "SELECT email FROM users WHERE email = ?",
+      ["nonlaunch@venterraliving.com"]
+    );
+    assert.equal(user, null);
+
+    const token = await queryFirst<{ email: string }>(
+      db,
+      "SELECT email FROM magic_tokens WHERE email = ?",
+      ["nonlaunch@venterraliving.com"]
+    );
+    assert.equal(token, null);
   } finally {
     close();
   }

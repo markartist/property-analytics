@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 ROOT = Path("/Users/mark/Property_Analytics")
 sys.path.insert(0, str(ROOT))
 
+from Data_Collection.collectors.resi_v2_collector import ResiV2Collector
 from Data_Collection.collectors.thirtylines_collector import ThirtyLinesCollector
 from Data_Collection.utils.property_identity import load_property_identities
 
@@ -25,6 +26,9 @@ DEFAULT_DB_PATH = ROOT / "data" / "portfolio_analytics.db"
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "resi_source_lookup"
 SHARED_PROPERTY_HOSTS = {"venterraliving.com", "www.venterraliving.com"}
 WEBSITE_DEFAULT_MARKETING_SOURCE = "VWS"
+SOURCE_THIRTYLINES = "thirtylines"
+SOURCE_RESI_V2 = "resi-v2"
+RESI_V2_DEFAULT_PHONE_SOURCE = "resi_v2.lead_sources.VWS"
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,7 +36,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--db", default=str(DEFAULT_DB_PATH), help="SQLite Pond mirror path.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Directory for JSON/CSV artifacts.")
     parser.add_argument("--external-source-field", default="id", help="Incoming URL parameter name.")
+    parser.add_argument(
+        "--source",
+        choices=[SOURCE_THIRTYLINES, SOURCE_RESI_V2],
+        default=SOURCE_THIRTYLINES,
+        help="Source snapshot to build from. Default preserves the legacy ThirtyLines path.",
+    )
     parser.add_argument("--refresh-feed", action="store_true", help="Fetch a fresh ThirtyLines snapshot before building.")
+    parser.add_argument(
+        "--use-latest-snapshot",
+        action="store_true",
+        help="For --source resi-v2, use the latest local Resi V2 snapshot instead of fetching a fresh read-only snapshot.",
+    )
     parser.add_argument("--run-id", help="Optional stable run id.")
     return parser.parse_args()
 
@@ -88,6 +103,9 @@ def url_prefix_for_url(website_url: str | None) -> str | None:
 def ensure_schema(conn: sqlite3.Connection) -> None:
     migration = ROOT / "apps" / "api" / "migrations" / "0062_create_resi_source_lookup_tables.sql"
     conn.executescript(migration.read_text(encoding="utf-8"))
+    resi_v2_migration = ROOT / "apps" / "api" / "migrations" / "0063_create_resi_v2_api_snapshots.sql"
+    if resi_v2_migration.exists():
+        conn.executescript(resi_v2_migration.read_text(encoding="utf-8"))
     existing = {row["name"] for row in conn.execute("PRAGMA table_info(resi_source_phone_lookup)").fetchall()}
     optional_columns = {
         "default_tracking_id": "TEXT",
@@ -122,6 +140,38 @@ def latest_feed_snapshot(conn: sqlite3.Connection) -> tuple[dict[str, Any], list
         "payload_sha256": row["payload_sha256"],
     }
     return snapshot, [item for item in properties if isinstance(item, dict)]
+
+
+def latest_resi_v2_snapshot(conn: sqlite3.Connection) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+    row = conn.execute(
+        """
+        SELECT snapshot_id, snapshot_date, fetched_at, api_base_url, account_id, account_name,
+               properties_seen, lead_sources_seen, properties_payload_sha256,
+               lead_sources_payload_sha256, raw_properties_json, raw_lead_sources_json
+        FROM resi_v2_api_snapshots
+        ORDER BY fetched_at DESC, created_at DESC
+        LIMIT 1
+        """
+    ).fetchone()
+    if not row:
+        raise RuntimeError("No Resi V2 API snapshot found. Run without --use-latest-snapshot first.")
+    properties = json.loads(row["raw_properties_json"])
+    lead_sources = json.loads(row["raw_lead_sources_json"])
+    snapshot = {
+        "snapshot_id": row["snapshot_id"],
+        "snapshot_date": row["snapshot_date"],
+        "fetched_at": row["fetched_at"],
+        "feed_url": f"{str(row['api_base_url']).rstrip('/')}/lead-sources",
+        "payload_sha256": row["lead_sources_payload_sha256"],
+        "source": "resi_v2_api_snapshots.lead_sources",
+        "api_base_url": row["api_base_url"],
+        "account_id": row["account_id"],
+        "account_name": row["account_name"],
+        "properties_payload_sha256": row["properties_payload_sha256"],
+        "properties_seen": row["properties_seen"],
+        "lead_sources_seen": row["lead_sources_seen"],
+    }
+    return snapshot, [item for item in properties if isinstance(item, dict)], [item for item in lead_sources if isinstance(item, dict)]
 
 
 def identity_by_property_code() -> dict[str, Any]:
@@ -196,6 +246,29 @@ def website_default_tracking_code(prop: dict[str, Any]) -> dict[str, Any] | None
         tracking_id = clean(code.get("trackingId")) or ""
         if tracking_id.endswith("30L"):
             return code
+    return None
+
+
+def marketing_source_cd_from_resi_v2(source: dict[str, Any], property_code: str) -> str | None:
+    code = clean(source.get("code"))
+    name = clean(source.get("name"))
+    if code and code.endswith("30L"):
+        return WEBSITE_DEFAULT_MARKETING_SOURCE
+    if code and code.startswith(property_code):
+        suffix = code[len(property_code) :].strip()
+        if suffix:
+            return suffix
+    return name
+
+
+def resi_v2_default_lead_source(sources: list[dict[str, Any]], property_code: str) -> dict[str, Any] | None:
+    for source in sources:
+        if marketing_source_cd_from_resi_v2(source, property_code) == WEBSITE_DEFAULT_MARKETING_SOURCE:
+            return source
+    for source in sources:
+        name = (clean(source.get("name")) or "").lower()
+        if name in {"vws", "website", "venterra_website", "venterra website"}:
+            return source
     return None
 
 
@@ -306,6 +379,159 @@ def build_rows(
     return rows, warnings
 
 
+def build_rows_from_resi_v2(
+    properties: list[dict[str, Any]],
+    lead_sources: list[dict[str, Any]],
+    identities: dict[str, Any],
+    hostname_overrides: dict[str, dict[str, list[str]]],
+    snapshot: dict[str, Any],
+    external_source_field: str,
+    run_id: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    rows: list[dict[str, Any]] = []
+    warnings: list[dict[str, Any]] = []
+    sources_by_property_uuid: dict[str, list[dict[str, Any]]] = {}
+    for source in lead_sources:
+        property_uuid = clean(source.get("property_id"))
+        if not property_uuid:
+            warnings.append({"warning": "resi_v2_lead_source_missing_property_id", "lead_source_id": source.get("id")})
+            continue
+        sources_by_property_uuid.setdefault(property_uuid, []).append(source)
+
+    for prop in properties:
+        property_uuid = clean(prop.get("id"))
+        property_code = clean(prop.get("reference_id"))
+        if not property_uuid:
+            warnings.append({"warning": "resi_v2_property_missing_id", "property_name": prop.get("name")})
+            continue
+        if not property_code:
+            warnings.append(
+                {
+                    "warning": "resi_v2_property_missing_reference_id",
+                    "resi_property_id": property_uuid,
+                    "property_name": prop.get("name"),
+                }
+            )
+            continue
+
+        identity = identities.get(property_code)
+        identity_status = "resolved" if identity else "feed_only"
+        if not identity:
+            warnings.append(
+                {
+                    "warning": "identity_not_resolved",
+                    "property_code": property_code,
+                    "feed_property_name": prop.get("name"),
+                    "resi_property_id": property_uuid,
+                }
+            )
+
+        property_sources = sources_by_property_uuid.get(property_uuid, [])
+        if not property_sources:
+            warnings.append({"warning": "no_lead_sources", "property_code": property_code, "resi_property_id": property_uuid})
+            continue
+
+        website_url = identity.website_url if identity else None
+        overrides = hostname_overrides.get(property_code, {"hostnames": [], "url_prefixes": []})
+        hostnames = sorted(set(hostnames_for_url(website_url) + overrides.get("hostnames", [])))
+        url_prefixes = sorted(
+            set([value for value in [url_prefix_for_url(website_url)] if value] + overrides.get("url_prefixes", []))
+        )
+        default_source = resi_v2_default_lead_source(property_sources, property_code)
+        default_tracking_id = clean((default_source or {}).get("code")) or clean((default_source or {}).get("id"))
+        default_marketing_source_cd = (
+            marketing_source_cd_from_resi_v2(default_source or {}, property_code) if default_source else None
+        )
+        default_phone = clean((default_source or {}).get("phone"))
+        default_email = clean((default_source or {}).get("email"))
+        fallback_phone = default_phone
+        fallback_email = default_email
+        default_phone_source = RESI_V2_DEFAULT_PHONE_SOURCE if default_phone else None
+        default_email_source = RESI_V2_DEFAULT_PHONE_SOURCE if default_email else None
+        if not default_phone:
+            warnings.append(
+                {
+                    "warning": "missing_vws_default_phone",
+                    "property_code": property_code,
+                    "feed_property_name": prop.get("name"),
+                    "fallback_phone_source": None,
+                }
+            )
+
+        for source in property_sources:
+            tracking_id = clean(source.get("code")) or clean(source.get("id"))
+            if not tracking_id:
+                warnings.append({"warning": "lead_source_missing_code", "property_code": property_code, "lead_source_id": source.get("id")})
+                continue
+
+            source_phone = clean(source.get("phone"))
+            source_email = clean(source.get("email"))
+            rows.append(
+                {
+                    "property_code": property_code,
+                    "tracking_id": tracking_id,
+                    "external_source_field": external_source_field,
+                    "marketing_source_cd": marketing_source_cd_from_resi_v2(source, property_code),
+                    "source_phone": source_phone,
+                    "source_email": source_email,
+                    "fallback_phone": fallback_phone,
+                    "fallback_email": fallback_email,
+                    "default_tracking_id": default_tracking_id,
+                    "default_marketing_source_cd": default_marketing_source_cd,
+                    "default_phone_source": default_phone_source,
+                    "default_email_source": default_email_source,
+                    "concierge_phone": clean((prop.get("data") or {}).get("conciergePhone")) if isinstance(prop.get("data"), dict) else None,
+                    "property_name": identity.property_name if identity else clean(prop.get("name")),
+                    "canonical_property_id": identity.canonical_property_id if identity else None,
+                    "ga4_property_id": identity.ga4_property_id if identity else None,
+                    "community_id": identity.community_id if identity else None,
+                    "website_url": website_url,
+                    "hostnames_json": json_compact(hostnames),
+                    "url_prefixes_json": json_compact(url_prefixes),
+                    "feed_property_id": property_code,
+                    "feed_property_name": clean(prop.get("name")),
+                    "feed_snapshot_id": snapshot["snapshot_id"],
+                    "feed_snapshot_date": snapshot["snapshot_date"],
+                    "feed_fetched_at": snapshot["fetched_at"],
+                    "feed_payload_sha256": snapshot["payload_sha256"],
+                    "source_has_phone": 1 if source_phone else 0,
+                    "source_has_email": 1 if source_email else 0,
+                    "identity_status": identity_status,
+                    "is_active": 1,
+                    "raw_tracking_code_json": json_compact({"source": source, "property": prop}),
+                    "run_id": run_id,
+                }
+            )
+
+    return rows, warnings
+
+
+def dedupe_rows(
+    rows: list[dict[str, Any]],
+    warnings: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    deduped: dict[tuple[str, str], dict[str, Any]] = {}
+    duplicate_counts: dict[tuple[str, str], int] = {}
+    for row in rows:
+        key = (str(row["property_code"]), str(row["tracking_id"]))
+        if key in deduped:
+            duplicate_counts[key] = duplicate_counts.get(key, 1) + 1
+        deduped[key] = row
+    if duplicate_counts:
+        warnings.append(
+            {
+                "warning": "duplicate_tracking_ids_collapsed",
+                "duplicate_key_count": len(duplicate_counts),
+                "duplicate_rows_over": sum(count - 1 for count in duplicate_counts.values()),
+                "examples": [
+                    {"property_code": property_code, "tracking_id": tracking_id, "count": count}
+                    for (property_code, tracking_id), count in list(duplicate_counts.items())[:10]
+                ],
+            }
+        )
+    return list(deduped.values())
+
+
 def upsert_rows(conn: sqlite3.Connection, rows: list[dict[str, Any]]) -> int:
     columns = [
         "property_code",
@@ -352,10 +578,19 @@ def upsert_rows(conn: sqlite3.Connection, rows: list[dict[str, Any]]) -> int:
             updated_at=CURRENT_TIMESTAMP
     """
     conn.executemany(sql, [[row[col] for col in columns] for row in rows])
-    return len(rows)
+    if not rows:
+        return 0
+    row = conn.execute("SELECT COUNT(*) AS count FROM resi_source_phone_lookup WHERE run_id = ?", (rows[0]["run_id"],)).fetchone()
+    return int(row["count"] if isinstance(row, sqlite3.Row) else row[0])
 
 
-def kv_payload(rows: list[dict[str, Any]], snapshot: dict[str, Any], generated_at: str, external_source_field: str) -> dict[str, Any]:
+def kv_payload(
+    rows: list[dict[str, Any]],
+    snapshot: dict[str, Any],
+    generated_at: str,
+    external_source_field: str,
+    source: str = SOURCE_THIRTYLINES,
+) -> dict[str, Any]:
     by_property: dict[str, Any] = {}
     by_hostname: dict[str, str] = {}
     by_url_prefix: dict[str, str] = {}
@@ -382,7 +617,7 @@ def kv_payload(rows: list[dict[str, Any]], snapshot: dict[str, Any], generated_a
             by_hostname[host] = row["property_code"]
         for prefix in prop["urlPrefixes"]:
             by_url_prefix[prefix] = row["property_code"]
-        source = {
+        source_entry = {
             "trackingId": row["tracking_id"],
             "marketingSourceCd": row["marketing_source_cd"],
             "phone": row["source_phone"] or row["fallback_phone"],
@@ -394,16 +629,16 @@ def kv_payload(rows: list[dict[str, Any]], snapshot: dict[str, Any], generated_a
             "hasSourcePhone": bool(row["source_has_phone"]),
             "hasSourceEmail": bool(row["source_has_email"]),
         }
-        prop["sources"][row["tracking_id"]] = source
+        prop["sources"][row["tracking_id"]] = source_entry
         by_tracking_id[row["tracking_id"]] = {
             "propertyCode": row["property_code"],
-            **source,
+            **source_entry,
         }
 
     return {
-        "version": "2026-08-06.resi-source-lookup-v1",
+        "version": "2026-08-20.resi-source-lookup-resi-v2" if source == SOURCE_RESI_V2 else "2026-08-06.resi-source-lookup-v1",
         "generatedAt": generated_at,
-        "source": "thirtylines_feed_snapshots.trackingCodes",
+        "source": "resi_v2_api_snapshots.lead_sources" if source == SOURCE_RESI_V2 else "thirtylines_feed_snapshots.trackingCodes",
         "externalSourceField": external_source_field,
         "feedSnapshot": snapshot,
         "propertyCount": len(by_property),
@@ -440,8 +675,13 @@ def main() -> int:
     db_path = Path(args.db)
     output_dir = Path(args.output_dir)
 
+    if args.refresh_feed and args.source != SOURCE_THIRTYLINES:
+        raise RuntimeError("--refresh-feed is only valid with --source thirtylines.")
+
     if args.refresh_feed:
         ThirtyLinesCollector(db_path).ingest()
+    if args.source == SOURCE_RESI_V2 and not args.use_latest_snapshot:
+        ResiV2Collector(db_path=db_path).ingest()
 
     generated_at = utc_now()
     run_base = args.run_id or generated_at.replace("-", "").replace(":", "").replace("Z", "Z")
@@ -449,7 +689,11 @@ def main() -> int:
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         ensure_schema(conn)
-        snapshot, feed_properties = latest_feed_snapshot(conn)
+        if args.source == SOURCE_RESI_V2:
+            snapshot, feed_properties, lead_sources = latest_resi_v2_snapshot(conn)
+        else:
+            snapshot, feed_properties = latest_feed_snapshot(conn)
+            lead_sources = []
         run_hash = hashlib.sha256(f"{snapshot['snapshot_id']}:{generated_at}".encode("utf-8")).hexdigest()[:12]
         run_id = run_base if args.run_id else f"resi_source_lookup_{run_hash}"
         identities = identity_by_property_code()
@@ -457,16 +701,28 @@ def main() -> int:
             load_official_url_overrides(identities),
             load_edge_manifest_overrides(),
         )
-        rows, warnings = build_rows(
-            feed_properties=feed_properties,
-            identities=identities,
-            hostname_overrides=hostname_overrides,
-            snapshot=snapshot,
-            external_source_field=args.external_source_field,
-            run_id=run_id,
-        )
+        if args.source == SOURCE_RESI_V2:
+            rows, warnings = build_rows_from_resi_v2(
+                properties=feed_properties,
+                lead_sources=lead_sources,
+                identities=identities,
+                hostname_overrides=hostname_overrides,
+                snapshot=snapshot,
+                external_source_field=args.external_source_field,
+                run_id=run_id,
+            )
+        else:
+            rows, warnings = build_rows(
+                feed_properties=feed_properties,
+                identities=identities,
+                hostname_overrides=hostname_overrides,
+                snapshot=snapshot,
+                external_source_field=args.external_source_field,
+                run_id=run_id,
+            )
+        rows = dedupe_rows(rows, warnings)
         rows_upserted = upsert_rows(conn, rows)
-        kv = kv_payload(rows, snapshot, generated_at, args.external_source_field)
+        kv = kv_payload(rows, snapshot, generated_at, args.external_source_field, args.source)
         artifacts = write_artifacts(output_dir, run_id, rows, kv, warnings)
         resolved_properties = len({row["property_code"] for row in rows if row["identity_status"] == "resolved"})
         feed_only_properties = len({row["property_code"] for row in rows if row["identity_status"] != "resolved"})
@@ -506,6 +762,7 @@ def main() -> int:
 
     summary = {
         "run_id": run_id,
+        "source": args.source,
         "db_path": str(db_path),
         "feed_snapshot": snapshot,
         "properties_seen": len(feed_properties),

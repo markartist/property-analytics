@@ -30,7 +30,7 @@ The target package is:
 - Performance: mobile reference parity, currently `98+`, and desktop `90+` PageSpeed Insights on the live production URL. The `90+` mobile floor is not enough to call the package equivalent to the proven examples.
 - Analytics: Zaraz-owned GA4, Heap/Contentsquare, Ahrefs Web Analytics, Resi attribution bridge, Cloudflare Analytics/RUM posture.
 - Consent: Cloudflare Zaraz CMP with purpose assignments, visible Worker preference UI when needed, and live accept/reject network proof.
-- Consent UI standard: use the shared `compact_finalized_pill_v27_2026_08_12` contract only. The pill text is `This website uses cookies`, pill buttons are `Preferences` and `Accept`, pill-level `Reject` is forbidden, `Preferences` must open `zaraz.showConsentModal()`, and the Cloudflare preferences modal must prove as a bounded centered desktop panel rather than a full-width slab.
+- Consent UI standard: use the shared `compact_shell_pill_v29_2026_08_20` contract only. The pill text is `This website uses cookies`, pill buttons are `Preferences` and `Accept`, pill-level `Reject` is forbidden, `Preferences` must open `zaraz.showConsentModal()`, and the Cloudflare preferences modal must prove as a bounded centered desktop panel rather than a full-width slab. The compact pill must follow the Resi Edge mobile shell marker, keep the cookie icon visible, and render `Preferences` as the subdued secondary action.
 - SEO and AI: meta, OG, canonical, schema URLs, `llms.txt`, sitemap/robots, GSC/indexing, stale identity cleanup.
 - Attribution: visible phone numbers come from the Resi source lookup, defaulting to VWS, never the raw office phone.
 - Evidence: browser screenshots, console/network logs, source-coded URL proof, architecture proof, PSI proof, analytics proof, cache purge proof, rollback marker.
@@ -248,6 +248,8 @@ Public marketing pages may use edge-owned shell rendering, native HTML cleanup, 
 
 WordPress control paths must never use those optimization paths. They must pass through to the native origin transparently with no edge HTML rewrite, no analytics injection, no cache, no `Set-Cookie` stripping, and no Worker-followed redirect rewriting.
 
+08/18/2026 protected-control clarification: when Cloudflare or the Resi Website Management Firewall intentionally returns an uncached `401`/`403` on WordPress control paths, that is acceptable proof only if the response has no Resi Edge markers, no `x-vtr` headers, and no cache hit behavior. The accepted security block is not permission to run shell rendering, cleanup, analytics, or caching on admin/API paths.
+
 Required transparent paths:
 
 - `/wp-login.php`
@@ -263,12 +265,12 @@ Required method rule:
 
 Required proof:
 
-- Origin `/wp-login.php` sends `wordpress_test_cookie`.
-- Public vanity `/wp-login.php` also sends `wordpress_test_cookie`.
+- Origin `/wp-login.php` sends `wordpress_test_cookie`, or the vanity control path is intentionally blocked by Cloudflare/Resi Website Management Firewall before WordPress is exposed.
+- Public vanity `/wp-login.php` either sends `wordpress_test_cookie` or returns the approved uncached protected-control `401`/`403`.
 - Public `/wp-login.php` does not include edge shell/topper/HTML-cleaner markers.
-- Public `/wp-admin/` preserves the native WordPress redirect behavior instead of returning a cleaned `200` page.
+- Public `/wp-admin/` preserves the native WordPress redirect behavior instead of returning a cleaned `200` page, or returns the approved uncached protected-control `401`/`403`.
 - Public control-path responses are `no-store` or native-equivalent and do not create Cloudflare cache hits.
-- Public `/wp-json/` remains native JSON and contains no edge shell/topper/cleanup markers.
+- Public `/wp-json/` remains native JSON or returns the approved uncached protected-control `401`/`403`; it must contain no edge shell/topper/cleanup markers.
 - The governed runner records this as `wordpress_control_path_bypass_proven` during live apply. If it fails after deploy, the package must roll back and stop.
 
 ### Analytics
@@ -285,6 +287,8 @@ Required cleanup:
 
 - Remove in WordPress or strip at the edge: native GTM, direct `gtag.js`, direct Heap/Contentsquare, direct Ahrefs, direct Resi Pixel.
 - Do not let native duplicate analytics leak on desktop pass-through.
+- Current production Heap app id is `286627304`. Resi-provided native reference script calls `heap.load("286627304")` and fetches `https://cdn.us.heap-api.com/config/286627304/heap_config.js`; use this as the production-id reference for auditing, not as permission to paste a direct native Heap loader into Resi Edge packages.
+- Any observed native Heap app id other than `286627304` is a cleanup finding unless Mark approves a current-task exception.
 - Use Heap mode `interaction_only_queue_v6_input_only_cs_verify_home_204`.
 - Use same-origin Contentsquare verify suppression at `/?vtr_cs_verify_suppressed=1` returning `204`.
 - Do not inject a manual Zaraz loader. Cloudflare Zaraz auto-injection is the only loader path.
@@ -300,7 +304,7 @@ The consent implementation is a shared standard. Use `/Users/mark/Property_Analy
 
 Current required visible pill:
 
-- Version: `compact_finalized_pill_v27_2026_08_12`.
+- Version: `compact_shell_pill_v29_2026_08_20`.
 - Visible text: `This website uses cookies`.
 - Visible buttons: `Preferences`, `Accept`.
 - Forbidden pill button: `Reject`.
@@ -375,6 +379,7 @@ Stage is allowed to prepare non-route setup only:
 
 - Generate, budget-check, and upload the mobile-owned asset package through the canonical generator/uploader. This includes hero AVIF/WebP and the first two shell-owned content-block AVIF/WebP assets. It does not generate desktop assets.
 - Apply or confirm the governed Zaraz analytics package: GA4, Heap interaction-only mode, Ahrefs existing project tooling, and Resi event bridge from the manifest.
+- Apply or confirm the governed Zaraz consent package before the consent audit. Consent is not audit-only; newly prepared domains must have Cloudflare Zaraz CMP enabled and enabled tools assigned to configured purposes before any route probe or Worker deploy.
 - Re-audit Zaraz consent after setup.
 - Build the exact deploy bundle that `apply` will use and run Wrangler dry-run against it. The bundle must include every shared runtime dependency, including `/Users/mark/Property_Analytics/ops/cloudflare/shared/resi-consent-widget/widget.mjs`, and must pass the `deploy_bundle_closure_verified` gate before any route probe is allowed.
 - Capture The Vine reference replay as evidence before setup, but do not let a stale live reference page override the current shared package contract. The blocking gates are static package validation, generated bundle closure, and the selected target's live production proof. Do not run TowneStone, Champions, Calais, District, Ventana, Pilot, or any other non-Vine property as a stage blocker; those are normalization targets, not references.
@@ -462,6 +467,7 @@ Required PSI proof:
 - Desktop live production URL: 90+.
 - Save JSON and summary.
 - A Lighthouse `500` or no-score result may use the runner's bounded no-score retry path. A measured score below target is not timing; it is a failed gate.
+- If Google PSI no-scores an exact sample but a fresh/live mobile sample scores at or above the current parity target, preserve the no-score evidence as provider noise and let the scored fresh/live sample carry the gate.
 - If PSI reports an unscored warning, do not fix it if the fix drops the primary score below target. Record it as known non-blocking unless a no-regression fix passes.
 
 ## Phase 7: Readout And Control Surface

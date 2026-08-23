@@ -1,0 +1,164 @@
+<mxfile host="app.diagrams.net" modified="2026-08-18T00:00:00.000Z" agent="Venterra" version="24.7.17" type="device">
+  <diagram id="public-website-architecture" name="Public Website Architecture and Data Flow">
+    <mxGraphModel dx="1600" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Public Website Architecture and Data Flow" style="text;html=1;strokeColor=none;fillColor=none;fontSize=28;fontStyle=1;fontColor=#15284B;align=left;verticalAlign=middle;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="35" width="760" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="Current model: property websites use vanity domains; venterraliving.com remains the enterprise site and points to Kinsta." style="text;html=1;strokeColor=none;fillColor=none;fontSize=14;fontColor=#294782;align=left;verticalAlign=middle;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry x="60" y="75" width="1180" height="25" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="lane-request" value="Public Request Path" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#3D66B9;strokeWidth=2;fillColor=#F6F6F5;fontColor=#15284B;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=16;" vertex="1" parent="1">
+          <mxGeometry x="50" y="120" width="1500" height="310" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-data" value="Supporting Evidence and Data Flow" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#3B9189;strokeWidth=2;fillColor=#F6F6F5;fontColor=#15284B;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=16;" vertex="1" parent="1">
+          <mxGeometry x="50" y="470" width="970" height="355" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-governance" value="Ownership, Governance, and Escalation" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#BD4830;strokeWidth=2;fillColor=#F6F6F5;fontColor=#15284B;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=16;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="470" width="490" height="355" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane-support" value="Where Support Starts" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#5A81CF;strokeWidth=2;fillColor=#FFFFFF;fontColor=#15284B;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=16;" vertex="1" parent="1">
+          <mxGeometry x="50" y="865" width="1500" height="175" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="external" value="External Demand&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Public users&lt;br&gt;Prospects&lt;br&gt;Search crawlers&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#3D66B9;strokeWidth=2;fontColor=#15284B;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="75" y="185" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="registrar" value="Property Vanity Domains&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Primary property URLs&lt;br&gt;Launch and vanity domains&lt;br&gt;Legacy URLs redirect here&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#D6D6D2;strokeColor=#294782;strokeWidth=2;fontColor=#15284B;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="325" y="165" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="cloudflare" value="Cloudflare Edge Control&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;DNS, proxying, redirects&lt;br&gt;SSL/TLS, cache rules, Workers&lt;br&gt;Access, Zaraz, selected assets&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#15284B;strokeColor=#3D66B9;strokeWidth=2;fontColor=#FFFFFF;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="625" y="155" width="270" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="origins" value="Website Origin / Vendor&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;CMS and page rendering&lt;br&gt;Leasing paths and forms&lt;br&gt;Vendor-hosted defects&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#3D66B9;strokeWidth=2;fontColor=#15284B;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="965" y="145" width="230" height="115" as="geometry"/>
+        </mxCell>
+        <mxCell id="platform" value="Platform Surfaces&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;app.venterradev.com&lt;br&gt;api.venterradev.com&lt;br&gt;Workers, D1, R2&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#7DCAC2;strokeColor=#3B9189;strokeWidth=2;fontColor=#15284B;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="965" y="295" width="230" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="result" value="Public Website Experience&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Property website&lt;br&gt;Launch or vanity domain&lt;br&gt;Page, leasing path, or form&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#3D66B9;strokeWidth=2;fontColor=#15284B;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1275" y="185" width="210" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="enterprise" value="Enterprise Site&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;venterraliving.com&lt;br&gt;Technology / IYT DNS records&lt;br&gt;Points to Kinsta&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#BD4830;strokeWidth=2;fontColor=#15284B;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="325" y="320" width="240" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="kinsta" value="Kinsta Enterprise Origin&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Enterprise website&lt;br&gt;Links out to property vanity domains&lt;br&gt;No property URL path dependency&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#D6D6D2;strokeColor=#BD4830;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="625" y="320" width="270" height="85" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="sourcefacts" value="Source Systems&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Cloudflare Analytics&lt;br&gt;Cloudflare billable usage&lt;br&gt;GA4, GSC, Heap / Contentsquare&lt;br&gt;DataForSEO, aHrefs&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#3B9189;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="95" y="555" width="245" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="collection" value="Collection and Validation&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Scheduled collectors&lt;br&gt;Freshness checks&lt;br&gt;Source limitations recorded&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#7DCAC2;strokeColor=#3B9189;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="405" y="555" width="230" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="datapond" value="Data Pond / Watchtower&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Local source facts&lt;br&gt;Freshness visibility&lt;br&gt;Reporting support&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#7DCAC2;strokeColor=#3B9189;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="555" width="230" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="outputs" value="Operating Outputs&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Reports and exports&lt;br&gt;Run packets&lt;br&gt;Support evidence&lt;br&gt;Audit artifacts&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#15284B;strokeColor=#3D66B9;strokeWidth=2;fontColor=#FFFFFF;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="405" y="730" width="525" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="webops" value="Web Operations&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Property website intent&lt;br&gt;Vanity-domain routing&lt;br&gt;Redirect approval&lt;br&gt;Support coordination&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#BD4830;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="545" width="185" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="tech" value="Technology / IYT&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;venterraliving.com DNS only&lt;br&gt;Point records to Kinsta&lt;br&gt;Not property-domain routing&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#BD4830;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1325" y="545" width="185" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="vendor" value="Website Vendor&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Origin availability&lt;br&gt;CMS behavior&lt;br&gt;Leasing functions&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#D6D6D2;strokeColor=#294782;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="705" width="185" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="keeper" value="Keeper&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Credential source of truth&lt;br&gt;No raw secrets in tickets or docs&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#D6D6D2;strokeColor=#294782;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1325" y="705" width="185" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="support1" value="Property vanity domain or legacy redirect fails&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Start with TBL - Public Website Down or Degraded&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#5A81CF;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="95" y="930" width="310" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="support2" value="DNS, redirect, Worker, cache, or Zaraz change&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Use POL / PROC Cloudflare pages&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#5A81CF;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="455" y="930" width="310" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="support3" value="Site loads but CMS, page, form, or widget is broken&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Use PROC - Raise Website Vendor Support Request&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#5A81CF;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="815" y="930" width="330" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="support4" value="SEO, site health, or collection issue&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Use aHrefs TBL or PROC pages&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#FFFFFF;strokeColor=#5A81CF;strokeWidth=2;fontColor=#15284B;fontSize=15;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1195" y="930" width="310" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#294782;strokeWidth=3;" edge="1" parent="1" source="external" target="registrar">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#294782;strokeWidth=3;" edge="1" parent="1" source="registrar" target="cloudflare">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#294782;strokeWidth=3;" edge="1" parent="1" source="cloudflare" target="origins">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#294782;strokeWidth=3;" edge="1" parent="1" source="cloudflare" target="platform">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#294782;strokeWidth=3;" edge="1" parent="1" source="origins" target="result">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#294782;strokeWidth=3;" edge="1" parent="1" source="platform" target="result">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6b" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#BD4830;strokeWidth=3;" edge="1" parent="1" source="enterprise" target="kinsta">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6c" value="links out" style="endArrow=block;html=1;rounded=0;strokeColor=#BD4830;strokeWidth=2;fontColor=#BD4830;fontSize=12;" edge="1" parent="1" source="kinsta" target="registrar">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="430"/>
+              <mxPoint x="445" y="430"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#3B9189;strokeWidth=3;" edge="1" parent="1" source="cloudflare" target="sourcefacts">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="445"/>
+              <mxPoint x="218" y="445"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#3B9189;strokeWidth=3;" edge="1" parent="1" source="sourcefacts" target="collection">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#3B9189;strokeWidth=3;" edge="1" parent="1" source="collection" target="datapond">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" value="" style="endArrow=block;html=1;rounded=0;strokeColor=#3B9189;strokeWidth=3;" edge="1" parent="1" source="datapond" target="outputs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" value="" style="endArrow=block;html=1;dashed=1;rounded=0;strokeColor=#BD4830;strokeWidth=2;" edge="1" parent="1" source="webops" target="cloudflare">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1193" y="505"/>
+              <mxPoint x="760" y="505"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="" style="endArrow=block;html=1;dashed=1;rounded=0;strokeColor=#BD4830;strokeWidth=2;" edge="1" parent="1" source="tech" target="enterprise">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1418" y="505"/>
+              <mxPoint x="445" y="505"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="" style="endArrow=block;html=1;dashed=1;rounded=0;strokeColor=#294782;strokeWidth=2;" edge="1" parent="1" source="vendor" target="origins">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1193" y="690"/>
+              <mxPoint x="1155" y="690"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   apiFetch,
+  AUTH_PRIMARY,
   buildCloudflareAccessBootstrapUrl,
   buildCloudflareAccessBootstrapRetryUrl,
   clearCloudflareLoggedOutFlag,
@@ -12,6 +13,7 @@ import {
   hasCloudflareBootstrapMarker,
   hasCloudflareBootstrapRetryMarker,
   hasLoggedOutMarker,
+  normalizeSafeNextPath,
   requestMagicLink,
 } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default function LoginClient() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
+  const nextPath = normalizeSafeNextPath(searchParams.get("next"), "/resi-edge/launch");
   const bootstrapAttempted = hasCloudflareBootstrapMarker(searchParams.toString());
   const bootstrapRetried = hasCloudflareBootstrapRetryMarker(searchParams.toString());
   const loggedOut = hasLoggedOutMarker(searchParams.toString());
@@ -75,7 +78,7 @@ export default function LoginClient() {
             const data = await res.json().catch(() => null);
             if (data?.user) {
               clearCloudflareLoggedOutFlag();
-              window.location.href = "/";
+              window.location.href = nextPath;
               return;
             }
           }
@@ -83,6 +86,10 @@ export default function LoginClient() {
           if (attempt < maxAttempts) {
             await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
             continue;
+          }
+
+          if (AUTH_PRIMARY === "magic") {
+            break;
           }
 
           if (!errorParam && !bootstrapAttempted && !loggedOut && !cancelled) {
@@ -99,6 +106,10 @@ export default function LoginClient() {
           if (attempt < maxAttempts) {
             await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
             continue;
+          }
+
+          if (AUTH_PRIMARY === "magic") {
+            break;
           }
 
           if (!errorParam && !bootstrapAttempted && !loggedOut && !cancelled) {
@@ -124,21 +135,22 @@ export default function LoginClient() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapAttempted, bootstrapRetried, cloudflareLoggedOut, errorParam, loggedOut]);
+  }, [bootstrapAttempted, bootstrapRetried, cloudflareLoggedOut, errorParam, loggedOut, nextPath]);
 
   function continueWithCloudflareAccess() {
     clearCloudflareLoggedOutFlag();
-    window.location.href = buildCloudflareAccessBootstrapUrl("/pond");
+    window.location.href = buildCloudflareAccessBootstrapUrl(nextPath);
   }
 
-  const showCloudflareFrontDoor = loggedOut || cloudflareLoggedOut;
+  const isMagicPrimary = AUTH_PRIMARY === "magic";
+  const showCloudflareFrontDoor = !isMagicPrimary && (loggedOut || cloudflareLoggedOut);
 
   if (checkingExistingSession) {
     return (
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(135deg, #15284B 0%, #0D5E6D 50%, #15803D 100%)" }}
+          style={{ background: "linear-gradient(135deg, #15284B 0%, #3B9189 50%, #7DCAC2 100%)" }}
         />
         <div className="relative z-10 flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 text-sm text-white/75 shadow-2xl shadow-black/20 backdrop-blur-xl">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -153,7 +165,7 @@ export default function LoginClient() {
     setError("");
     setLoading(true);
     try {
-      await requestMagicLink(email);
+      await requestMagicLink(email, nextPath);
       setMagicLinkSent(true);
     } catch {
       setError("Unable to connect to the server.");
@@ -173,7 +185,7 @@ export default function LoginClient() {
       });
       if (res.ok) {
         clearCloudflareLoggedOutFlag();
-        window.location.href = "/";
+        window.location.href = nextPath;
       } else {
         const data = await res.json();
         setError(data.error?.message ?? "Login failed");
@@ -189,7 +201,7 @@ export default function LoginClient() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
       <div
         className="absolute inset-0"
-        style={{ background: "linear-gradient(135deg, #15284B 0%, #0D5E6D 50%, #15803D 100%)" }}
+        style={{ background: "linear-gradient(135deg, #15284B 0%, #3B9189 50%, #7DCAC2 100%)" }}
       />
 
       <div className="absolute inset-x-0 bottom-0 h-[50%] pointer-events-none">
@@ -199,7 +211,7 @@ export default function LoginClient() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[20%] left-[10%] w-64 h-64 rounded-full bg-white/[0.03] animate-pulse" style={{ animationDuration: "4s" }} />
         <div className="absolute top-[60%] right-[5%] w-96 h-96 rounded-full bg-white/[0.02] animate-pulse" style={{ animationDuration: "6s" }} />
-        <div className="absolute bottom-[10%] left-[30%] w-80 h-80 rounded-full bg-[#0D5E6D]/20 animate-pulse" style={{ animationDuration: "5s" }} />
+        <div className="absolute bottom-[10%] left-[30%] w-80 h-80 rounded-full bg-[#3B9189]/20 animate-pulse" style={{ animationDuration: "5s" }} />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
@@ -209,15 +221,15 @@ export default function LoginClient() {
           </div>
           <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70 backdrop-blur-sm">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Cloudflare One Protected
+            {isMagicPrimary ? "Magic Link Protected" : "Cloudflare One Protected"}
           </div>
           <div className="mb-2 flex items-center justify-center gap-2">
-            <Waves className="h-5 w-5 text-[#0D5E6D]/60" style={{ color: "rgba(255,255,255,0.5)" }} />
+            <Waves className="h-5 w-5 text-[#7DCAC2]/70" style={{ color: "rgba(255,255,255,0.5)" }} />
             <h1 className="text-3xl font-bold tracking-tight text-white">The Data Pond</h1>
           </div>
           <p className="text-sm text-white/50">WebOps Analytics</p>
           <p className="mt-2 text-xs text-white/35">
-            Styled like Data Pond. Secured at the edge by Cloudflare Access.
+            {isMagicPrimary ? "Company email required for access." : "Styled like Data Pond. Secured at the edge by Cloudflare Access."}
           </p>
         </div>
 
@@ -261,7 +273,7 @@ export default function LoginClient() {
                   <button
                     type="button"
                     onClick={continueWithCloudflareAccess}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1D4ED8] to-[#0891B2] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-950/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-cyan-950/40"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3D66B9] to-[#3B9189] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15284B]/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[#15284B]/40"
                   >
                     Continue with Cloudflare Access
                     <ArrowRight className="h-4 w-4" />
@@ -281,7 +293,7 @@ export default function LoginClient() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="h-12 rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-[#0D5E6D] focus:ring-[#0D5E6D]/50"
+                  className="h-12 rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-[#7DCAC2] focus:ring-[#7DCAC2]/50"
                 />
               </div>
 
@@ -295,32 +307,36 @@ export default function LoginClient() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0D5E6D] to-[#15803D] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#0D5E6D]/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[#0D5E6D]/40 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3D66B9] to-[#3B9189] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15284B]/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[#15284B]/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                 {showCloudflareFrontDoor ? "Use Magic Link Instead" : "Send Magic Link"}
               </button>
 
-              <div className="relative my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-transparent px-3 text-xs text-white/30">or</span>
-                </div>
-              </div>
+              {!isMagicPrimary && (
+                <>
+                  <div className="relative my-2">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-white/10" />
+                    </div>
+                    <div className="relative flex justify-center">
+                      <span className="bg-transparent px-3 text-xs text-white/30">or</span>
+                    </div>
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("password");
-                  setError("");
-                }}
-                className="flex w-full items-center justify-center gap-2 text-xs text-white/40 transition-colors hover:text-white/70"
-              >
-                <KeyRound className="h-3 w-3" />
-                Sign in with password instead
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("password");
+                      setError("");
+                    }}
+                    className="flex w-full items-center justify-center gap-2 text-xs text-white/40 transition-colors hover:text-white/70"
+                  >
+                    <KeyRound className="h-3 w-3" />
+                    Sign in with password instead
+                  </button>
+                </>
+              )}
             </form>
           ) : (
             <form onSubmit={handlePasswordLogin} className="space-y-5">
@@ -341,7 +357,7 @@ export default function LoginClient() {
                   <button
                     type="button"
                     onClick={continueWithCloudflareAccess}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1D4ED8] to-[#0891B2] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-cyan-950/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-cyan-950/40"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3D66B9] to-[#3B9189] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15284B]/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[#15284B]/40"
                   >
                     Continue with Cloudflare Access
                     <ArrowRight className="h-4 w-4" />
@@ -361,7 +377,7 @@ export default function LoginClient() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="h-12 rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-[#0D5E6D] focus:ring-[#0D5E6D]/50"
+                  className="h-12 rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-[#7DCAC2] focus:ring-[#7DCAC2]/50"
                 />
               </div>
               <div className="space-y-2">
@@ -375,7 +391,7 @@ export default function LoginClient() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-[#0D5E6D] focus:ring-[#0D5E6D]/50"
+                  className="h-12 rounded-xl border-white/20 bg-white/10 text-white placeholder:text-white/30 focus:border-[#7DCAC2] focus:ring-[#7DCAC2]/50"
                 />
               </div>
 
@@ -389,7 +405,7 @@ export default function LoginClient() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0D5E6D] to-[#15803D] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#0D5E6D]/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[#0D5E6D]/40 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#3D66B9] to-[#3B9189] px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15284B]/30 transition-all hover:brightness-110 hover:shadow-xl hover:shadow-[#15284B]/40 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                 {showCloudflareFrontDoor ? "Use App Password Instead" : "Sign In"}

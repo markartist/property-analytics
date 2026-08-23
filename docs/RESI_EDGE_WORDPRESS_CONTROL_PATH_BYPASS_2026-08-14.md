@@ -51,6 +51,8 @@ They must pass to origin transparently with:
 - no edge cookie stripping
 - no Cloudflare cache hit behavior
 
+08/18/2026 protected-control addendum: if Cloudflare or the Resi Website Management Firewall intentionally blocks a WordPress control path before the native WordPress response is exposed, the gate may accept that as protected control-path behavior only when the response is `401` or `403`, uncached, has no `x-vtr` headers, and contains no Resi Edge shell/topper/cleanup markers. This does not permit caching, rewriting, analytics injection, or shell rendering on admin/API paths.
+
 ## Required Transparent Paths
 
 Every Resi Edge Worker must bypass public-page optimization for:
@@ -175,7 +177,7 @@ curl -sS -D - -o /tmp/wp-login.html https://PROPERTY_DOMAIN/wp-login.php \
 
 Pass criteria:
 
-- `Set-Cookie` includes `wordpress_test_cookie`
+- `Set-Cookie` includes `wordpress_test_cookie`, or the path returns an intentional uncached Cloudflare/Resi Website Management Firewall `401`/`403`
 - `cf-cache-status` is not a cache hit
 - response has no edge shell/topper/native-clean marker
 
@@ -188,7 +190,7 @@ curl -sS -D - -o /tmp/wp-admin.html https://PROPERTY_DOMAIN/wp-admin/ \
 
 Pass criteria:
 
-- unauthenticated request preserves native WordPress redirect behavior, usually `302`
+- unauthenticated request preserves native WordPress redirect behavior, usually `302`, or the path returns an intentional uncached Cloudflare/Resi Website Management Firewall `401`/`403`
 - response is not a cleaned `200`
 - response has no edge shell/topper/native-clean marker
 
@@ -201,7 +203,7 @@ curl -sS -D - -o /tmp/wp-json.json https://PROPERTY_DOMAIN/wp-json/ \
 
 Pass criteria:
 
-- response remains native JSON
+- response remains native JSON, or the path returns an intentional uncached Cloudflare/Resi Website Management Firewall `401`/`403`
 - response has no edge shell/topper/native-clean marker
 
 ### Public Homepage Still Optimized
