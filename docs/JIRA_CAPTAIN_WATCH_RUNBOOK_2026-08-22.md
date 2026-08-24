@@ -110,6 +110,8 @@ The governed publish target is the existing Captain Runtime model:
 
 Use generated SQL only after review. Remote D1 publish, Jira mutation, and recurring automation setup are separate approval steps.
 
+08/24/2026 production note: the reviewed packet `/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch/jira-captain-watch-20260824-0819/captain-watch-upserts.sql` was applied to remote Captain Runtime. It created/updated `14` Jira watch items and `14` Jira actions across `12` property Captains. Jira remained read-only. During the same current-state pass, duplicate legacy The Vine Captain identity `505234023` was retired/superseded in favor of governed `TX4EK` without deleting lineage rows.
+
 ## Desired Captain Behavior
 
 Every Captain should be able to answer:

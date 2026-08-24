@@ -7,6 +7,7 @@ import argparse
 import json
 import sqlite3
 from collections import Counter
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,10 @@ from captain_fleet_support import DB_PATH, ROOT, age_days, build_fleet_context, 
 
 OUTPUT_DIR = ROOT / "reports" / "captains_log" / "readiness"
 EXPECTED_SUPPORT_AGENTS = 11
+
+
+def today_display() -> str:
+    return date.today().strftime("%m/%d/%Y")
 
 
 def fetch_local_dates() -> dict[str, dict[str, str | None]]:
@@ -114,8 +119,41 @@ def build_rows() -> list[dict[str, Any]]:
     context = build_fleet_context()
     local_dates = fetch_local_dates()
     remote = fetch_remote_status()
+    manifest_rows_by_code = {
+        str(row["property_code"]): row
+        for row in context.manifest.get("properties", [])
+        if row.get("property_code")
+    }
+    active_remote_codes = sorted(
+        code
+        for code, row in remote.items()
+        if int(row.get("support_agent_count") or 0) > 0 or int(row.get("active_memory_count") or 0) > 0
+    )
+    if len(active_remote_codes) > len(manifest_rows_by_code):
+        source_rows = [
+            {
+                "property_code": code,
+                "property_name": (
+                    context.identities.get(code).property_name
+                    if context.identities.get(code)
+                    else manifest_rows_by_code.get(code, {}).get("property_name", code)
+                ),
+                "captain": manifest_rows_by_code.get(code, {}).get("captain", f"Captain {code}"),
+                "scope_type": manifest_rows_by_code.get(code, {}).get("scope_type"),
+                "designation": manifest_rows_by_code.get(code, {}).get("designation"),
+                "market": manifest_rows_by_code.get(code, {}).get("market"),
+                "ga4_property_id": (
+                    context.identities.get(code).ga4_property_id
+                    if context.identities.get(code)
+                    else manifest_rows_by_code.get(code, {}).get("ga4_property_id")
+                ),
+            }
+            for code in active_remote_codes
+        ]
+    else:
+        source_rows = context.manifest.get("properties", [])
     rows: list[dict[str, Any]] = []
-    for manifest_row in context.manifest.get("properties", []):
+    for manifest_row in source_rows:
         code = manifest_row["property_code"]
         identity = context.identities.get(code)
         remote_row = remote.get(code, {})
@@ -192,7 +230,7 @@ def write_outputs(rows: list[dict[str, Any]], output_stem: Path) -> None:
     lines = [
         "# Captain Readiness Audit",
         "",
-        f"Date: {today_ymd()}",
+        f"Date: {today_display()}",
         "",
         "## Summary",
         "",

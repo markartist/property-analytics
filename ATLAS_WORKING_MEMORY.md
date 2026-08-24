@@ -4,6 +4,16 @@
 
 ---
 
+### 08/24/2026 - Captain fleet brought current
+- Published the reviewed Jira Captain Watch packet `/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch/jira-captain-watch-20260824-0819/captain-watch-upserts.sql` into remote D1 Captain Runtime. This added/updated `14` Jira watch items and `14` Jira actions across `12` properties through Keeper-backed Cloudflare auth; Jira and Confluence themselves were not mutated.
+- Corrected a duplicate active Captain identity for The Vine. Legacy GA4-id Captain `505234023` was retired/superseded without deletion: `11` support-agent rows retired, `1` activation memory deprecated, `7` watch rows superseded, and `3` action rows superseded. Governed `TX4EK` remains the active The Vine Captain identity.
+- Updated `/Users/mark/Property_Analytics/scripts/audit_captain_readiness.py` so fleet audits use the broader active remote Captain fleet when it is larger than the latest scoped activation manifest, and Markdown audit dates render as `MM/DD/YYYY`.
+- Current remote Captain Runtime state: `94` active Captain properties, `1,034` active support-agent rows, and `94` active Captain activation memories.
+- Current active Jira Captain Runtime state: `14` Jira watch items and `14` Jira actions across `12` properties.
+- Current readiness audit: `/Users/mark/Property_Analytics/reports/captains_log/readiness/captain_readiness_audit_2026-08-24_current.md` and `.json`. Summary is `94` audited, `91` partial, `3` source-gap, `0` ready, and `0` activation-gap. Source-gap properties are Sundara at Spring Cypress (`521906919`), The Vine Kyle Parkway (`TX4EK`), and Monteverde (`TX4MV`).
+- Property identity governance passed after correction: `94` properties, `94` with community IDs, `93` with property codes.
+- Boundary: this was a Captain Runtime current-state correction and reviewed Jira visibility publish only. It did not edit Jira, Confluence, Microsoft 365, Cloudflare Pages, locked PIB files, or source-system tickets.
+
 ### 08/24/2026 - Ops Watch Pond visibility wired
 - Added the read-only Ops Watch Pond snapshot generator `/Users/mark/Property_Analytics/scripts/build_ops_watch_pond_snapshot.py`.
 - Added typed static web snapshot files under `/Users/mark/Property_Analytics/apps/web/src/lib/ops-watch/`: `types.ts` and generated `generated-snapshot.ts`.

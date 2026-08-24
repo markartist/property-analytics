@@ -1,5 +1,16 @@
 # Capability Register
 
+## 08/24/2026 Captain Fleet Current-State Refresh
+
+- Published the reviewed Jira Captain Watch SQL packet `/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch/jira-captain-watch-20260824-0819/captain-watch-upserts.sql` into remote D1 Captain Runtime.
+- Result: `14` Jira watch items and `14` Jira actions are active across `12` property Captains, with Jira and Confluence kept read-only.
+- Corrected duplicate The Vine active identity by retiring/superseding the legacy GA4-id Captain `505234023` while keeping governed `TX4EK` active. Retired/superseded rows: `11` support agents, `1` activation memory, `7` watch rows, and `3` action rows. No rows were deleted.
+- Updated `/Users/mark/Property_Analytics/scripts/audit_captain_readiness.py` so current audits use the active remote Captain fleet when it is broader than the latest scoped activation manifest, and Markdown dates render in `MM/DD/YYYY`.
+- Current remote Captain Runtime state: `94` active Captain properties, `1,034` active support agents, `94` active activation memories.
+- Current readiness audit: `/Users/mark/Property_Analytics/reports/captains_log/readiness/captain_readiness_audit_2026-08-24_current.md` and `.json`; result is `94` audited, `91` partial, `3` source-gap, `0` ready, and `0` activation-gap.
+- Current source-gap properties: Sundara at Spring Cypress (`521906919`), The Vine Kyle Parkway (`TX4EK`), and Monteverde (`TX4MV`).
+- Disposition: Captain Runtime is current for active identity and Jira-ticket visibility. Remaining readiness work is source freshness/runtime cadence, especially guest cards plus the three source-gap properties.
+
 ## 08/24/2026 Ops Watch Pond Visibility Layer
 
 - Added `/Users/mark/Property_Analytics/scripts/build_ops_watch_pond_snapshot.py` to generate a static, typed Data Pond snapshot from the latest governed `ops-watch-packet.json`.
