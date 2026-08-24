@@ -28,6 +28,7 @@
 10. **[PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md](PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md)** - Governing content strategy artifact for property narrative, site harmonization, VACS drafts, channel derivatives, and AI-readable content trails
 11. **[OPS_WATCH_RUNBOOK_2026-08-22.md](OPS_WATCH_RUNBOOK_2026-08-22.md)** - Governed Jira/Confluence/Microsoft 365/Captain monitoring layer and action boundary
 12. **[OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md](OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md)** - Live Cloudflare mirror/push ingest lane for sanitized internal Ops Watch exports
+13. **[CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md](CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md)** - Cloudflare Cron/D1/R2 refresh lane for Captain persona profiles and Office Wall snapshots
 
 ### Critical Knowledge
 Before working with this system, **READ THESE FIRST:**
@@ -121,6 +122,13 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 **Live ingest health:** `https://ops-watch.venterrawebops.com/health`
 **Storage:** D1 tables `ops_watch_ingest_runs`, `ops_watch_signals`, `ops_watch_action_queue`; R2 prefix `ops-watch/ingest/`
 **Credential source:** Keeper record `Ops Watch Ingest Shared Secret`
+
+### 7. Captain Cloudflare Refresh
+**Purpose:** Refresh Captain Office Wall and persona/profile state through Cloudflare Cron, D1, and R2
+**Runbook:** `docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
+**Worker:** `ops/cloudflare/captain-refresh/`
+**Storage:** D1 tables `captain_persona_profiles`, `captain_refresh_runs`, `captain_office_wall_snapshots`; R2 prefix `captains/`
+**Boundary:** Cloudflare refreshes governed Captain state and persona deadlines; source-system harvesting remains mirror/push or separately approved Keeper-backed Worker credentials.
 
 ---
 

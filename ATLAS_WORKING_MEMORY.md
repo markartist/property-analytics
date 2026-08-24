@@ -4,6 +4,14 @@
 
 ---
 
+### 08/24/2026 - Captain Cloudflare refresh lane wired
+- Added Cloudflare-owned Captain refresh control plane under `/Users/mark/Property_Analytics/ops/cloudflare/captain-refresh/`.
+- Added D1 schema `/Users/mark/Property_Analytics/apps/api/migrations/0066_create_captain_refresh_tables.sql`, mirrored by `/Users/mark/Property_Analytics/infra/migrations/043_create_captain_refresh_tables.sql`.
+- New D1 tables: `captain_persona_profiles`, `captain_refresh_runs`, and `captain_office_wall_snapshots`.
+- The Worker runs every 30 minutes, reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona defaults, tracks the existing-Captain family composition due date of `09/07/2026`, writes current Office Wall snapshots to D1, and stores JSON evidence under R2 prefix `captains/`.
+- Added runbook `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md` plus README/docs index references.
+- Boundary: this lane moves Captain refresh state into Cloudflare but does not give Cloudflare inward intranet access and does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or source-system data. External harvesting remains mirror/push or a separately approved Keeper-backed Worker credential lane.
+
 ### 08/24/2026 - Captain's Office progressive disclosure UI wired
 - Reworked `/Users/mark/Property_Analytics/apps/web/src/app/captains/captain-office-client.tsx` from an always-visible vertical stack into a progressive workspace model.
 - The Captain's Office now exposes compact status posture plus five operator workspaces: Runtime, Watch & Actions, Quarters, Expert Reads, and Lineage.

@@ -1,5 +1,14 @@
 # Capability Register
 
+## 08/24/2026 Captain Cloudflare Refresh Control Plane
+
+- Added dedicated Cloudflare Worker `/Users/mark/Property_Analytics/ops/cloudflare/captain-refresh/` with a 30-minute Cron Trigger.
+- Added D1 migration `/Users/mark/Property_Analytics/apps/api/migrations/0066_create_captain_refresh_tables.sql`, mirrored by `/Users/mark/Property_Analytics/infra/migrations/043_create_captain_refresh_tables.sql`.
+- New D1 tables are `captain_persona_profiles`, `captain_refresh_runs`, and `captain_office_wall_snapshots`.
+- The Worker creates missing Captain persona profile defaults, tracks the existing-Captain family composition due date of `09/07/2026`, writes current Office Wall snapshots to D1, and stores JSON snapshot/run evidence in R2 under `captains/`.
+- Added runbook `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md` and linked it from the root/docs/Cloudflare documentation outlets.
+- Disposition: active Cloudflare refresh lane for governed Captain state. It does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or source-system data; external harvesting remains mirror/push or a separately approved Keeper-backed Worker credential lane.
+
 ## 08/24/2026 Captain's Office Progressive Disclosure UI
 
 - Reworked `/Users/mark/Property_Analytics/apps/web/src/app/captains/captain-office-client.tsx` so Captain's Office is no longer one always-visible vertical stack.

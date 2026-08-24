@@ -84,3 +84,14 @@ Credential boundary:
 - Worker secret: `OPS_WATCH_INGEST_SHARED_SECRET`
 
 Do not put the shared secret in local files, `.env`, shell history, tickets, screenshots, or source code. The Worker accepts only HMAC-signed sanitized packets and does not reach into intranet systems.
+
+## Captain Refresh Worker
+
+The Captain refresh control plane is a dedicated Cloudflare Worker for scheduled Captain Office Wall and persona/profile refresh:
+
+- Worker folder: `/Users/mark/Property_Analytics/ops/cloudflare/captain-refresh/`
+- Production health: `https://captain-refresh.venterrawebops.com/health`
+- Production status: `https://captain-refresh.venterrawebops.com/v1/captains/refresh/status`
+- Runbook: `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
+
+The Worker runs every 30 minutes, reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona profile defaults, writes current Office Wall snapshots to D1, and stores JSON snapshot evidence in R2. It does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or inward intranet systems.
