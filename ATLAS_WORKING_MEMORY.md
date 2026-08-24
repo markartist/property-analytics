@@ -10,6 +10,7 @@
 - Existing data wiring remains intact: Captain Runtime interaction submit, structured response readback, evidence packets, watch items, routing/actions, Awareness memory posture, candidate memory, Expert Reads, and runtime lineage still use the existing governed API clients.
 - Deep-link routes remain compatible: `/captains/<property>`, `/history`, `/watchlist`, `/quarters`, and `/expert-reads` now land on the corresponding workspace instead of loading the full page vertically.
 - UI intent: progressive disclosure, fewer one-column gutters, and paired horizontal layouts where the relationship is natural: Runtime/Evidence, Watch/Routing, Expert/Authority, and Log/Lineage.
+- Published Cloudflare Pages deployment `https://78961093.property-analytics.pages.dev`; protected user route is `https://pond.venterrawebops.com/captains/<property>`.
 - Verification: `npm --prefix apps/web run build` passed.
 - Boundary: this was a hosted Data Pond UI composition change only. It did not mutate Captain Runtime data, Jira, Confluence, Microsoft 365, Cloudflare D1/R2, locked PIB files, or source-system tickets.
 

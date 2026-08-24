@@ -6,6 +6,7 @@
 - Added a compact workspace switcher with five operator modes: Runtime, Watch & Actions, Quarters, Expert Reads, and Lineage.
 - Preserved existing governed data wiring for Captain Runtime submit/readback, evidence packets, watch items, routing/actions, Awareness memory posture, candidate memory, Expert Reads, and lineage.
 - Preserved deep-link compatibility for `/captains/<property>`, `/history`, `/watchlist`, `/quarters`, and `/expert-reads` by mapping each route to its matching workspace.
+- Published Cloudflare Pages deployment `https://78961093.property-analytics.pages.dev`; protected user route is `https://pond.venterrawebops.com/captains/<property>`.
 - Disposition: active hosted Data Pond UI layer. This is a human-friendliness and progressive-disclosure change only; it does not mutate Captain Runtime records, Jira, Confluence, Microsoft 365, D1/R2, Cloudflare source systems, or locked PIB files.
 
 ## 08/24/2026 Captain Fleet Current-State Refresh
