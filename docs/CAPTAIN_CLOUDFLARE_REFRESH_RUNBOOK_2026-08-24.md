@@ -9,13 +9,13 @@ The first live slice is the `captain-refresh` Worker. It reads governed D1 state
 ## Current Production State
 
 - Deployment date: `08/24/2026`
-- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Worker version: `2920b8ec-8bf4-48d2-a208-ae687d327599`
 - Git commit: `d19b96d`
 - Custom domain: `captain-refresh.venterrawebops.com`
 - Cron schedule: every `30` minutes
 - Remote D1 migration: applied to `pop-brief-db`
 - Health: live and returning `ok: true`
-- Status as of 08/24/2026 validation: no scheduled run had fired yet, so snapshot tables were present but empty.
+- Status as of 08/24/2026 validation: first scheduled run succeeded but initially refreshed only `7` Awareness-backed properties; follow-up Worker deployment corrected active fleet selection to merge Awareness identities with active Captain support-agent properties. Production SQL readback resolves `94` active properties for the next scheduled run.
 
 ## Production URLs
 
@@ -138,13 +138,14 @@ PY
 
 ## Validation
 
-Deployed 08/24/2026 to Worker version `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`.
+Deployed 08/24/2026 to Worker version `2920b8ec-8bf4-48d2-a208-ae687d327599`.
 
 Validation on 08/24/2026:
 
 - `GET /health` returned `ok: true`.
-- `GET /v1/captains/refresh/status` returned `ok: true` with no latest run yet because the first scheduled Cron Trigger had not fired.
-- `GET /v1/captains/AR4PB/wall` returned `snapshot_not_found` before the first scheduled run, which is expected for a newly created snapshot table.
+- `GET /v1/captains/refresh/status` returned `ok: true`.
+- First scheduled run `captain-refresh-20260824T170013Z-7dcc035fa2e3` succeeded with `7` snapshots before the fleet-source correction.
+- Production D1 readback after correction resolves `94` active Captain properties through merged Awareness/support-agent identity.
 
 Smoke:
 

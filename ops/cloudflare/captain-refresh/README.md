@@ -5,11 +5,12 @@ Cloudflare-owned refresh lane for Captain Office Wall and Captain persona state.
 Production deployment:
 
 - Custom domain: `captain-refresh.venterrawebops.com`
-- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Worker version: `2920b8ec-8bf4-48d2-a208-ae687d327599`
 - Git commit: `d19b96d`
 - Deployed: `08/24/2026`
 - Initial health proof: `GET /health` returned `ok: true`
-- Initial status proof: `GET /v1/captains/refresh/status` returned `ok: true` with no latest run before the first Cron Trigger fired.
+- Initial status proof: `GET /v1/captains/refresh/status` returned `ok: true`; first Cron Trigger succeeded with `7` snapshots before the full-fleet source correction.
+- Full-fleet correction: active Captain selection now merges Awareness identities with active Captain support-agent properties; production D1 readback resolves `94` active properties.
 
 Production intent:
 

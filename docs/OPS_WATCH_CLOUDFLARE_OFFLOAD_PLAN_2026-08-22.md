@@ -39,13 +39,13 @@ The second offload lane is live as the Captain refresh control plane:
 - Status: `GET /v1/captains/refresh/status`
 - Property wall read: `GET /v1/captains/<property>/wall`
 - Cron Trigger: every `30` minutes
-- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Worker version: `2920b8ec-8bf4-48d2-a208-ae687d327599`
 - Git commit: `d19b96d`
 - Runbook: `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
 - D1 migration: `/Users/mark/Property_Analytics/apps/api/migrations/0066_create_captain_refresh_tables.sql`
 - R2 prefix: `captains/`
 
-This lane reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona defaults, tracks family-composition deadlines, writes Office Wall snapshots to D1, and stores JSON evidence in R2. It does not harvest Jira/Confluence/MS365 directly yet and does not mutate source systems.
+This lane reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona defaults, tracks family-composition deadlines, writes Office Wall snapshots to D1, and stores JSON evidence in R2. Active fleet selection merges Awareness identities with active Captain support-agent properties; production SQL readback resolves `94` active properties. It does not harvest Jira/Confluence/MS365 directly yet and does not mutate source systems.
 
 Proof:
 

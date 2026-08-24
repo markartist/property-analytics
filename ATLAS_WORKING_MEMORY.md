@@ -9,8 +9,8 @@
 - Added D1 schema `/Users/mark/Property_Analytics/apps/api/migrations/0066_create_captain_refresh_tables.sql`, mirrored by `/Users/mark/Property_Analytics/infra/migrations/043_create_captain_refresh_tables.sql`.
 - New D1 tables: `captain_persona_profiles`, `captain_refresh_runs`, and `captain_office_wall_snapshots`.
 - The Worker runs every 30 minutes, reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona defaults, tracks the existing-Captain family composition due date of `09/07/2026`, writes current Office Wall snapshots to D1, and stores JSON evidence under R2 prefix `captains/`.
-- Remote D1 migration was applied to `pop-brief-db`; Worker deployed to `https://captain-refresh.venterrawebops.com` as version `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`; corporate Git commit is `d19b96d`.
-- Live validation on 08/24/2026: `/health` returned `ok: true`, `/v1/captains/refresh/status` returned `ok: true`, and no scheduled run had fired yet, so snapshot count remained `0`.
+- Remote D1 migration was applied to `pop-brief-db`; Worker deployed to `https://captain-refresh.venterrawebops.com`; latest deployed version is `2920b8ec-8bf4-48d2-a208-ae687d327599`; initial corporate Git commit is `d19b96d`.
+- Live validation on 08/24/2026: `/health` returned `ok: true`; the first scheduled run `captain-refresh-20260824T170013Z-7dcc035fa2e3` succeeded with `7` snapshots before a follow-up Worker correction merged Awareness identities with active Captain support-agent properties. Production SQL readback now resolves `94` active Captain properties for the next scheduled run.
 - Added runbook `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md` plus README/docs index references.
 - Boundary: this lane moves Captain refresh state into Cloudflare but does not give Cloudflare inward intranet access and does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or source-system data. External harvesting remains mirror/push or a separately approved Keeper-backed Worker credential lane.
 

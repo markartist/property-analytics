@@ -101,7 +101,7 @@ async function exec(env, sql, params = []) {
 }
 
 async function activeCaptains(env, maxProperties) {
-  const rows = await queryAll(
+  const awarenessRows = await queryAll(
     env,
     `SELECT
        assigned_property_id AS property_id,
@@ -111,34 +111,42 @@ async function activeCaptains(env, maxProperties) {
      WHERE agent_type = 'captain'
        AND active_status = 'active'
        AND assigned_property_id IS NOT NULL
-     ORDER BY assigned_property_id
-     LIMIT ?`,
-    [maxProperties]
+     ORDER BY assigned_property_id`
   );
 
-  if (rows.length) {
-    return rows.map((row) => ({
-      propertyId: cleanToken(row.property_id, 120),
-      captainDisplayName: cleanText(row.captain_display_name, 160),
-      sourceAgentId: cleanText(row.source_agent_id, 160)
-    })).filter((row) => row.propertyId);
-  }
-
-  const fallbackRows = await queryAll(
+  const supportRows = await queryAll(
     env,
     `SELECT property_id, MAX(agent_name) AS captain_display_name, NULL AS source_agent_id
      FROM captain_support_agents
      WHERE status = 'active'
      GROUP BY property_id
-     ORDER BY property_id
-     LIMIT ?`,
-    [maxProperties]
+     ORDER BY property_id`
   );
-  return fallbackRows.map((row) => ({
-    propertyId: cleanToken(row.property_id, 120),
-    captainDisplayName: cleanText(row.captain_display_name, 160) || fallbackCaptainName(row.property_id),
-    sourceAgentId: null
-  })).filter((row) => row.propertyId);
+
+  const byProperty = new Map();
+  for (const row of supportRows) {
+    const propertyId = cleanToken(row.property_id, 120);
+    if (!propertyId) continue;
+    byProperty.set(propertyId, {
+      propertyId,
+      captainDisplayName: cleanText(row.captain_display_name, 160) || fallbackCaptainName(propertyId),
+      sourceAgentId: null
+    });
+  }
+
+  for (const row of awarenessRows) {
+    const propertyId = cleanToken(row.property_id, 120);
+    if (!propertyId) continue;
+    byProperty.set(propertyId, {
+      propertyId,
+      captainDisplayName: cleanText(row.captain_display_name, 160) || byProperty.get(propertyId)?.captainDisplayName || fallbackCaptainName(propertyId),
+      sourceAgentId: cleanText(row.source_agent_id, 160) || byProperty.get(propertyId)?.sourceAgentId || null
+    });
+  }
+
+  return [...byProperty.values()]
+    .sort((left, right) => left.propertyId.localeCompare(right.propertyId))
+    .slice(0, maxProperties);
 }
 
 async function ensurePersona(env, captain, asOfIso) {
