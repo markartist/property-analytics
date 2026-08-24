@@ -6,6 +6,8 @@
 - Added D1 migration `/Users/mark/Property_Analytics/apps/api/migrations/0066_create_captain_refresh_tables.sql`, mirrored by `/Users/mark/Property_Analytics/infra/migrations/043_create_captain_refresh_tables.sql`.
 - New D1 tables are `captain_persona_profiles`, `captain_refresh_runs`, and `captain_office_wall_snapshots`.
 - The Worker creates missing Captain persona profile defaults, tracks the existing-Captain family composition due date of `09/07/2026`, writes current Office Wall snapshots to D1, and stores JSON snapshot/run evidence in R2 under `captains/`.
+- Remote D1 migration was applied to `pop-brief-db`; Worker deployed to `https://captain-refresh.venterrawebops.com` as version `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`; corporate Git commit is `d19b96d`.
+- Live validation on 08/24/2026 proved the health/status routes. The first scheduled run had not fired yet at validation time, so current snapshot count was `0`.
 - Added runbook `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md` and linked it from the root/docs/Cloudflare documentation outlets.
 - Disposition: active Cloudflare refresh lane for governed Captain state. It does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or source-system data; external harvesting remains mirror/push or a separately approved Keeper-backed Worker credential lane.
 

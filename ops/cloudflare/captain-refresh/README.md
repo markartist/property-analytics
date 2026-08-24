@@ -2,6 +2,15 @@
 
 Cloudflare-owned refresh lane for Captain Office Wall and Captain persona state.
 
+Production deployment:
+
+- Custom domain: `captain-refresh.venterrawebops.com`
+- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Git commit: `d19b96d`
+- Deployed: `08/24/2026`
+- Initial health proof: `GET /health` returned `ok: true`
+- Initial status proof: `GET /v1/captains/refresh/status` returned `ok: true` with no latest run before the first Cron Trigger fired.
+
 Production intent:
 
 - refresh active Captain state on a Cloudflare Cron Trigger;

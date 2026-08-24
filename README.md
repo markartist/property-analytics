@@ -109,11 +109,14 @@ The Captain refresh control plane moves recurring Captain Office Wall and person
 
 - Worker: `/Users/mark/Property_Analytics/ops/cloudflare/captain-refresh/`
 - Health: `https://captain-refresh.venterrawebops.com/health`
+- Status: `https://captain-refresh.venterrawebops.com/v1/captains/refresh/status`
 - Schedule: every 30 minutes
+- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Git commit: `d19b96d`
 - D1 tables: `captain_persona_profiles`, `captain_refresh_runs`, `captain_office_wall_snapshots`
 - R2 prefix: `captains/`
 
-The Worker creates missing Captain persona defaults, tracks the family-composition deadline, refreshes Office Wall snapshots from governed D1 state, and stores snapshot evidence in R2. It does not edit source systems or locked PIB files.
+The Worker creates missing Captain persona defaults, tracks the family-composition deadline, refreshes Office Wall snapshots from governed D1 state, and stores snapshot evidence in R2. It does not edit source systems or locked PIB files. Manual triggering requires a Keeper/KSM-backed `CAPTAIN_REFRESH_ADMIN_SECRET`; no local secret fallback is allowed.
 
 ## Unified Foundation
 

@@ -2,7 +2,7 @@
 
 Date: 08/22/2026
 Owner: MarketingOps / Property Analytics
-Status: architecture plan with mirror/push ingest implemented
+Status: architecture plan with mirror/push ingest and Captain refresh implemented
 
 ## Direction
 
@@ -30,6 +30,22 @@ The first offload lane is live using the mirror/push model:
 - R2 prefix: `ops-watch/ingest/<source>/<run_id>.json`
 
 This first live lane receives signed sanitized packets pushed from inside Venterra/private contexts. It does not let Cloudflare reach inward.
+
+The second offload lane is live as the Captain refresh control plane:
+
+- Worker: `/Users/mark/Property_Analytics/ops/cloudflare/captain-refresh/worker.js`
+- Host: `https://captain-refresh.venterrawebops.com`
+- Health: `GET /health`
+- Status: `GET /v1/captains/refresh/status`
+- Property wall read: `GET /v1/captains/<property>/wall`
+- Cron Trigger: every `30` minutes
+- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Git commit: `d19b96d`
+- Runbook: `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
+- D1 migration: `/Users/mark/Property_Analytics/apps/api/migrations/0066_create_captain_refresh_tables.sql`
+- R2 prefix: `captains/`
+
+This lane reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona defaults, tracks family-composition deadlines, writes Office Wall snapshots to D1, and stores JSON evidence in R2. It does not harvest Jira/Confluence/MS365 directly yet and does not mutate source systems.
 
 Proof:
 
@@ -96,6 +112,9 @@ Codex should own:
   - `ops_watch_ingest_runs`
   - `ops_watch_signals`
   - `ops_watch_action_queue`
+  - `captain_persona_profiles`
+  - `captain_refresh_runs`
+  - `captain_office_wall_snapshots`
   - future read/publish layer may also populate `captain_watch_items` and `captain_actions` after review.
 - Data Pond API:
   - Read-only status and details first
@@ -122,7 +141,7 @@ Codex should own:
 
 ## Recommended First Build
 
-The first build is complete as a mirror/push Worker that receives sanitized packets. The next build should be the internal scheduled exporter that runs from the private/Venterra side:
+The first build is complete as a mirror/push Worker that receives sanitized packets. The Captain refresh Worker is also deployed and owns recurring Cloudflare-side Captain Office Wall snapshot refresh. The next build should be the internal scheduled exporter that runs from the private/Venterra side:
 
 1. Internal scheduler reads approved intranet/private systems.
 2. Internal exporter reduces and sanitizes facts locally.

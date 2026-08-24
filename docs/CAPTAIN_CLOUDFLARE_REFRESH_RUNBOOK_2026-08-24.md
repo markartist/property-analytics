@@ -6,6 +6,17 @@ Move Captain system refresh as far into Cloudflare as practical while keeping so
 
 The first live slice is the `captain-refresh` Worker. It reads governed D1 state, creates or updates Captain persona/profile defaults, writes current Office Wall snapshots, and stores JSON evidence in R2.
 
+## Current Production State
+
+- Deployment date: `08/24/2026`
+- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Git commit: `d19b96d`
+- Custom domain: `captain-refresh.venterrawebops.com`
+- Cron schedule: every `30` minutes
+- Remote D1 migration: applied to `pop-brief-db`
+- Health: live and returning `ok: true`
+- Status as of 08/24/2026 validation: no scheduled run had fired yet, so snapshot tables were present but empty.
+
 ## Production URLs
 
 - Health: `https://captain-refresh.venterrawebops.com/health`
@@ -76,6 +87,8 @@ Use two source patterns:
 
 2. Direct Worker harvest only after explicit approval.
    Public/SaaS APIs such as Jira, Confluence, Microsoft Graph, Ahrefs, GA4, or Cloudflare APIs may later be called by Workers only if the needed credentials are represented in Keeper/KSM and set as Worker secrets through the Keeper-backed deployment path.
+
+Manual refresh follows the same rule. `POST /v1/captains/refresh/run` is intentionally disabled until `CAPTAIN_REFRESH_ADMIN_SECRET` is represented in Keeper/KSM and set as a Worker secret. Do not add a local token, `.env`, checked-in secret, or direct environment fallback.
 
 ## Deployment
 

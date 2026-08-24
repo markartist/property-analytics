@@ -127,6 +127,8 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 **Purpose:** Refresh Captain Office Wall and persona/profile state through Cloudflare Cron, D1, and R2
 **Runbook:** `docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
 **Worker:** `ops/cloudflare/captain-refresh/`
+**Production:** `https://captain-refresh.venterrawebops.com/health`
+**Deployment:** Worker version `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`, Git commit `d19b96d`
 **Storage:** D1 tables `captain_persona_profiles`, `captain_refresh_runs`, `captain_office_wall_snapshots`; R2 prefix `captains/`
 **Boundary:** Cloudflare refreshes governed Captain state and persona deadlines; source-system harvesting remains mirror/push or separately approved Keeper-backed Worker credentials.
 

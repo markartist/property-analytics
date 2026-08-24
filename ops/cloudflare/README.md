@@ -92,6 +92,8 @@ The Captain refresh control plane is a dedicated Cloudflare Worker for scheduled
 - Worker folder: `/Users/mark/Property_Analytics/ops/cloudflare/captain-refresh/`
 - Production health: `https://captain-refresh.venterrawebops.com/health`
 - Production status: `https://captain-refresh.venterrawebops.com/v1/captains/refresh/status`
+- Worker version: `6c0c4fa8-6ed9-47b6-a1c5-dd9072462742`
+- Git commit: `d19b96d`
 - Runbook: `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
 
-The Worker runs every 30 minutes, reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona profile defaults, writes current Office Wall snapshots to D1, and stores JSON snapshot evidence in R2. It does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or inward intranet systems.
+The Worker runs every 30 minutes, reads governed D1 Captain/Awareness/Ops Watch state, creates missing Captain persona profile defaults, writes current Office Wall snapshots to D1, and stores JSON snapshot evidence in R2. It does not edit Jira, Confluence, Microsoft 365, source tickets, locked PIB files, or inward intranet systems. Manual refresh is disabled until `CAPTAIN_REFRESH_ADMIN_SECRET` is set through Keeper/KSM.
