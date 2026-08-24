@@ -1,5 +1,17 @@
 # Capability Register
 
+## 08/24/2026 Ops Watch Pond Visibility Layer
+
+- Added `/Users/mark/Property_Analytics/scripts/build_ops_watch_pond_snapshot.py` to generate a static, typed Data Pond snapshot from the latest governed `ops-watch-packet.json`.
+- Added `/Users/mark/Property_Analytics/apps/web/src/lib/ops-watch/types.ts` and `/Users/mark/Property_Analytics/apps/web/src/lib/ops-watch/generated-snapshot.ts`.
+- Extended `/Users/mark/Property_Analytics/apps/web/src/app/page.tsx` so the Pond landing page exposes read-only Ops Watch pressure: Jira-backed property rows, Critical records, pending-vendor records, property visibility, top property ticket queue, and source-readiness blockers.
+- Extended `/Users/mark/Property_Analytics/apps/web/src/app/watchtower/page.tsx` with an `#ops-watch` deck for the latest ticket/source posture, priority Jira property queue, blocked source lanes, and assisted-action boundary.
+- Published the layer to Cloudflare Pages deployment `https://5382cf5c.property-analytics.pages.dev`; the active protected route is `https://pond.venterrawebops.com/pond`, with the Watchtower anchor at `https://pond.venterrawebops.com/watchtower#ops-watch`.
+- Current snapshot source: `/Users/mark/Property_Analytics/reports/ops_watch/ops-watch-20260824-0819/ops-watch-packet.json`.
+- Current human readout: `/Users/mark/Property_Analytics/reports/ops_watch/ops-watch-20260824-0819/OPS_WATCH_READOUT.md`.
+- Current snapshot counts: `12` Jira issues reviewed, `14` Jira/Captain records, `25` Confluence source signals, `29` total Captain records, `25` properties, `13` Critical records, `5` pending-vendor records, `5` stale `14+` records, and `0` unresolved property records.
+- Disposition: active read-only Pond visibility. No Jira, Confluence, Microsoft 365, D1, Captain Runtime, Cloudflare, or PIB mutation is performed by this layer. Jira writeback and Captain Runtime publish remain separate reviewed steps.
+
 ## 08/22/2026 Ops Watch Mirror/Push Cloudflare Ingest
 
 - Added dedicated Cloudflare Worker `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/worker.js` and Wrangler config `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/wrangler.toml`.

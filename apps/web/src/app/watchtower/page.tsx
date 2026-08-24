@@ -13,11 +13,12 @@ import {
   SITE_CONTENT_DEBUG_FLAG,
   type HealthStatusResponse, type TableStat, type SourceFreshness, type DailyCollectionSourceStatus, type PondLandscapeResponse,
 } from "@/lib/api";
+import { OPS_WATCH_SNAPSHOT } from "@/lib/ops-watch/generated-snapshot";
 import {
   Eye, Loader2, ArrowLeft, CheckCircle2, XCircle,
   Database, Clock, Activity, Layers, Search, Siren, ShieldAlert, Wrench, RefreshCw,
   Gauge, Radar, Zap, Orbit, TimerReset, Flame, Sparkles, Shield, ScanSearch, Cable,
-  AlertTriangle, Target, Binary, ChevronRight,
+  AlertTriangle, Target, Binary, ChevronRight, ClipboardCheck,
 } from "lucide-react";
 import { format, parseISO, differenceInDays } from "date-fns";
 
@@ -212,6 +213,13 @@ function formatDateTimeLabel(value: string | null): string {
   } catch {
     return value;
   }
+}
+
+function formatOpsDate(value: string | null): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return format(parsed, "MM/dd/yyyy");
 }
 
 function formatSourceName(value: string): string {
@@ -1517,6 +1525,17 @@ export default function WatchtowerPage() {
   const [currentWebHost, setCurrentWebHost] = React.useState<string | null>(null);
   const role = user?.role ?? "viewer";
   const roleGuidance = ROLE_WATCHTOWER_GUIDANCE[role];
+  const opsWatch = OPS_WATCH_SNAPSHOT;
+  const opsWatchJiraRecords = opsWatch.captainRecords.filter((record) => record.sourceSystem === "jira");
+  const opsWatchBlockedSources = opsWatch.sourceReadiness.filter((row) => row.status.startsWith("blocked"));
+  const opsWatchHighSignals = opsWatch.sourceSignals.filter((signal) => signal.severity === "high" || signal.severity === "critical");
+  const opsWatchPriorityRecords = opsWatch.captainRecords
+    .filter((record) => record.sourceSystem === "jira")
+    .sort((a, b) => {
+      const severityRank = (severity: string) => severity === "critical" ? 0 : severity === "high" ? 1 : severity === "medium" ? 2 : 3;
+      return severityRank(a.severity) - severityRank(b.severity) || (b.staleDays ?? 0) - (a.staleDays ?? 0);
+    })
+    .slice(0, 8);
 
   React.useEffect(() => {
     let active = true;
@@ -2272,6 +2291,106 @@ export default function WatchtowerPage() {
                 tone={closureStateTone(data.daily_collection_status.closure.state)}
                 icon={Target}
               />
+            </section>
+
+            <section id="ops-watch" className="watchtower-signal-shell scroll-mt-6 rounded-[36px] p-6 text-white md:p-8">
+              <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+                <div>
+                  <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <Badge className="border-0 bg-[#5A81CF]/18 text-cyan-100">Read Only</Badge>
+                    <Badge className="border-0 bg-white/10 text-cyan-100">{formatOpsDate(opsWatch.asOf)}</Badge>
+                    <Badge className="border-0 bg-white/10 text-cyan-100">{opsWatch.runId}</Badge>
+                  </div>
+                  <p className="text-xs uppercase tracking-[0.34em] text-cyan-300/80">Ops Watch</p>
+                  <h2 className="mt-3 max-w-3xl text-3xl font-semibold tracking-tight text-white md:text-4xl">
+                    Jira and Confluence are now visible in the Pond operating view.
+                  </h2>
+                  <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
+                    Assisted action remains the boundary: drafts and routing signals are visible, while Jira writeback and Captain Runtime publish stay separate approval steps.
+                  </p>
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <TowerReadout
+                      label="Captain Records"
+                      value={String(opsWatch.summary.captain_record_count)}
+                      detail={`${opsWatch.summary.property_count} properties with active visibility`}
+                      tone="cyan"
+                      icon={ClipboardCheck}
+                    />
+                    <TowerReadout
+                      label="Critical"
+                      value={String(opsWatch.summary.critical_record_count)}
+                      detail={`${opsWatch.summary.pending_vendor_record_count} pending vendor rows`}
+                      tone={opsWatch.summary.critical_record_count > 0 ? "rose" : "emerald"}
+                      icon={Siren}
+                    />
+                    <TowerReadout
+                      label="Stale 14+"
+                      value={String(opsWatch.summary.stale_14_day_record_count)}
+                      detail="Records needing follow-up pressure"
+                      tone={opsWatch.summary.stale_14_day_record_count > 0 ? "amber" : "emerald"}
+                      icon={TimerReset}
+                    />
+                    <TowerReadout
+                      label="Source Blockers"
+                      value={String(opsWatchBlockedSources.length)}
+                      detail={`${opsWatchHighSignals.length} high source signal${opsWatchHighSignals.length === 1 ? "" : "s"}`}
+                      tone={opsWatchBlockedSources.length > 0 ? "amber" : "emerald"}
+                      icon={ShieldAlert}
+                    />
+                  </div>
+                </div>
+
+                <div className="watchtower-panel rounded-[32px] p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Property Ticket Queue</p>
+                      <p className="mt-1 text-sm text-slate-300">{opsWatchJiraRecords.length} Jira-backed property rows from the latest harvest</p>
+                    </div>
+                    <span
+                      title={opsWatch.readoutPath}
+                      className="rounded-full border border-white/16 bg-white/8 px-4 py-2 text-sm font-medium text-white/80"
+                    >
+                      Packet Path
+                    </span>
+                  </div>
+
+                  <div className="mt-5 overflow-hidden rounded-[24px] border border-white/10">
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-white/10 bg-white/[0.04] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/44">
+                      <span>Property / Item</span>
+                      <span>Status</span>
+                      <span>Updated</span>
+                    </div>
+                    {opsWatchPriorityRecords.map((record) => (
+                      <a
+                        key={`${record.propertyCode}-${record.itemKey}`}
+                        href={record.itemUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-white/8 px-4 py-3 text-sm text-white/70 transition-colors last:border-b-0 hover:bg-white/[0.06] hover:text-white"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-semibold text-white">{record.propertyCode} {record.propertyName}</span>
+                          <span className="block truncate text-xs text-white/48">{record.itemKey} · {record.category.replace(/_/g, " ")}</span>
+                        </span>
+                        <span className="self-center rounded-full border border-white/12 px-2.5 py-1 text-xs text-white/64">{record.status}</span>
+                        <span className="self-center text-xs tabular-nums text-white/54">{formatOpsDate(record.updated)}</span>
+                      </a>
+                    ))}
+                  </div>
+
+                  {opsWatchBlockedSources.length > 0 && (
+                    <div className="mt-5 grid gap-3">
+                      {opsWatchBlockedSources.slice(0, 3).map((source) => (
+                        <div key={source.sourceKey} className="rounded-2xl border border-[#BD4830]/24 bg-[#BD4830]/10 px-4 py-3">
+                          <p className="text-sm font-semibold text-white">{source.displayName}</p>
+                          <p className="mt-1 text-xs leading-5 text-white/58">{source.blocker}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </section>
 
             {derived.effectiveSelectedSource && (

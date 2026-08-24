@@ -11,6 +11,7 @@ import {
   ClearwaterStage,
 } from "@/components/shared/clearwater-glass";
 import { getPondInsights, type PondInsight, type PondSurface } from "@/lib/api";
+import { OPS_WATCH_SNAPSHOT } from "@/lib/ops-watch/generated-snapshot";
 import { useAuth } from "@/components/auth-provider";
 import { IS_LAUNCH_ROOM_AUTH, getFeaturedOfferings, getRoleTitle, type AppRole, type SurfaceId } from "@/lib/permissions";
 import {
@@ -20,7 +21,7 @@ import {
   BriefcaseBusiness, ClipboardCheck, FileText, ShieldCheck, ListChecks,
   MonitorCheck,
 } from "lucide-react";
-import { formatDistanceToNow, parseISO } from "date-fns";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
 
 // ────────────────────────────────────────────────────────────────
 // Insight icon resolver
@@ -299,6 +300,13 @@ function freshnessStatus(dateStr: string | null): "ready" | "watch" | "stale" {
   return "stale";
 }
 
+function formatOpsDate(value: string | null): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return format(parsed, "MM/dd/yyyy");
+}
+
 // Labels for source freshness keys (from data_freshness table)
 const SUNSET_SOURCE_KEYS = new Set(["semrush"]);
 
@@ -460,6 +468,16 @@ export default function DataPondLanding() {
   const staleSources = sourceEntries.filter((entry) => entry.status === "stale");
   const watchSources = sourceEntries.filter((entry) => entry.status === "watch");
   const readySources = sourceEntries.filter((entry) => entry.status === "ready");
+  const opsWatch = OPS_WATCH_SNAPSHOT;
+  const opsWatchJiraRecords = opsWatch.captainRecords.filter((record) => record.sourceSystem === "jira");
+  const opsWatchBlockedSources = opsWatch.sourceReadiness.filter((row) => row.status.startsWith("blocked"));
+  const opsWatchQueue = opsWatch.captainRecords
+    .filter((record) => record.sourceSystem === "jira")
+    .sort((a, b) => {
+      const severityRank = (severity: string) => severity === "critical" ? 0 : severity === "high" ? 1 : severity === "medium" ? 2 : 3;
+      return severityRank(a.severity) - severityRank(b.severity) || (b.staleDays ?? 0) - (a.staleDays ?? 0);
+    })
+    .slice(0, 6);
 
   React.useEffect(() => {
     getPondInsights()
@@ -654,6 +672,100 @@ export default function DataPondLanding() {
             </div>
           </div>
         )}
+
+        {/* Ops Watch */}
+        <ClearwaterPanel tone="tinted" className="clearwater-lens-card">
+          <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr] xl:items-start">
+            <div>
+              <div className="inline-flex rounded-2xl bg-white/[0.14] p-3">
+                <ClipboardCheck className="h-7 w-7 text-white" />
+              </div>
+              <ClearwaterKicker className="mt-5">Ops Watch</ClearwaterKicker>
+              <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-white">Ticket pressure is in the Pond</h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-white/62">
+                Latest packet {formatOpsDate(opsWatch.asOf)} keeps Jira and Confluence visible as governed, read-only operating signals.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  href="/watchtower#ops-watch"
+                  className="inline-flex items-center rounded-xl border border-white/14 bg-white/[0.1] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white/90 transition-colors hover:bg-white/[0.16] hover:text-white"
+                >
+                  Open Watchtower
+                </Link>
+                <Link
+                  href="/captains"
+                  className="inline-flex items-center rounded-xl border border-white/12 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white"
+                >
+                  Captain Queue
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="grid gap-3 sm:grid-cols-4">
+                <div className="rounded-2xl border border-[#5A81CF]/26 bg-[#5A81CF]/12 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Jira</p>
+                  <p className="mt-2 text-3xl font-black text-white">{opsWatchJiraRecords.length}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">property records</p>
+                </div>
+                <div className="rounded-2xl border border-[#E02472]/30 bg-[#E02472]/14 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Critical</p>
+                  <p className="mt-2 text-3xl font-black text-white">{opsWatch.summary.critical_record_count}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">Captain rows</p>
+                </div>
+                <div className="rounded-2xl border border-[#BD4830]/26 bg-[#BD4830]/12 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Vendor</p>
+                  <p className="mt-2 text-3xl font-black text-white">{opsWatch.summary.pending_vendor_record_count}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">pending rows</p>
+                </div>
+                <div className="rounded-2xl border border-[#7DCAC2]/24 bg-[#7DCAC2]/10 px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/50">Properties</p>
+                  <p className="mt-2 text-3xl font-black text-[#7DCAC2]">{opsWatch.summary.property_count}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/56">with visibility</p>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-white/12 bg-white/[0.055]">
+                <div className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-white/10 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/42">
+                  <span>Property / Ticket</span>
+                  <span>Status</span>
+                  <span>Updated</span>
+                </div>
+                {opsWatchQueue.map((record) => (
+                  <a
+                    key={`${record.propertyCode}-${record.itemKey}`}
+                    href={record.itemUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="grid grid-cols-[1fr_auto_auto] gap-3 border-b border-white/8 px-4 py-3 text-sm text-white/70 transition-colors last:border-b-0 hover:bg-white/[0.06] hover:text-white"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-white">{record.propertyCode} {record.propertyName}</span>
+                      <span className="block truncate text-xs text-white/48">{record.itemKey} · {record.category.replace(/_/g, " ")}</span>
+                    </span>
+                    <span className="self-center rounded-full border border-white/12 px-2.5 py-1 text-xs text-white/64">{record.status}</span>
+                    <span className="self-center text-xs tabular-nums text-white/54">{formatOpsDate(record.updated)}</span>
+                  </a>
+                ))}
+              </div>
+
+              {opsWatchBlockedSources.length > 0 && (
+                <div className="rounded-2xl border border-[#BD4830]/26 bg-[#BD4830]/12 px-4 py-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#F6F6F5]" />
+                    <div>
+                      <p className="text-sm font-semibold text-white">{opsWatchBlockedSources.length} source-readiness blocker{opsWatchBlockedSources.length === 1 ? "" : "s"}</p>
+                      <p className="mt-1 text-sm leading-6 text-white/58">
+                        {opsWatchBlockedSources.slice(0, 2).map((row) => row.displayName).join(", ")}
+                        {opsWatchBlockedSources.length > 2 ? `, and ${opsWatchBlockedSources.length - 2} more` : ""}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </ClearwaterPanel>
 
         {/* Canonical PIB Builder */}
         <ClearwaterPanel tone="tinted" className="clearwater-lens-card">

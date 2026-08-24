@@ -126,6 +126,26 @@ Default output root:
 
 - `/Users/mark/Property_Analytics/reports/ops_watch/`
 
+## Pond Visibility Snapshot
+
+After the portfolio packet is built, refresh the static Pond visibility snapshot:
+
+```bash
+python3 scripts/build_ops_watch_pond_snapshot.py --packet <ops-watch-packet.json>
+```
+
+Default output:
+
+- `/Users/mark/Property_Analytics/apps/web/src/lib/ops-watch/generated-snapshot.ts`
+
+Supporting type contract:
+
+- `/Users/mark/Property_Analytics/apps/web/src/lib/ops-watch/types.ts`
+
+The Pond landing page and Watchtower consume this generated snapshot. The visible app layer is read-only and should show source pressure, Captain property rows, source blockers, and assisted-action posture. It must not become a Jira writeback, Captain Runtime publish, Confluence edit, Microsoft 365 action, Cloudflare action, or D1 mutation surface.
+
+08/24/2026 production note: the current Ops Watch Pond visibility deployment is Cloudflare Pages `https://5382cf5c.property-analytics.pages.dev`. The protected user route is `https://pond.venterrawebops.com/pond`; the Watchtower anchor is `https://pond.venterrawebops.com/watchtower#ops-watch`. If publishing from a scoped worktree, set the Cloudflare account explicitly when using the Keeper-backed Wrangler helper so Wrangler does not depend on the user memberships endpoint.
+
 ## Recurring Harvest Shape
 
 The recurring Atlassian heartbeat should:
@@ -208,7 +228,9 @@ After editing this lane, run:
 ```bash
 python3 -m py_compile scripts/build_ops_watch_packet.py scripts/build_jira_captain_watch_packet.py
 python3 -m py_compile scripts/build_confluence_ops_watch_packet.py
+python3 -m py_compile scripts/build_ops_watch_pond_snapshot.py
 python3 -m py_compile scripts/build_ops_watch_ingest_sample_packet.py scripts/push_ops_watch_ingest_packet.py
+npm --prefix apps/web run build
 node --check ops/cloudflare/ops-watch-ingest/worker.js
 bash scripts/check_property_identity_governance.sh
 bash scripts/check_context_discipline.sh

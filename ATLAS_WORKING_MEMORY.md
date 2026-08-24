@@ -1,8 +1,18 @@
 # ATLAS WORKING MEMORY
-**Last Updated:** 08/22/2026
+**Last Updated:** 08/24/2026
 **Purpose:** Single source of truth for Atlas AI - read this FIRST in every session
 
 ---
+
+### 08/24/2026 - Ops Watch Pond visibility wired
+- Added the read-only Ops Watch Pond snapshot generator `/Users/mark/Property_Analytics/scripts/build_ops_watch_pond_snapshot.py`.
+- Added typed static web snapshot files under `/Users/mark/Property_Analytics/apps/web/src/lib/ops-watch/`: `types.ts` and generated `generated-snapshot.ts`.
+- Current snapshot source is `/Users/mark/Property_Analytics/reports/ops_watch/ops-watch-20260824-0819/ops-watch-packet.json`; human readout is `/Users/mark/Property_Analytics/reports/ops_watch/ops-watch-20260824-0819/OPS_WATCH_READOUT.md`.
+- The Pond landing page now shows an Ops Watch panel with Jira/Captain property rows, Critical count, pending vendor count, property visibility, source-readiness blockers, and top Jira property queue.
+- The Watchtower now has a first-class `#ops-watch` section showing the latest read-only ticket/source posture, priority Jira property queue, source blockers, and assisted-action boundary.
+- Production web deployment is Cloudflare Pages `https://5382cf5c.property-analytics.pages.dev`, carried by the protected custom route `https://pond.venterrawebops.com/pond`. The panel is below Source Readiness / Surface Conditions on the Pond landing page, and the Watchtower section is at `https://pond.venterrawebops.com/watchtower#ops-watch`.
+- Current app snapshot counts: `12` Jira issues reviewed, `14` Jira/Captain records, `25` Confluence source signals, `29` total Captain records, `25` properties, `13` Critical records, `5` pending-vendor records, `5` stale `14+` records, and `0` unresolved property records.
+- Boundary: this is a static Pond visibility layer only. It does not edit Jira, Confluence, Microsoft 365, D1, Captain Runtime, Cloudflare, or locked PIB files. Jira writeback and Captain Runtime publish remain separate reviewed steps.
 
 ### 08/22/2026 - Ops Watch mirror/push Cloudflare ingest wired
 - Added the Cloudflare-side Ops Watch mirror/push receiving lane for sanitized internal/intranet exports. The dedicated Worker lives at `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/worker.js` with config `/Users/mark/Property_Analytics/ops/cloudflare/ops-watch-ingest/wrangler.toml`.
