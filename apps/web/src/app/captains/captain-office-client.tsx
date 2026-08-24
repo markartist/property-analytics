@@ -44,6 +44,7 @@ import {
 import { canPerformOfferingAction } from "@/lib/permissions";
 
 type OfficeSection = "office" | "history" | "watchlist" | "memory" | "quarters" | "expert-reads";
+type WorkspaceTab = "runtime" | "watch" | "memory" | "expert" | "lineage";
 
 const DEFAULT_PROPERTY = "AR4PB";
 const RUNTIME_MODES = ["monitoring", "lightweight", "standard", "escalated", "executive", "simulation"] as const;
@@ -80,6 +81,22 @@ const EXPERT_LANES: Array<{ id: ExpertLaneId; label: string; purpose: string }> 
   { id: "operational_capacity_advisor", label: "Operational Capacity Advisor", purpose: "team capacity and execution feasibility" },
   { id: "peer_borrowing_advisor", label: "Peer Borrowing Advisor", purpose: "borrowable peer tactics across region and portfolio" },
 ];
+
+const WORKSPACES: Array<{ id: WorkspaceTab; label: string; description: string; icon: React.ElementType }> = [
+  { id: "runtime", label: "Runtime", description: "Submit updates and inspect the governed response.", icon: Send },
+  { id: "watch", label: "Watch & Actions", description: "Review active alerts, tickets, and follow-through.", icon: AlertTriangle },
+  { id: "memory", label: "Quarters", description: "Capture working memory without promoting it to truth.", icon: Brain },
+  { id: "expert", label: "Expert Reads", description: "Request and review specialist guidance.", icon: FileSearch },
+  { id: "lineage", label: "Lineage", description: "Audit prior runs, hashes, and evidence trail.", icon: GitBranch },
+];
+
+function workspaceForSection(section: OfficeSection): WorkspaceTab {
+  if (section === "history") return "lineage";
+  if (section === "watchlist") return "watch";
+  if (section === "memory" || section === "quarters") return "memory";
+  if (section === "expert-reads") return "expert";
+  return "runtime";
+}
 
 function formatDate(value: unknown): string {
   if (!value || typeof value !== "string") return "-";
@@ -163,6 +180,7 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
   const [focus, setFocus] = React.useState(INTERACTION_FOCUS[0]);
   const [expertLane, setExpertLane] = React.useState<ExpertLaneId>("quartermaster");
   const [expertReason, setExpertReason] = React.useState("Review this property context and return governed specialist guidance.");
+  const [activeWorkspace, setActiveWorkspace] = React.useState<WorkspaceTab>(() => workspaceForSection(section));
 
   React.useEffect(() => {
     if (initialPropertyId && initialPropertyId !== propertyId) setPropertyId(initialPropertyId);
@@ -194,6 +212,10 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
     loadOffice(propertyId);
   }, [authLoading, canView, loadOffice, propertyId]);
 
+  React.useEffect(() => {
+    setActiveWorkspace(workspaceForSection(section));
+  }, [section]);
+
   async function submitInteraction(event: React.FormEvent) {
     event.preventDefault();
     if (!inputText.trim() || !state) return;
@@ -219,6 +241,19 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
 
   const selectedPropertyCode = state?.property.property_code ?? state?.property.encasa_property_code ?? propertyId;
   const latest = state?.history[0] ?? null;
+  const alertCount = state?.alerts.length ?? 0;
+  const watchCount = state?.watch_items.length ?? 0;
+  const actionCount = state?.actions.length ?? 0;
+  const evidenceCount = state?.evidence_packets[0]?.evidence.length ?? 0;
+  const memoryOpenCount = (awarenessPosture?.open_commitments.length ?? 0) + (awarenessPosture?.verification_needed_items.length ?? 0);
+  const blockedExpertCount = expertReads.filter((read) => read.read_status === "blocked" || read.publishability === "blocked").length;
+  const workspaceMetrics: Record<WorkspaceTab, { value: string; tone: unknown }> = {
+    runtime: { value: latest ? formatDate(latest.timestamp) : "No run", tone: latest?.publishability ?? "unknown" },
+    watch: { value: `${alertCount + watchCount + actionCount}`, tone: alertCount || actionCount ? "warn" : "pass" },
+    memory: { value: `${memoryOpenCount}`, tone: memoryOpenCount ? "warn" : "pass" },
+    expert: { value: `${expertReads.length}`, tone: blockedExpertCount ? "blocked" : "current" },
+    lineage: { value: `${evidenceCount}`, tone: evidenceCount ? "current" : "unknown" },
+  };
 
   async function selectExpertRead(expertReadId: string) {
     const existing = expertReads.find((read) => read.expert_read_id === expertReadId);
@@ -320,22 +355,17 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
   return (
     <div className="min-h-screen bg-[#F5F8FB]">
       <div className="mx-auto max-w-[1500px] space-y-6 px-5 py-7 md:px-8">
-        <header className="rounded-lg border border-slate-200 bg-white p-6">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-[#0D5E6D]">
+        <header className="rounded-lg border border-slate-200 bg-white p-5">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-[#3B9189]">
                 <ClipboardCheck className="h-4 w-4" />
                 <span className="text-xs font-black uppercase tracking-[0.24em]">Captain’s Office</span>
               </div>
-              <h1 className="mt-3 text-3xl font-black tracking-normal text-[#15284B] md:text-4xl">
+              <h1 className="mt-2 truncate text-3xl font-black tracking-normal text-[#15284B] md:text-4xl">
                 {state?.property.name ?? "Governed property workspace"}
               </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Evidence-aware runtime workspace for property-specific questions, updates, concerns, recommendations, lineage, and candidate memory.
-              </p>
-              <p className="mt-3 text-sm font-semibold text-slate-500">
-                Manager-provided updates remain operational claims until verified through governed evidence workflows.
-              </p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Evidence-aware runtime workspace for property updates, tickets, recommendations, memory, and lineage.</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row xl:items-center">
               <select
@@ -363,12 +393,12 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
               </Link>
             </div>
           </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <SummaryTile label="Runtime Mode" value={state?.runtime_status.latest_runtime_mode ?? "No run"} tone={state?.runtime_status.latest_runtime_mode} />
+          <div className="mt-5 grid gap-2 rounded-lg border border-[#D6D6D2] bg-[#F6F6F5] p-2 md:grid-cols-5">
+            <SummaryTile label="Mode" value={state?.runtime_status.latest_runtime_mode ?? "No run"} tone={state?.runtime_status.latest_runtime_mode} />
             <SummaryTile label="Authority" value={state?.runtime_status.latest_authority_level ?? "No state"} tone={state?.runtime_status.latest_authority_level} />
             <SummaryTile label="Confidence" value={numericPercent(state?.runtime_status.latest_confidence)} tone={state?.runtime_status.latest_confidence ? "verified" : "unknown"} />
-            <SummaryTile label="Publishability" value={state?.runtime_status.latest_publishability ?? "No state"} tone={state?.runtime_status.latest_publishability} />
-            <SummaryTile label="Last Runtime" value={formatDate(state?.runtime_status.last_interaction_at)} tone="current" />
+            <SummaryTile label="Publish" value={state?.runtime_status.latest_publishability ?? "No state"} tone={state?.runtime_status.latest_publishability} />
+            <SummaryTile label="Last Run" value={formatDate(state?.runtime_status.last_interaction_at)} tone="current" />
           </div>
         </header>
 
@@ -383,10 +413,12 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
             <Loader2 className="h-7 w-7 animate-spin text-slate-400" />
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-            <main className="space-y-6">
-              {(section === "office" || section === "history") && (
-                <>
+          <main className="space-y-5">
+            <WorkspaceSwitch active={activeWorkspace} onChange={setActiveWorkspace} metrics={workspaceMetrics} />
+
+            {activeWorkspace === "runtime" && (
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.75fr)]">
+                <div className="space-y-5">
                   <InteractionWorkspace
                     focus={focus}
                     setFocus={setFocus}
@@ -399,30 +431,36 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
                     latest={latest}
                   />
                   <StructuredResponse latest={latest} />
-                </>
-              )}
+                </div>
+                <EvidenceAuthoritySidebar state={state} />
+              </div>
+            )}
 
-              {(section === "office" || section === "watchlist") && (
+            {activeWorkspace === "watch" && (
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)]">
                 <WatchItemsPanel state={state} propertyCode={selectedPropertyCode} />
-              )}
+                <RoutingPanel latest={latest} actions={state?.actions ?? []} />
+              </div>
+            )}
 
-              {(section === "office" || section === "memory" || section === "quarters") && (
-                <>
-                  <MemoryStewardshipPanel
-                    posture={awarenessPosture}
-                    selfNoteText={selfNoteText}
-                    setSelfNoteText={setSelfNoteText}
-                    commitmentText={commitmentText}
-                    setCommitmentText={setCommitmentText}
-                    saving={savingAwareness}
-                    onSelfNote={submitSelfNote}
-                    onCommitment={submitCommitment}
-                  />
-                  <MemoryCandidatePanel candidates={state?.memory_candidates ?? []} propertyCode={selectedPropertyCode} />
-                </>
-              )}
+            {activeWorkspace === "memory" && (
+              <div className="space-y-5">
+                <MemoryStewardshipPanel
+                  posture={awarenessPosture}
+                  selfNoteText={selfNoteText}
+                  setSelfNoteText={setSelfNoteText}
+                  commitmentText={commitmentText}
+                  setCommitmentText={setCommitmentText}
+                  saving={savingAwareness}
+                  onSelfNote={submitSelfNote}
+                  onCommitment={submitCommitment}
+                />
+                <MemoryCandidatePanel candidates={state?.memory_candidates ?? []} propertyCode={selectedPropertyCode} />
+              </div>
+            )}
 
-              {(section === "office" || section === "expert-reads") && (
+            {activeWorkspace === "expert" && (
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)]">
                 <ExpertReadsWorkspace
                   propertyCode={selectedPropertyCode}
                   reads={expertReads}
@@ -438,30 +476,75 @@ export function CaptainOfficeClient({ initialPropertyId, section = "office" }: {
                   requesting={requestingExpert}
                   onRequest={submitExpertReadRequest}
                 />
-              )}
+                <ExpertReadAuthorityPanel reads={expertReads} selectedRead={selectedExpertRead} />
+              </div>
+            )}
 
-              <RuntimeHistoryPanel items={state?.history ?? []} propertyCode={selectedPropertyCode} expanded={section === "history"} />
-            </main>
-
-            <aside className="space-y-6">
-              <EvidenceAuthoritySidebar state={state} />
-              <ExpertReadAuthorityPanel reads={expertReads} selectedRead={selectedExpertRead} />
-              <RoutingPanel latest={latest} actions={state?.actions ?? []} />
-              <LineageFooter state={state} />
-            </aside>
-          </div>
+            {activeWorkspace === "lineage" && (
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)]">
+                <RuntimeHistoryPanel items={state?.history ?? []} propertyCode={selectedPropertyCode} expanded />
+                <LineageFooter state={state} />
+              </div>
+            )}
+          </main>
         )}
       </div>
     </div>
   );
 }
 
+function WorkspaceSwitch({
+  active,
+  onChange,
+  metrics,
+}: {
+  active: WorkspaceTab;
+  onChange: (value: WorkspaceTab) => void;
+  metrics: Record<WorkspaceTab, { value: string; tone: unknown }>;
+}) {
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {WORKSPACES.map((workspace) => {
+          const Icon = workspace.icon;
+          const metric = metrics[workspace.id];
+          const selected = active === workspace.id;
+          return (
+            <button
+              key={workspace.id}
+              type="button"
+              onClick={() => onChange(workspace.id)}
+              aria-pressed={selected}
+              className={`min-h-[112px] rounded-lg border p-4 text-left transition ${
+                selected ? "border-[#15284B] bg-[#15284B] text-white shadow-sm" : "border-[#D6D6D2] bg-[#F6F6F5] text-slate-700 hover:border-[#3D66B9] hover:bg-white"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-md ${selected ? "bg-white/15 text-white" : "bg-white text-[#3B9189]"}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <Badge value={metric.tone}>{metric.value}</Badge>
+              </div>
+              <p className="mt-3 text-base font-black">{workspace.label}</p>
+              <p className={`mt-1 text-sm leading-5 ${selected ? "text-white/75" : "text-slate-500"}`}>{workspace.description}</p>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function SummaryTile({ label: title, value, tone }: { label: string; value: unknown; tone?: unknown }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">{title}</p>
-      <p className="mt-2 truncate text-2xl font-black capitalize text-slate-950">{label(value)}</p>
-      <div className="mt-3"><Badge value={tone ?? value} /></div>
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+      <div className="flex min-h-10 items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{title}</p>
+          <p className="mt-1 truncate text-sm font-black capitalize text-slate-950">{label(value)}</p>
+        </div>
+        <Badge value={tone ?? value} />
+      </div>
     </div>
   );
 }

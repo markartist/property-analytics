@@ -1,5 +1,13 @@
 # Capability Register
 
+## 08/24/2026 Captain's Office Progressive Disclosure UI
+
+- Reworked `/Users/mark/Property_Analytics/apps/web/src/app/captains/captain-office-client.tsx` so Captain's Office is no longer one always-visible vertical stack.
+- Added a compact workspace switcher with five operator modes: Runtime, Watch & Actions, Quarters, Expert Reads, and Lineage.
+- Preserved existing governed data wiring for Captain Runtime submit/readback, evidence packets, watch items, routing/actions, Awareness memory posture, candidate memory, Expert Reads, and lineage.
+- Preserved deep-link compatibility for `/captains/<property>`, `/history`, `/watchlist`, `/quarters`, and `/expert-reads` by mapping each route to its matching workspace.
+- Disposition: active hosted Data Pond UI layer. This is a human-friendliness and progressive-disclosure change only; it does not mutate Captain Runtime records, Jira, Confluence, Microsoft 365, D1/R2, Cloudflare source systems, or locked PIB files.
+
 ## 08/24/2026 Captain Fleet Current-State Refresh
 
 - Published the reviewed Jira Captain Watch SQL packet `/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch/jira-captain-watch-20260824-0819/captain-watch-upserts.sql` into remote D1 Captain Runtime.

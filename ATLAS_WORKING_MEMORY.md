@@ -4,6 +4,15 @@
 
 ---
 
+### 08/24/2026 - Captain's Office progressive disclosure UI wired
+- Reworked `/Users/mark/Property_Analytics/apps/web/src/app/captains/captain-office-client.tsx` from an always-visible vertical stack into a progressive workspace model.
+- The Captain's Office now exposes compact status posture plus five operator workspaces: Runtime, Watch & Actions, Quarters, Expert Reads, and Lineage.
+- Existing data wiring remains intact: Captain Runtime interaction submit, structured response readback, evidence packets, watch items, routing/actions, Awareness memory posture, candidate memory, Expert Reads, and runtime lineage still use the existing governed API clients.
+- Deep-link routes remain compatible: `/captains/<property>`, `/history`, `/watchlist`, `/quarters`, and `/expert-reads` now land on the corresponding workspace instead of loading the full page vertically.
+- UI intent: progressive disclosure, fewer one-column gutters, and paired horizontal layouts where the relationship is natural: Runtime/Evidence, Watch/Routing, Expert/Authority, and Log/Lineage.
+- Verification: `npm --prefix apps/web run build` passed.
+- Boundary: this was a hosted Data Pond UI composition change only. It did not mutate Captain Runtime data, Jira, Confluence, Microsoft 365, Cloudflare D1/R2, locked PIB files, or source-system tickets.
+
 ### 08/24/2026 - Captain fleet brought current
 - Published the reviewed Jira Captain Watch packet `/Users/mark/Property_Analytics/reports/captains_log/jira_ticket_watch/jira-captain-watch-20260824-0819/captain-watch-upserts.sql` into remote D1 Captain Runtime. This added/updated `14` Jira watch items and `14` Jira actions across `12` properties through Keeper-backed Cloudflare auth; Jira and Confluence themselves were not mutated.
 - Corrected a duplicate active Captain identity for The Vine. Legacy GA4-id Captain `505234023` was retired/superseded without deletion: `11` support-agent rows retired, `1` activation memory deprecated, `7` watch rows superseded, and `3` action rows superseded. Governed `TX4EK` remains the active The Vine Captain identity.
