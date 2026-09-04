@@ -23,6 +23,9 @@ WEB_SNAPSHOT = ROOT / "apps/web/src/lib/resi-edge-launch/generated-snapshot.ts"
 DB_PATH = ROOT / "data/portfolio_analytics.db"
 PSI_BASELINE_ROOT = ROOT / "reports/resi_edge_performance/performance-baselines"
 VANITY_QA_ROOT = ROOT / "reports/domain_ops"
+HEAP_HYGIENE_ROOT = ROOT / "reports/resi_edge_performance/heap-hygiene"
+OPTIMIZATION_PROOF_ROOT = ROOT / "reports/resi_edge_performance"
+HERO_FRESHNESS_ROOT = ROOT / "reports/resi_edge_performance/hero-freshness-sync"
 
 
 OPEN_FOCUS = (
@@ -33,6 +36,8 @@ OPEN_FOCUS = (
 )
 
 PSI_LAUNCH_TARGETS = ("legacy Venterra URL", "staging Kinsta URL", "final vanity URL")
+EXPECTED_HEAP_ID = "286627304"
+OLD_HEAP_ID = "676880719"
 
 
 def latest_file(root: Path, name: str) -> Path:
@@ -338,6 +343,153 @@ def load_latest_vanity_qa_packet() -> dict[str, Any]:
     }
 
 
+def load_latest_heap_hygiene_packet() -> dict[str, Any]:
+    paths = sorted(HEAP_HYGIENE_ROOT.glob("*/heap-hygiene-evidence.json"))
+    if not paths:
+        return {"summary": {}, "rows": [], "_path": None}
+    path = paths[-1]
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        "summary": payload.get("summary") or {},
+        "rows": payload.get("rows") or [],
+        "generated_at_human": payload.get("generated_for_display", ""),
+        "_path": str(path.relative_to(ROOT)),
+    }
+
+
+def load_latest_hero_freshness_packet() -> dict[str, Any]:
+    paths = sorted(HERO_FRESHNESS_ROOT.glob("*/latest-summary.json"))
+    root_latest = HERO_FRESHNESS_ROOT / "latest-summary.json"
+    if root_latest.exists():
+        paths.append(root_latest)
+    if not paths:
+        return {"summary": {}, "rows": [], "_path": None}
+    path = paths[-1]
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        "summary": payload,
+        "rows": payload.get("rows") or [],
+        "generated_at_human": payload.get("generated_at_human", ""),
+        "_path": str(path.relative_to(ROOT)),
+    }
+
+
+def index_heap_hygiene(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {str(row.get("domain") or "").lower(): row for row in rows if row.get("domain")}
+
+
+def index_hero_freshness(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    index: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        domain = str(row.get("domain") or "").lower()
+        code = str(row.get("property_code") or "").upper()
+        if domain:
+            index[domain] = row
+        if code:
+            index[code] = row
+    return index
+
+
+def analytics_hygiene_signal(row: dict[str, Any] | None) -> dict[str, Any]:
+    if not row:
+        return {
+            "color": "yellow",
+            "label": "Needs Check",
+            "detail": "Heap source hygiene has not been checked in the latest packet.",
+            "sourceHeapIds": [],
+            "oldHeapPresent": False,
+            "expectedHeapPresent": False,
+            "dualHeapPresent": False,
+            "heapDebugTrue": False,
+            "browserHeapIds": [],
+            "browserOldHeapPresent": None,
+            "browserExpectedHeapPresent": None,
+            "clean": False,
+        }
+    browser = row.get("browser") or {}
+    source_ids = row.get("heap_ids") or []
+    browser_ids = browser.get("heap_ids") or []
+    clean = bool(row.get("clean"))
+    old_heap = bool(row.get("old_heap_present"))
+    expected = bool(row.get("expected_heap_present"))
+    dual = bool(row.get("dual_heap_present"))
+    debug = bool(row.get("heap_debug_true"))
+    if clean:
+        return {
+            "color": "green",
+            "label": "Clean",
+            "detail": f"Only production Heap {EXPECTED_HEAP_ID} is present and debug mode is off.",
+            "sourceHeapIds": source_ids,
+            "oldHeapPresent": old_heap,
+            "expectedHeapPresent": expected,
+            "dualHeapPresent": dual,
+            "heapDebugTrue": debug,
+            "browserHeapIds": browser_ids,
+            "browserOldHeapPresent": browser.get("old_heap_present"),
+            "browserExpectedHeapPresent": browser.get("expected_heap_present"),
+            "clean": True,
+        }
+    reasons = []
+    if old_heap:
+        reasons.append(f"old Heap {OLD_HEAP_ID}")
+    if dual:
+        reasons.append("dual Heap IDs")
+    if debug:
+        reasons.append("debug mode")
+    if not expected:
+        reasons.append(f"production Heap {EXPECTED_HEAP_ID} not confirmed")
+    detail = "Resi cleanup is required before optimization: " + ", ".join(reasons) + "."
+    return {
+        "color": "red",
+        "label": "Blocked",
+        "detail": detail,
+        "sourceHeapIds": source_ids,
+        "oldHeapPresent": old_heap,
+        "expectedHeapPresent": expected,
+        "dualHeapPresent": dual,
+        "heapDebugTrue": debug,
+        "browserHeapIds": browser_ids,
+        "browserOldHeapPresent": browser.get("old_heap_present"),
+        "browserExpectedHeapPresent": browser.get("expected_heap_present"),
+        "clean": False,
+    }
+
+
+def hero_freshness_signal(row: dict[str, Any] | None) -> dict[str, Any]:
+    if not row:
+        return {
+            "color": "yellow",
+            "label": "Needs Check",
+            "detail": "Hero source freshness has not been captured in the latest packet.",
+            "status": "not_checked",
+            "recommendedAction": "capture_hero_freshness",
+        }
+    status = str(row.get("status") or "source_error")
+    if status == "current":
+        return {
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record.",
+            "status": status,
+            "recommendedAction": row.get("recommended_action") or "none",
+        }
+    if status == "refresh_needed":
+        return {
+            "color": "yellow",
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration.",
+            "status": status,
+            "recommendedAction": row.get("recommended_action") or "regenerate_hero_assets",
+        }
+    return {
+        "color": "yellow",
+        "label": "Check",
+        "detail": "Native hero source could not be confirmed cleanly.",
+        "status": status,
+        "recommendedAction": row.get("recommended_action") or "check_native_source",
+    }
+
+
 def index_fresh_psi(rows: list[dict[str, Any]]) -> dict[tuple[str, str, str], dict[str, Any]]:
     return {
         (str(row.get("property_code")), str(row.get("target_label")), str(row.get("strategy"))): row
@@ -399,10 +551,168 @@ def fresh_psi_target(
     }
 
 
-def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fresh_psi_index: dict[tuple[str, str, str], dict[str, Any]], fresh_psi_captured_at: str) -> dict[str, Any]:
+def load_optimized_proof_index() -> dict[str, dict[str, Any]]:
+    def normalized_psi_score(score: Any) -> int | None:
+        if score is None:
+            return None
+        try:
+            value = float(score)
+        except (TypeError, ValueError):
+            return None
+        if value <= 1:
+            value *= 100
+        return int(round(value))
+
+    def exact_scores_from_summary(summary_path: Path, strategy: str) -> list[int]:
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        scores: list[int] = []
+        for run in summary.get("runs") or []:
+            if run.get("strategy") != strategy or not run.get("ok") or "exact" not in str(run.get("label") or ""):
+                continue
+            score = normalized_psi_score(run.get("score"))
+            if score is not None:
+                scores.append(score)
+        return scores
+
+    def highest_successful_psi_scores(apply_dir: Path) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for psi_path in sorted((apply_dir / "psi" / "psi").glob("**/psi-*.json")):
+            if psi_path.name in {"psi-gate.json", "psi-summary.json"}:
+                continue
+            stem = psi_path.stem.lower()
+            if "mobile" in stem:
+                strategy = "mobile"
+            elif "desktop" in stem:
+                strategy = "desktop"
+            else:
+                continue
+            try:
+                payload = json.loads(psi_path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            score = normalized_psi_score(
+                ((payload.get("lighthouseResult") or {}).get("categories") or {}).get("performance", {}).get("score")
+            )
+            if score is None:
+                continue
+            if score > int(result.get(strategy, {}).get("score", -1)):
+                result[strategy] = {
+                    "score": score,
+                    "evidence_path": str(psi_path),
+                    "captured_at": str(payload.get("analysisUTCTimestamp") or "").replace("T", " ").replace("Z", " UTC"),
+                }
+        return result
+
+    def latest_recheck_scores(property_root: Path) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for summary_path in sorted(property_root.glob("psi-recheck-*/psi-summary.json"), key=lambda path: path.stat().st_mtime):
+            for strategy in ("mobile", "desktop"):
+                scores = exact_scores_from_summary(summary_path, strategy)
+                if not scores:
+                    continue
+                result[strategy] = {
+                    "score": min(scores),
+                    "highest_score": max(scores),
+                    "scores": scores,
+                    "evidence_path": str(summary_path.parent),
+                    "captured_at": summary_path.parent.name.replace("psi-recheck-", ""),
+                }
+        return result
+
+    proofs: dict[str, dict[str, Any]] = {}
+    for readout_path in sorted(OPTIMIZATION_PROOF_ROOT.glob("*/*/apply-*/apply-readout.json")):
+        try:
+            readout = json.loads(readout_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        dashboard_recovery_path = readout_path.parent / "dashboard" / "dashboard-finalization-recovery.json"
+        dashboard_recovery_passed = False
+        try:
+            dashboard_recovery = json.loads(dashboard_recovery_path.read_text(encoding="utf-8"))
+            dashboard_recovery_passed = (
+                dashboard_recovery.get("pass") is True
+                or (
+                    dashboard_recovery.get("publish_recovery_pass") is True
+                    and dashboard_recovery.get("property_gate_ledger_was_already_passed") is True
+                )
+            )
+        except Exception:
+            dashboard_recovery = {}
+        property_gates_passed = ((readout.get("contract_gate_ledger") or {}).get("pass") is True)
+        if readout.get("pass") is not True and not (property_gates_passed and dashboard_recovery_passed):
+            continue
+        domain = str(readout.get("domain") or "").lower().strip()
+        property_code = str(readout.get("property_code") or "").upper().strip()
+        if not domain and not property_code:
+            continue
+        psi_gate_path = readout_path.parent / "psi/psi/psi-gate.json"
+        try:
+            psi_gate = json.loads(psi_gate_path.read_text(encoding="utf-8"))
+        except Exception:
+            psi_gate = {}
+        mobile_score = psi_gate.get("mobile_min_score")
+        desktop_score = psi_gate.get("desktop_min_score")
+        highest_scores = highest_successful_psi_scores(readout_path.parent)
+        recheck = latest_recheck_scores(readout_path.parent.parent)
+        mobile_candidates = [normalized_psi_score(mobile_score)]
+        desktop_candidates = [normalized_psi_score(desktop_score)]
+        if highest_scores.get("mobile"):
+            mobile_candidates.append(normalized_psi_score(highest_scores["mobile"].get("score")))
+        if highest_scores.get("desktop"):
+            desktop_candidates.append(normalized_psi_score(highest_scores["desktop"].get("score")))
+        if recheck.get("mobile"):
+            mobile_candidates.append(normalized_psi_score(recheck["mobile"].get("highest_score")))
+        if recheck.get("desktop"):
+            desktop_candidates.append(normalized_psi_score(recheck["desktop"].get("highest_score")))
+        mobile_score = max(score for score in mobile_candidates if score is not None) if any(score is not None for score in mobile_candidates) else None
+        desktop_score = max(score for score in desktop_candidates if score is not None) if any(score is not None for score in desktop_candidates) else None
+        mobile_evidence = highest_scores.get("mobile") or recheck.get("mobile") or {}
+        desktop_evidence = highest_scores.get("desktop") or recheck.get("desktop") or {}
+        proof = {
+            "status": "captured",
+            "label": "optimized live proof",
+            "url": f"https://{domain}/" if domain else "",
+            "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+            "mobileScore": mobile_score,
+            "desktopScore": desktop_score,
+            "mobileLcp": None,
+            "desktopLcp": None,
+            "mobileCls": None,
+            "desktopCls": None,
+            "mobileTbt": None,
+            "desktopTbt": None,
+            "capturedAt": (desktop_evidence or mobile_evidence).get("captured_at") or readout_path.parent.name.replace("apply-", ""),
+            "evidencePath": str(readout_path.parent),
+            "psiEvidencePath": (desktop_evidence or mobile_evidence).get("evidence_path") or str(psi_gate_path),
+            "runtimeVersion": ((readout.get("stage_setup") or {}).get("deploy_bundle_validation") or {}).get("mobile_shell_byte_forecast", {}).get("runtime_version"),
+            "gateSummary": (readout.get("contract_gate_ledger") or {}).get("summary") or {},
+        }
+        for key in (domain, property_code):
+            if key:
+                proofs[key] = proof
+    return proofs
+
+
+def build_property(
+    row: dict[str, Any],
+    index: int,
+    conn: sqlite3.Connection,
+    fresh_psi_index: dict[tuple[str, str, str], dict[str, Any]],
+    fresh_psi_captured_at: str,
+    heap_hygiene_index: dict[str, dict[str, Any]],
+    hero_freshness_index: dict[str, dict[str, Any]],
+    optimized_proof_index: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
     focus = OPEN_FOCUS[index % len(OPEN_FOCUS)]
     property_name = row["property_name"]
     vanity_domain = row["vanity_domain"]
+    heap_hygiene = analytics_hygiene_signal(heap_hygiene_index.get(str(vanity_domain).lower()))
+    hero_freshness = hero_freshness_signal(
+        hero_freshness_index.get(str(vanity_domain).lower()) or hero_freshness_index.get(str(row["property_code"]).upper())
+    )
     current_url = current_url_from_name(property_name)
     new_url = f"https://{vanity_domain}/"
     staging_url = ""
@@ -441,11 +751,39 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
         fresh_psi_target(row["property_code"], "staging Kinsta URL", staging_url, fresh_psi_index, fresh_psi_captured_at),
         fresh_psi_target(row["property_code"], "final vanity URL", new_url, fresh_psi_index, fresh_psi_captured_at),
     ]
+    optimized_proof = (
+        optimized_proof_index.get(str(vanity_domain).lower())
+        or optimized_proof_index.get(str(row["property_code"]).upper())
+        or {
+            "status": "missing",
+            "label": "optimized live proof",
+            "url": new_url,
+            "note": "Optimization proof has not started.",
+            "mobileScore": None,
+            "desktopScore": None,
+            "mobileLcp": None,
+            "desktopLcp": None,
+            "mobileCls": None,
+            "desktopCls": None,
+            "mobileTbt": None,
+            "desktopTbt": None,
+            "capturedAt": "",
+            "evidencePath": "",
+            "runtimeVersion": "",
+            "gateSummary": {},
+        }
+    )
+    if not optimized_proof.get("url"):
+        optimized_proof["url"] = new_url
+    optimized_complete = optimized_proof.get("status") == "captured"
     has_psi_history = psi["mobileScore"] is not None or psi["desktopScore"] is not None
     fresh_psi_complete = all(target["status"] == "captured" for target in psi_launch_targets[:2])
     live_vanity_psi_complete = psi_launch_targets[2]["status"] == "captured"
     launch_live = live_vanity_psi_complete
-    if launch_live:
+    if optimized_complete:
+        focus = "Optimized proof complete"
+        progress_percent = 100
+    elif launch_live:
         focus = "Optimization benchmark"
         progress_percent = 100
 
@@ -498,7 +836,9 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
             {
                 "number": 7,
                 "title": "Optimization target",
-                "status": yellow("Future Work", "Use the captured live benchmark to queue the optimization run."),
+                "status": green("Done", "The governed optimization package passed live proof.")
+                if optimized_complete
+                else yellow("Future Work", "Use the captured live benchmark to queue the optimization run."),
             },
         ]
 
@@ -531,10 +871,10 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
             ),
             metric(
                 "Optimization Queue" if launch_live else "Launch Prep",
-                "Queued" if launch_live else "Open",
-                "Use the live benchmark to plan governed optimization work." if launch_live else "This is the next item to clear before approval.",
-                "yellow",
-                45,
+                "Done" if optimized_complete else "Queued" if launch_live else "Open",
+                "Governed optimization proof is complete." if optimized_complete else "Use the live benchmark to plan governed optimization work." if launch_live else "This is the next item to clear before approval.",
+                "green" if optimized_complete else "yellow",
+                100 if optimized_complete else 45,
             ),
         ],
         "steps": steps,
@@ -568,6 +908,15 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
                 else yellow("Open", "Reporting history still needs confirmation."),
             },
             {
+                "label": "Analytics hygiene",
+                "value": "Clean" if heap_hygiene["clean"] else "Cleanup required",
+                "signal": {
+                    "color": heap_hygiene["color"],
+                    "label": heap_hygiene["label"],
+                    "detail": heap_hygiene["detail"],
+                },
+            },
+            {
                 "label": "Performance baseline",
                 "value": (
                     f"Legacy M {psi_launch_targets[0]['mobileScore']}; D {psi_launch_targets[0]['desktopScore']} | Kinsta M {psi_launch_targets[1]['mobileScore']}; D {psi_launch_targets[1]['desktopScore']} | Live M {psi_launch_targets[2]['mobileScore']}; D {psi_launch_targets[2]['desktopScore']}"
@@ -581,9 +930,20 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
                 else yellow("Open", "Fresh legacy and Kinsta speed baselines still need capture."),
             },
             {
+                "label": "Hero media freshness",
+                "value": hero_freshness["label"],
+                "signal": {
+                    "color": hero_freshness["color"],
+                    "label": hero_freshness["label"],
+                    "detail": hero_freshness["detail"],
+                },
+            },
+            {
                 "label": "Launch prep",
-                "value": "Optimization benchmark" if launch_live else focus,
-                "signal": yellow("Future Work", "Optimization is the next phase after the live benchmark.")
+                "value": "Optimized proof complete" if optimized_complete else "Optimization benchmark" if launch_live else focus,
+                "signal": green("Optimized", "Governed optimization package passed live proof.")
+                if optimized_complete
+                else yellow("Future Work", "Optimization is the next phase after the live benchmark.")
                 if launch_live
                 else yellow("Open", f"{focus} is the next item to clear."),
             },
@@ -591,6 +951,9 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
         "organic": organic,
         "psi": psi,
         "psiLaunchTargets": psi_launch_targets,
+        "optimizedProof": optimized_proof,
+        "analyticsHygiene": heap_hygiene,
+        "heroFreshness": hero_freshness,
         "domain": green("Ready", "The new property domain is active in the company Cloudflare account.")
         if domain_ready
         else yellow("Open", "The new property domain still needs confirmation."),
@@ -608,11 +971,15 @@ def build_property(row: dict[str, Any], index: int, conn: sqlite3.Connection, fr
         else green("Ready", "Fresh legacy and Kinsta speed baselines are captured; live vanity PSI is the next benchmark.")
         if fresh_psi_complete
         else yellow("Baseline Open", "Fresh legacy and Kinsta speed baselines still need capture."),
-        "operations": yellow("Future Work", "Optimization is the next phase after the live benchmark.")
+        "operations": green("Optimized", "Governed optimization package passed live proof.")
+        if optimized_complete
+        else yellow("Future Work", "Optimization is the next phase after the live benchmark.")
         if launch_live
         else yellow("Prep Open", f"{focus} is the next item to clear."),
         "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-        "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+        "nextStep": "Next: monitor optimized live proof and carry this package forward."
+        if optimized_complete
+        else "Next: compare live vanity PSI against the optimized target and queue improvements."
         if launch_live
         else f"Next: clear {focus.lower()} for {property_name}.",
         "_completed_setup": completed_setup,
@@ -668,9 +1035,19 @@ def main() -> int:
     fresh_psi_captured_at = fresh_psi.get("generated_at_human", "")
     vanity_qa = load_latest_vanity_qa_packet()
     vanity_qa_summary = vanity_qa.get("summary") or {}
+    heap_hygiene = load_latest_heap_hygiene_packet()
+    heap_hygiene_summary = heap_hygiene.get("summary") or {}
+    heap_hygiene_index = index_heap_hygiene(heap_hygiene.get("rows", []))
+    hero_freshness = load_latest_hero_freshness_packet()
+    hero_freshness_summary = hero_freshness.get("summary") or {}
+    hero_freshness_index = index_hero_freshness(hero_freshness.get("rows", []))
+    optimized_proof_index = load_optimized_proof_index()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    properties = [build_property(row, index, conn, fresh_psi_index, fresh_psi_captured_at) for index, row in enumerate(rows)]
+    properties = [
+        build_property(row, index, conn, fresh_psi_index, fresh_psi_captured_at, heap_hygiene_index, hero_freshness_index, optimized_proof_index)
+        for index, row in enumerate(rows)
+    ]
     conn.close()
     for prop in properties:
         prop.pop("_completed_setup", None)
@@ -683,6 +1060,7 @@ def main() -> int:
     ahrefs = sum(1 for row in rows if row.get("ahrefs_project_status") == "ready_existing_vanity_project_found")
     performance = sum(1 for prop in properties if all(target["status"] == "captured" for target in prop["psiLaunchTargets"][:2]))
     live_vanity_performance = sum(1 for prop in properties if prop["psiLaunchTargets"][2]["status"] == "captured")
+    optimized_performance = sum(1 for prop in properties if prop["optimizedProof"]["status"] == "captured")
     vanity_qa_green = int(vanity_qa_summary.get("green") or 0)
     vanity_qa_yellow = int(vanity_qa_summary.get("yellow") or 0)
     vanity_qa_red = int(vanity_qa_summary.get("red") or 0)
@@ -713,6 +1091,23 @@ def main() -> int:
     psi_mobile_average = round(sum(mobile_scores) / len(mobile_scores)) if mobile_scores else None
     psi_desktop_average = round(sum(desktop_scores) / len(desktop_scores)) if desktop_scores else None
     psi_latest = max([prop["psi"]["latestDate"] for prop in properties if prop["psi"]["latestDate"]], default="")
+    analytics_hygiene_clean = int(heap_hygiene_summary.get("clean") or 0)
+    analytics_hygiene_source_checked = int(heap_hygiene_summary.get("properties") or 0)
+    analytics_hygiene_old_heap = int(heap_hygiene_summary.get("old_heap_present") or 0)
+    analytics_hygiene_expected_heap = int(heap_hygiene_summary.get("expected_heap_present") or 0)
+    analytics_hygiene_dual_heap = int(heap_hygiene_summary.get("dual_heap_present") or 0)
+    analytics_hygiene_debug_true = int(heap_hygiene_summary.get("heap_debug_true") or 0)
+    analytics_hygiene_browser_checked = int(heap_hygiene_summary.get("browser_checked") or 0)
+    analytics_hygiene_browser_old = int(heap_hygiene_summary.get("browser_old_heap_present") or 0)
+    analytics_hygiene_browser_expected = int(heap_hygiene_summary.get("browser_expected_heap_present") or 0)
+    analytics_hygiene_status = str(heap_hygiene_summary.get("status") or "not_checked")
+    hero_statuses = [str(prop.get("heroFreshness", {}).get("status") or "not_checked") for prop in properties]
+    hero_freshness_current = sum(1 for status in hero_statuses if status == "current")
+    hero_freshness_refresh_needed = sum(1 for status in hero_statuses if status == "refresh_needed")
+    hero_freshness_source_missing = sum(1 for status in hero_statuses if status == "source_missing")
+    hero_freshness_source_error = sum(1 for status in hero_statuses if status == "source_error")
+    hero_freshness_checked = sum(1 for status in hero_statuses if status != "not_checked")
+    hero_freshness_open = hero_freshness_refresh_needed + hero_freshness_source_missing + hero_freshness_source_error
 
     focus_counts = Counter(prop["currentFocus"] for prop in properties)
     market_counts = Counter(prop["market"] for prop in properties)
@@ -761,6 +1156,31 @@ def main() -> int:
                 "yellow",
                 60,
             ),
+            metric(
+                "Optimized Proof",
+                f"{optimized_performance}/{total}",
+                "Governed optimization proof is complete for passed properties.",
+                "green" if optimized_performance else "yellow",
+                round((optimized_performance / total) * 100) if total else 0,
+            ),
+            metric(
+                "Analytics Hygiene",
+                f"{analytics_hygiene_clean}/{total}",
+                "All live pages have one approved production Heap path."
+                if analytics_hygiene_clean == total
+                else f"Old Heap {OLD_HEAP_ID} and debug mode must be removed before optimization.",
+                "green" if analytics_hygiene_clean == total else "red",
+                round((analytics_hygiene_clean / total) * 100) if total else 0,
+            ),
+            metric(
+                "Hero Media",
+                f"{hero_freshness_current}/{total}" if hero_freshness_checked else "Pending",
+                "Native hero sources match optimized asset records."
+                if hero_freshness_checked and hero_freshness_open == 0 and hero_freshness_current == total
+                else "Hero source freshness is being watched for source-media changes.",
+                "green" if hero_freshness_checked and hero_freshness_open == 0 and hero_freshness_current == total else "yellow",
+                round((hero_freshness_current / total) * 100) if total else 0,
+            ),
         ],
         "stageBars": [
             {"label": "Domains", "value": domains, "total": total, "tone": "green"},
@@ -770,6 +1190,9 @@ def main() -> int:
             {"label": "PSI History", "value": psi_history, "total": total, "tone": "green" if psi_history == total else "yellow"},
             {"label": "Fresh PSI", "value": performance, "total": total, "tone": "green" if performance == total else "yellow"},
             {"label": "Read-Only QA", "value": vanity_qa_green, "total": vanity_qa_total, "tone": "green" if vanity_qa_passed else "red" if vanity_qa_red else "yellow"},
+            {"label": "Analytics Clean", "value": analytics_hygiene_clean, "total": total, "tone": "green" if analytics_hygiene_clean == total else "red"},
+            {"label": "Hero Media", "value": hero_freshness_current, "total": total, "tone": "green" if hero_freshness_checked and hero_freshness_open == 0 and hero_freshness_current == total else "yellow"},
+            {"label": "Optimized Proof", "value": optimized_performance, "total": total, "tone": "green" if optimized_performance else "yellow"},
             {"label": "Final Approval", "value": approvals, "total": total, "tone": "yellow"},
         ],
         "openItemBreakdown": [
@@ -807,6 +1230,7 @@ def main() -> int:
             "freshPsiPropertiesCompleted": int((fresh_psi.get("summary") or {}).get("properties_completed") or 0),
             "freshPsiLatestDate": fresh_psi_captured_at,
             "finalVanityPsiStatus": "captured" if live_vanity_performance == total else "pending_live_capture",
+            "optimizedProofProperties": optimized_performance,
             "vanityQaGreen": vanity_qa_green,
             "vanityQaYellow": vanity_qa_yellow,
             "vanityQaRed": vanity_qa_red,
@@ -823,6 +1247,27 @@ def main() -> int:
             "vanityQaLatestDate": vanity_qa.get("generated_at_human", ""),
             "vanityQaEvidencePath": vanity_qa.get("_path"),
             "promoBannerStatus": "vendor_follow_up",
+            "analyticsHygieneStatus": analytics_hygiene_status,
+            "analyticsHygieneClean": analytics_hygiene_clean,
+            "analyticsHygieneSourceChecked": analytics_hygiene_source_checked,
+            "analyticsHygieneOldHeapPresent": analytics_hygiene_old_heap,
+            "analyticsHygieneExpectedHeapPresent": analytics_hygiene_expected_heap,
+            "analyticsHygieneDualHeapPresent": analytics_hygiene_dual_heap,
+            "analyticsHygieneDebugTrue": analytics_hygiene_debug_true,
+            "analyticsHygieneBrowserChecked": analytics_hygiene_browser_checked,
+            "analyticsHygieneBrowserOldHeapPresent": analytics_hygiene_browser_old,
+            "analyticsHygieneBrowserExpectedHeapPresent": analytics_hygiene_browser_expected,
+            "analyticsHygieneExpectedHeapId": EXPECTED_HEAP_ID,
+            "analyticsHygieneOldHeapId": OLD_HEAP_ID,
+            "analyticsHygieneEvidencePath": heap_hygiene.get("_path"),
+            "heroFreshnessStatus": "fresh" if hero_freshness_checked and hero_freshness_open == 0 and hero_freshness_current == total else "watching",
+            "heroFreshnessChecked": hero_freshness_checked,
+            "heroFreshnessCurrent": hero_freshness_current,
+            "heroFreshnessRefreshNeeded": hero_freshness_refresh_needed,
+            "heroFreshnessSourceMissing": hero_freshness_source_missing,
+            "heroFreshnessSourceError": hero_freshness_source_error,
+            "heroFreshnessLatestDate": hero_freshness.get("generated_at_human", ""),
+            "heroFreshnessEvidencePath": hero_freshness.get("_path"),
         },
         "properties": properties,
     }

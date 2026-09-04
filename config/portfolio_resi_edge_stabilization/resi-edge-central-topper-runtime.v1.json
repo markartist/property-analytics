@@ -1,0 +1,79 @@
+{
+  "schema_version": "resi_edge_central_topper_runtime_v1",
+  "status": "central_render_only_live_active_set_cloudflare_media_lane_local",
+  "updated": "2026-09-01",
+  "purpose": "Centralize Resi Edge mobile topper rendering while property Workers keep route, origin, desktop, native-continuation, and fallback ownership.",
+  "non_deviation_contract": {
+    "one_shared_topper_runtime": true,
+    "property_specific_topper_scripts_allowed": false,
+    "property_specific_runtime_forks_allowed": false,
+    "unversioned_fleet_hotload_allowed": false,
+    "desktop_topper_allowed": false,
+    "zaraz_only_analytics": true,
+    "freshness_records_are_data_not_runtime": true
+  },
+  "delivery_model": {
+    "current_state": "active_property_workers_use_central_render_only_topper",
+    "target_state": "property_worker_owns_traffic_and_delegates_mobile_shell_rendering_to_versioned_shared_topper_runtime",
+    "migration_posture": "one_time_property_worker_migration_required",
+    "production_default": "bundled_until_mark_approves_central_canary",
+    "shared_runtime_version": "2026-08-31.edge-promo-record-v1",
+    "shared_runtime_source": "ops/cloudflare/shared/resi-edge-package/runtime.mjs",
+    "worker_shell_source": "ops/cloudflare/resi-edge-canonical-worker/worker.js",
+    "central_service_worker": "ops/cloudflare/resi-edge-topper-service/worker.js",
+    "thin_property_worker": "ops/cloudflare/resi-edge-thin-property-worker/worker.js"
+  },
+  "edge_record_contract": {
+    "bucket_binding": "RESI_EDGE_ASSETS",
+    "config_prefix": "resi-edge-topper-config/",
+    "config_key_pattern": "resi-edge-topper-config/<property-code>-<domain>/current.json",
+    "promo_prefix": "resi-edge-promo/",
+    "promo_key_pattern": "resi-edge-promo/<property-code>-<domain>/current.json",
+    "hero_freshness_prefix": "resi-edge-hero-freshness/",
+    "hero_freshness_key_pattern": "resi-edge-hero-freshness/<property-code>-<domain>/current.json",
+    "hero_media_state_prefix": "resi-edge-media-state/",
+    "hero_media_state_key_pattern": "resi-edge-media-state/<property-code>-<domain>/current.json",
+    "hero_media_refresh_queue": "resi-edge-hero-media-refresh",
+    "record_schema_version": "resi_edge_topper_config_record.v1",
+    "builder": "scripts/build_resi_edge_topper_config_records.py"
+  },
+  "allowed_record_fields": [
+    "schema_version",
+    "generated_at",
+    "property_code",
+    "source_property_code",
+    "domain",
+    "property_name",
+    "runtime_version",
+    "release_token_version",
+    "manifest_sha256",
+    "target",
+    "routing",
+    "mobile_shell",
+    "desktop",
+    "phone_attribution",
+    "analytics",
+    "consent",
+    "seo",
+    "record_keys"
+  ],
+  "promotion_rules": {
+    "canary_required_before_default_change": true,
+    "current_property_apply_runner_remains_authority": true,
+    "central_runtime_update_requires_static_validation": true,
+    "central_runtime_update_requires_record_builder_validation": true,
+    "rollback": "Move the property worker back to the last bundled runtime or point the central runtime pointer back to the last approved version."
+  },
+  "freshness_integration": {
+    "promo": "Cloudflare API scheduled routine updates promo records every 15 minutes from ThirtyLines propertyBannerSpecial.",
+    "hero": "Cloudflare API scheduled routine records hero freshness every 15 minutes; approved Cloudflare refreshes update stable R2 hero keys, hero freshness, and hero media-state records without mutating property Workers.",
+    "hero_media_state": "Accepted Cloudflare hero refresh baseline. Freshness checks compare native source to media-state first, then manifest when no accepted media-state exists.",
+    "topper_read_order": [
+      "central property config record",
+      "promo edge record",
+      "hero media-state record",
+      "hero freshness record",
+      "manifest fallback only while a property has not migrated to central config"
+    ]
+  }
+}

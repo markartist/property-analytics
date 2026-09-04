@@ -1,0 +1,398 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "existing_project_id": "10240483",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_domain_profile; retain_legacy_venterra_path_project_in_legacy_folder_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "balmoralvillageapts.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHBV",
+      "legacy_project_id": "10125761",
+      "data_key_status": "existing_vanity_project_found_in_phase2_analytics_profile_evidence"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "measurement_id": "G-FSJYR60T26",
+      "measurement_id_status": "configured_in_ga4_admin_after_08_17_2026_default_uri_patch_pending_zaraz_readback",
+      "owner": "cloudflare_zaraz",
+      "property_id": "378397296",
+      "zaraz_tool_name": "GA4BV",
+      "expected_stream_name": "Balmoral Village"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HBV"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBGA4BV"
+    }
+  },
+  "captain": {
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4bv_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4bv_2026-05-04.sql",
+    "id": "GA4BV-captain"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-summary.json",
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-results.csv",
+      "reports/domain_ops/20260825_092028_vanity_qa/screenshots/balmoralvillageapts.com.png",
+      "reports/resi_edge_performance/performance-baselines/performance-baseline-20260820T160054Z-final-vanity-merged/performance-baseline-results.csv",
+      "reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234731Z/PHASE2_AHREFS_VANITY_PROJECT_READOUT.md",
+      "reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185637Z/PHASE2_GA4_DEFAULT_URI_READOUT.md",
+      "reports/resi_edge_performance/heap-hygiene/heap-hygiene-20260824T205033Z/heap-hygiene-evidence.json",
+      "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+      "reports/resi_edge_performance/08-09-2026/balmoralvillageapts-com/source-scrape-prep/balmoralvillageapts.com_.html",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+      "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4bv_2026-05-04.sql"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "present": true,
+      "source": "live native home content exposes Kingsley award, verified 08/26/2026",
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg",
+          "alt": "Kingsley Excellence of resident satisfaction award badge"
+        }
+      ]
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "Balmoral Village live source theme tokens and canonical Venterra palette, verified 08/26/2026"
+    },
+    "content_blocks": [
+      {
+        "sequence": 1,
+        "kind": "welcome",
+        "heading": "Welcome to Balmoral Village",
+        "body": "In charming Peachtree City, Balmoral Village offers a distinctive residential setting shaped by greenery, space, and a relaxed Southern pace. Thoughtfully arranged homes and a neighborhood feel create a welcoming environment where everyday life unfolds comfortably, surrounded by the natural beauty and community spirit of Peachtree City.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://balmoralvillageapts.com/apartments/",
+        "image_url": "/assets/resi-edge-assets/GA4BV/home/welcome-640.avif",
+        "source_image_url": "https://dam.getresi.co/19647/conversions/Home-Welcome-full.jpg",
+        "image_alt": "Two-story gray house with large windows and a front porch, surrounded by trees and shrubs on a sunny day."
+      },
+      {
+        "sequence": 2,
+        "kind": "features",
+        "eyebrow": "Apartment Features",
+        "heading": "Stylish Living Spaces",
+        "body": "Enjoy spacious, stylishly appointed interiors with thoughtfully designed layouts that feel a little different—in the best way—offering comfortable room to spread out, settle in, and make everyday living feel effortlessly personal.",
+        "bullets": [
+          "Spacious one, two, and three-bedroom homes",
+          "Stylishly appointed interiors",
+          "Thoughtfully designed layouts",
+          "Comfortable room to spread out"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://balmoralvillageapts.com/features/",
+        "image_url": "/assets/resi-edge-assets/GA4BV/home/features-900.avif",
+        "source_image_url": "https://dam.getresi.co/19645/conversions/Home-Features-full.jpg",
+        "image_alt": "Modern kitchen with dark wood cabinets, stainless steel appliances, and light countertops and flooring."
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Noto Serif",
+    "hero": {
+      "headline": "1, 2, and 3 Bedroom Apartments in Peachtree City, GA",
+      "image_mobile": "/assets/resi-edge-assets/GA4BV/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://balmoralvillageapts.com/apartments/",
+      "source_image": "https://dam.getresi.co/19636/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "Balmoral Village live vanity source capture and Phase 2 draft manifest, verified 08/26/2026",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/GA4BV",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/GA4BV",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://balmoralvillageapts.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://balmoralvillageapts.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://balmoralvillageapts.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://balmoralvillageapts.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://balmoralvillageapts.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://balmoralvillageapts.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://balmoralvillageapts.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://balmoralvillageapts.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://balmoralvillageapts.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ]
+    },
+    "promo": {
+      "present": false,
+      "source": "feed_backed_no_active_homepage_or_source_lookup_special_observed_in_live_source_capture_08_26_2026"
+    },
+    "reviews": {
+      "present": true,
+      "source": "live origin review row, verified 08/26/2026",
+      "rating": 4.1,
+      "count": 209,
+      "url": "https://balmoralvillageapts.com/reviews/",
+      "last_verified": "08/26/2026",
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "link_required": true
+    },
+    "title_font": "Noto Serif"
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(470) 288-1832",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "GA4BV30L",
+        "phone": "(470) 288-1832",
+        "source": "VWS"
+      },
+      {
+        "code": "GA4BVAG",
+        "phone": "(770) 766-0565",
+        "source": "AG-VL"
+      },
+      {
+        "code": "GA4BVAH",
+        "phone": "(470) 288-1832",
+        "source": "AH"
+      },
+      {
+        "code": "GA4BVALIST",
+        "phone": "(844) 441-0351",
+        "source": "APL"
+      },
+      {
+        "code": "GA4BVAPT",
+        "phone": "(470) 745-8943",
+        "source": "ADC-VL"
+      },
+      {
+        "code": "GA4BVAR",
+        "phone": "(470) 288-1832",
+        "source": "APR"
+      },
+      {
+        "code": "GA4BVBNG",
+        "phone": "(470) 868-4320",
+        "source": "BNG"
+      },
+      {
+        "code": "GA4BVGOA",
+        "phone": "(770) 308-0953",
+        "source": "GOA"
+      },
+      {
+        "code": "GA4BVGOO",
+        "phone": "(470) 868-4320",
+        "source": "GOO-VL"
+      },
+      {
+        "code": "GA4BVSOC",
+        "phone": "(470) 693-9446",
+        "source": "SOC"
+      },
+      {
+        "code": "GA4BVUNA",
+        "phone": "(470) 288-1832",
+        "source": "UNA"
+      },
+      {
+        "code": "GA4BVYAH",
+        "phone": "(470) 868-4320",
+        "source": "YHO"
+      },
+      {
+        "code": "GA4BVZI",
+        "phone": "(470) 486-4022",
+        "source": "ZIL-VL"
+      },
+      {
+        "code": "GA4BVZUM",
+        "phone": "(470) 868-4320",
+        "source": "ZUM-VL"
+      }
+    ]
+  },
+  "rollback": {
+    "no_wordpress_mutation_required": true,
+    "previous_worker_script": "not_yet_recorded",
+    "strategy": "no_live_mutation_yet; before any explicit apply, record existing Cloudflare route/worker state and restore prior route/script if any live proof fails"
+  },
+  "routing": {
+    "cloudflare_zone_name": "balmoralvillageapts.com",
+    "existing_worker_script": "not_yet_recorded",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "balmoralvillageapts.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "llms_url": "https://balmoralvillageapts.com/llms.txt",
+    "meta_description": "Welcome home to Balmoral Village in Peachtree City, GA — Discover luxury living in our one, two, and three bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Balmoral Village",
+    "og_image": "https://balmoralvillageapts.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "sitemap_url": "https://balmoralvillageapts.com/sitemap_index.xml",
+    "stale_identity_scan_required": true
+  },
+  "target": {
+    "canonical_url": "https://balmoralvillageapts.com/",
+    "city": "Peachtree City",
+    "community_id": "0a74a116-c69b-47d1-a0d6-d0185282859d",
+    "domain": "balmoralvillageapts.com",
+    "ga4_measurement_id": "G-FSJYR60T26",
+    "ga4_property_id": "378397296",
+    "governed_reference_url": "https://venterraliving.com/apartments/balmoral-village/",
+    "gsc_property": "sc-domain:balmoralvillageapts.com",
+    "property_code": "GA4BV",
+    "property_name": "Balmoral Village",
+    "source_property_code": "GA4BV",
+    "staging_kinsta_url": "https://balmoralvillage.kinsta.cloud/",
+    "state": "GA"
+  }
+}

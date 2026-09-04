@@ -1,0 +1,385 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "existing_project_id": "10240458",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_domain_profile; retain_legacy_venterra_path_project_in_legacy_folder_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "creeksideapt.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHCS",
+      "legacy_project_id": "10125777",
+      "data_key_status": "existing_vanity_project_found_in_phase2_analytics_profile_evidence"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "measurement_id": "G-211V5BP4SE",
+      "measurement_id_status": "configured_in_ga4_admin_after_08_17_2026_default_uri_patch_pending_zaraz_readback",
+      "owner": "cloudflare_zaraz",
+      "property_id": "383887248",
+      "zaraz_tool_name": "GA4CS",
+      "expected_stream_name": "Creekside"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HCS"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBOK4CS"
+    }
+  },
+  "captain": {
+    "id": "OK4CS-captain",
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_ok4cs_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/activation/chunks_seed_only/captain_activation_ok4cs_2026-05-04.sql"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-summary.json",
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-results.csv",
+      "reports/domain_ops/20260825_092028_vanity_qa/screenshots/creeksideapt.com.png",
+      "reports/resi_edge_performance/performance-baselines/performance-baseline-20260820T160054Z-final-vanity-merged/performance-baseline-results.csv",
+      "reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234731Z/PHASE2_AHREFS_VANITY_PROJECT_READOUT.md",
+      "reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185637Z/PHASE2_GA4_DEFAULT_URI_READOUT.md",
+      "reports/resi_edge_performance/heap-hygiene/heap-hygiene-20260824T205047Z/heap-hygiene-evidence.json",
+      "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+      "reports/resi_edge_performance/08-09-2026/creeksideapt-com/source-scrape-prep/creeksideapt.com_20260826T230847Z.html",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+      "reports/captains_log/activation/chunks_seed_only/captain_activation_ok4cs_2026-05-04.sql"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "present": true,
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg",
+          "alt": "Kingsley Excellence of resident satisfaction award badge"
+        }
+      ],
+      "source": "live native home content exposes Kingsley award, verified 08/26/2026"
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "Creekside Apartment Homes live source theme tokens and canonical Venterra palette, verified 08/26/2026"
+    },
+    "content_blocks": [
+      {
+        "sequence": 1,
+        "kind": "welcome",
+        "heading": "Welcome to Creekside Apartment Homes",
+        "subheading": "Choose the perfect layout for your lifestyle.",
+        "body": "In Broken Arrow, Creekside Apartments offers a warm, comfortable community where everyday living feels easy and inviting. Thoughtfully designed homes create room to unwind, while the neighborhood’s friendly energy and quick access around town keep you connected—bringing together small-town calm and city-close convenience.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://creeksideapt.com/apartments/",
+        "image_url": "/assets/resi-edge-assets/OK4CS/home/welcome-640.avif",
+        "source_image_url": "https://dam.getresi.co/21170/conversions/Home-Welcome-full.jpg",
+        "image_alt": "Apartment community clubhouse and pool setting at Creekside Apartment Homes."
+      },
+      {
+        "sequence": 2,
+        "kind": "features",
+        "eyebrow": "Apartment Features",
+        "heading": "Stylish Living Spaces",
+        "body": "Settle into thoughtfully designed one-, two-, and three-bedroom interiors with granite countertops, sleek black appliances, oversized closets, and in-home washers and dryers—plus select homes featuring attached garages for added convenience and easy everyday flow.",
+        "bullets": [
+          "Granite Countertops",
+          "Black Appliances",
+          "Oversized Closets",
+          "In-Home Washer and Dryer"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://creeksideapt.com/features/",
+        "image_url": "/assets/resi-edge-assets/OK4CS/home/features-900.avif",
+        "source_image_url": "https://dam.getresi.co/21168/conversions/Home-Features-full.jpg",
+        "image_alt": "Creekside apartment kitchen and living interior with modern finishes."
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Lato",
+    "hero": {
+      "headline": "1, 2, and 3 Bedroom Apartments in Broken Arrow, OK",
+      "image_mobile": "/assets/resi-edge-assets/OK4CS/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://creeksideapt.com/apartments/",
+      "source_image": "https://dam.getresi.co/21159/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "Creekside Apartment Homes live vanity source capture and Phase 2 draft manifest, verified 08/26/2026",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/OK4CS",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/OK4CS",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://creeksideapt.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://creeksideapt.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://creeksideapt.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://creeksideapt.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://creeksideapt.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://creeksideapt.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://creeksideapt.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://creeksideapt.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://creeksideapt.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ]
+    },
+    "promo": {
+      "present": false,
+      "source": "feed_backed_no_active_homepage_or_source_lookup_special_observed_in_live_source_capture_08_26_2026"
+    },
+    "reviews": {
+      "present": true,
+      "rating": 4.3,
+      "count": 289,
+      "url": "https://creeksideapt.com/reviews/",
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "link_required": true,
+      "last_verified": "08/26/2026",
+      "source": "live origin review row, verified 08/26/2026"
+    },
+    "title_font": "Noto Serif",
+    "structured_data": null
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(539) 800-2508",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "OK4CS30L",
+        "phone": "(539) 800-2508",
+        "source": "VWS"
+      },
+      {
+        "code": "OK4CSAH",
+        "phone": "(539) 800-2508",
+        "source": "AH"
+      },
+      {
+        "code": "OK4CSAPT",
+        "phone": "(539) 269-1862",
+        "source": "APT"
+      },
+      {
+        "code": "OK4CSAR",
+        "phone": "(539) 800-2508",
+        "source": "AR"
+      },
+      {
+        "code": "OK4CSBNG",
+        "phone": "(539) 257-9218",
+        "source": "BNG"
+      },
+      {
+        "code": "OK4CSGOA",
+        "phone": "(539) 217-0610",
+        "source": "GOA"
+      },
+      {
+        "code": "OK4CSGOO",
+        "phone": "(539) 269-1857",
+        "source": "GOO"
+      },
+      {
+        "code": "OK4CSPOP",
+        "phone": "(539) 800-2508",
+        "source": "POP"
+      },
+      {
+        "code": "OK4CSSOC",
+        "phone": "(539) 257-9248",
+        "source": "SOC"
+      },
+      {
+        "code": "OK4CSYAH",
+        "phone": "(539) 257-9218",
+        "source": "YAH"
+      },
+      {
+        "code": "OK4CSZI",
+        "phone": "(539) 800-2610",
+        "source": "ZI"
+      }
+    ]
+  },
+  "rollback": {
+    "strategy": "no_live_mutation_yet; before any explicit apply, record existing Cloudflare route/worker state and restore prior route/script if any live proof fails",
+    "previous_worker_script": "not_yet_recorded",
+    "no_wordpress_mutation_required": true
+  },
+  "routing": {
+    "cloudflare_zone_name": "creeksideapt.com",
+    "existing_worker_script": "not_yet_recorded",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "creeksideapt.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "llms_url": "https://creeksideapt.com/llms.txt",
+    "meta_description": "Welcome home to Creekside Apartment Homes in Broken Arrow, OK — Discover luxury living in our one, two, and three bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Creekside Apartment Homes",
+    "og_image": "https://creeksideapt.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "sitemap_url": "https://creeksideapt.com/sitemap_index.xml",
+    "stale_identity_scan_required": true
+  },
+  "target": {
+    "canonical_url": "https://creeksideapt.com/",
+    "city": "Broken Arrow",
+    "community_id": "1fb629e6-6430-47c2-ac61-b3c922807a7f",
+    "domain": "creeksideapt.com",
+    "ga4_measurement_id": "G-211V5BP4SE",
+    "ga4_property_id": "383887248",
+    "governed_reference_url": "https://venterraliving.com/apartments/creekside/",
+    "gsc_property": "sc-domain:creeksideapt.com",
+    "property_code": "OK4CS",
+    "property_name": "Creekside",
+    "source_property_code": "OK4CS",
+    "staging_kinsta_url": "https://creeksideapartmenthomes.kinsta.cloud/",
+    "state": "OK"
+  }
+}

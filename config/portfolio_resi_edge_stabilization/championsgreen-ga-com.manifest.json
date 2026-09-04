@@ -146,6 +146,30 @@
         {
           "label": "Location",
           "url": "/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "/contact/"
+        },
+        {
+          "label": "Specials",
+          "url": "/specials/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
         }
       ]
     },

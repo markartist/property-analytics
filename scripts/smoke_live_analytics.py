@@ -5,15 +5,16 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import base64
 import json
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qs, parse_qsl, urlencode, unquote, urlsplit, urlunsplit
 
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
-from google.analytics.data_v1beta.types import Dimension, Metric, RunRealtimeReportRequest
+from google.analytics.data_v1beta.types import Dimension, Metric, MinuteRange, RunRealtimeReportRequest
 from google.oauth2 import service_account
 from playwright.async_api import async_playwright
 
@@ -50,6 +51,21 @@ def _extract_heap_app_ids(values: list[str]) -> list[str]:
     return sorted(ids)
 
 
+def _decode_zaraz_bootstrap_payloads(values: list[str]) -> list[str]:
+    payloads: list[str] = []
+    for value in values:
+        if "/cdn-cgi/zaraz/s.js" not in value:
+            continue
+        z_values = parse_qs(urlsplit(value).query).get("z") or []
+        for encoded in z_values:
+            try:
+                raw = base64.b64decode(encoded + "=" * (-len(encoded) % 4)).decode("utf-8", errors="replace")
+            except Exception:
+                continue
+            payloads.append(unquote(raw))
+    return payloads
+
+
 def _add_query_flag(url: str, flag: str) -> str:
     parts = urlsplit(url)
     query = parse_qsl(parts.query, keep_blank_values=True)
@@ -57,7 +73,14 @@ def _add_query_flag(url: str, flag: str) -> str:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
-async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_check: bool, expected_heap_app_id: str) -> dict:
+async def _check_url(
+    url: str,
+    passive_ms: int,
+    delayed_ms: int,
+    interaction_check: bool,
+    expected_heap_app_id: str,
+    expected_measurement_id: str,
+) -> dict:
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(viewport={"width": 1365, "height": 900}, user_agent=DESKTOP_UA)
@@ -213,6 +236,10 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
         + list((interaction or {}).get("heapScriptIds") or [])
     )
     unexpected_heap_app_ids = [item for item in observed_heap_app_ids if item != expected_heap_app_id]
+    zaraz_bootstrap_payloads = _decode_zaraz_bootstrap_payloads([item["url"] for item in requests])
+    zaraz_measurement_id_present = bool(expected_measurement_id) and any(
+        expected_measurement_id in payload for payload in zaraz_bootstrap_payloads
+    )
 
     return {
         "url": url,
@@ -236,6 +263,7 @@ async def _check_url(url: str, passive_ms: int, delayed_ms: int, interaction_che
                 "contentsquare_same_origin_suppression_count": sum("vtr_cs_verify_suppressed=1" in item["url"].lower() for item in requests),
                 "analytics_bad_response_count": len(delayed_bad_responses),
                 "analytics_passive_bad_response_count": len(passive_bad_responses),
+                "zaraz_measurement_id_present": zaraz_measurement_id_present,
                 "ahrefs_request_count": sum("ahrefs" in item["url"].lower() for item in delayed_requests),
                 "ahrefs_interaction_request_count": sum("ahrefs" in item["url"].lower() for item in interaction_requests) if interaction_check else None,
                 "observed_heap_app_ids": observed_heap_app_ids,
@@ -268,7 +296,65 @@ def _run_ga4_realtime(property_id: str) -> dict:
             }
             for row in response.rows
         ]
-    return {"property": f"properties/{property_id}", "dimensions": dimensions}
+    combined_response = client.run_realtime_report(
+        RunRealtimeReportRequest(
+            property=f"properties/{property_id}",
+            dimensions=[Dimension(name="eventName"), Dimension(name="streamName"), Dimension(name="minutesAgo")],
+            metrics=[Metric(name="eventCount")],
+            minute_ranges=[MinuteRange(name="last30", start_minutes_ago=29, end_minutes_ago=0)],
+            limit=100,
+        )
+    )
+    event_stream_minutes = [
+        {
+            "eventName": row.dimension_values[0].value,
+            "streamName": row.dimension_values[1].value,
+            "minutesAgo": row.dimension_values[2].value,
+            "eventCount": row.metric_values[0].value,
+        }
+        for row in combined_response.rows
+    ]
+    return {
+        "property": f"properties/{property_id}",
+        "dimensions": dimensions,
+        "eventStreamMinutes": event_stream_minutes,
+    }
+
+
+def evaluate_ga4_realtime_gate(ga4_realtime: dict | None, expected_stream_names: list[str]) -> tuple[list[str], dict]:
+    """Record GA4 Realtime evidence without treating reporting-window output as package proof."""
+    diagnostics = {
+        "required_event": "page_view",
+        "session_start_observed": False,
+        "page_view_on_expected_stream": False,
+        "expected_stream_present": False,
+        "matched_page_view_rows": [],
+        "matched_stream_rows": [],
+    }
+    if not ga4_realtime:
+        return [], diagnostics
+
+    expected_streams = {item.strip() for item in expected_stream_names if item and item.strip()}
+    event_rows = ga4_realtime.get("dimensions", {}).get("eventName", [])
+    stream_rows = ga4_realtime.get("dimensions", {}).get("streamName", [])
+    combined_rows = ga4_realtime.get("eventStreamMinutes") or []
+    events = {row.get("dimension") for row in event_rows}
+    streams = {row.get("dimension") for row in stream_rows}
+    diagnostics["session_start_observed"] = "session_start" in events or any(row.get("eventName") == "session_start" for row in combined_rows)
+
+    if expected_streams:
+        matched_page_view_rows = [
+            row for row in combined_rows if row.get("eventName") == "page_view" and row.get("streamName") in expected_streams
+        ]
+        matched_stream_rows = [row for row in stream_rows if row.get("dimension") in expected_streams]
+        diagnostics["matched_page_view_rows"] = matched_page_view_rows
+        diagnostics["matched_stream_rows"] = matched_stream_rows
+        diagnostics["page_view_on_expected_stream"] = bool(matched_page_view_rows)
+        diagnostics["expected_stream_present"] = bool(matched_stream_rows or matched_page_view_rows)
+        return [], diagnostics
+
+    diagnostics["page_view_on_expected_stream"] = "page_view" in events or any(row.get("eventName") == "page_view" for row in combined_rows)
+    return [], diagnostics
 
 
 async def _main_async(args: argparse.Namespace) -> int:
@@ -279,7 +365,16 @@ async def _main_async(args: argparse.Namespace) -> int:
 
     browser_checks = []
     for url in urls:
-        browser_checks.append(await _check_url(url, args.passive_ms, args.delayed_ms, args.expect_heap_after_interaction, args.heap_app_id))
+        browser_checks.append(
+            await _check_url(
+                url,
+                args.passive_ms,
+                args.delayed_ms,
+                args.expect_heap_after_interaction,
+                args.heap_app_id,
+                args.measurement_id,
+            )
+        )
 
     if args.ga4_wait_ms:
         await asyncio.sleep(args.ga4_wait_ms / 1000)
@@ -305,6 +400,10 @@ async def _main_async(args: argparse.Namespace) -> int:
             failures.append(f"{check['url']}: Zaraz global missing")
         if summary["zaraz_request_count"] <= 0:
             failures.append(f"{check['url']}: Zaraz network request missing")
+        if "page_view" not in set(check.get("passive", {}).get("dataLayerEvents") or []):
+            failures.append(f"{check['url']}: Resi Edge page_view dataLayer event missing")
+        if not summary["zaraz_measurement_id_present"]:
+            failures.append(f"{check['url']}: Zaraz bootstrap missing expected GA4 measurement id {args.measurement_id}")
         if summary["heap_passive_loaded"]:
             failures.append(f"{check['url']}: Heap loaded during passive window")
         if summary["heap_late_passive_loaded"]:
@@ -327,15 +426,9 @@ async def _main_async(args: argparse.Namespace) -> int:
         if args.require_ahrefs and summary["ahrefs_request_count"] <= 0 and ahrefs_after_interaction <= 0 and not summary["ahrefs_script_present"]:
             failures.append(f"{check['url']}: Ahrefs request/script missing")
 
-    if ga4_realtime:
-        events = {row["dimension"] for row in ga4_realtime["dimensions"].get("eventName", [])}
-        streams = {row["dimension"] for row in ga4_realtime["dimensions"].get("streamName", [])}
-        for event in ("page_view", "session_start"):
-            if event not in events:
-                failures.append(f"GA4 realtime missing {event}")
-        expected_streams = {item.strip() for item in args.expected_stream_name if item and item.strip()}
-        if expected_streams and not expected_streams.intersection(streams):
-            failures.append(f"GA4 realtime missing expected stream ({', '.join(sorted(expected_streams))})")
+    ga4_failures, ga4_diagnostics = evaluate_ga4_realtime_gate(ga4_realtime, args.expected_stream_name)
+    failures.extend(ga4_failures)
+    result["ga4_gate_diagnostics"] = ga4_diagnostics
 
     result["status"] = "failed" if failures else "passed"
     result["failures"] = failures

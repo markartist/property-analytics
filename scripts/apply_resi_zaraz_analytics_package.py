@@ -40,6 +40,10 @@ API_RETRIES = 3
 API_RETRY_WAIT_SECONDS = 4
 
 
+def _is_retryable_http_error(exc: HTTPError) -> bool:
+    return 500 <= exc.code <= 599
+
+
 def _api(token: str, path: str, *, method: str = "GET", payload: dict | None = None) -> dict:
     data = None if payload is None else json.dumps(payload).encode("utf-8")
     request = Request(
@@ -54,13 +58,20 @@ def _api(token: str, path: str, *, method: str = "GET", payload: dict | None = N
         try:
             with urlopen(request, timeout=45) as response:
                 return json.load(response)
-        except HTTPError:
-            raise
+        except HTTPError as exc:
+            if not _is_retryable_http_error(exc):
+                raise
+            last_error = exc
+            if attempt == API_RETRIES:
+                break
+            time.sleep(API_RETRY_WAIT_SECONDS * attempt)
         except transient_errors as exc:
             last_error = exc
             if attempt == API_RETRIES:
                 break
             time.sleep(API_RETRY_WAIT_SECONDS * attempt)
+    if isinstance(last_error, HTTPError):
+        raise RuntimeError(f"Cloudflare Zaraz API request failed after {API_RETRIES} attempts: HTTP {last_error.code}")
     raise RuntimeError(f"Cloudflare Zaraz API request failed after {API_RETRIES} attempts: {type(last_error).__name__}")
 
 
@@ -71,14 +82,50 @@ def _urlopen_json_with_retry(request: Request, *, label: str) -> dict:
         try:
             with urlopen(request, timeout=45) as response:
                 return json.load(response)
-        except HTTPError:
-            raise
+        except HTTPError as exc:
+            if not _is_retryable_http_error(exc):
+                raise
+            last_error = exc
+            if attempt == API_RETRIES:
+                break
+            time.sleep(API_RETRY_WAIT_SECONDS * attempt)
         except transient_errors as exc:
             last_error = exc
             if attempt == API_RETRIES:
                 break
             time.sleep(API_RETRY_WAIT_SECONDS * attempt)
+    if isinstance(last_error, HTTPError):
+        raise RuntimeError(f"{label} request failed after {API_RETRIES} attempts: HTTP {last_error.code}")
     raise RuntimeError(f"{label} request failed after {API_RETRIES} attempts: {type(last_error).__name__}")
+
+
+def _failure_result(manifest: dict, *, apply: bool, error: Exception) -> dict:
+    target = manifest.get("target") or {}
+    return {
+        "domain": target.get("domain"),
+        "property_code": target.get("property_code"),
+        "mode": "apply" if apply else "dry_run",
+        "status": "failed",
+        "changes": [],
+        "errors": [str(error)],
+    }
+
+
+def _write_payload(output: Path, result: dict) -> dict:
+    payload = {
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "scope": "resi_zaraz_analytics_package",
+        "status": "failed" if result.get("status") == "failed" else "passed",
+        "result": result,
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return payload
+
+
+def _print_payload_summary(payload: dict, output: Path) -> None:
+    result = payload.get("result") or {}
+    print(json.dumps({"status": payload["status"], "mode": result.get("mode"), "result_status": result.get("status"), "output": str(output), "changes": result.get("changes", [])}, indent=2))
 
 
 def _slug(value: str) -> str:
@@ -106,8 +153,16 @@ def _pageview_triggers() -> dict:
                 {"id": "rul1", "match": "{{ client.__zarazTrack }}", "op": "NOT_MATCH_REGEX", "value": "^__zaraz.*"},
                 {"id": "rul2", "match": "{{ client.__zarazEcommerce }}", "op": "NOT_MATCH_REGEX", "value": "true"},
                 {"id": "pgv2", "match": "{{ client.__zarazTrack }}", "op": "NOT_MATCH_REGEX", "value": "^Pageview$"},
+                {"id": "pgv3", "match": "{{ client.__zarazTrack }}", "op": "NOT_MATCH_REGEX", "value": "^page_view$"},
             ],
             "name": "All Tracks",
+        },
+        "ResiEdgePageview": {
+            "clientRules": [],
+            "description": "Package-owned Resi Edge page_view events",
+            "excludeRules": [],
+            "loadRules": [{"match": "{{ client.__zarazTrack }}", "op": "EQUALS", "value": "page_view"}],
+            "name": "Resi Edge Pageview",
         },
         "Pageview": {
             "clientRules": [],
@@ -128,7 +183,7 @@ def _ga4_tool(name: str, measurement_id: str) -> dict:
                 "blockingTriggers": [],
                 "data": {"__enrichPayload": "client", "__zaraz_setting_name": "Pageview"},
                 "enabled": True,
-                "firingTriggers": ["Pageview"],
+                "firingTriggers": ["ResiEdgePageview"],
             },
             "AllTracks": {
                 "actionType": "event",
@@ -585,7 +640,7 @@ def _is_managed_resi_edge_tool(tool: dict) -> bool:
     return any(token in text for token in managed_tokens)
 
 
-def _apply(manifest: dict, *, apply: bool) -> dict:
+def _apply(manifest: dict, *, apply: bool, force_republish: bool = False) -> dict:
     target = manifest["target"]
     analytics = manifest["analytics"]
     domain = target["domain"]
@@ -644,6 +699,7 @@ def _apply(manifest: dict, *, apply: bool) -> dict:
         "status": "unchanged",
         "zone_id": zone_id,
         "changes": changes,
+        "force_republish": bool(force_republish),
         "before": _redact(config),
         "after": _redact(updated),
         "assertions": {
@@ -665,7 +721,7 @@ def _apply(manifest: dict, *, apply: bool) -> dict:
             ),
         },
     }
-    if not changes:
+    if not changes and not (apply and force_republish):
         return result
     result["status"] = "planned"
     if not apply:
@@ -676,11 +732,15 @@ def _apply(manifest: dict, *, apply: bool) -> dict:
         result["status"] = "failed"
         result["errors"] = [f"Cloudflare PUT returned HTTP {exc.code}"]
         return result
+    except RuntimeError as exc:
+        result["status"] = "failed"
+        result["errors"] = [str(exc)]
+        return result
     if not response.get("success", True):
         result["status"] = "failed"
         result["errors"] = ["Cloudflare PUT returned unsuccessful response"]
         return result
-    result["status"] = "applied"
+    result["status"] = "republished" if force_republish and not changes else "applied"
     return result
 
 
@@ -688,21 +748,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Apply the Resi Zaraz analytics package from a governed manifest.")
     parser.add_argument("--manifest", required=True, help="Resi Edge manifest path.")
     parser.add_argument("--apply", action="store_true", help="Write the Zaraz config. Default is dry-run.")
+    parser.add_argument("--force-republish", action="store_true", help="PUT the canonical Zaraz config even when no semantic diff is detected.")
     parser.add_argument("--output", help="Redacted run packet path.")
     args = parser.parse_args()
 
     manifest = _load_manifest(Path(args.manifest))
-    result = _apply(manifest, apply=args.apply)
-    payload = {
-        "checked_at": datetime.now(timezone.utc).isoformat(),
-        "scope": "resi_zaraz_analytics_package",
-        "status": "failed" if result.get("status") == "failed" else "passed",
-        "result": result,
-    }
     output = Path(args.output) if args.output else ROOT / "reports" / "cloudflare_zaraz" / f"resi_zaraz_analytics_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"status": payload["status"], "mode": result["mode"], "result_status": result["status"], "output": str(output), "changes": result.get("changes", [])}, indent=2))
+    try:
+        result = _apply(manifest, apply=args.apply, force_republish=args.force_republish)
+    except Exception as exc:
+        result = _failure_result(manifest, apply=args.apply, error=exc)
+    payload = _write_payload(output, result)
+    _print_payload_summary(payload, output)
     return 1 if payload["status"] == "failed" else 0
 
 

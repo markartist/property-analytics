@@ -1,0 +1,395 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "data_key_status": "existing_vanity_project_found_in_phase2_analytics_profile_evidence",
+      "existing_project_id": "10240455",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_domain_profile; retain_legacy_venterra_path_project_in_legacy_folder_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "retreatatkedronvillage.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHKV"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "expected_stream_name": "Retreat at Kedron Village",
+      "measurement_id": "G-0L4M7KKRYK",
+      "measurement_id_status": "configured_in_ga4_admin_after_08_17_2026_default_uri_patch_pending_zaraz_readback",
+      "owner": "cloudflare_zaraz",
+      "property_id": "378387143",
+      "zaraz_tool_name": "GA4KV"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HKV"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBGA4KV"
+    }
+  },
+  "captain": {
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4kv_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4kv_2026-05-04.sql",
+    "id": "GA4KV-captain"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-summary.json",
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-results.csv",
+      "reports/resi_edge_performance/performance-baselines/performance-baseline-20260820T160054Z-final-vanity-merged/performance-baseline-results.csv",
+      "reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234731Z/PHASE2_AHREFS_VANITY_PROJECT_READOUT.md",
+      "reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185637Z/PHASE2_GA4_DEFAULT_URI_READOUT.md",
+      "reports/resi_edge_performance/heap-hygiene/heap-hygiene-20260824T205047Z/heap-hygiene-evidence.json",
+      "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+      "reports/domain_ops/20260825_092028_vanity_qa/screenshots/retreatatkedronvillage.com.png",
+      "reports/resi_edge_performance/source-harvest/08-27-2026/retreatatkedronvillage-com/harvest-20260827T180759Z/rendered.html",
+      "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4kv_2026-05-04.sql"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "assets": [
+        {
+          "alt": "Kingsley Excellence of resident satisfaction award badge",
+          "label": "Kingsley Excellence of resident satisfaction award badge",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg"
+        }
+      ],
+      "confidence": 0.8,
+      "present": true,
+      "source": "cloudflare_browser_rendered_html"
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "current_live_resi_theme_tokens_and_official_venterra_palette"
+    },
+    "content_blocks": [
+      {
+        "body": "Choose the perfect layout for your lifestyle. In Peachtree City, Retreat at Kedron Village offers a peaceful residential setting shaped by greenery, space, and a warm neighborhood feel. Thoughtfully designed homes create a calm place to settle in, while the surrounding village energy adds everyday convenience and connection to Peachtree City living. See Available Homes",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://retreatatkedronvillage.com/apartments/",
+        "heading": "Welcome to Retreat at Kedron Village",
+        "image_alt": "Exterior of a stone-and-siding apartment building with covered balconies, framed by manicured shrubs and a curving walkway through a shaded lawn.",
+        "image_url": "/assets/resi-edge-assets/GA4KV/home/welcome-640.avif",
+        "kind": "welcome",
+        "sequence": 1,
+        "source_image_url": "https://dam.getresi.co/22090/conversions/Home-Welcome-full.jpg"
+      },
+      {
+        "body": "Stylish Living Spaces Enjoy open-concept interiors with sleek black appliances, expansive closets, and in-unit washers and dryers\u2014plus select homes featuring gourmet walk-through kitchens, dual-sink vanities, and attached garages that add comfort and ease to everyday living. Open-Concept Layouts In-Unit Washer/Dryer Dual-Sink Vanities Attached Garages See Features",
+        "bullets": [
+          "Open-Concept Layouts",
+          "In-Unit Washer/Dryer",
+          "Dual-Sink Vanities",
+          "Attached Garages"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://retreatatkedronvillage.com/features/",
+        "heading": "Apartment Features",
+        "image_alt": "Galley kitchen with maple cabinets, granite countertops, tile backsplash, stainless steel range and over-range microwave, and wood-look flooring.",
+        "image_url": "/assets/resi-edge-assets/GA4KV/home/features-900.avif",
+        "kind": "features",
+        "sequence": 2,
+        "source_image_url": "https://dam.getresi.co/22091/conversions/Home-Features-full.jpg"
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Lato",
+    "hero": {
+      "headline": "1, 2, and 3 Bedroom Apartments in Peachtree City, GA",
+      "image_mobile": "/assets/resi-edge-assets/GA4KV/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://retreatatkedronvillage.com/apartments/",
+      "source_image": "https://dam.getresi.co/22089/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "Retreat at Kedron Village active manifest promoted from Phase 2 draft plus live source harvest on 08/27/2026.",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/GA4KV",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://retreatatkedronvillage.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://retreatatkedronvillage.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://retreatatkedronvillage.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://retreatatkedronvillage.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://retreatatkedronvillage.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://retreatatkedronvillage.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://retreatatkedronvillage.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://retreatatkedronvillage.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://retreatatkedronvillage.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ],
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/GA4KV"
+    },
+    "promo": {
+      "confidence": 0.0,
+      "present": false,
+      "source": "feed_backed_absent_current_live_resi_no_homepage_promo_verified_2026_08_27"
+    },
+    "reviews": {
+      "confidence": 0.85,
+      "count": 159,
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "last_verified": "2026-08-27",
+      "link_required": true,
+      "present": true,
+      "rating": 4.5,
+      "source": "cloudflare_browser_rendered_html",
+      "url": "https://retreatatkedronvillage.com/reviews/"
+    }
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(470) 613-2593",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "GA4KV30L",
+        "phone": "(470) 613-2593",
+        "source": "VWS"
+      },
+      {
+        "code": "GA4KVAH",
+        "phone": "(470) 613-2593",
+        "source": "AH"
+      },
+      {
+        "code": "GA4KVALIST",
+        "phone": "(855) 906-3549",
+        "source": "APL"
+      },
+      {
+        "code": "GA4KVAPT",
+        "phone": "(470) 422-7361",
+        "source": "ADC-VL"
+      },
+      {
+        "code": "GA4KVAR",
+        "phone": "(470) 613-2593",
+        "source": "APR"
+      },
+      {
+        "code": "GA4KVBNG",
+        "phone": "(470) 518-4531",
+        "source": "BNG"
+      },
+      {
+        "code": "GA4KVGOA",
+        "phone": "(470) 777-9606",
+        "source": "GOA"
+      },
+      {
+        "code": "GA4KVGOO",
+        "phone": "(470) 518-4531",
+        "source": "GOO-VL"
+      },
+      {
+        "code": "GA4KVSOC",
+        "phone": "(470) 375-1257",
+        "source": "SOC"
+      },
+      {
+        "code": "GA4KVVIO",
+        "phone": "(470) 354-0179",
+        "source": "VIO"
+      },
+      {
+        "code": "GA4KVYAH",
+        "phone": "(470) 518-4531",
+        "source": "YHO"
+      },
+      {
+        "code": "GA4KVZI",
+        "phone": "(470) 518-4531",
+        "source": "ZIL-VL"
+      }
+    ]
+  },
+  "rollback": {
+    "no_wordpress_mutation_required": true,
+    "previous_worker_script": "not_yet_recorded",
+    "strategy": "no_live_mutation_yet; before any explicit apply, record existing route/worker state and restore prior route/script if any live proof fails"
+  },
+  "routing": {
+    "cloudflare_zone_name": "retreatatkedronvillage.com",
+    "existing_worker_script": "not_yet_recorded",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "retreatatkedronvillage.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required",
+    "strategy": "activate_canonical_resi_edge_worker_on_vanity_domain_only"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "canonical_url": "https://retreatatkedronvillage.com/",
+    "domain": "retreatatkedronvillage.com",
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "gsc_property": "sc-domain:retreatatkedronvillage.com",
+    "llms_url": "https://retreatatkedronvillage.com/llms.txt",
+    "meta_description": "Welcome home to Retreat at Kedron Village Apartments in Peachtree City, GA \u2014 Discover luxury living in our 1-, 2-, and 3-bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Retreat at Kedron Village",
+    "og_image": "https://retreatatkedronvillage.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "og_image_alt": "Resort-style pool with a landscaped island and Japanese maple, surrounded by a paved deck, lounge chairs, and stone-accented apartment buildings amid lush trees.",
+    "property_name": "Retreat at Kedron Village",
+    "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+    "schema_url_policy": "canonical_vanity_https_urls_only; repair http vanity schema URLs in edge output",
+    "sitemap_url": "https://retreatatkedronvillage.com/sitemap_index.xml",
+    "stale_identity_scan_required": true
+  },
+  "target": {
+    "canonical_url": "https://retreatatkedronvillage.com/",
+    "city": "Peachtree City",
+    "community_id": "b535df1b-ab66-53bc-9223-c748dd500acc",
+    "domain": "retreatatkedronvillage.com",
+    "ga4_measurement_id": "G-0L4M7KKRYK",
+    "ga4_property_id": "378387143",
+    "governed_reference_url": "https://venterraliving.com/apartments/the-retreat-at-kedron-village/",
+    "gsc_property": "sc-domain:retreatatkedronvillage.com",
+    "property_code": "GA4KV",
+    "property_name": "Retreat at Kedron Village",
+    "source_property_code": "GA4KV",
+    "staging_kinsta_url": "https://retreatatkedronvillage.kinsta.cloud/",
+    "state": "GA"
+  }
+}

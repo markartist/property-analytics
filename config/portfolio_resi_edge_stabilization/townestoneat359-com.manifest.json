@@ -59,31 +59,31 @@
     "fonts": [
       {
         "family": "Poppins",
-        "url": "https://townestoneat359.com/wp-content/themes/resi-child-theme/fonts/poppins-581f0b26.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/poppins-581f0b26.woff2",
         "weight": 400,
         "style": "normal"
       },
       {
         "family": "Poppins",
-        "url": "https://townestoneat359.com/wp-content/themes/resi-child-theme/fonts/poppins-2b4d4a2f.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/poppins-2b4d4a2f.woff2",
         "weight": 600,
         "style": "normal"
       },
       {
         "family": "Poppins",
-        "url": "https://townestoneat359.com/wp-content/themes/resi-child-theme/fonts/poppins-5d280ea4.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/poppins-5d280ea4.woff2",
         "weight": 700,
         "style": "normal"
       },
       {
         "family": "Merriweather",
-        "url": "https://townestoneat359.com/wp-content/themes/resi-child-theme/fonts/merriweather-8b1e9ec0.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/merriweather-8b1e9ec0.woff2",
         "weight": 400,
         "style": "normal"
       },
       {
         "family": "nevisbold",
-        "url": "https://townestoneat359.com/wp-content/themes/resi-child-theme/fonts/nevis_3-webfont.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/nevis_3-webfont.woff2",
         "weight": 600,
         "style": "normal"
       }
@@ -126,6 +126,8 @@
       "link_required": false
     },
     "navigation": {
+      "tour_enabled": false,
+      "tour_visibility_reason": "Lease-up tours are not available yet; hide mobile header and drawer Tour CTAs until enabled by approved manifest update.",
       "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/TX4FC",
       "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/TX4FC",
       "links": [

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -29,6 +30,8 @@ MANIFEST_SCHEMA_PATH = MANIFEST_DIR / "resi-edge-manifest.schema.json"
 DEPLOY_ADAPTER = REPO_ROOT / "scripts/resi_edge_deploy_adapter.py"
 VALIDATOR = REPO_ROOT / "scripts/validate_resi_mobile_shell_contract.mjs"
 STATIC_VALIDATOR = REPO_ROOT / "scripts/validate_resi_edge_package_static.mjs"
+PROCESS_AUDITOR = REPO_ROOT / "scripts/audit_resi_edge_rollout_process.py"
+BATCH_AUDITOR = REPO_ROOT / "scripts/audit_resi_edge_rollout_batch.py"
 MOBILE_SHELL_BYTE_FORECAST = REPO_ROOT / "scripts/forecast_resi_edge_mobile_shell_bytes.mjs"
 CONSENT_WIDGET_GEOMETRY = REPO_ROOT / "scripts/validate_resi_consent_widget_geometry.mjs"
 GATE_COVERAGE_VALIDATOR = REPO_ROOT / "scripts/check_resi_edge_gate_coverage.py"
@@ -38,24 +41,44 @@ ZARAZ_CONSENT_PACKAGE = REPO_ROOT / "scripts/apply_zaraz_consent_package.py"
 AHREFS_ADMIN = REPO_ROOT / "scripts/ahrefs_project_admin.py"
 ANALYTICS_SMOKE = REPO_ROOT / "scripts/smoke_live_analytics.py"
 PSI_RUNNER = REPO_ROOT / "scripts/run_resi_edge_prototype_psi.py"
+DASHBOARD_SNAPSHOT_BUILDER = REPO_ROOT / "scripts/build_resi_edge_launch_dashboard_snapshot.py"
 CACHE_PURGE = REPO_ROOT / "ops/cloudflare/purge_cloudflare_cache.py"
 ASSET_GENERATOR = REPO_ROOT / "scripts/generate_resi_edge_assets.py"
 ASSET_UPLOADER = REPO_ROOT / "scripts/upload_resi_edge_assets_to_r2.py"
+WEB_APP_DIR = REPO_ROOT / "apps/web"
 REPORT_ROOT = REPO_ROOT / "reports/resi_edge_performance/08-09-2026"
 IDENTITY_HELPER_ROOT = REPO_ROOT / "Data_Collection/utils"
+SCOPE_LOCK_PATH = MANIFEST_DIR / "active-resi-edge-scope-lock.json"
 CF_ACCOUNT_ID = "5a5a60afaad00085864fe6bab7eb2882"
+DASHBOARD_PAGES_PROJECT = "resi-edge-launch"
+DASHBOARD_HOST = "launch.venterrawebops.com"
+DASHBOARD_API_BASE_URL = f"https://{DASHBOARD_HOST}"
 DESKTOP_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36"
 MOBILE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/123 Mobile/15E148 Safari/604.1"
 EXPECTED_HEAP_MODE = "interaction_only_queue_v6_input_only_cs_verify_home_204"
+EXPECTED_HEAP_APP_ID = "286627304"
 EXPECTED_CONSENT_WIDGET_VERSION = json.loads(CONSENT_CONTRACT_PATH.read_text())["version"]
 EXPECTED_CS_VERIFY_PATH = "/?vtr_cs_verify_suppressed=1"
 EXPECTED_LBLE_TITLE_TEXT = "Live Better. Live Easy."
+REQUIRED_MOBILE_NAV_LABELS = [
+    "Apartments & Pricing",
+    "Features",
+    "Amenities",
+    "Gallery",
+    "Location",
+    "FAQs",
+    "Reviews",
+    "Contact",
+    "About Venterra",
+    "SMARTHUB",
+]
 PSI_TRANSIENT_RETRIES = 2
 PSI_TRANSIENT_RETRY_WAIT_SECONDS = 90
 MOBILE_HERO_MAX_BYTES = 80_000
 CONTENT_BLOCK_IMAGE_MAX_BYTES = 55_000
 OTHER_R2_ASSET_MAX_BYTES = 120_000
 MOBILE_PSI_PARITY_TARGET = 98
+DESKTOP_PSI_TARGET = 90
 MOBILE_SHELL_INITIAL_HTML_MAX_BYTES = 40_000
 
 
@@ -115,6 +138,8 @@ PREFLIGHT_REQUIRED_GATES = [
     "award_badge_sequence_verified",
     "asset_budget_manifest_present",
     "static_package_validation_passed",
+    "batch_inventory_audit_passed",
+    "process_scenario_audit_passed",
     "canonical_deploy_adapter_supports_live_apply",
     "ahrefs_existing_project_confirmed",
     "heap_contentsquare_verify_guard_configured",
@@ -233,6 +258,67 @@ def manifest_path(args: argparse.Namespace) -> Path:
 def base_runner_command(args: argparse.Namespace) -> str:
     manifest_part = f" --manifest {args.manifest}" if getattr(args, "manifest", None) else ""
     return f"python3 scripts/run_resi_edge_upgrade.py --property-code {args.property_code.upper()} --domain {args.domain}{manifest_part}"
+
+
+def validate_scope_lock(args: argparse.Namespace, lock_path: Path = SCOPE_LOCK_PATH) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "pass": False,
+        "blocked": True,
+        "lock_path": str(lock_path),
+        "property_code": args.property_code.upper(),
+        "domain": args.domain.lower(),
+        "mode": args.mode,
+    }
+    if args.mode == "validate-reference":
+        result.update({"pass": True, "blocked": False, "reason": "Reference validation is not a property rollout action."})
+        return result
+    if not lock_path.exists():
+        result["reason"] = "Resi Edge scope lock is missing. Mark must explicitly name the target before plan, stage, or apply."
+        return result
+    try:
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        result["reason"] = f"Resi Edge scope lock is invalid JSON: {exc}"
+        return result
+    result["scope_id"] = lock.get("scope_id")
+    if lock.get("status") != "ACTIVE":
+        result["reason"] = "Resi Edge scope lock is not ACTIVE."
+        return result
+    expires_at = lock.get("expires_at")
+    if expires_at:
+        try:
+            expires = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+        except ValueError:
+            result["reason"] = "Resi Edge scope lock has an invalid expires_at timestamp."
+            return result
+        if datetime.now(timezone.utc) > expires:
+            result["reason"] = "Resi Edge scope lock is expired."
+            return result
+    allowed_targets = lock.get("allowed_targets")
+    if not isinstance(allowed_targets, list):
+        result["reason"] = "Resi Edge scope lock has no allowed_targets list."
+        return result
+    requested_code = args.property_code.upper()
+    requested_domain = args.domain.lower()
+    for target in allowed_targets:
+        if not isinstance(target, dict):
+            continue
+        modes = [str(mode) for mode in target.get("modes", [])]
+        if (
+            str(target.get("property_code", "")).upper() == requested_code
+            and str(target.get("domain", "")).lower() == requested_domain
+            and args.mode in modes
+        ):
+            result.update({
+                "pass": True,
+                "blocked": False,
+                "reason": "Exact active scope lock matched.",
+                "matched_target": target,
+            })
+            return result
+    result["reason"] = "Requested Resi Edge property/domain/mode is outside the active scope lock."
+    result["allowed_targets"] = allowed_targets
+    return result
 
 
 def validate_manifest(manifest: dict[str, Any] | None, args: argparse.Namespace, identity: dict[str, Any] | None) -> dict[str, Any]:
@@ -359,6 +445,9 @@ def validate_manifest(manifest: dict[str, Any] | None, args: argparse.Namespace,
         failures.append("mobile_shell.reviews.present must explicitly be true or false")
     for dotted in find_pending_values(manifest):
         failures.append(f"manifest field is still pending before apply: {dotted}")
+    for draft_key in ("manifest_stage", "draft_notice", "draft_generated_at"):
+        if draft_key in manifest:
+            failures.append(f"promoted manifest must not retain draft-only field: {draft_key}")
 
     if manifest.get("package_contract_id") != "resi-edge-canonical-upgrade-package":
         failures.append("package_contract_id must be resi-edge-canonical-upgrade-package")
@@ -388,8 +477,15 @@ def validate_manifest(manifest: dict[str, Any] | None, args: argparse.Namespace,
     if get_path(manifest, "analytics.owner") != "cloudflare_zaraz":
         failures.append("analytics.owner must be cloudflare_zaraz")
     ga4_status = str(get_path(manifest, "analytics.ga4.measurement_id_status") or "").lower()
-    if "direct_wordpress" in ga4_status or "requires_zaraz_cutover" in ga4_status:
-        failures.append("analytics.ga4.measurement_id_status still declares direct WordPress load / Zaraz cutover required")
+    if ga4_status and not re.search(r"configured|zaraz", ga4_status):
+        failures.append("analytics.ga4.measurement_id_status must declare a configured/Zaraz-owned state")
+    if "wordpress" in ga4_status or "requires_zaraz_cutover" in ga4_status:
+        failures.append("analytics.ga4.measurement_id_status must not declare WordPress ownership or a pending Zaraz cutover")
+    expected_stream_name = str(get_path(manifest, "analytics.ga4.expected_stream_name") or "").strip()
+    if expected_stream_name.lower() in {"website", "required_before_apply", "pending_apply_gate"} and args.property_code.upper() not in {"TX4EK", "TX4FC"}:
+        failures.append("analytics.ga4.expected_stream_name must be the property stream name, not a generic draft value")
+    if get_path(manifest, "analytics.heap.app_id") != EXPECTED_HEAP_APP_ID:
+        failures.append(f"analytics.heap.app_id must be production Heap app id {EXPECTED_HEAP_APP_ID}")
     if get_path(manifest, "analytics.heap.mode") != EXPECTED_HEAP_MODE:
         failures.append(f"analytics.heap.mode must be {EXPECTED_HEAP_MODE}")
     if get_path(manifest, "analytics.heap.passive_timer_allowed") is not False:
@@ -406,11 +502,49 @@ def validate_manifest(manifest: dict[str, Any] | None, args: argparse.Namespace,
         failures.append(f"consent.widget_version must be {EXPECTED_CONSENT_WIDGET_VERSION}")
     if get_path(manifest, "phone_attribution.default_source") != "VWS":
         failures.append("phone_attribution.default_source must be VWS")
+    nav = get_path(manifest, "mobile_shell.navigation") or {}
+    nav_links = nav.get("links") if isinstance(nav, dict) else []
+    nav_labels = [link.get("label") for link in nav_links or [] if isinstance(link, dict)]
+    missing_nav_labels = [label for label in REQUIRED_MOBILE_NAV_LABELS if label not in nav_labels]
+    if missing_nav_labels:
+        failures.append("mobile_shell.navigation.links missing required labels: " + ", ".join(missing_nav_labels))
+    for dotted in ["mobile_shell.navigation.tour_url", "mobile_shell.navigation.apply_url"]:
+        value = get_path(manifest, dotted)
+        if not isinstance(value, str) or not value.startswith("https://online.venterraliving.com/"):
+            failures.append(f"{dotted} must use the canonical online.venterraliving.com leasing URL")
+    for index, link in enumerate(nav_links or [], start=1):
+        if not isinstance(link, dict):
+            failures.append(f"mobile_shell.navigation.links[{index}] must be an object")
+            continue
+        label = str(link.get("label") or "").strip()
+        url = str(link.get("url") or "").strip()
+        if not label or not url:
+            failures.append(f"mobile_shell.navigation.links[{index}] must include label and url")
+        if url == "#" or url.lower().startswith("javascript:"):
+            failures.append(f"mobile_shell.navigation.links[{index}] must not use placeholder/script URLs")
+    ahrefs_project_id = str(get_path(manifest, "analytics.ahrefs.existing_project_id") or "").strip()
+    if not re.fullmatch(r"\d+", ahrefs_project_id):
+        failures.append("analytics.ahrefs.existing_project_id must be a numeric verified vanity project id")
+    if get_path(manifest, "analytics.ahrefs.verified") is not True:
+        failures.append("analytics.ahrefs.verified must be true before plan/stage/apply")
+    if get_path(manifest, "rollback.no_wordpress_mutation_required") is not True:
+        failures.append("rollback.no_wordpress_mutation_required must be true for the Resi Edge package")
+    if get_path(manifest, "rollback.previous_worker_script") in (None, "", "required_before_apply", "pending_apply_gate"):
+        failures.append("rollback.previous_worker_script must be recorded or explicitly marked not_yet_recorded")
     if len(get_path(manifest, "mobile_shell.content_blocks") or []) < 2:
         failures.append("mobile_shell.content_blocks must include at least two blocks")
     hero_mobile = get_path(manifest, "mobile_shell.hero.image_mobile")
     if not isinstance(hero_mobile, str) or not hero_mobile.endswith(".avif") or not hero_mobile.startswith("/assets/resi-edge-assets/"):
         failures.append("mobile_shell.hero.image_mobile must be a same-origin optimized AVIF asset")
+    for index, font in enumerate(get_path(manifest, "mobile_shell.fonts") or [], start=1):
+        if not isinstance(font, dict):
+            failures.append(f"mobile_shell.fonts[{index}] must be an object")
+            continue
+        font_url = str(font.get("url") or "").strip()
+        if not re.fullmatch(r"/wp-content/themes/resi-child-theme/fonts/[^\"'<>?\s]+\.woff2", font_url, flags=re.IGNORECASE):
+            failures.append(f"mobile_shell.fonts[{index}].url must be a same-origin Resi theme font path")
+        if font_url.lower().endswith("/lato-regular.woff2"):
+            failures.append(f"mobile_shell.fonts[{index}].url must not use the draft placeholder lato-regular.woff2 path")
     for index, block in enumerate(get_path(manifest, "mobile_shell.content_blocks") or [], start=1):
         image_url = block.get("image_url") if isinstance(block, dict) else None
         source_url = block.get("source_image_url") if isinstance(block, dict) else None
@@ -459,10 +593,30 @@ def run(cmd: list[str], cwd: Path = REPO_ROOT, check: bool = False, env: dict[st
     )
 
 
-def command_payload(cmd: list[str], out_path: Path | None = None, cwd: Path = REPO_ROOT) -> dict[str, Any]:
-    result = run(cmd, cwd=cwd)
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def iso_now() -> str:
+    return utc_now().isoformat()
+
+
+def command_payload(
+    cmd: list[str],
+    out_path: Path | None = None,
+    cwd: Path = REPO_ROOT,
+    env: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    started_at = iso_now()
+    started_perf = time.perf_counter()
+    result = run(cmd, cwd=cwd, env=env)
+    completed_at = iso_now()
     payload = {
         "command": cmd,
+        "cwd": str(cwd),
+        "started_at": started_at,
+        "completed_at": completed_at,
+        "duration_seconds": round(time.perf_counter() - started_perf, 3),
         "exit_code": result.returncode,
         "stdout_tail": result.stdout[-4000:],
         "stderr_tail": result.stderr[-4000:],
@@ -473,6 +627,66 @@ def command_payload(cmd: list[str], out_path: Path | None = None, cwd: Path = RE
         out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
         payload["evidence_path"] = str(out_path)
     return payload
+
+
+class PhaseRecorder:
+    def __init__(self, out_dir: Path) -> None:
+        self.out_dir = out_dir
+        self.started_at = iso_now()
+        self.completed_at: str | None = None
+        self.started_perf = time.perf_counter()
+        self.phases: list[dict[str, Any]] = []
+        self.out_path = out_dir / "phase-timings.json"
+
+    def start(self, name: str) -> dict[str, Any]:
+        return {
+            "name": name,
+            "started_at": iso_now(),
+            "started_perf": time.perf_counter(),
+        }
+
+    def finish(
+        self,
+        token: dict[str, Any],
+        status: str,
+        evidence_path: str | None = None,
+        detail: str | None = None,
+        extra: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        phase = {
+            "name": token["name"],
+            "started_at": token["started_at"],
+            "completed_at": iso_now(),
+            "duration_seconds": round(time.perf_counter() - float(token["started_perf"]), 3),
+            "status": status,
+            "evidence_path": evidence_path,
+        }
+        if detail:
+            phase["detail"] = detail
+        if extra:
+            phase.update(extra)
+        self.phases.append(phase)
+        self.write()
+        return phase
+
+    def write(self) -> dict[str, Any]:
+        payload = self.payload()
+        write_json(self.out_path, payload)
+        return payload
+
+    def complete(self) -> dict[str, Any]:
+        self.completed_at = iso_now()
+        return self.write()
+
+    def payload(self) -> dict[str, Any]:
+        return {
+            "generated_at": iso_now(),
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+            "duration_seconds": round(time.perf_counter() - self.started_perf, 3),
+            "phase_count": len(self.phases),
+            "phases": self.phases,
+        }
 
 
 def fetch_text(url: str, user_agent: str | None = None) -> dict[str, Any]:
@@ -639,6 +853,128 @@ def audit_source_page(url: str) -> dict[str, Any]:
 def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def launch_dashboard_build_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["NEXT_PUBLIC_API_BASE_URL"] = DASHBOARD_API_BASE_URL
+    env["NEXT_PUBLIC_AUTH_PRIMARY"] = "magic"
+    return env
+
+
+def dashboard_deploy_env() -> dict[str, str]:
+    sys.path.insert(0, str(REPO_ROOT / "apps/api/scripts"))
+    from wrangler_auth import build_runtime_env
+
+    return build_runtime_env()
+
+
+def wrangler_prefix(env: dict[str, str]) -> list[str]:
+    sys.path.insert(0, str(REPO_ROOT / "apps/api/scripts"))
+    from wrangler_auth import npx_wrangler_prefix
+
+    return npx_wrangler_prefix(env)
+
+
+def first_url(value: str) -> str | None:
+    match = re.search(r"https://[^\s)]+", value or "")
+    return match.group(0) if match else None
+
+
+def run_dashboard_finalization(args: argparse.Namespace, out_dir: Path, final_ledger: dict[str, Any]) -> dict[str, Any]:
+    dashboard_dir = out_dir / "dashboard"
+    generated_at = datetime.now(timezone.utc).isoformat()
+
+    snapshot = command_payload(
+        [sys.executable, str(DASHBOARD_SNAPSHOT_BUILDER)],
+        dashboard_dir / "snapshot-refresh.json",
+    )
+
+    build = command_payload(
+        ["npm", "run", "build"],
+        dashboard_dir / "web-build.json",
+        cwd=WEB_APP_DIR,
+        env=launch_dashboard_build_env(),
+    )
+
+    deploy: dict[str, Any] | None = None
+    deploy_attempts: list[dict[str, Any]] = []
+    publish_requested = not args.skip_dashboard_publish
+    if snapshot["pass"] and build["pass"] and publish_requested:
+        deploy_runtime_env = dashboard_deploy_env()
+        deploy_cmd = [
+            *wrangler_prefix(deploy_runtime_env),
+            "pages",
+            "deploy",
+            "out",
+            "--project-name",
+            DASHBOARD_PAGES_PROJECT,
+            "--branch",
+            "main",
+            "--commit-dirty=true",
+        ]
+        for attempt in range(1, 3):
+            attempt_path = dashboard_dir / f"pages-deploy-attempt-{attempt}.json"
+            deploy = command_payload(
+                deploy_cmd,
+                attempt_path,
+                cwd=WEB_APP_DIR,
+                env=deploy_runtime_env,
+            )
+            deploy["attempt"] = attempt
+            write_json(attempt_path, deploy)
+            deploy_attempts.append(
+                {
+                    "attempt": attempt,
+                    "pass": deploy["pass"],
+                    "evidence_path": deploy.get("evidence_path"),
+                    "duration_seconds": deploy.get("duration_seconds"),
+                    "exit_code": deploy.get("exit_code"),
+                }
+            )
+            if deploy["pass"]:
+                break
+            deploy_text = f"{deploy.get('stdout_tail', '')}\n{deploy.get('stderr_tail', '')}"
+            if "Failed to upload files. Please try again" not in deploy_text:
+                break
+            time.sleep(5)
+        if deploy is not None:
+            write_json(dashboard_dir / "pages-deploy.json", deploy)
+
+    pass_finalization = bool(snapshot["pass"] and build["pass"] and (not publish_requested or (deploy and deploy["pass"])))
+    deployment_url = first_url((deploy or {}).get("stdout_tail", "")) if deploy else None
+    payload = {
+        "generated_at": generated_at,
+        "domain": args.domain,
+        "property_code": args.property_code.upper(),
+        "dashboard_host": DASHBOARD_HOST,
+        "pages_project": DASHBOARD_PAGES_PROJECT,
+        "snapshot_refresh": {
+            "pass": snapshot["pass"],
+            "evidence_path": snapshot.get("evidence_path"),
+        },
+        "web_build": {
+            "pass": build["pass"],
+            "evidence_path": build.get("evidence_path"),
+            "api_base_url": DASHBOARD_API_BASE_URL,
+            "auth_primary": "magic",
+        },
+        "publish": {
+            "requested": publish_requested,
+            "pass": None if deploy is None else deploy["pass"],
+            "evidence_path": None if deploy is None else deploy.get("evidence_path"),
+            "deployment_url": deployment_url,
+            "attempts": deploy_attempts,
+        },
+        "contract_gate_ledger_passed_before_dashboard_update": final_ledger["pass"],
+        "pass": pass_finalization,
+        "blocked": not pass_finalization,
+        "block_reason": None
+        if pass_finalization
+        else "Dashboard finalization failed after optimization proof. Stop before the next property; live package remains active unless a package gate failed.",
+    }
+    write_json(dashboard_dir / "dashboard-finalization.json", payload)
+    return payload
 
 
 def write_reset_card(out_dir: Path, args: argparse.Namespace, identity: dict[str, Any] | None, contract: dict[str, Any]) -> None:
@@ -1659,6 +1995,9 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
         values = (((summary.get("summary") or {}).get(strategy) or {}).get("score") or {}).get("values") or []
         return any(float(value) < target for value in values)
 
+    def target_for_strategy(strategy: str) -> int:
+        return MOBILE_PSI_PARITY_TARGET if strategy == "mobile" else DESKTOP_PSI_TARGET
+
     initial = run_psi_attempt(output_dir, ["mobile", "desktop"])
     attempts = [{"label": "initial", **initial}]
     final_summary_by_strategy = {"mobile": initial["summary"], "desktop": initial["summary"]}
@@ -1666,21 +2005,21 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
     desktop_score = min_score_from_summary(initial["summary"], "desktop")
     retry_log: list[dict[str, Any]] = []
 
-    # A missing/incomplete PSI sample is different from a below-threshold score.
-    # Retry only transient no-score cases; measured scores below 90 still fail immediately.
+    # Treat below-target PSI as unstable until the bounded retry policy has a clean final sample.
     for strategy in ["mobile", "desktop"]:
         current_summary = final_summary_by_strategy[strategy]
-        if strategy_has_below_target_score(current_summary, strategy):
-            continue
-        if strategy_all_runs_scored(current_summary, strategy):
+        target = target_for_strategy(strategy)
+        if strategy_all_runs_scored(current_summary, strategy) and not strategy_has_below_target_score(current_summary, strategy, target):
             continue
         for retry_index in range(1, PSI_TRANSIENT_RETRIES + 1):
+            below_target = strategy_has_below_target_score(current_summary, strategy, target)
             retry_log.append(
                 {
                     "strategy": strategy,
                     "retry": retry_index,
                     "wait_seconds": PSI_TRANSIENT_RETRY_WAIT_SECONDS,
-                    "reason": "PSI returned an incomplete no-score sample set; waiting for deployment/cache/Lighthouse stabilization before retry.",
+                    "reason": f"PSI {'returned a below-target score' if below_target else 'returned an incomplete no-score sample set'}; waiting for deployment/cache/Lighthouse stabilization before retry.",
+                    "target": target,
                     "previous_failures": strategy_failures(current_summary, strategy),
                 }
             )
@@ -1697,7 +2036,7 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
                 desktop_score = retry_score
                 final_summary_by_strategy["desktop"] = retry_attempt["summary"]
                 current_summary = final_summary_by_strategy["desktop"]
-            if strategy_has_below_target_score(current_summary, strategy) or strategy_all_runs_scored(current_summary, strategy):
+            if strategy_all_runs_scored(current_summary, strategy) and not strategy_has_below_target_score(current_summary, strategy, target):
                 break
 
     cmd = [
@@ -1722,8 +2061,13 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
         and mobile_score >= MOBILE_PSI_PARITY_TARGET
         and not strategy_has_below_target_score(final_summary_by_strategy["mobile"], "mobile", MOBILE_PSI_PARITY_TARGET)
     )
+    desktop_pass = bool(
+        desktop_score is not None
+        and desktop_score >= DESKTOP_PSI_TARGET
+        and not strategy_has_below_target_score(final_summary_by_strategy["desktop"], "desktop", DESKTOP_PSI_TARGET)
+    )
     desktop_recorded = bool(desktop_score is not None)
-    overall_pass = bool(mobile_pass and desktop_recorded)
+    overall_pass = bool(mobile_pass and desktop_pass)
     payload = {
         "command": cmd,
         "exit_code": 0 if overall_pass else 1,
@@ -1746,13 +2090,13 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
         "transient_retry_policy": {
             "retries": PSI_TRANSIENT_RETRIES,
             "wait_seconds": PSI_TRANSIENT_RETRY_WAIT_SECONDS,
-            "only_when_score_missing": True,
+            "only_when_score_missing": False,
             "also_when_required_sample_set_incomplete": True,
-            "below_90_scores_retry": False,
+            "below_target_scores_retry": True,
         },
         "score_targets": {
             "mobile_reference_parity": MOBILE_PSI_PARITY_TARGET,
-            "desktop": "recorded_only_native_passthrough_not_blocking",
+            "desktop_native_passthrough": DESKTOP_PSI_TARGET,
         },
         "retry_log": retry_log,
         "mobile_min_score": mobile_score,
@@ -1762,7 +2106,7 @@ def run_psi_gate(args: argparse.Namespace, out_dir: Path) -> dict[str, Any]:
         "provider_no_score_samples_recorded": bool(not mobile_complete or not desktop_complete),
         "mobile_pass": mobile_pass,
         "desktop_recorded": desktop_recorded,
-        "desktop_pass": desktop_recorded,
+        "desktop_pass": desktop_pass,
         "pass": overall_pass,
         "stdout_tail": initial["stdout_tail"],
         "stderr_tail": initial["stderr_tail"],
@@ -1818,6 +2162,14 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
             page.on("requestfailed", lambda request: result["failed_requests"].append({"url": request.url, "failure": str(request.failure or "")}))
             page.on("response", lambda response: result["bad_responses"].append({"status": response.status, "url": response.url}) if response.status >= 400 else None)
             response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            promo_headers = {
+                "state": response.headers.get("x-vtr-promo-state", "") if response else "",
+                "source": response.headers.get("x-vtr-promo-source", "") if response else "",
+                "key": response.headers.get("x-vtr-promo-key", "") if response else "",
+                "present": response.headers.get("x-vtr-promo-present", "") if response else "",
+                "fetched_at": response.headers.get("x-vtr-promo-fetched-at", "") if response else "",
+            }
+            result["promo_record"] = promo_headers
             page.wait_for_timeout(2000)
             mobile_shot = out_dir / "mobile-first-view.png"
             page.screenshot(path=str(mobile_shot), full_page=False)
@@ -1838,6 +2190,8 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
               const headline = document.querySelector(".hero .hero-headline");
               const cta = document.querySelector(".hero .cta");
               const promoWrap = document.querySelector(".promo-wrap");
+              const promoLabel = document.querySelector(".promo-label");
+              const promoDrop = document.querySelector("[data-edge-promo-drop]");
               const headerBar = document.querySelector(".bar");
               const hero = document.querySelector(".hero");
               const awardImages = Array.from(document.querySelectorAll("[data-vtr-shell-awards] img"));
@@ -1926,6 +2280,11 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 heapEnvironmentVar: window.HEAP_ENVIRONMENT || "",
                 heapModeVar: window.HEAP_MODE || "",
                 heapDebugVarType: typeof window.HEAP_JS_DEBUG,
+                promo: {
+                  present: !!promoWrap,
+                  label: (promoLabel?.textContent || "").replace(/\\s+/g, " ").trim(),
+                  drawerText: (promoDrop?.textContent || "").replace(/\\s+/g, " ").trim()
+                },
                 trackedShellElements,
                 drawerNavLinks,
                 heroFullHeight: {
@@ -1966,6 +2325,16 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
             )
             if response is None or response.status >= 400:
                 note(mobile_failures, f"mobile browser status {response.status if response else 'none'}")
+            if not promo_headers.get("state") or not promo_headers.get("source") or not promo_headers.get("key"):
+                note(mobile_failures, "edge promo record readout headers missing")
+            if promo_headers.get("state", "").startswith("manifest_fallback_"):
+                note(mobile_failures, "edge promo record unavailable; manifest fallback is not allowed for live proof")
+            if promo_headers.get("state") == "edge_record_stale":
+                note(mobile_failures, "edge promo record is stale")
+            promo_header_present = promo_headers.get("present") == "true"
+            promo_dom_present = bool((mobile_eval.get("promo") or {}).get("present"))
+            if promo_header_present != promo_dom_present:
+                note(mobile_failures, "edge promo record present state does not match rendered topper promo")
             if mobile_eval["statusMarker"] != "1":
                 note(mobile_failures, "mobile shell marker missing")
             if mobile_eval["shellBlocks"] < 2:
@@ -2013,7 +2382,7 @@ def validate_browser_acceptance(args: argparse.Namespace, manifest: dict[str, An
                 "drawer_phone",
                 "hero_primary_cta",
             }
-            if get_path(manifest, "mobile_shell.promo.present") is not False:
+            if promo_header_present:
                 required_tracked_elements.update({"promo_bar_toggle", "promo_drawer_close"})
             observed_elements = {item.get("element") for item in tracked_shell}
             missing_tracked = sorted(required_tracked_elements - observed_elements)
@@ -2365,7 +2734,16 @@ def run_zaraz_audit(manifest: dict[str, Any], out_dir: Path) -> dict[str, Any]:
 
 def run_zaraz_package_apply(manifest_path: Path, out_dir: Path) -> dict[str, Any]:
     output = out_dir / "zaraz-analytics-package-apply.json"
-    cmd = ["python3", str(ZARAZ_PACKAGE), "--manifest", str(manifest_path), "--apply", "--output", str(output)]
+    cmd = [
+        "python3",
+        str(ZARAZ_PACKAGE),
+        "--manifest",
+        str(manifest_path),
+        "--apply",
+        "--force-republish",
+        "--output",
+        str(output),
+    ]
     result = run(cmd)
     payload = load_json(output) or {}
     package_result = payload.get("result") or {}
@@ -2373,7 +2751,7 @@ def run_zaraz_package_apply(manifest_path: Path, out_dir: Path) -> dict[str, Any
     return {
         "command": cmd,
         "exit_code": result.returncode,
-        "pass": result.returncode == 0 and payload.get("status") == "passed" and result_status in {"applied", "unchanged"},
+        "pass": result.returncode == 0 and payload.get("status") == "passed" and result_status in {"applied", "unchanged", "republished"},
         "status": payload.get("status"),
         "result_status": result_status,
         "changes": package_result.get("changes") or [],
@@ -2472,6 +2850,57 @@ def static_package_validation(out_dir: Path, target_manifest_path: Path | None =
     }
     write_json(out_dir / "static-package-gate-readout.json", combined)
     return {**combined, "evidence_path": str(out_dir / "static-package-gate-readout.json")}
+
+
+def run_process_scenario_audit(args: argparse.Namespace, out_dir: Path, target_manifest_path: Path) -> dict[str, Any]:
+    process_audit_dir = out_dir / "process-scenario-audit"
+    payload = command_payload(
+        [
+            "python3",
+            str(PROCESS_AUDITOR),
+            "--property-code",
+            args.property_code.upper(),
+            "--domain",
+            args.domain,
+            "--manifest",
+            str(target_manifest_path),
+            "--out",
+            str(process_audit_dir),
+        ],
+        process_audit_dir / "process-audit-command.json",
+    )
+    audit_payload_path = process_audit_dir / "process-audit.json"
+    if audit_payload_path.exists():
+        payload["audit_payload_path"] = str(audit_payload_path)
+        try:
+            payload["audit"] = json.loads(audit_payload_path.read_text())
+        except json.JSONDecodeError:
+            payload["audit"] = {"pass": False, "reason": "process-audit.json was not valid JSON"}
+    write_json(process_audit_dir / "process-scenario-audit-gate-readout.json", payload)
+    return {**payload, "evidence_path": str(process_audit_dir / "process-scenario-audit-gate-readout.json")}
+
+
+def run_batch_inventory_audit(out_dir: Path) -> dict[str, Any]:
+    batch_audit_dir = out_dir / "batch-inventory-audit"
+    payload = command_payload(
+        [
+            "python3",
+            str(BATCH_AUDITOR),
+            "--skip-process-audits",
+            "--out",
+            str(batch_audit_dir),
+        ],
+        batch_audit_dir / "batch-inventory-audit-command.json",
+    )
+    summary_path = batch_audit_dir / "batch-process-audit-summary.json"
+    if summary_path.exists():
+        payload["audit_payload_path"] = str(summary_path)
+        try:
+            payload["audit"] = json.loads(summary_path.read_text())
+        except json.JSONDecodeError:
+            payload["audit"] = {"pass": False, "reason": "batch-process-audit-summary.json was not valid JSON"}
+    write_json(batch_audit_dir / "batch-inventory-audit-gate-readout.json", payload)
+    return {**payload, "evidence_path": str(batch_audit_dir / "batch-inventory-audit-gate-readout.json")}
 
 
 def add_manifest_gates(ledger: GateLedger, manifest: dict[str, Any] | None, manifest_validation: dict[str, Any], identity: dict[str, Any] | None, out_dir: Path) -> None:
@@ -2703,6 +3132,40 @@ def build_preflight_context(args: argparse.Namespace, out_dir: Path, contract: d
     else:
         ledger.fail_gate("static_package_validation_passed", evidence_path=static_result.get("evidence_path"), detail="Static canonical package validation failed.")
 
+    batch_audit = run_batch_inventory_audit(out_dir)
+    if batch_audit["pass"]:
+        ledger.pass_gate(
+            "batch_inventory_audit_passed",
+            evidence_path=batch_audit.get("evidence_path"),
+            detail="Active production manifest inventory is unambiguous and release/register references resolve to active manifests.",
+        )
+    else:
+        ledger.fail_gate(
+            "batch_inventory_audit_passed",
+            evidence_path=batch_audit.get("evidence_path"),
+            detail=batch_audit.get("stderr_tail") or batch_audit.get("stdout_tail") or "Batch inventory audit failed.",
+        )
+
+    if static_result["pass"] and manifest_validation["pass"] and identity is not None:
+        process_audit = run_process_scenario_audit(args, out_dir, target_manifest_path)
+        if process_audit["pass"]:
+            ledger.pass_gate(
+                "process_scenario_audit_passed",
+                evidence_path=process_audit.get("evidence_path"),
+                detail="Read-only scenario audit proved known bad manifest states are blocked before stage/apply.",
+            )
+        else:
+            ledger.fail_gate(
+                "process_scenario_audit_passed",
+                evidence_path=process_audit.get("evidence_path"),
+                detail=process_audit.get("stderr_tail") or process_audit.get("stdout_tail") or "Process scenario audit failed.",
+            )
+    else:
+        ledger.block_gate(
+            "process_scenario_audit_passed",
+            detail="Process scenario audit requires passing manifest, identity, and static package gates first.",
+        )
+
     if artifacts["manifest_schema_present"]:
         ledger.pass_gate("manifest_schema_present", required=False)
     if base_reference:
@@ -2722,6 +3185,16 @@ def build_preflight_context(args: argparse.Namespace, out_dir: Path, contract: d
         zaraz = run_zaraz_audit(manifest, out_dir / "consent")
         if zaraz["pass"]:
             ledger.pass_gate("zaraz_consent_ready", evidence_path=zaraz["evidence_path"])
+        elif args.mode == "plan":
+            ledger.set(
+                "zaraz_consent_ready",
+                "not_run",
+                evidence_path=zaraz["evidence_path"],
+                detail=(
+                    "Consent is not yet configured on this zone. This is a stage setup action: "
+                    "the governed Zaraz consent package is applied and re-audited before any route probe or Worker deploy."
+                ),
+            )
         else:
             ledger.fail_gate("zaraz_consent_ready", evidence_path=zaraz["evidence_path"], detail=zaraz.get("stderr_tail") or "Zaraz consent audit failed.")
 
@@ -3079,6 +3552,8 @@ def mode_apply(
         print(json.dumps(payload, indent=2))
         return 3
 
+    phases = PhaseRecorder(out_dir)
+    preflight_phase = phases.start("preflight_context_and_static_gates")
     context = build_preflight_context(args, out_dir, contract, identity)
     target_manifest_path = context["target_manifest_path"]
     artifacts = context["artifacts"]
@@ -3088,6 +3563,7 @@ def mode_apply(
     ledger = context["ledger"]
 
     if base_reference:
+        phases.finish(preflight_phase, "blocked", detail="Protected golden reference cannot be overwritten.")
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": args.mode,
@@ -3098,6 +3574,7 @@ def mode_apply(
             "block_reason": "This is a protected golden reference. References may be validated/captured only, never overwritten by a generated package.",
             "manifest_path": str(target_manifest_path),
             "contract_gate_ledger": ledger.payload(),
+            "phase_timings": phases.complete(),
         }
         write_json(out_dir / "apply-blocked-base-reference.json", payload)
         print(json.dumps(payload, indent=2))
@@ -3105,6 +3582,7 @@ def mode_apply(
 
     current_preflight_failures = preflight_failures(ledger)
     if current_preflight_failures:
+        phases.finish(preflight_phase, "failed", detail="Apply preflight failed.")
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": args.mode,
@@ -3119,13 +3597,18 @@ def mode_apply(
             "blocked": True,
             "block_reason": "Apply preflight failed. No asset upload, Zaraz setup, route probe, or Worker deploy was attempted.",
             "preflight_failures": current_preflight_failures,
+            "phase_timings": phases.complete(),
         }
         write_json(out_dir / "apply-blocked-preflight-readout.json", payload)
         print(json.dumps(payload, indent=2))
         return 3
 
+    phases.finish(preflight_phase, "pass", evidence_path=str(out_dir / "static-package-gate-readout.json"))
+
+    reference_phase = phases.start("reference_replay")
     reference_replay = run_reference_replay(out_dir, ledger)
     if not reference_replay["pass"]:
+        phases.finish(reference_phase, "failed", evidence_path=reference_replay.get("evidence_path"))
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": args.mode,
@@ -3140,17 +3623,21 @@ def mode_apply(
             "pass": False,
             "blocked": True,
             "block_reason": "Reference replay failed. No asset upload, Zaraz setup, route probe, or Worker deploy was attempted.",
+            "phase_timings": phases.complete(),
         }
         write_json(out_dir / "apply-blocked-reference-replay.json", payload)
         print(json.dumps(payload, indent=2))
         return 3
+    phases.finish(reference_phase, "pass", evidence_path=reference_replay.get("evidence_path"))
 
+    stage_phase = phases.start("stage_setup_assets_analytics_consent_bundle")
     stage_setup = run_stage_setup(args, out_dir, target_manifest_path, manifest, ledger)
     current_stage_failures = stage_failures(ledger)
     asset_package = stage_setup.get("asset_package")
     zaraz_package = stage_setup.get("zaraz_package")
     deploy_bundle_validation = stage_setup.get("deploy_bundle_validation")
     if not stage_setup["pass"] or current_stage_failures:
+        phases.finish(stage_phase, "failed", detail=stage_setup.get("block_reason") or "Apply staged setup gates failed.")
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": args.mode,
@@ -3167,11 +3654,22 @@ def mode_apply(
             "blocked": True,
             "block_reason": stage_setup.get("block_reason") or "Apply staged setup gates failed. No route probe or Worker deploy was attempted.",
             "stage_failures": current_stage_failures,
+            "phase_timings": phases.complete(),
         }
         write_json(out_dir / "apply-blocked-stage-readout.json", payload)
         print(json.dumps(payload, indent=2))
         return 3
+    phases.finish(
+        stage_phase,
+        "pass",
+        evidence_path=(deploy_bundle_validation or {}).get("evidence_path"),
+        extra={
+            "asset_package_pass": bool((asset_package or {}).get("pass")),
+            "zaraz_package_pass": bool((zaraz_package or {}).get("pass")),
+        },
+    )
 
+    route_phase = phases.start("cloudflare_route_interception_probe")
     route_probe = validate_route_interception(args, manifest or {}, out_dir / "route-probe")
     if route_probe["pass"]:
         ledger.pass_gate(
@@ -3179,12 +3677,14 @@ def mode_apply(
             evidence_path=route_probe["evidence_path"],
             detail="Temporary isolated route proved Worker interception, homepage isolation, and cleanup.",
         )
+        phases.finish(route_phase, "pass", evidence_path=route_probe.get("evidence_path"))
     else:
         ledger.fail_gate(
             "cloudflare_route_interception_probe_passed",
             evidence_path=route_probe.get("evidence_path"),
             detail=route_probe.get("reason") or "Route interception probe failed.",
         )
+        phases.finish(route_phase, "failed", evidence_path=route_probe.get("evidence_path"), detail=route_probe.get("reason") or "Route interception probe failed.")
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": args.mode,
@@ -3199,11 +3699,13 @@ def mode_apply(
             "route_probe": route_probe,
             "asset_package": asset_package,
             "contract_gate_ledger": ledger.payload(),
+            "phase_timings": phases.complete(),
         }
         write_json(out_dir / "apply-blocked-route-probe.json", payload)
         print(json.dumps(payload, indent=2))
         return 3
 
+    deploy_phase = phases.start("live_worker_deploy")
     deploy_command = [
         "python3",
         str(DEPLOY_ADAPTER),
@@ -3219,6 +3721,7 @@ def mode_apply(
     if deploy_readout.exists():
         deploy_payload = json.loads(deploy_readout.read_text())
     if deploy.returncode != 0 or not (deploy_payload or {}).get("pass"):
+        phases.finish(deploy_phase, "failed", evidence_path=str(deploy_readout) if deploy_readout.exists() else None, detail="Deploy adapter failed.")
         payload = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": args.mode,
@@ -3233,10 +3736,12 @@ def mode_apply(
             "deploy_bundle_validation": deploy_bundle_validation,
             "asset_package": asset_package,
             "deploy": deploy_payload or {"exit_code": deploy.returncode, "stdout": deploy.stdout, "stderr": deploy.stderr},
+            "phase_timings": phases.complete(),
         }
         write_json(out_dir / "apply-failed-readout.json", payload)
         print(json.dumps(payload, indent=2))
         return 3
+    phases.finish(deploy_phase, "pass", evidence_path=str(deploy_readout), extra={"deploy_returncode": deploy.returncode})
 
     def rollback_readout(readout_name: str, block_reason: str, extra: dict[str, Any] | None = None) -> int:
         rollback = rollback_package_worker(
@@ -3266,6 +3771,7 @@ def mode_apply(
             "pass": False,
             "blocked": True,
             "block_reason": block_reason,
+            "phase_timings": phases.complete(),
         }
         if extra:
             payload.update(extra)
@@ -3273,6 +3779,7 @@ def mode_apply(
         print(json.dumps(payload, indent=2))
         return 3
 
+    package_health_phase = phases.start("package_health_probe")
     package_health = validate_package_health(args, manifest or {}, out_dir / "package-health")
     if package_health["pass"]:
         ledger.pass_gate(
@@ -3280,18 +3787,21 @@ def mode_apply(
             evidence_path=package_health["evidence_path"],
             detail=f"Package health passed at {', '.join(package_health.get('passing_labels') or [])}.",
         )
+        phases.finish(package_health_phase, "pass", evidence_path=package_health.get("evidence_path"))
     else:
         ledger.fail_gate(
             "cloudflare_package_health_probe_passed",
             evidence_path=package_health.get("evidence_path"),
             detail=package_health.get("reason") or "Package health probe failed.",
         )
+        phases.finish(package_health_phase, "failed", evidence_path=package_health.get("evidence_path"), detail=package_health.get("reason") or "Package health probe failed.")
         return rollback_readout(
             "apply-failed-package-health-readout.json",
             "Package health proof failed after deploy. Package Worker was rolled back.",
             {"package_health": package_health},
         )
 
+    wordpress_phase = phases.start("wordpress_control_path_bypass")
     wordpress_control_path = validate_wordpress_control_path_bypass(args, out_dir / "wordpress-control")
     if wordpress_control_path["pass"]:
         ledger.pass_gate(
@@ -3299,9 +3809,16 @@ def mode_apply(
             evidence_path=wordpress_control_path["evidence_path"],
             detail="WordPress login/admin/API paths preserved transparent native behavior.",
         )
+        phases.finish(wordpress_phase, "pass", evidence_path=wordpress_control_path.get("evidence_path"))
     else:
         ledger.fail_gate(
             "wordpress_control_path_bypass_proven",
+            evidence_path=wordpress_control_path.get("evidence_path"),
+            detail="; ".join(wordpress_control_path.get("failures") or []) or "WordPress control-path bypass proof failed.",
+        )
+        phases.finish(
+            wordpress_phase,
+            "failed",
             evidence_path=wordpress_control_path.get("evidence_path"),
             detail="; ".join(wordpress_control_path.get("failures") or []) or "WordPress control-path bypass proof failed.",
         )
@@ -3311,11 +3828,14 @@ def mode_apply(
             {"package_health": package_health, "wordpress_control_path_bypass": wordpress_control_path},
         )
 
+    cache_phase = phases.start("cache_purge")
     cache_purge = run_cache_purge(args, out_dir / "cache")
     if cache_purge["pass"]:
         ledger.pass_gate("cache_purge_proven", evidence_path=cache_purge["evidence_path"])
+        phases.finish(cache_phase, "pass", evidence_path=cache_purge.get("evidence_path"))
     else:
         ledger.fail_gate("cache_purge_proven", evidence_path=cache_purge.get("evidence_path"), detail=cache_purge.get("stderr_tail") or "Cloudflare cache purge failed.")
+        phases.finish(cache_phase, "failed", evidence_path=cache_purge.get("evidence_path"), detail=cache_purge.get("stderr_tail") or "Cloudflare cache purge failed.")
         return rollback_readout(
             "apply-failed-cache-purge-readout.json",
             "Cache purge proof failed after package deploy. Package Worker was rolled back.",
@@ -3323,26 +3843,33 @@ def mode_apply(
         )
 
     if manifest:
+        r2_phase = phases.start("r2_asset_readback")
         r2_assets = validate_r2_asset_readback(args, manifest, out_dir / "r2")
         if r2_assets["pass"]:
             ledger.pass_gate("r2_asset_readback_passed", evidence_path=r2_assets["evidence_path"])
+            phases.finish(r2_phase, "pass", evidence_path=r2_assets.get("evidence_path"))
         else:
             ledger.fail_gate("r2_asset_readback_passed", evidence_path=r2_assets["evidence_path"], detail=r2_assets.get("reason"))
+            phases.finish(r2_phase, "failed", evidence_path=r2_assets.get("evidence_path"), detail=r2_assets.get("reason"))
             return rollback_readout(
                 "apply-failed-r2-readback-readout.json",
                 "R2 asset readback proof failed after package deploy. Package Worker was rolled back.",
                 {"package_health": package_health, "cache_purge": cache_purge, "r2_asset_readback": r2_assets},
             )
 
+    live_shell_phase = phases.start("live_mobile_shell_proof")
     live_shell = validate_shell(args, out_dir / "live-proof")
     add_live_gates_from_shell(ledger, live_shell)
     if not live_shell["pass"]:
+        phases.finish(live_shell_phase, "failed", evidence_path=live_shell.get("evidence_path"), detail=live_shell.get("reason") or "Live shell proof failed.")
         return rollback_readout(
             "apply-failed-live-proof-readout.json",
             "Live shell proof failed after deploy. Package Worker was rolled back.",
             {"package_health": package_health, "cache_purge": cache_purge, "live_shell_validation": live_shell},
         )
+    phases.finish(live_shell_phase, "pass", evidence_path=live_shell.get("evidence_path"))
 
+    browser_phase = phases.start("browser_acceptance_visual_and_event_proof")
     browser_acceptance = validate_browser_acceptance(args, manifest or {}, out_dir / "browser-proof")
     browser_gates = browser_acceptance.get("gate_results") or {}
     browser_failures = browser_acceptance.get("gate_failures") or {}
@@ -3365,6 +3892,7 @@ def mode_apply(
     apply_browser_gate("resi_event_bridge_accounted_for", "event_bridge")
 
     if not browser_acceptance["pass"]:
+        phases.finish(browser_phase, "failed", evidence_path=browser_acceptance.get("evidence_path"), detail=browser_acceptance.get("reason") or "Browser acceptance proof failed.")
         return rollback_readout(
             "apply-failed-browser-acceptance-readout.json",
             "Browser acceptance proof failed after package deploy. Package Worker was rolled back.",
@@ -3375,8 +3903,10 @@ def mode_apply(
                 "browser_acceptance": browser_acceptance,
             },
         )
+    phases.finish(browser_phase, "pass", evidence_path=browser_acceptance.get("evidence_path"))
 
     if manifest:
+        source_phase = phases.start("source_phone_seo_analytics_proof")
         source_phone = validate_source_phone(args, manifest, out_dir / "phone")
         if source_phone["pass"]:
             ledger.pass_gate("source_coded_phone_proof_passed", evidence_path=source_phone["evidence_path"])
@@ -3384,6 +3914,7 @@ def mode_apply(
         else:
             ledger.fail_gate("source_coded_phone_proof_passed", evidence_path=source_phone["evidence_path"], detail=source_phone.get("reason") or "Source-coded phone proof failed.")
             ledger.fail_gate("browser_source_coded_mobile_valid", evidence_path=source_phone["evidence_path"], detail=source_phone.get("reason") or "Source-coded mobile proof failed.")
+            phases.finish(source_phase, "failed", evidence_path=source_phone.get("evidence_path"), detail=source_phone.get("reason") or "Source-coded phone proof failed.")
             return rollback_readout(
                 "apply-failed-source-phone-readout.json",
                 "Source-coded phone proof failed after package deploy. Package Worker was rolled back.",
@@ -3395,6 +3926,7 @@ def mode_apply(
             ledger.pass_gate("llms_txt_valid", evidence_path=llms["evidence_path"])
         else:
             ledger.fail_gate("llms_txt_valid", evidence_path=llms["evidence_path"], detail="llms.txt did not return H1 plus markdown links.")
+            phases.finish(source_phase, "failed", evidence_path=llms.get("evidence_path"), detail="llms.txt did not return H1 plus markdown links.")
             return rollback_readout(
                 "apply-failed-llms-readout.json",
                 "llms.txt proof failed after package deploy. Package Worker was rolled back.",
@@ -3411,6 +3943,7 @@ def mode_apply(
         else:
             ledger.fail_gate("stale_identity_scan_passed", evidence_path=meta["evidence_path"], detail=f"Stale identity: {meta.get('stale_identity')}")
         if not meta["pass"]:
+            phases.finish(source_phase, "failed", evidence_path=meta.get("evidence_path"), detail="Meta/OG/schema/icon or stale-identity proof failed.")
             return rollback_readout(
                 "apply-failed-meta-schema-readout.json",
                 "Meta/OG/schema/icon or stale-identity proof failed after package deploy. Package Worker was rolled back.",
@@ -3425,23 +3958,29 @@ def mode_apply(
             detail = "; ".join(analytics.get("failures") or []) or analytics.get("stderr_tail") or "Live analytics smoke failed."
             ledger.fail_gate("ga4_zaraz_proof_passed", evidence_path=analytics.get("evidence_path"), detail=detail)
             ledger.fail_gate("heap_contentsquare_interaction_only_proof_passed", evidence_path=analytics.get("evidence_path"), detail=detail)
+            phases.finish(source_phase, "failed", evidence_path=analytics.get("evidence_path"), detail=detail)
             return rollback_readout(
                 "apply-failed-analytics-readout.json",
                 "Live analytics proof failed after package deploy. Package Worker was rolled back.",
                 {"package_health": package_health, "cache_purge": cache_purge, "live_shell_validation": live_shell, "browser_acceptance": browser_acceptance, "analytics": analytics},
             )
+        phases.finish(source_phase, "pass", evidence_path=analytics.get("evidence_path"))
 
+    cloudflare_analytics_phase = phases.start("cloudflare_analytics_state_record")
     cloudflare_analytics = run_cloudflare_analytics_state(out_dir / "cloudflare-analytics")
     if cloudflare_analytics["pass"]:
         ledger.pass_gate("cloudflare_analytics_state_recorded", evidence_path=cloudflare_analytics["evidence_path"])
+        phases.finish(cloudflare_analytics_phase, "pass", evidence_path=cloudflare_analytics.get("evidence_path"))
     else:
         ledger.fail_gate("cloudflare_analytics_state_recorded", evidence_path=cloudflare_analytics.get("evidence_path"), detail=cloudflare_analytics.get("stderr_tail") or "Cloudflare analytics smoke failed.")
+        phases.finish(cloudflare_analytics_phase, "failed", evidence_path=cloudflare_analytics.get("evidence_path"), detail=cloudflare_analytics.get("stderr_tail") or "Cloudflare analytics smoke failed.")
         return rollback_readout(
             "apply-failed-cloudflare-analytics-readout.json",
             "Cloudflare analytics state proof failed after package deploy. Package Worker was rolled back.",
             {"package_health": package_health, "cache_purge": cache_purge, "live_shell_validation": live_shell, "browser_acceptance": browser_acceptance, "cloudflare_analytics": cloudflare_analytics},
         )
 
+    psi_phase = phases.start("psi_mobile_desktop_gate")
     psi = run_psi_gate(args, out_dir / "psi")
     if psi["mobile_pass"]:
         ledger.pass_gate("psi_mobile_90_plus_live", evidence_path=psi["evidence_path"], detail=f"Mobile minimum score: {psi.get('mobile_min_score')}; package parity target: {MOBILE_PSI_PARITY_TARGET}")
@@ -3450,17 +3989,29 @@ def mode_apply(
         detail = f"Mobile minimum score: {psi.get('mobile_min_score')}; required reference parity target: {MOBILE_PSI_PARITY_TARGET}"
         ledger.fail_gate("psi_mobile_90_plus_live", evidence_path=psi.get("evidence_path"), detail=detail)
         ledger.fail_gate("psi_mobile_reference_parity_live", evidence_path=psi.get("evidence_path"), detail=detail)
-    if psi["desktop_recorded"]:
-        ledger.pass_gate("psi_desktop_recorded_live", evidence_path=psi["evidence_path"], detail=f"Desktop native passthrough PSI recorded for evidence only. Minimum observed score: {psi.get('desktop_min_score')}")
+    if psi["desktop_pass"]:
+        ledger.pass_gate("psi_desktop_recorded_live", evidence_path=psi["evidence_path"], detail=f"Desktop native passthrough PSI met target. Minimum observed score: {psi.get('desktop_min_score')}; target: {DESKTOP_PSI_TARGET}.")
     else:
-        ledger.fail_gate("psi_desktop_recorded_live", evidence_path=psi.get("evidence_path"), detail="Desktop native passthrough PSI could not be recorded.")
+        detail = f"Desktop native passthrough PSI did not meet target. Minimum observed score: {psi.get('desktop_min_score')}; required target: {DESKTOP_PSI_TARGET}."
+        ledger.fail_gate("psi_desktop_recorded_live", evidence_path=psi.get("evidence_path"), detail=detail)
     if not psi["pass"]:
+        phases.finish(psi_phase, "failed", evidence_path=psi.get("evidence_path"), detail="Live PSI proof failed.")
         return rollback_readout(
             "apply-failed-psi-readout.json",
-            "Live mobile PSI reference-parity proof failed after package deploy. Package Worker was rolled back.",
+            "Live PSI proof failed after package deploy. Package Worker was rolled back.",
             {"package_health": package_health, "cache_purge": cache_purge, "live_shell_validation": live_shell, "browser_acceptance": browser_acceptance, "psi": psi},
         )
+    phases.finish(
+        psi_phase,
+        "pass",
+        evidence_path=psi.get("evidence_path"),
+        extra={
+            "mobile_min_score": psi.get("mobile_min_score"),
+            "desktop_min_score": psi.get("desktop_min_score"),
+        },
+    )
 
+    evidence_phase = phases.start("evidence_packet")
     evidence_packet_path = out_dir / "evidence-packet.json"
     evidence_files = sorted(path for path in out_dir.rglob("*") if path.is_file() and path.name != "evidence-packet.json")
     ledger.pass_gate("evidence_packet_written", evidence_path=str(evidence_packet_path), detail=f"{len(evidence_files)} evidence files recorded.")
@@ -3474,10 +4025,17 @@ def mode_apply(
             "contract_gate_ledger": ledger.payload(),
         },
     )
+    phases.finish(
+        evidence_phase,
+        "pass",
+        evidence_path=str(evidence_packet_path),
+        extra={"evidence_file_count": evidence_packet.get("file_count")},
+    )
 
     mark_unproven_apply_gates(ledger)
     final_ledger = ledger.payload()
     rollback = None
+    dashboard_finalization = None
     if not final_ledger["pass"]:
         rollback = rollback_package_worker(
             args,
@@ -3485,6 +4043,54 @@ def mode_apply(
             "Full package gate ledger failed after package deploy.",
             manifest=manifest,
         )
+    else:
+        pre_dashboard_payload = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "mode": args.mode,
+            "domain": args.domain,
+            "property_code": args.property_code.upper(),
+            "identity": identity,
+            "artifacts": artifacts,
+            "manifest_path": str(target_manifest_path),
+            "manifest_validation": manifest_validation,
+            "reference_replay": reference_replay,
+            "zaraz_package": zaraz_package,
+            "stage_setup": stage_setup,
+            "deploy_bundle_validation": deploy_bundle_validation,
+            "route_probe": route_probe,
+            "asset_package": asset_package,
+            "deploy": deploy_payload,
+            "package_health": package_health,
+            "wordpress_control_path_bypass": wordpress_control_path,
+            "live_shell_validation": live_shell,
+            "rollback": None,
+            "dashboard_finalization": None,
+            "contract_gate_ledger": final_ledger,
+            "phase_timings": phases.payload(),
+            "pass": True,
+            "blocked": False,
+            "block_reason": None,
+        }
+        write_json(out_dir / "apply-readout.json", pre_dashboard_payload)
+        dashboard_phase = phases.start("launch_dashboard_finalization")
+        dashboard_finalization = run_dashboard_finalization(args, out_dir, final_ledger)
+        phases.finish(
+            dashboard_phase,
+            "pass" if dashboard_finalization["pass"] else "failed",
+            evidence_path=str(out_dir / "dashboard/dashboard-finalization.json"),
+            detail=dashboard_finalization.get("block_reason"),
+            extra={
+                "publish_requested": dashboard_finalization.get("publish", {}).get("requested"),
+                "deployment_url": dashboard_finalization.get("publish", {}).get("deployment_url"),
+            },
+        )
+    final_pass = bool(final_ledger["pass"] and (dashboard_finalization is None or dashboard_finalization["pass"]))
+    block_reason = None
+    if not final_ledger["pass"]:
+        block_reason = "Full package gate ledger failed. Package Worker was rolled back."
+    elif dashboard_finalization and not dashboard_finalization["pass"]:
+        block_reason = dashboard_finalization["block_reason"]
+    phase_timings = phases.complete()
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "mode": args.mode,
@@ -3505,10 +4111,12 @@ def mode_apply(
         "wordpress_control_path_bypass": wordpress_control_path,
         "live_shell_validation": live_shell,
         "rollback": rollback,
+        "dashboard_finalization": dashboard_finalization,
         "contract_gate_ledger": final_ledger,
-        "pass": final_ledger["pass"],
-        "blocked": not final_ledger["pass"],
-        "block_reason": None if final_ledger["pass"] else "Full package gate ledger failed. Package Worker was rolled back.",
+        "phase_timings": phase_timings,
+        "pass": final_pass,
+        "blocked": not final_pass,
+        "block_reason": block_reason,
     }
     write_json(out_dir / "apply-readout.json", payload)
     print(json.dumps(payload, indent=2))
@@ -3522,6 +4130,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mode", choices=["plan", "stage", "validate-reference", "apply"], required=True)
     parser.add_argument("--manifest", help="Explicit target manifest path for governed canary/pilot runs.")
     parser.add_argument("--require-live-proof", action="store_true")
+    parser.add_argument(
+        "--skip-dashboard-publish",
+        action="store_true",
+        help="Refresh and build the launch dashboard snapshot but do not publish the Cloudflare Pages dashboard during apply finalization.",
+    )
     return parser.parse_args()
 
 
@@ -3532,6 +4145,23 @@ def main() -> int:
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     out_dir = REPORT_ROOT / slug(args.domain) / f"{args.mode}-{run_id}"
     write_reset_card(out_dir, args, identity, contract)
+    scope_lock = validate_scope_lock(args)
+    write_json(out_dir / "scope-lock-validation.json", scope_lock)
+    if not scope_lock.get("pass"):
+        payload = {
+            "mode": args.mode,
+            "property_code": args.property_code.upper(),
+            "domain": args.domain,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "pass": False,
+            "blocked": True,
+            "block_reason": scope_lock.get("reason"),
+            "scope_lock": scope_lock,
+        }
+        readout_name = "apply-readout.json" if args.mode == "apply" else f"{args.mode}-readout.json"
+        write_json(out_dir / readout_name, payload)
+        print(json.dumps(payload, indent=2))
+        return 3
 
     if args.mode == "plan":
         return mode_plan(args, out_dir, contract, identity)

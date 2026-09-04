@@ -1,0 +1,394 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "existing_project_id": "10240461",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_domain_profile; retain_legacy_venterra_path_project_in_legacy_folder_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "livecantonmill.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHCM",
+      "legacy_project_id": "10125769",
+      "data_key_status": "existing_vanity_project_found_in_phase2_analytics_profile_evidence"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "measurement_id": "G-3DCPYZ87WV",
+      "measurement_id_status": "configured_in_ga4_admin_after_08_17_2026_default_uri_patch_pending_zaraz_readback",
+      "owner": "cloudflare_zaraz",
+      "property_id": "378412775",
+      "zaraz_tool_name": "GA4CM",
+      "expected_stream_name": "Canton Mill Lofts"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HCM"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBGA4CM"
+    }
+  },
+  "captain": {
+    "id": "GA4CM-captain",
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4cm_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4cm_2026-05-04.sql"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-summary.json",
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-results.csv",
+      "reports/domain_ops/20260825_092028_vanity_qa/screenshots/livecantonmill.com.png",
+      "reports/resi_edge_performance/performance-baselines/performance-baseline-20260820T160054Z-final-vanity-merged/performance-baseline-results.csv",
+      "reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234731Z/PHASE2_AHREFS_VANITY_PROJECT_READOUT.md",
+      "reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185637Z/PHASE2_GA4_DEFAULT_URI_READOUT.md",
+      "reports/resi_edge_performance/heap-hygiene/heap-hygiene-20260824T205047Z/heap-hygiene-evidence.json",
+      "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+      "reports/resi_edge_performance/08-09-2026/livecantonmill-com/source-scrape-prep/livecantonmill.com_20260826T223050Z.html",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+      "reports/captains_log/activation/chunks_seed_only/captain_activation_ga4cm_2026-05-04.sql"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "present": true,
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg",
+          "alt": "Kingsley Excellence of resident satisfaction award badge"
+        }
+      ],
+      "source": "live native home content exposes Kingsley award, verified 08/26/2026"
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "Canton Mill Lofts live source theme tokens and canonical Venterra palette, verified 08/26/2026"
+    },
+    "content_blocks": [
+      {
+        "sequence": 1,
+        "kind": "welcome",
+        "heading": "Welcome to Canton Mill Lofts",
+        "subheading": "Choose the perfect layout for your lifestyle.",
+        "body": "In Canton, Canton Mill Lofts blends historic character with modern style for a living experience that feels truly distinctive. Loft-inspired spaces, dramatic architectural details, and an effortless sense of cool create a home that is equal parts grounded and elevated, reflecting Canton’s mix of small-town warmth and city-close convenience.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://livecantonmill.com/apartments/",
+        "image_url": "/assets/resi-edge-assets/GA4CM/home/welcome-640.avif",
+        "source_image_url": "https://dam.getresi.co/20015/conversions/Home-Welcome-full.jpg",
+        "image_alt": "Red-brick apartment building with large windows, trees in front, and partly cloudy sky above."
+      },
+      {
+        "sequence": 2,
+        "kind": "features",
+        "eyebrow": "Apartment Features",
+        "heading": "Stylish Living Spaces",
+        "body": "Experience industrial-chic loft interiors with stained concrete floors, exposed brick, timber and ductwork, massive factory windows, and soaring 20-35 foot ceilings, finished with stainless steel appliances, granite countertops, and updated cabinetry for a modern edge.",
+        "bullets": [
+          "Exposed Brick",
+          "Stained Concrete Floors",
+          "Soaring Ceilings",
+          "Stainless Steel Appliances"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://livecantonmill.com/features/",
+        "image_url": "/assets/resi-edge-assets/GA4CM/home/features-900.avif",
+        "source_image_url": "https://dam.getresi.co/20012/conversions/Home-Features-full.jpg",
+        "image_alt": "Modern kitchen with gray cabinets, stainless steel appliances, white subway tile, and a sputnik chandelier."
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Noto Serif",
+    "hero": {
+      "headline": "1 and 2 Bedroom Apartments in Canton, GA",
+      "image_mobile": "/assets/resi-edge-assets/GA4CM/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://livecantonmill.com/apartments/",
+      "source_image": "https://dam.getresi.co/20014/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "Canton Mill Lofts live vanity source capture and Phase 2 draft manifest, verified 08/26/2026",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/GA4CM",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/GA4CM",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://livecantonmill.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://livecantonmill.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://livecantonmill.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://livecantonmill.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://livecantonmill.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://livecantonmill.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://livecantonmill.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://livecantonmill.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://livecantonmill.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ]
+    },
+    "promo": {
+      "present": false,
+      "source": "feed_backed_no_active_homepage_or_source_lookup_special_observed_in_live_source_capture_08_26_2026"
+    },
+    "reviews": {
+      "present": true,
+      "rating": 4.1,
+      "count": 397,
+      "url": "https://livecantonmill.com/reviews/",
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "link_required": true,
+      "last_verified": "08/26/2026",
+      "source": "live origin review row, verified 08/26/2026"
+    },
+    "title_font": "Noto Serif"
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(844) 542-1964",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "GA4CM30L",
+        "phone": "(844) 542-1964",
+        "source": "VWS"
+      },
+      {
+        "code": "GA4CMAH",
+        "phone": "(844) 542-1964",
+        "source": "AH"
+      },
+      {
+        "code": "GA4CMALIST",
+        "phone": "(844) 961-4982",
+        "source": "APL"
+      },
+      {
+        "code": "GA4CMAPT",
+        "phone": "(877) 378-5476",
+        "source": "ADC-VL"
+      },
+      {
+        "code": "GA4CMAR",
+        "phone": "(844) 542-1964",
+        "source": "APR"
+      },
+      {
+        "code": "GA4CMBNG",
+        "phone": "(833) 320-3283",
+        "source": "BNG"
+      },
+      {
+        "code": "GA4CMGOA",
+        "phone": "(833) 900-3608",
+        "source": "GOA"
+      },
+      {
+        "code": "GA4CMGOO",
+        "phone": "(833) 320-3283",
+        "source": "GOO-VL"
+      },
+      {
+        "code": "GA4CMPOP",
+        "phone": "(844) 542-1964",
+        "source": "POP"
+      },
+      {
+        "code": "GA4CMSOC",
+        "phone": "(855) 933-1618",
+        "source": "SOC"
+      },
+      {
+        "code": "GA4CMUNA",
+        "phone": "(844) 542-1964",
+        "source": "UNA"
+      },
+      {
+        "code": "GA4CMYAH",
+        "phone": "(833) 320-3283",
+        "source": "YHO"
+      },
+      {
+        "code": "GA4CMZI",
+        "phone": "(855) 526-2942",
+        "source": "ZIL-VL"
+      }
+    ]
+  },
+  "rollback": {
+    "strategy": "no_live_mutation_yet; before any explicit apply, record existing Cloudflare route/worker state and restore prior route/script if any live proof fails",
+    "previous_worker_script": "not_yet_recorded",
+    "no_wordpress_mutation_required": true
+  },
+  "routing": {
+    "cloudflare_zone_name": "livecantonmill.com",
+    "existing_worker_script": "not_yet_recorded",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "livecantonmill.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "llms_url": "https://livecantonmill.com/llms.txt",
+    "meta_description": "Welcome home to Canton Mill Lofts Apartments in Canton, GA — Discover luxury living in our 1- and 2-bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Canton Mill Lofts",
+    "og_image": "https://livecantonmill.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "sitemap_url": "https://livecantonmill.com/sitemap_index.xml",
+    "stale_identity_scan_required": true
+  },
+  "target": {
+    "canonical_url": "https://livecantonmill.com/",
+    "city": "Canton",
+    "community_id": "3c51a5be-3799-426e-b1d3-820008a2b5e0",
+    "domain": "livecantonmill.com",
+    "ga4_measurement_id": "G-3DCPYZ87WV",
+    "ga4_property_id": "378412775",
+    "governed_reference_url": "https://venterraliving.com/apartments/canton-mill-lofts/",
+    "gsc_property": "sc-domain:livecantonmill.com",
+    "property_code": "GA4CM",
+    "property_name": "Canton Mill Lofts",
+    "source_property_code": "GA4CM",
+    "staging_kinsta_url": "https://cantonmilllofts.kinsta.cloud/",
+    "state": "GA"
+  }
+}

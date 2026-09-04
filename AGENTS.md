@@ -2,6 +2,19 @@
 
 This repository has strict guardrails for PIB.
 
+## Non-Negotiable Rule: Resi Edge Scope Lock
+
+For any Resi Edge rollout, optimization, Worker, routing, analytics, consent, dashboard-finalization, or launch-proof work:
+
+1. Read `ATLAS_WORKING_MEMORY.md` and the active Resi Edge run packet before any tool action.
+2. Act only on the property/action the user explicitly names in the current task.
+3. Do not inspect, audit, repair, rerun, or mutate completed properties unless the user names that exact target.
+4. Do not treat discovered adjacent evidence as scope.
+5. Before running `scripts/run_resi_edge_upgrade.py` in `plan`, `stage`, or `apply`, set an explicit current-turn lock with `scripts/set_resi_edge_scope_lock.py`. The lock must name the exact property code, domain, and allowed mode.
+6. Clear the lock after the approved target is complete.
+
+The runner and deploy adapter enforce this mechanically through `config/portfolio_resi_edge_stabilization/active-resi-edge-scope-lock.json`.
+
 ## Non-Negotiable Rule: Locked PIB Versions Require Explicit Approval
 
 Never mutate canonical PIB generation/rendering behavior unless the user gives explicit approval in the current task.
@@ -19,6 +32,15 @@ Locked files:
 - `Property_Intelligence_Brief/send_property_intelligence_brief_email_v2_2_1.py`
 
 ## Required Behavior for Agents
+
+### Jira / Customer-Facing Communication Discipline
+
+When writing Jira comments, ticket updates, or other customer-facing status messages on the user's behalf:
+
+1. Start with a personalized greeting like `Hi, Name` or `Hello, Name` when the recipient's name is known.
+2. Use a warm, natural tone rather than terse or sterile status language.
+3. Close with: `Thanks, and have a great day!`
+4. Preserve exact technical details, statuses, ticket keys, and instructions; warmth should not blur accountability or next steps.
 
 ### Keeper / KSM Credential Discipline
 

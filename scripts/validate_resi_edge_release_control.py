@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TOKENS = ROOT / "config/portfolio_resi_edge_stabilization/resi-edge-release-tokens.v1.json"
 REGISTER = ROOT / "config/portfolio_resi_edge_stabilization/resi-edge-pilot-rollout-register.json"
+CONSENT_CONTRACT_PATH = ROOT / "ops/cloudflare/shared/resi-consent-widget/contract.json"
+CENTRAL_TOPPER_CONTRACT = ROOT / "config/portfolio_resi_edge_stabilization/resi-edge-central-topper-runtime.v1.json"
 
 REQUIRED_PROPERTY_FIELDS = {
     "id",
@@ -67,6 +69,9 @@ def main() -> int:
         tokens = {}
     else:
         tokens = load_json(TOKENS)
+    consent_contract = load_json(CONSENT_CONTRACT_PATH) if CONSENT_CONTRACT_PATH.exists() else {}
+    if not consent_contract:
+        errors.append(f"missing consent contract: {CONSENT_CONTRACT_PATH}")
 
     if not REGISTER.exists():
         errors.append(f"missing register file: {REGISTER}")
@@ -113,11 +118,41 @@ def main() -> int:
     }.items():
         if value not in APPROVED_COLORS:
             errors.append(f"{label} uses non-approved color {value!r}")
+    consent_defaults = mobile_shell.get("consent", {})
+    consent_version = consent_contract.get("version")
+    if consent_defaults.get("version") != consent_version:
+        errors.append(f"defaults.mobile_shell.consent.version must match shared consent contract {consent_version}")
+    if consent_defaults.get("source") != "ops/cloudflare/shared/resi-consent-widget/widget.mjs":
+        errors.append("defaults.mobile_shell.consent.source must point to the shared consent widget")
 
     source = tokens.get("source_of_truth", {})
-    for field in ("runtime", "worker", "manifest_schema", "canary_manifest", "canary_evidence"):
+    for field in (
+        "runtime",
+        "worker",
+        "central_topper_contract",
+        "central_topper_service_worker",
+        "thin_property_worker",
+        "central_topper_record_builder",
+        "manifest_schema",
+        "canary_manifest",
+        "canary_evidence",
+    ):
         if not rel_exists(source.get(field)):
             errors.append(f"source_of_truth.{field} does not exist: {source.get(field)}")
+    central_contract = load_json(CENTRAL_TOPPER_CONTRACT) if CENTRAL_TOPPER_CONTRACT.exists() else {}
+    if central_contract.get("schema_version") != "resi_edge_central_topper_runtime_v1":
+        errors.append("central topper contract schema_version must be resi_edge_central_topper_runtime_v1")
+    if central_contract.get("non_deviation_contract", {}).get("property_specific_topper_scripts_allowed") is not False:
+        errors.append("central topper contract must forbid property-specific topper scripts")
+    if central_contract.get("delivery_model", {}).get("production_default") != "bundled_until_mark_approves_central_canary":
+        errors.append("central topper contract production_default must preserve bundled mode until Mark approves a central canary")
+    topper_delivery = tokens.get("topper_delivery", {})
+    if topper_delivery.get("current_default") != "bundled_property_worker":
+        errors.append("topper_delivery.current_default must remain bundled_property_worker until central canary approval")
+    if topper_delivery.get("migration_target") != "centralized_topper_service_with_thin_property_workers":
+        errors.append("topper_delivery.migration_target must be centralized_topper_service_with_thin_property_workers")
+    if topper_delivery.get("canary_required_before_default_change") is not True:
+        errors.append("topper_delivery.canary_required_before_default_change must be true")
 
     properties = register.get("properties", [])
     if not properties:

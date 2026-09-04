@@ -1,6 +1,6 @@
 {
   "registry_id": "resi-edge-shared-standards-registry",
-  "updated": "2026-08-20",
+  "updated": "2026-09-01",
   "principle": "Property runs consume shared standards and property manifests. They do not carry local behavior variants.",
   "active_standards": [
     {
@@ -20,6 +20,23 @@
         "analytics stripping",
         "source-coded phone rendering",
         "Contentsquare verify suppression"
+      ]
+    },
+    {
+      "id": "resi-edge-central-topper-delivery",
+      "status": "migration_ready_not_live_default",
+      "contract": "config/portfolio_resi_edge_stabilization/resi-edge-central-topper-runtime.v1.json",
+      "record_builder": "scripts/build_resi_edge_topper_config_records.py",
+      "central_service_worker": "ops/cloudflare/resi-edge-topper-service/worker.js",
+      "thin_property_worker": "ops/cloudflare/resi-edge-thin-property-worker/worker.js",
+      "deploy_adapter_mode": "centralized",
+      "scope": [
+        "one shared topper renderer",
+        "thin property Workers",
+        "tokenized property config records",
+        "promo freshness record consumption",
+        "hero freshness record pointers",
+        "no unversioned fleet hotload"
       ]
     },
     {
@@ -63,11 +80,17 @@
       "status": "active_enforced",
       "generator": "scripts/generate_resi_edge_assets.py",
       "uploader": "scripts/upload_resi_edge_assets_to_r2.py",
+      "cloudflare_refresh_worker": "ops/cloudflare/resi-edge-hero-media-refresh-worker/worker.mjs",
+      "cloudflare_refresh_queue": "resi-edge-hero-media-refresh",
+      "cloudflare_media_state_pattern": "resi-edge-media-state/<property-code>-<domain>/current.json",
       "scope": [
         "mobile hero AVIF <= 80 KB",
+        "mobile hero WebP <= 80 KB",
         "first two content-block AVIFs <= 55 KB each",
         "same-origin R2 readback",
         "immutable cache metadata",
+        "Cloudflare Images canary refresh path",
+        "media-state baseline after accepted Cloudflare refresh",
         "no package-owned desktop hero assets"
       ]
     },

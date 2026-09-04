@@ -1,7 +1,7 @@
 import type { LaunchSnapshot } from "./types";
 
 export const launchSnapshot = {
-  "generatedForDisplay": "08/21/2026 02:44 PM",
+  "generatedForDisplay": "08/31/2026 01:40 PM",
   "launchDate": "08/19/2026",
   "targetHost": "launch.venterrawebops.com",
   "rollupMetrics": [
@@ -21,7 +21,7 @@ export const launchSnapshot = {
     },
     {
       "label": "Organic T30",
-      "value": "13,529",
+      "value": "10,665",
       "helper": "Organic Search sessions in the latest 30-day window.",
       "tone": "green",
       "percent": 100
@@ -56,10 +56,10 @@ export const launchSnapshot = {
     },
     {
       "label": "Read-Only QA",
-      "value": "19/20",
-      "helper": "Latest expanded read-only QA has open items.",
-      "tone": "yellow",
-      "percent": 95
+      "value": "20/20",
+      "helper": "Latest routing, canonical, indexability, metadata, CTA, core-page, and mobile smoke test passed at 08/25/2026 09:24 AM.",
+      "tone": "green",
+      "percent": 100
     },
     {
       "label": "Promo Bars",
@@ -67,6 +67,27 @@ export const launchSnapshot = {
       "helper": "Promotion banner rendering is pending the Resi app follow-up.",
       "tone": "yellow",
       "percent": 60
+    },
+    {
+      "label": "Optimized Proof",
+      "value": "20/20",
+      "helper": "Governed optimization proof is complete for passed properties.",
+      "tone": "green",
+      "percent": 100
+    },
+    {
+      "label": "Analytics Hygiene",
+      "value": "20/20",
+      "helper": "All live pages have one approved production Heap path.",
+      "tone": "green",
+      "percent": 100
+    },
+    {
+      "label": "Hero Media",
+      "value": "7/20",
+      "helper": "Hero source freshness is being watched for source-media changes.",
+      "tone": "yellow",
+      "percent": 35
     }
   ],
   "stageBars": [
@@ -108,9 +129,27 @@ export const launchSnapshot = {
     },
     {
       "label": "Read-Only QA",
-      "value": 19,
+      "value": 20,
+      "total": 20,
+      "tone": "green"
+    },
+    {
+      "label": "Analytics Clean",
+      "value": 20,
+      "total": 20,
+      "tone": "green"
+    },
+    {
+      "label": "Hero Media",
+      "value": 7,
       "total": 20,
       "tone": "yellow"
+    },
+    {
+      "label": "Optimized Proof",
+      "value": 20,
+      "total": 20,
+      "tone": "green"
     },
     {
       "label": "Final Approval",
@@ -203,22 +242,23 @@ export const launchSnapshot = {
     "detailsClosed": 0,
     "searchBaselinesCaptured": 0,
     "finalApprovals": 0,
-    "organicT30Sessions": 13529,
-    "organicPriorT30Sessions": 15244,
-    "organicSessionChangePercent": -11.3,
-    "organicSharePercent": 38.4,
-    "organicLatestDate": "08/20/2026",
+    "organicT30Sessions": 10665,
+    "organicPriorT30Sessions": 14893,
+    "organicSessionChangePercent": -28.4,
+    "organicSharePercent": 30.5,
+    "organicLatestDate": "08/30/2026",
     "psiHistoryProperties": 20,
-    "psiMobileAverage": 60,
-    "psiDesktopAverage": 87,
-    "psiLatestDate": "08/21/2026",
+    "psiMobileAverage": 96,
+    "psiDesktopAverage": 89,
+    "psiLatestDate": "08/31/2026",
     "freshPsiMeasurementsOk": 120,
     "freshPsiMeasurementsFailed": 0,
     "freshPsiPropertiesCompleted": 20,
     "freshPsiLatestDate": "08/20/2026 11:00 AM CDT",
     "finalVanityPsiStatus": "captured",
-    "vanityQaGreen": 19,
-    "vanityQaYellow": 1,
+    "optimizedProofProperties": 20,
+    "vanityQaGreen": 20,
+    "vanityQaYellow": 0,
     "vanityQaRed": 0,
     "vanityQaTotal": 20,
     "vanityQaRoot200": 20,
@@ -228,11 +268,32 @@ export const launchSnapshot = {
     "vanityQaRobotsIndexable": 20,
     "vanityQaMobileSmokeOk": 20,
     "vanityQaCorePagesChecked": 251,
-    "vanityQaCorePageIssues": 1,
-    "vanityQaPropertiesWithCorePageIssues": 1,
-    "vanityQaLatestDate": "08/21/2026 02:42 PM",
-    "vanityQaEvidencePath": "reports/domain_ops/20260821_143906_vanity_qa/vanity-qa-summary.json",
-    "promoBannerStatus": "vendor_follow_up"
+    "vanityQaCorePageIssues": 0,
+    "vanityQaPropertiesWithCorePageIssues": 0,
+    "vanityQaLatestDate": "08/25/2026 09:24 AM",
+    "vanityQaEvidencePath": "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-summary.json",
+    "promoBannerStatus": "vendor_follow_up",
+    "analyticsHygieneStatus": "clean",
+    "analyticsHygieneClean": 20,
+    "analyticsHygieneSourceChecked": 20,
+    "analyticsHygieneOldHeapPresent": 0,
+    "analyticsHygieneExpectedHeapPresent": 20,
+    "analyticsHygieneDualHeapPresent": 0,
+    "analyticsHygieneDebugTrue": 0,
+    "analyticsHygieneBrowserChecked": 20,
+    "analyticsHygieneBrowserOldHeapPresent": 0,
+    "analyticsHygieneBrowserExpectedHeapPresent": 20,
+    "analyticsHygieneExpectedHeapId": "286627304",
+    "analyticsHygieneOldHeapId": "676880719",
+    "analyticsHygieneEvidencePath": "reports/resi_edge_performance/heap-hygiene/heap-hygiene-20260824T205047Z/heap-hygiene-evidence.json",
+    "heroFreshnessStatus": "watching",
+    "heroFreshnessChecked": 20,
+    "heroFreshnessCurrent": 7,
+    "heroFreshnessRefreshNeeded": 13,
+    "heroFreshnessSourceMissing": 0,
+    "heroFreshnessSourceError": 0,
+    "heroFreshnessLatestDate": "08/31/2026 06:39 PM UTC",
+    "heroFreshnessEvidencePath": "reports/resi_edge_performance/hero-freshness-sync/latest-summary.json"
   },
   "properties": [
     {
@@ -242,7 +303,7 @@ export const launchSnapshot = {
       "units": 230,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -288,10 +349,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -353,9 +414,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -397,6 +458,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 63; D 94 | Kinsta M 77; D 99 | Live M 53; D 98",
           "signal": {
@@ -406,180 +476,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/19/2026",
-        "t30Sessions": 626,
-        "priorT30Sessions": 677,
-        "t30Users": 552,
-        "t30Conversions": 103,
-        "sessionChangePercent": -7.5,
-        "organicSharePercent": 46.5,
+        "latestDate": "08/30/2026",
+        "t30Sessions": 348,
+        "priorT30Sessions": 717,
+        "t30Users": 304,
+        "t30Conversions": 65,
+        "sessionChangePercent": -51.5,
+        "organicSharePercent": 38.0,
         "trend": [
           {
-            "label": "5/28",
-            "value": 253
+            "label": "6/8",
+            "value": 195
           },
           {
-            "label": "6/4",
-            "value": 223
-          },
-          {
-            "label": "6/11",
-            "value": 174
-          },
-          {
-            "label": "6/18",
-            "value": 142
-          },
-          {
-            "label": "6/25",
+            "label": "6/15",
             "value": 158
           },
           {
-            "label": "7/2",
-            "value": 153
+            "label": "6/22",
+            "value": 145
           },
           {
-            "label": "7/9",
+            "label": "6/29",
+            "value": 150
+          },
+          {
+            "label": "7/6",
             "value": 177
           },
           {
-            "label": "7/16",
-            "value": 167
+            "label": "7/13",
+            "value": 160
           },
           {
-            "label": "7/23",
-            "value": 177
+            "label": "7/20",
+            "value": 181
           },
           {
-            "label": "7/30",
-            "value": 124
+            "label": "7/27",
+            "value": 158
           },
           {
-            "label": "8/6",
-            "value": 125
+            "label": "8/3",
+            "value": 118
           },
           {
-            "label": "8/13",
-            "value": 139
+            "label": "8/10",
+            "value": 148
+          },
+          {
+            "label": "8/17",
+            "value": 52
+          },
+          {
+            "label": "8/24",
+            "value": 2
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 72,
-        "desktopScore": 75,
-        "mobileLcp": 4.68,
-        "desktopLcp": 1.19,
+        "latestDate": "08/31/2026",
+        "mobileScore": 97,
+        "desktopScore": 92,
+        "mobileLcp": 2.43,
+        "desktopLcp": 1.21,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 61
           },
           {
-            "label": "6/6",
-            "value": 60
-          },
-          {
-            "label": "6/13",
-            "value": 61
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 64
           },
           {
-            "label": "6/27",
+            "label": "6/23",
             "value": 63
           },
           {
-            "label": "7/4",
+            "label": "6/30",
             "value": 63
           },
           {
-            "label": "7/11",
+            "label": "7/7",
+            "value": 62
+          },
+          {
+            "label": "7/14",
+            "value": 69
+          },
+          {
+            "label": "7/21",
+            "value": 62
+          },
+          {
+            "label": "7/28",
             "value": 66
           },
           {
-            "label": "7/18",
-            "value": 65
-          },
-          {
-            "label": "7/25",
-            "value": 65
-          },
-          {
-            "label": "8/1",
+            "label": "8/4",
             "value": 63
           },
           {
-            "label": "8/8",
+            "label": "8/11",
+            "value": 66
+          },
+          {
+            "label": "8/18",
             "value": 65
           },
           {
-            "label": "8/15",
-            "value": 66
+            "label": "8/25",
+            "value": 91
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
+            "value": 93
+          },
+          {
+            "label": "6/16",
+            "value": 92
+          },
+          {
+            "label": "6/23",
+            "value": 93
+          },
+          {
+            "label": "6/30",
             "value": 89
           },
           {
-            "label": "6/6",
-            "value": 93
-          },
-          {
-            "label": "6/13",
+            "label": "7/7",
             "value": 92
           },
           {
-            "label": "6/20",
-            "value": 93
-          },
-          {
-            "label": "6/27",
-            "value": 90
-          },
-          {
-            "label": "7/4",
-            "value": 91
-          },
-          {
-            "label": "7/11",
-            "value": 93
-          },
-          {
-            "label": "7/18",
+            "label": "7/14",
             "value": 92
           },
           {
-            "label": "7/25",
+            "label": "7/21",
+            "value": 92
+          },
+          {
+            "label": "7/28",
+            "value": 95
+          },
+          {
+            "label": "8/4",
+            "value": 92
+          },
+          {
+            "label": "8/11",
+            "value": 95
+          },
+          {
+            "label": "8/18",
+            "value": 89
+          },
+          {
+            "label": "8/25",
             "value": 93
-          },
-          {
-            "label": "8/1",
-            "value": 94
-          },
-          {
-            "label": "8/8",
-            "value": 93
-          },
-          {
-            "label": "8/15",
-            "value": 90
           }
         ]
       },
@@ -630,6 +709,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://anatoleatnorman.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 98,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 19:26:19.502 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/anatoleatnorman-com/apply-20260828T191314Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/anatoleatnorman-com/apply-20260828T191314Z/psi/psi/desktop-retry-1/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -656,12 +786,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "TX4CP",
@@ -670,7 +800,7 @@ export const launchSnapshot = {
       "units": 184,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -716,10 +846,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -781,9 +911,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -825,6 +955,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 63; D 94 | Kinsta M 78; D 99 | Live M 64; D 82",
           "signal": {
@@ -834,180 +973,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 320,
-        "priorT30Sessions": 463,
-        "t30Users": 292,
-        "t30Conversions": 32,
-        "sessionChangePercent": -30.9,
-        "organicSharePercent": 32.6,
+        "latestDate": "08/29/2026",
+        "t30Sessions": 288,
+        "priorT30Sessions": 401,
+        "t30Users": 253,
+        "t30Conversions": 38,
+        "sessionChangePercent": -28.2,
+        "organicSharePercent": 25.1,
         "trend": [
           {
-            "label": "5/29",
-            "value": 140
+            "label": "6/7",
+            "value": 94
           },
           {
-            "label": "6/5",
+            "label": "6/14",
             "value": 95
           },
           {
-            "label": "6/12",
+            "label": "6/21",
             "value": 97
           },
           {
-            "label": "6/19",
-            "value": 97
+            "label": "6/28",
+            "value": 125
           },
           {
-            "label": "6/26",
-            "value": 131
+            "label": "7/5",
+            "value": 125
           },
           {
-            "label": "7/3",
-            "value": 112
+            "label": "7/12",
+            "value": 104
           },
           {
-            "label": "7/10",
-            "value": 112
+            "label": "7/19",
+            "value": 56
           },
           {
-            "label": "7/17",
-            "value": 73
+            "label": "7/26",
+            "value": 78
           },
           {
-            "label": "7/24",
-            "value": 65
+            "label": "8/2",
+            "value": 76
           },
           {
-            "label": "7/31",
-            "value": 83
+            "label": "8/9",
+            "value": 82
           },
           {
-            "label": "8/7",
-            "value": 79
+            "label": "8/16",
+            "value": 70
           },
           {
-            "label": "8/14",
-            "value": 74
+            "label": "8/23",
+            "value": 37
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 56,
-        "desktopScore": 79,
-        "mobileLcp": 9.71,
-        "desktopLcp": 1.17,
+        "latestDate": "08/31/2026",
+        "mobileScore": 95,
+        "desktopScore": 93,
+        "mobileLcp": 2.44,
+        "desktopLcp": 1.08,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.08,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 59
+            "label": "6/9",
+            "value": 61
           },
           {
-            "label": "6/6",
-            "value": 59
-          },
-          {
-            "label": "6/13",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/20",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "6/27",
+            "label": "6/30",
             "value": 62
           },
           {
-            "label": "7/4",
+            "label": "7/7",
             "value": 62
           },
           {
-            "label": "7/11",
+            "label": "7/14",
+            "value": 68
+          },
+          {
+            "label": "7/21",
             "value": 66
           },
           {
-            "label": "7/18",
+            "label": "7/28",
             "value": 67
           },
           {
-            "label": "7/25",
-            "value": 64
-          },
-          {
-            "label": "8/1",
-            "value": 69
-          },
-          {
-            "label": "8/8",
+            "label": "8/4",
             "value": 67
           },
           {
-            "label": "8/15",
-            "value": 64
+            "label": "8/11",
+            "value": 67
+          },
+          {
+            "label": "8/18",
+            "value": 65
+          },
+          {
+            "label": "8/25",
+            "value": 72
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "6/6",
-            "value": 85
-          },
-          {
-            "label": "6/13",
+            "label": "6/16",
             "value": 90
           },
           {
-            "label": "6/20",
+            "label": "6/23",
             "value": 93
           },
           {
-            "label": "6/27",
-            "value": 92
-          },
-          {
-            "label": "7/4",
+            "label": "6/30",
             "value": 91
           },
           {
-            "label": "7/11",
-            "value": 94
-          },
-          {
-            "label": "7/18",
+            "label": "7/7",
             "value": 93
           },
           {
-            "label": "7/25",
+            "label": "7/14",
             "value": 94
           },
           {
-            "label": "8/1",
+            "label": "7/21",
+            "value": 93
+          },
+          {
+            "label": "7/28",
+            "value": 95
+          },
+          {
+            "label": "8/4",
             "value": 94
           },
           {
-            "label": "8/8",
-            "value": 96
+            "label": "8/11",
+            "value": 95
           },
           {
-            "label": "8/15",
-            "value": 90
+            "label": "8/18",
+            "value": 89
+          },
+          {
+            "label": "8/25",
+            "value": 84
           }
         ]
       },
@@ -1058,6 +1206,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://carlyleplacesa.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 98,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 17:20:08.570 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/carlyleplacesa-com/apply-20260828T171150Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/carlyleplacesa-com/apply-20260828T171150Z/psi/psi/desktop-retry-1/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -1084,12 +1283,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "FL4VW",
@@ -1098,7 +1297,7 @@ export const launchSnapshot = {
       "units": 240,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -1144,10 +1343,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -1209,9 +1408,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -1253,6 +1452,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 62; D 94 | Kinsta M 67; D 98 | Live M 66; D 76",
           "signal": {
@@ -1262,180 +1470,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 698,
-        "priorT30Sessions": 872,
-        "t30Users": 554,
-        "t30Conversions": 83,
-        "sessionChangePercent": -20.0,
-        "organicSharePercent": 46.6,
+        "latestDate": "08/29/2026",
+        "t30Sessions": 619,
+        "priorT30Sessions": 792,
+        "t30Users": 463,
+        "t30Conversions": 132,
+        "sessionChangePercent": -21.8,
+        "organicSharePercent": 34.9,
         "trend": [
           {
-            "label": "5/29",
-            "value": 218
-          },
-          {
-            "label": "6/5",
-            "value": 177
-          },
-          {
-            "label": "6/12",
+            "label": "6/7",
             "value": 174
           },
           {
-            "label": "6/19",
-            "value": 209
+            "label": "6/14",
+            "value": 194
           },
           {
-            "label": "6/26",
-            "value": 209
+            "label": "6/21",
+            "value": 205
           },
           {
-            "label": "7/3",
-            "value": 209
+            "label": "6/28",
+            "value": 207
           },
           {
-            "label": "7/10",
-            "value": 208
+            "label": "7/5",
+            "value": 223
           },
           {
-            "label": "7/17",
-            "value": 171
+            "label": "7/12",
+            "value": 185
           },
           {
-            "label": "7/24",
-            "value": 160
+            "label": "7/19",
+            "value": 184
           },
           {
-            "label": "7/31",
-            "value": 166
+            "label": "7/26",
+            "value": 152
           },
           {
-            "label": "8/7",
-            "value": 153
+            "label": "8/2",
+            "value": 163
           },
           {
-            "label": "8/14",
-            "value": 166
+            "label": "8/9",
+            "value": 163
+          },
+          {
+            "label": "8/16",
+            "value": 157
+          },
+          {
+            "label": "8/23",
+            "value": 91
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 61,
-        "desktopScore": 70,
-        "mobileLcp": 9.46,
-        "desktopLcp": 1.16,
+        "latestDate": "08/31/2026",
+        "mobileScore": 94,
+        "desktopScore": 90,
+        "mobileLcp": 2.37,
+        "desktopLcp": 1.11,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 59
-          },
-          {
-            "label": "6/6",
+            "label": "6/9",
             "value": 60
           },
           {
-            "label": "6/13",
+            "label": "6/16",
+            "value": 62
+          },
+          {
+            "label": "6/23",
+            "value": 62
+          },
+          {
+            "label": "6/30",
+            "value": 63
+          },
+          {
+            "label": "7/7",
             "value": 61
           },
           {
-            "label": "6/20",
-            "value": 62
-          },
-          {
-            "label": "6/27",
-            "value": 63
-          },
-          {
-            "label": "7/4",
-            "value": 62
-          },
-          {
-            "label": "7/11",
-            "value": 65
-          },
-          {
-            "label": "7/18",
-            "value": 63
-          },
-          {
-            "label": "7/25",
+            "label": "7/14",
             "value": 66
           },
           {
-            "label": "8/1",
-            "value": 65
+            "label": "7/21",
+            "value": 64
           },
           {
-            "label": "8/8",
+            "label": "7/28",
+            "value": 68
+          },
+          {
+            "label": "8/4",
+            "value": 63
+          },
+          {
+            "label": "8/11",
             "value": 67
           },
           {
-            "label": "8/15",
-            "value": 64
+            "label": "8/18",
+            "value": 62
+          },
+          {
+            "label": "8/25",
+            "value": 77
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 91
-          },
-          {
-            "label": "6/6",
-            "value": 91
-          },
-          {
-            "label": "6/13",
+            "label": "6/9",
             "value": 93
           },
           {
-            "label": "6/20",
+            "label": "6/16",
             "value": 94
           },
           {
-            "label": "6/27",
+            "label": "6/23",
+            "value": 94
+          },
+          {
+            "label": "6/30",
+            "value": 91
+          },
+          {
+            "label": "7/7",
             "value": 92
           },
           {
-            "label": "7/4",
-            "value": 91
-          },
-          {
-            "label": "7/11",
-            "value": 93
-          },
-          {
-            "label": "7/18",
-            "value": 96
-          },
-          {
-            "label": "7/25",
+            "label": "7/14",
             "value": 94
           },
           {
-            "label": "8/1",
-            "value": 88
+            "label": "7/21",
+            "value": 94
           },
           {
-            "label": "8/8",
+            "label": "7/28",
+            "value": 90
+          },
+          {
+            "label": "8/4",
+            "value": 93
+          },
+          {
+            "label": "8/11",
             "value": 96
           },
           {
-            "label": "8/15",
-            "value": 90
+            "label": "8/18",
+            "value": 89
+          },
+          {
+            "label": "8/25",
+            "value": 93
           }
         ]
       },
@@ -1486,6 +1703,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://villagewalkapts.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 98,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 01:54:20.535 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/villagewalkapts-com/apply-20260828T014837Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/villagewalkapts-com/apply-20260828T014837Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -1512,12 +1780,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "GA4KV",
@@ -1526,7 +1794,7 @@ export const launchSnapshot = {
       "units": 216,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -1572,10 +1840,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -1637,9 +1905,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -1681,6 +1949,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 66; D 94 | Kinsta M 77; D 98 | Live M 69; D 65",
           "signal": {
@@ -1690,28 +1967,33 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 869,
-        "priorT30Sessions": 1053,
-        "t30Users": 759,
-        "t30Conversions": 149,
-        "sessionChangePercent": -17.5,
-        "organicSharePercent": 66.8,
+        "latestDate": "08/27/2026",
+        "t30Sessions": 705,
+        "priorT30Sessions": 1020,
+        "t30Users": 617,
+        "t30Conversions": 129,
+        "sessionChangePercent": -30.9,
+        "organicSharePercent": 52.1,
         "trend": [
-          {
-            "label": "5/29",
-            "value": 295
-          },
           {
             "label": "6/5",
             "value": 254
@@ -1755,114 +2037,118 @@ export const launchSnapshot = {
           {
             "label": "8/14",
             "value": 181
+          },
+          {
+            "label": "8/21",
+            "value": 36
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 63,
-        "desktopScore": 94,
-        "mobileLcp": 9.77,
-        "desktopLcp": 1.31,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 85,
+        "mobileLcp": 2.29,
+        "desktopLcp": 1.09,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 59
           },
           {
-            "label": "6/6",
-            "value": 59
-          },
-          {
-            "label": "6/13",
-            "value": 60
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/27",
+            "label": "6/23",
             "value": 61
           },
           {
-            "label": "7/4",
-            "value": 61
+            "label": "6/30",
+            "value": 63
           },
           {
-            "label": "7/11",
+            "label": "7/7",
             "value": 60
           },
           {
-            "label": "7/18",
-            "value": 64
+            "label": "7/14",
+            "value": 63
           },
           {
-            "label": "7/25",
-            "value": 67
-          },
-          {
-            "label": "8/1",
+            "label": "7/21",
             "value": 65
           },
           {
-            "label": "8/8",
+            "label": "7/28",
+            "value": 63
+          },
+          {
+            "label": "8/4",
             "value": 68
           },
           {
-            "label": "8/15",
+            "label": "8/11",
+            "value": 67
+          },
+          {
+            "label": "8/18",
             "value": 66
+          },
+          {
+            "label": "8/25",
+            "value": 80
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
+            "value": 93
+          },
+          {
+            "label": "6/16",
+            "value": 92
+          },
+          {
+            "label": "6/23",
             "value": 91
           },
           {
-            "label": "6/6",
+            "label": "6/30",
             "value": 92
           },
           {
-            "label": "6/13",
-            "value": 92
-          },
-          {
-            "label": "6/20",
-            "value": 92
-          },
-          {
-            "label": "6/27",
-            "value": 92
-          },
-          {
-            "label": "7/4",
+            "label": "7/7",
             "value": 91
           },
           {
-            "label": "7/11",
+            "label": "7/14",
+            "value": 93
+          },
+          {
+            "label": "7/21",
             "value": 92
           },
           {
-            "label": "7/18",
+            "label": "7/28",
+            "value": 93
+          },
+          {
+            "label": "8/4",
             "value": 94
           },
           {
-            "label": "7/25",
+            "label": "8/11",
             "value": 93
           },
           {
-            "label": "8/1",
-            "value": 93
+            "label": "8/18",
+            "value": 89
           },
           {
-            "label": "8/8",
-            "value": 93
-          },
-          {
-            "label": "8/15",
+            "label": "8/25",
             "value": 92
           }
         ]
@@ -1914,6 +2200,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://retreatatkedronvillage.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 19:32:19.480 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/retreatatkedronvillage-com/apply-20260827T192631Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/retreatatkedronvillage-com/apply-20260827T192631Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -1940,12 +2277,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "GA4TU",
@@ -1954,7 +2291,7 @@ export const launchSnapshot = {
       "units": 324,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -2000,10 +2337,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -2065,9 +2402,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -2109,6 +2446,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 62; D 87 | Kinsta M 77; D 94 | Live M 53; D 90",
           "signal": {
@@ -2118,180 +2464,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 941,
-        "priorT30Sessions": 972,
-        "t30Users": 789,
-        "t30Conversions": 175,
-        "sessionChangePercent": -3.2,
-        "organicSharePercent": 41.3,
+        "latestDate": "08/30/2026",
+        "t30Sessions": 715,
+        "priorT30Sessions": 956,
+        "t30Users": 599,
+        "t30Conversions": 127,
+        "sessionChangePercent": -25.2,
+        "organicSharePercent": 30.7,
         "trend": [
           {
-            "label": "5/29",
-            "value": 1358
+            "label": "6/8",
+            "value": 868
           },
           {
-            "label": "6/5",
-            "value": 1338
+            "label": "6/15",
+            "value": 170
           },
           {
-            "label": "6/12",
-            "value": 166
+            "label": "6/22",
+            "value": 236
           },
           {
-            "label": "6/19",
+            "label": "6/29",
+            "value": 199
+          },
+          {
+            "label": "7/6",
+            "value": 243
+          },
+          {
+            "label": "7/13",
             "value": 230
           },
           {
-            "label": "6/26",
-            "value": 213
-          },
-          {
-            "label": "7/3",
+            "label": "7/20",
             "value": 203
           },
           {
-            "label": "7/10",
-            "value": 252
+            "label": "7/27",
+            "value": 246
           },
           {
-            "label": "7/17",
-            "value": 198
+            "label": "8/3",
+            "value": 248
           },
           {
-            "label": "7/24",
-            "value": 226
+            "label": "8/10",
+            "value": 189
           },
           {
-            "label": "7/31",
-            "value": 267
+            "label": "8/17",
+            "value": 163
           },
           {
-            "label": "8/7",
-            "value": 209
-          },
-          {
-            "label": "8/14",
-            "value": 179
+            "label": "8/24",
+            "value": 56
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 59,
-        "desktopScore": 95,
-        "mobileLcp": 9.81,
-        "desktopLcp": 1.29,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 96,
+        "mobileLcp": 2.14,
+        "desktopLcp": 1.09,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 58
-          },
-          {
-            "label": "6/6",
+            "label": "6/9",
             "value": 60
           },
           {
-            "label": "6/13",
-            "value": 60
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/27",
-            "value": 61
-          },
-          {
-            "label": "7/4",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "7/11",
+            "label": "6/30",
+            "value": 62
+          },
+          {
+            "label": "7/7",
+            "value": 62
+          },
+          {
+            "label": "7/14",
             "value": 64
           },
           {
-            "label": "7/18",
-            "value": 61
+            "label": "7/21",
+            "value": 62
           },
           {
-            "label": "7/25",
-            "value": 67
+            "label": "7/28",
+            "value": 69
           },
           {
-            "label": "8/1",
-            "value": 65
+            "label": "8/4",
+            "value": 63
           },
           {
-            "label": "8/8",
-            "value": 65
+            "label": "8/11",
+            "value": 68
           },
           {
-            "label": "8/15",
-            "value": 66
+            "label": "8/18",
+            "value": 64
+          },
+          {
+            "label": "8/25",
+            "value": 80
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 84
-          },
-          {
-            "label": "6/6",
+            "label": "6/9",
             "value": 92
           },
           {
-            "label": "6/13",
+            "label": "6/16",
+            "value": 92
+          },
+          {
+            "label": "6/23",
+            "value": 93
+          },
+          {
+            "label": "6/30",
             "value": 91
           },
           {
-            "label": "6/20",
+            "label": "7/7",
             "value": 94
           },
           {
-            "label": "6/27",
+            "label": "7/14",
             "value": 92
           },
           {
-            "label": "7/4",
+            "label": "7/21",
             "value": 93
           },
           {
-            "label": "7/11",
+            "label": "7/28",
+            "value": 94
+          },
+          {
+            "label": "8/4",
+            "value": 95
+          },
+          {
+            "label": "8/11",
+            "value": 95
+          },
+          {
+            "label": "8/18",
             "value": 92
           },
           {
-            "label": "7/18",
-            "value": 94
-          },
-          {
-            "label": "7/25",
-            "value": 93
-          },
-          {
-            "label": "8/1",
-            "value": 95
-          },
-          {
-            "label": "8/8",
-            "value": 94
-          },
-          {
-            "label": "8/15",
-            "value": 95
+            "label": "8/25",
+            "value": 89
           }
         ]
       },
@@ -2342,6 +2697,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://tuscanylindbergh.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 23:49:01.361 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/tuscanylindbergh-com/apply-20260827T234320Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/tuscanylindbergh-com/apply-20260827T234320Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -2368,12 +2774,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "TX4PX",
@@ -2382,7 +2788,7 @@ export const launchSnapshot = {
       "units": 170,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -2428,10 +2834,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -2493,9 +2899,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -2537,6 +2943,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 62; D 95 | Kinsta M 84; D 96 | Live M 67; D 93",
           "signal": {
@@ -2546,180 +2961,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 638,
-        "priorT30Sessions": 813,
-        "t30Users": 589,
-        "t30Conversions": 74,
-        "sessionChangePercent": -21.5,
-        "organicSharePercent": 42.9,
+        "latestDate": "08/30/2026",
+        "t30Sessions": 476,
+        "priorT30Sessions": 733,
+        "t30Users": 427,
+        "t30Conversions": 82,
+        "sessionChangePercent": -35.1,
+        "organicSharePercent": 30.0,
         "trend": [
           {
-            "label": "5/29",
-            "value": 199
+            "label": "6/8",
+            "value": 200
           },
           {
-            "label": "6/5",
-            "value": 187
+            "label": "6/15",
+            "value": 177
           },
           {
-            "label": "6/12",
-            "value": 208
+            "label": "6/22",
+            "value": 205
           },
           {
-            "label": "6/19",
-            "value": 181
+            "label": "6/29",
+            "value": 191
           },
           {
-            "label": "6/26",
-            "value": 186
+            "label": "7/6",
+            "value": 176
           },
           {
-            "label": "7/3",
-            "value": 187
+            "label": "7/13",
+            "value": 178
           },
           {
-            "label": "7/10",
-            "value": 174
-          },
-          {
-            "label": "7/17",
+            "label": "7/20",
             "value": 179
           },
           {
-            "label": "7/24",
-            "value": 145
+            "label": "7/27",
+            "value": 124
           },
           {
-            "label": "7/31",
-            "value": 165
+            "label": "8/3",
+            "value": 172
           },
           {
-            "label": "8/7",
-            "value": 136
+            "label": "8/10",
+            "value": 138
           },
           {
-            "label": "8/14",
-            "value": 144
+            "label": "8/17",
+            "value": 102
+          },
+          {
+            "label": "8/24",
+            "value": 34
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 46,
-        "desktopScore": 92,
-        "mobileLcp": 9.89,
-        "desktopLcp": 1.14,
+        "latestDate": "08/31/2026",
+        "mobileScore": 97,
+        "desktopScore": 57,
+        "mobileLcp": 2.15,
+        "desktopLcp": 1.57,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 60
+            "label": "6/9",
+            "value": 59
           },
           {
-            "label": "6/6",
-            "value": 58
-          },
-          {
-            "label": "6/13",
-            "value": 60
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/27",
+            "label": "6/23",
+            "value": 62
+          },
+          {
+            "label": "6/30",
             "value": 61
           },
           {
-            "label": "7/4",
-            "value": 62
+            "label": "7/7",
+            "value": 61
           },
           {
-            "label": "7/11",
-            "value": 64
-          },
-          {
-            "label": "7/18",
-            "value": 62
-          },
-          {
-            "label": "7/25",
-            "value": 64
-          },
-          {
-            "label": "8/1",
+            "label": "7/14",
             "value": 65
           },
           {
-            "label": "8/8",
+            "label": "7/21",
+            "value": 61
+          },
+          {
+            "label": "7/28",
             "value": 66
           },
           {
-            "label": "8/15",
+            "label": "8/4",
             "value": 65
+          },
+          {
+            "label": "8/11",
+            "value": 70
+          },
+          {
+            "label": "8/18",
+            "value": 61
+          },
+          {
+            "label": "8/25",
+            "value": 81
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 84
-          },
-          {
-            "label": "6/6",
-            "value": 90
-          },
-          {
-            "label": "6/13",
-            "value": 93
-          },
-          {
-            "label": "6/20",
-            "value": 92
-          },
-          {
-            "label": "6/27",
-            "value": 92
-          },
-          {
-            "label": "7/4",
-            "value": 92
-          },
-          {
-            "label": "7/11",
-            "value": 93
-          },
-          {
-            "label": "7/18",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "7/25",
-            "value": 93
-          },
-          {
-            "label": "8/1",
-            "value": 92
-          },
-          {
-            "label": "8/8",
+            "label": "6/16",
             "value": 94
           },
           {
-            "label": "8/15",
-            "value": 95
+            "label": "6/23",
+            "value": 92
+          },
+          {
+            "label": "6/30",
+            "value": 93
+          },
+          {
+            "label": "7/7",
+            "value": 91
+          },
+          {
+            "label": "7/14",
+            "value": 93
+          },
+          {
+            "label": "7/21",
+            "value": 91
+          },
+          {
+            "label": "7/28",
+            "value": 93
+          },
+          {
+            "label": "8/4",
+            "value": 93
+          },
+          {
+            "label": "8/11",
+            "value": 94
+          },
+          {
+            "label": "8/18",
+            "value": 92
+          },
+          {
+            "label": "8/25",
+            "value": 84
           }
         ]
       },
@@ -2770,6 +3194,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://phoenixfortworth.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 23:01:36.666 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/phoenixfortworth-com/apply-20260827T225541Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/phoenixfortworth-com/apply-20260827T225541Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -2796,12 +3271,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "OK4CS",
@@ -2810,7 +3285,7 @@ export const launchSnapshot = {
       "units": 380,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -2856,10 +3331,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -2921,9 +3396,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -2965,6 +3440,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 60; D 95 | Kinsta M 78; D 98 | Live M 66; D 89",
           "signal": {
@@ -2974,180 +3458,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 1110,
-        "priorT30Sessions": 1137,
-        "t30Users": 968,
-        "t30Conversions": 179,
-        "sessionChangePercent": -2.4,
-        "organicSharePercent": 46.5,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 830,
+        "priorT30Sessions": 1199,
+        "t30Users": 725,
+        "t30Conversions": 187,
+        "sessionChangePercent": -30.8,
+        "organicSharePercent": 36.9,
         "trend": [
           {
-            "label": "5/29",
-            "value": 845
+            "label": "6/6",
+            "value": 684
           },
           {
-            "label": "6/5",
-            "value": 776
+            "label": "6/13",
+            "value": 262
           },
           {
-            "label": "6/12",
-            "value": 268
+            "label": "6/20",
+            "value": 240
           },
           {
-            "label": "6/19",
-            "value": 234
+            "label": "6/27",
+            "value": 251
           },
           {
-            "label": "6/26",
-            "value": 257
+            "label": "7/4",
+            "value": 249
           },
           {
-            "label": "7/3",
-            "value": 244
+            "label": "7/11",
+            "value": 304
           },
           {
-            "label": "7/10",
-            "value": 282
+            "label": "7/18",
+            "value": 263
           },
           {
-            "label": "7/17",
-            "value": 299
+            "label": "7/25",
+            "value": 295
           },
           {
-            "label": "7/24",
-            "value": 281
+            "label": "8/1",
+            "value": 256
           },
           {
-            "label": "7/31",
-            "value": 267
+            "label": "8/8",
+            "value": 225
           },
           {
-            "label": "8/7",
-            "value": 213
+            "label": "8/15",
+            "value": 230
           },
           {
-            "label": "8/14",
-            "value": 254
+            "label": "8/22",
+            "value": 45
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 63,
-        "desktopScore": 88,
-        "mobileLcp": 5.15,
-        "desktopLcp": 1.18,
+        "latestDate": "08/31/2026",
+        "mobileScore": 96,
+        "desktopScore": 96,
+        "mobileLcp": 2.37,
+        "desktopLcp": 1.1,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 60
+            "label": "6/9",
+            "value": 61
           },
           {
-            "label": "6/6",
-            "value": 60
-          },
-          {
-            "label": "6/13",
-            "value": 62
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 63
           },
           {
-            "label": "6/27",
-            "value": 64
-          },
-          {
-            "label": "7/4",
-            "value": 62
-          },
-          {
-            "label": "7/11",
+            "label": "6/23",
             "value": 65
           },
           {
-            "label": "7/18",
-            "value": 63
+            "label": "6/30",
+            "value": 61
           },
           {
-            "label": "7/25",
+            "label": "7/7",
+            "value": 62
+          },
+          {
+            "label": "7/14",
+            "value": 66
+          },
+          {
+            "label": "7/21",
+            "value": 65
+          },
+          {
+            "label": "7/28",
+            "value": 65
+          },
+          {
+            "label": "8/4",
+            "value": 65
+          },
+          {
+            "label": "8/11",
             "value": 64
           },
           {
-            "label": "8/1",
-            "value": 66
+            "label": "8/18",
+            "value": 60
           },
           {
-            "label": "8/8",
-            "value": 66
-          },
-          {
-            "label": "8/15",
-            "value": 61
+            "label": "8/25",
+            "value": 75
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 89
+            "label": "6/9",
+            "value": 91
           },
           {
-            "label": "6/6",
+            "label": "6/16",
+            "value": 93
+          },
+          {
+            "label": "6/23",
+            "value": 93
+          },
+          {
+            "label": "6/30",
+            "value": 93
+          },
+          {
+            "label": "7/7",
             "value": 92
           },
           {
-            "label": "6/13",
-            "value": 91
+            "label": "7/14",
+            "value": 92
           },
           {
-            "label": "6/20",
+            "label": "7/21",
             "value": 93
           },
           {
-            "label": "6/27",
-            "value": 93
-          },
-          {
-            "label": "7/4",
-            "value": 93
-          },
-          {
-            "label": "7/11",
-            "value": 93
-          },
-          {
-            "label": "7/18",
-            "value": 91
-          },
-          {
-            "label": "7/25",
-            "value": 95
-          },
-          {
-            "label": "8/1",
-            "value": 94
-          },
-          {
-            "label": "8/8",
+            "label": "7/28",
             "value": 96
           },
           {
-            "label": "8/15",
+            "label": "8/4",
             "value": 93
+          },
+          {
+            "label": "8/11",
+            "value": 96
+          },
+          {
+            "label": "8/18",
+            "value": 91
+          },
+          {
+            "label": "8/25",
+            "value": 81
           }
         ]
       },
@@ -3198,6 +3691,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://creeksideapt.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 98,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 17:29:00.908 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/creeksideapt-com/apply-20260828T172316Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/creeksideapt-com/apply-20260828T172316Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -3224,12 +3768,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "OK4BL",
@@ -3238,7 +3782,7 @@ export const launchSnapshot = {
       "units": 216,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -3284,10 +3828,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -3349,9 +3893,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -3393,6 +3937,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 59; D 85 | Kinsta M 79; D 89 | Live M 68; D 96",
           "signal": {
@@ -3402,180 +3955,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 407,
-        "priorT30Sessions": 404,
-        "t30Users": 350,
-        "t30Conversions": 89,
-        "sessionChangePercent": 0.7,
-        "organicSharePercent": 37.2,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 294,
+        "priorT30Sessions": 436,
+        "t30Users": 257,
+        "t30Conversions": 72,
+        "sessionChangePercent": -32.6,
+        "organicSharePercent": 27.8,
         "trend": [
           {
-            "label": "5/29",
-            "value": 106
+            "label": "6/6",
+            "value": 102
           },
           {
-            "label": "6/5",
-            "value": 104
+            "label": "6/13",
+            "value": 107
           },
           {
-            "label": "6/12",
-            "value": 116
+            "label": "6/20",
+            "value": 88
           },
           {
-            "label": "6/19",
+            "label": "6/27",
+            "value": 86
+          },
+          {
+            "label": "7/4",
+            "value": 85
+          },
+          {
+            "label": "7/11",
             "value": 89
           },
           {
-            "label": "6/26",
-            "value": 81
+            "label": "7/18",
+            "value": 126
           },
           {
-            "label": "7/3",
-            "value": 95
+            "label": "7/25",
+            "value": 109
           },
           {
-            "label": "7/10",
-            "value": 82
+            "label": "8/1",
+            "value": 79
           },
           {
-            "label": "7/17",
-            "value": 120
+            "label": "8/8",
+            "value": 92
           },
           {
-            "label": "7/24",
-            "value": 112
+            "label": "8/15",
+            "value": 79
           },
           {
-            "label": "7/31",
-            "value": 80
-          },
-          {
-            "label": "8/7",
-            "value": 91
-          },
-          {
-            "label": "8/14",
-            "value": 89
+            "label": "8/22",
+            "value": 19
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 69,
-        "desktopScore": 92,
-        "mobileLcp": 5.09,
-        "desktopLcp": 1.23,
+        "latestDate": "08/31/2026",
+        "mobileScore": 94,
+        "desktopScore": 85,
+        "mobileLcp": 2.44,
+        "desktopLcp": 1.16,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 61
+            "label": "6/9",
+            "value": 60
           },
           {
-            "label": "6/6",
-            "value": 62
-          },
-          {
-            "label": "6/13",
-            "value": 61
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 63
           },
           {
-            "label": "6/27",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "7/4",
-            "value": 63
-          },
-          {
-            "label": "7/11",
+            "label": "6/30",
             "value": 62
           },
           {
-            "label": "7/18",
+            "label": "7/7",
+            "value": 62
+          },
+          {
+            "label": "7/14",
             "value": 64
           },
           {
-            "label": "7/25",
+            "label": "7/21",
+            "value": 62
+          },
+          {
+            "label": "7/28",
             "value": 67
           },
           {
-            "label": "8/1",
-            "value": 64
+            "label": "8/4",
+            "value": 66
           },
           {
-            "label": "8/8",
-            "value": 69
+            "label": "8/11",
+            "value": 67
           },
           {
-            "label": "8/15",
-            "value": 64
+            "label": "8/18",
+            "value": 61
+          },
+          {
+            "label": "8/25",
+            "value": 78
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 87
+            "label": "6/9",
+            "value": 86
           },
           {
-            "label": "6/6",
-            "value": 87
+            "label": "6/16",
+            "value": 93
           },
           {
-            "label": "6/13",
+            "label": "6/23",
             "value": 92
           },
           {
-            "label": "6/20",
-            "value": 93
-          },
-          {
-            "label": "6/27",
-            "value": 91
-          },
-          {
-            "label": "7/4",
-            "value": 91
-          },
-          {
-            "label": "7/11",
-            "value": 93
-          },
-          {
-            "label": "7/18",
-            "value": 93
-          },
-          {
-            "label": "7/25",
-            "value": 91
-          },
-          {
-            "label": "8/1",
+            "label": "6/30",
             "value": 92
           },
           {
-            "label": "8/8",
+            "label": "7/7",
+            "value": 91
+          },
+          {
+            "label": "7/14",
             "value": 93
           },
           {
-            "label": "8/15",
-            "value": 89
+            "label": "7/21",
+            "value": 88
+          },
+          {
+            "label": "7/28",
+            "value": 95
+          },
+          {
+            "label": "8/4",
+            "value": 91
+          },
+          {
+            "label": "8/11",
+            "value": 92
+          },
+          {
+            "label": "8/18",
+            "value": 87
+          },
+          {
+            "label": "8/25",
+            "value": 83
           }
         ]
       },
@@ -3626,6 +4188,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://blvdatlakeside.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-26 21:43:16.944 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/blvdatlakeside-com/apply-20260826T213732Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/blvdatlakeside-com/apply-20260826T213732Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -3652,12 +4265,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "FL4LH",
@@ -3666,7 +4279,7 @@ export const launchSnapshot = {
       "units": 328,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -3712,10 +4325,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -3777,9 +4390,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -3821,6 +4434,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 83; D 94 | Kinsta M 80; D 97 | Live M 71; D 92",
           "signal": {
@@ -3830,180 +4452,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 1229,
-        "priorT30Sessions": 1531,
-        "t30Users": 1040,
-        "t30Conversions": 197,
-        "sessionChangePercent": -19.7,
-        "organicSharePercent": 31.8,
+        "latestDate": "08/30/2026",
+        "t30Sessions": 946,
+        "priorT30Sessions": 1458,
+        "t30Users": 806,
+        "t30Conversions": 199,
+        "sessionChangePercent": -35.1,
+        "organicSharePercent": 24.5,
         "trend": [
           {
-            "label": "5/29",
-            "value": 454
+            "label": "6/8",
+            "value": 424
           },
           {
-            "label": "6/5",
-            "value": 436
+            "label": "6/15",
+            "value": 414
           },
           {
-            "label": "6/12",
-            "value": 430
+            "label": "6/22",
+            "value": 342
           },
           {
-            "label": "6/19",
-            "value": 334
-          },
-          {
-            "label": "6/26",
+            "label": "6/29",
             "value": 349
           },
           {
-            "label": "7/3",
-            "value": 375
+            "label": "7/6",
+            "value": 384
           },
           {
-            "label": "7/10",
-            "value": 368
+            "label": "7/13",
+            "value": 346
           },
           {
-            "label": "7/17",
-            "value": 315
+            "label": "7/20",
+            "value": 296
           },
           {
-            "label": "7/24",
-            "value": 297
+            "label": "7/27",
+            "value": 302
           },
           {
-            "label": "7/31",
+            "label": "8/3",
+            "value": 276
+          },
+          {
+            "label": "8/10",
             "value": 285
           },
           {
-            "label": "8/7",
-            "value": 291
+            "label": "8/17",
+            "value": 246
           },
           {
-            "label": "8/14",
-            "value": 283
+            "label": "8/24",
+            "value": 68
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 60,
-        "desktopScore": 93,
-        "mobileLcp": 5.46,
-        "desktopLcp": 1.43,
+        "latestDate": "08/31/2026",
+        "mobileScore": 97,
+        "desktopScore": 97,
+        "mobileLcp": 2.29,
+        "desktopLcp": 1.13,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 58
+            "label": "6/9",
+            "value": 61
           },
           {
-            "label": "6/6",
-            "value": 62
-          },
-          {
-            "label": "6/13",
-            "value": 62
-          },
-          {
-            "label": "6/20",
-            "value": 64
-          },
-          {
-            "label": "6/27",
-            "value": 62
-          },
-          {
-            "label": "7/4",
+            "label": "6/16",
             "value": 63
           },
           {
-            "label": "7/11",
+            "label": "6/23",
+            "value": 64
+          },
+          {
+            "label": "6/30",
             "value": 62
           },
           {
-            "label": "7/18",
+            "label": "7/7",
+            "value": 63
+          },
+          {
+            "label": "7/14",
+            "value": 65
+          },
+          {
+            "label": "7/21",
+            "value": 64
+          },
+          {
+            "label": "7/28",
+            "value": 72
+          },
+          {
+            "label": "8/4",
             "value": 66
           },
           {
-            "label": "7/25",
-            "value": 67
+            "label": "8/11",
+            "value": 70
           },
           {
-            "label": "8/1",
-            "value": 69
+            "label": "8/18",
+            "value": 63
           },
           {
-            "label": "8/8",
-            "value": 69
-          },
-          {
-            "label": "8/15",
-            "value": 65
+            "label": "8/25",
+            "value": 88
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 90
-          },
-          {
-            "label": "6/6",
+            "label": "6/9",
             "value": 93
           },
           {
-            "label": "6/13",
-            "value": 92
+            "label": "6/16",
+            "value": 91
           },
           {
-            "label": "6/20",
+            "label": "6/23",
             "value": 90
           },
           {
-            "label": "6/27",
+            "label": "6/30",
             "value": 94
           },
           {
-            "label": "7/4",
-            "value": 92
-          },
-          {
-            "label": "7/11",
+            "label": "7/7",
             "value": 93
           },
           {
-            "label": "7/18",
+            "label": "7/14",
             "value": 93
           },
           {
-            "label": "7/25",
+            "label": "7/21",
+            "value": 93
+          },
+          {
+            "label": "7/28",
             "value": 95
           },
           {
-            "label": "8/1",
+            "label": "8/4",
             "value": 92
           },
           {
-            "label": "8/8",
-            "value": 95
+            "label": "8/11",
+            "value": 96
           },
           {
-            "label": "8/15",
-            "value": 93
+            "label": "8/18",
+            "value": 89
+          },
+          {
+            "label": "8/25",
+            "value": 92
           }
         ]
       },
@@ -4054,6 +4685,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://lumaheadwaters.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 96,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 00:50:20.429 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/lumaheadwaters-com/apply-20260827T004426Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/lumaheadwaters-com/apply-20260827T004426Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -4080,12 +4762,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "GA4CM",
@@ -4094,7 +4776,7 @@ export const launchSnapshot = {
       "units": 315,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -4140,10 +4822,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -4205,9 +4887,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -4249,6 +4931,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 72; D 93 | Kinsta M 74; D 90 | Live M 54; D 92",
           "signal": {
@@ -4258,180 +4949,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 772,
-        "priorT30Sessions": 814,
-        "t30Users": 668,
-        "t30Conversions": 124,
-        "sessionChangePercent": -5.2,
-        "organicSharePercent": 30.5,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 659,
+        "priorT30Sessions": 816,
+        "t30Users": 572,
+        "t30Conversions": 97,
+        "sessionChangePercent": -19.2,
+        "organicSharePercent": 25.9,
         "trend": [
           {
-            "label": "5/29",
-            "value": 249
+            "label": "6/6",
+            "value": 230
           },
           {
-            "label": "6/5",
-            "value": 234
-          },
-          {
-            "label": "6/12",
-            "value": 203
-          },
-          {
-            "label": "6/19",
-            "value": 168
-          },
-          {
-            "label": "6/26",
-            "value": 181
-          },
-          {
-            "label": "7/3",
-            "value": 199
-          },
-          {
-            "label": "7/10",
-            "value": 182
-          },
-          {
-            "label": "7/17",
-            "value": 214
-          },
-          {
-            "label": "7/24",
-            "value": 148
-          },
-          {
-            "label": "7/31",
+            "label": "6/13",
             "value": 195
           },
           {
-            "label": "8/7",
-            "value": 179
+            "label": "6/20",
+            "value": 181
           },
           {
-            "label": "8/14",
-            "value": 183
+            "label": "6/27",
+            "value": 174
+          },
+          {
+            "label": "7/4",
+            "value": 194
+          },
+          {
+            "label": "7/11",
+            "value": 196
+          },
+          {
+            "label": "7/18",
+            "value": 196
+          },
+          {
+            "label": "7/25",
+            "value": 142
+          },
+          {
+            "label": "8/1",
+            "value": 203
+          },
+          {
+            "label": "8/8",
+            "value": 182
+          },
+          {
+            "label": "8/15",
+            "value": 196
+          },
+          {
+            "label": "8/22",
+            "value": 54
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 67,
-        "desktopScore": 80,
-        "mobileLcp": 5.25,
-        "desktopLcp": 1.26,
+        "latestDate": "08/31/2026",
+        "mobileScore": 95,
+        "desktopScore": 96,
+        "mobileLcp": 2.43,
+        "desktopLcp": 1.0,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.06,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 38
+            "label": "6/9",
+            "value": 37
           },
           {
-            "label": "6/6",
-            "value": 38
+            "label": "6/16",
+            "value": 53
           },
           {
-            "label": "6/13",
-            "value": 44
-          },
-          {
-            "label": "6/20",
+            "label": "6/23",
             "value": 58
           },
           {
-            "label": "6/27",
-            "value": 58
-          },
-          {
-            "label": "7/4",
-            "value": 60
-          },
-          {
-            "label": "7/11",
+            "label": "6/30",
             "value": 59
           },
           {
-            "label": "7/18",
-            "value": 63
+            "label": "7/7",
+            "value": 59
           },
           {
-            "label": "7/25",
+            "label": "7/14",
             "value": 61
           },
           {
-            "label": "8/1",
+            "label": "7/21",
             "value": 62
           },
           {
-            "label": "8/8",
+            "label": "7/28",
             "value": 62
           },
           {
-            "label": "8/15",
-            "value": 60
+            "label": "8/4",
+            "value": 61
+          },
+          {
+            "label": "8/11",
+            "value": 64
+          },
+          {
+            "label": "8/18",
+            "value": 61
+          },
+          {
+            "label": "8/25",
+            "value": 75
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 57
+            "label": "6/9",
+            "value": 63
           },
           {
-            "label": "6/6",
-            "value": 62
+            "label": "6/16",
+            "value": 81
           },
           {
-            "label": "6/13",
-            "value": 71
-          },
-          {
-            "label": "6/20",
-            "value": 91
-          },
-          {
-            "label": "6/27",
+            "label": "6/23",
             "value": 89
           },
           {
-            "label": "7/4",
+            "label": "6/30",
+            "value": 90
+          },
+          {
+            "label": "7/7",
+            "value": 85
+          },
+          {
+            "label": "7/14",
+            "value": 85
+          },
+          {
+            "label": "7/21",
+            "value": 89
+          },
+          {
+            "label": "7/28",
+            "value": 89
+          },
+          {
+            "label": "8/4",
             "value": 86
           },
           {
-            "label": "7/11",
-            "value": 85
-          },
-          {
-            "label": "7/18",
+            "label": "8/11",
             "value": 90
           },
           {
-            "label": "7/25",
-            "value": 88
+            "label": "8/18",
+            "value": 86
           },
           {
-            "label": "8/1",
+            "label": "8/25",
             "value": 85
-          },
-          {
-            "label": "8/8",
-            "value": 90
-          },
-          {
-            "label": "8/15",
-            "value": 89
           }
         ]
       },
@@ -4482,6 +5182,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://livecantonmill.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 17:51:19.902 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/livecantonmill-com/apply-20260828T174531Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/livecantonmill-com/apply-20260828T174531Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -4508,12 +5259,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "TX4SP",
@@ -4522,7 +5273,7 @@ export const launchSnapshot = {
       "units": 347,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -4568,10 +5319,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -4633,9 +5384,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -4677,6 +5428,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 60; D 96 | Kinsta M 76; D 98 | Live M 65; D 97",
           "signal": {
@@ -4686,180 +5446,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 1048,
-        "priorT30Sessions": 1196,
-        "t30Users": 907,
-        "t30Conversions": 129,
-        "sessionChangePercent": -12.4,
-        "organicSharePercent": 37.7,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 811,
+        "priorT30Sessions": 1233,
+        "t30Users": 700,
+        "t30Conversions": 90,
+        "sessionChangePercent": -34.2,
+        "organicSharePercent": 30.6,
         "trend": [
           {
-            "label": "5/29",
-            "value": 255
-          },
-          {
-            "label": "6/5",
-            "value": 271
-          },
-          {
-            "label": "6/12",
-            "value": 229
-          },
-          {
-            "label": "6/19",
+            "label": "6/6",
             "value": 251
           },
           {
-            "label": "6/26",
-            "value": 264
+            "label": "6/13",
+            "value": 242
           },
           {
-            "label": "7/3",
-            "value": 255
+            "label": "6/20",
+            "value": 239
           },
           {
-            "label": "7/10",
-            "value": 296
+            "label": "6/27",
+            "value": 270
           },
           {
-            "label": "7/17",
+            "label": "7/4",
+            "value": 277
+          },
+          {
+            "label": "7/11",
+            "value": 290
+          },
+          {
+            "label": "7/18",
             "value": 317
           },
           {
-            "label": "7/24",
-            "value": 248
+            "label": "7/25",
+            "value": 224
           },
           {
-            "label": "7/31",
-            "value": 231
+            "label": "8/1",
+            "value": 252
           },
           {
-            "label": "8/7",
-            "value": 265
+            "label": "8/8",
+            "value": 254
           },
           {
-            "label": "8/14",
-            "value": 212
+            "label": "8/15",
+            "value": 208
+          },
+          {
+            "label": "8/22",
+            "value": 52
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 59,
-        "desktopScore": 86,
-        "mobileLcp": 5.54,
-        "desktopLcp": 1.3,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 97,
+        "mobileLcp": 2.15,
+        "desktopLcp": 1.07,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.04,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 60
           },
           {
-            "label": "6/6",
-            "value": 59
-          },
-          {
-            "label": "6/13",
-            "value": 61
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/27",
-            "value": 61
-          },
-          {
-            "label": "7/4",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "7/11",
-            "value": 63
+            "label": "6/30",
+            "value": 62
           },
           {
-            "label": "7/18",
+            "label": "7/7",
+            "value": 62
+          },
+          {
+            "label": "7/14",
             "value": 64
           },
           {
-            "label": "7/25",
-            "value": 66
+            "label": "7/21",
+            "value": 62
           },
           {
-            "label": "8/1",
+            "label": "7/28",
             "value": 68
           },
           {
-            "label": "8/8",
-            "value": 69
+            "label": "8/4",
+            "value": 70
           },
           {
-            "label": "8/15",
-            "value": 63
+            "label": "8/11",
+            "value": 65
+          },
+          {
+            "label": "8/18",
+            "value": 62
+          },
+          {
+            "label": "8/25",
+            "value": 80
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 90
-          },
-          {
-            "label": "6/6",
-            "value": 92
-          },
-          {
-            "label": "6/13",
-            "value": 90
-          },
-          {
-            "label": "6/20",
-            "value": 92
-          },
-          {
-            "label": "6/27",
-            "value": 89
-          },
-          {
-            "label": "7/4",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "7/11",
+            "label": "6/16",
             "value": 93
           },
           {
-            "label": "7/18",
+            "label": "6/23",
+            "value": 88
+          },
+          {
+            "label": "6/30",
+            "value": 91
+          },
+          {
+            "label": "7/7",
+            "value": 93
+          },
+          {
+            "label": "7/14",
+            "value": 93
+          },
+          {
+            "label": "7/21",
             "value": 92
           },
           {
-            "label": "7/25",
+            "label": "7/28",
             "value": 95
           },
           {
-            "label": "8/1",
+            "label": "8/4",
             "value": 94
           },
           {
-            "label": "8/8",
-            "value": 95
+            "label": "8/11",
+            "value": 93
           },
           {
-            "label": "8/15",
-            "value": 92
+            "label": "8/18",
+            "value": 90
+          },
+          {
+            "label": "8/25",
+            "value": 91
           }
         ]
       },
@@ -4910,6 +5679,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://sanpalmilla-houston.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 20:33:56.345 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/sanpalmilla-houston-com/apply-20260827T202816Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/sanpalmilla-houston-com/apply-20260827T202816Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -4936,12 +5756,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "FL4WP",
@@ -4950,7 +5770,7 @@ export const launchSnapshot = {
       "units": 280,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -4996,10 +5816,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -5061,9 +5881,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -5105,6 +5925,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 62; D 86 | Kinsta M 79; D 75 | Live M 69; D 96",
           "signal": {
@@ -5114,180 +5943,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 457,
-        "priorT30Sessions": 531,
-        "t30Users": 407,
-        "t30Conversions": 84,
-        "sessionChangePercent": -13.9,
-        "organicSharePercent": 41.4,
+        "latestDate": "08/29/2026",
+        "t30Sessions": 387,
+        "priorT30Sessions": 490,
+        "t30Users": 342,
+        "t30Conversions": 65,
+        "sessionChangePercent": -21.0,
+        "organicSharePercent": 32.0,
         "trend": [
           {
-            "label": "5/29",
-            "value": 245
+            "label": "6/7",
+            "value": 163
           },
           {
-            "label": "6/5",
-            "value": 174
+            "label": "6/14",
+            "value": 144
           },
           {
-            "label": "6/12",
-            "value": 141
+            "label": "6/21",
+            "value": 130
           },
           {
-            "label": "6/19",
-            "value": 136
+            "label": "6/28",
+            "value": 122
           },
           {
-            "label": "6/26",
+            "label": "7/5",
+            "value": 125
+          },
+          {
+            "label": "7/12",
             "value": 128
           },
           {
-            "label": "7/3",
-            "value": 123
-          },
-          {
-            "label": "7/10",
-            "value": 124
-          },
-          {
-            "label": "7/17",
+            "label": "7/19",
             "value": 113
           },
           {
-            "label": "7/24",
-            "value": 95
+            "label": "7/26",
+            "value": 94
           },
           {
-            "label": "7/31",
-            "value": 124
+            "label": "8/2",
+            "value": 117
           },
           {
-            "label": "8/7",
-            "value": 78
+            "label": "8/9",
+            "value": 88
           },
           {
-            "label": "8/14",
-            "value": 122
+            "label": "8/16",
+            "value": 119
+          },
+          {
+            "label": "8/23",
+            "value": 31
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 64,
-        "desktopScore": 80,
-        "mobileLcp": 5.46,
-        "desktopLcp": 1.33,
+        "latestDate": "08/31/2026",
+        "mobileScore": 97,
+        "desktopScore": 97,
+        "mobileLcp": 2.28,
+        "desktopLcp": 1.12,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.06,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 59
           },
           {
-            "label": "6/6",
-            "value": 58
-          },
-          {
-            "label": "6/13",
-            "value": 60
-          },
-          {
-            "label": "6/20",
-            "value": 60
-          },
-          {
-            "label": "6/27",
-            "value": 62
-          },
-          {
-            "label": "7/4",
+            "label": "6/16",
             "value": 61
           },
           {
-            "label": "7/11",
-            "value": 63
+            "label": "6/23",
+            "value": 62
           },
           {
-            "label": "7/18",
-            "value": 63
+            "label": "6/30",
+            "value": 61
           },
           {
-            "label": "7/25",
+            "label": "7/7",
+            "value": 61
+          },
+          {
+            "label": "7/14",
+            "value": 64
+          },
+          {
+            "label": "7/21",
+            "value": 65
+          },
+          {
+            "label": "7/28",
             "value": 67
           },
           {
-            "label": "8/1",
-            "value": 71
+            "label": "8/4",
+            "value": 73
           },
           {
-            "label": "8/8",
-            "value": 68
+            "label": "8/11",
+            "value": 67
           },
           {
-            "label": "8/15",
-            "value": 65
+            "label": "8/18",
+            "value": 64
+          },
+          {
+            "label": "8/25",
+            "value": 88
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 87
-          },
-          {
-            "label": "6/6",
-            "value": 92
-          },
-          {
-            "label": "6/13",
-            "value": 93
-          },
-          {
-            "label": "6/20",
-            "value": 94
-          },
-          {
-            "label": "6/27",
-            "value": 91
-          },
-          {
-            "label": "7/4",
-            "value": 90
-          },
-          {
-            "label": "7/11",
-            "value": 93
-          },
-          {
-            "label": "7/18",
-            "value": 93
-          },
-          {
-            "label": "7/25",
+            "label": "6/9",
             "value": 95
           },
           {
-            "label": "8/1",
+            "label": "6/16",
             "value": 93
           },
           {
-            "label": "8/8",
+            "label": "6/23",
+            "value": 92
+          },
+          {
+            "label": "6/30",
+            "value": 92
+          },
+          {
+            "label": "7/7",
+            "value": 92
+          },
+          {
+            "label": "7/14",
+            "value": 92
+          },
+          {
+            "label": "7/21",
+            "value": 94
+          },
+          {
+            "label": "7/28",
+            "value": 94
+          },
+          {
+            "label": "8/4",
             "value": 93
           },
           {
-            "label": "8/15",
-            "value": 91
+            "label": "8/11",
+            "value": 93
+          },
+          {
+            "label": "8/18",
+            "value": 89
+          },
+          {
+            "label": "8/25",
+            "value": 89
           }
         ]
       },
@@ -5338,6 +6176,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://linksatwindsorparke.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 00:40:58.817 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/linksatwindsorparke-com/apply-20260827T003526Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/linksatwindsorparke-com/apply-20260827T003526Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -5364,12 +6253,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "TX4ST",
@@ -5378,7 +6267,7 @@ export const launchSnapshot = {
       "units": 198,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -5424,10 +6313,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -5489,9 +6378,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -5533,6 +6422,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 64; D 95 | Kinsta M 78; D 95 | Live M 61; D 80",
           "signal": {
@@ -5542,180 +6440,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 374,
+        "latestDate": "08/29/2026",
+        "t30Sessions": 301,
         "priorT30Sessions": 356,
-        "t30Users": 317,
-        "t30Conversions": 64,
-        "sessionChangePercent": 5.1,
-        "organicSharePercent": 23.4,
+        "t30Users": 257,
+        "t30Conversions": 44,
+        "sessionChangePercent": -15.4,
+        "organicSharePercent": 19.6,
         "trend": [
           {
-            "label": "5/29",
-            "value": 284
+            "label": "6/7",
+            "value": 122
           },
           {
-            "label": "6/5",
-            "value": 149
-          },
-          {
-            "label": "6/12",
+            "label": "6/14",
             "value": 104
           },
           {
-            "label": "6/19",
-            "value": 91
+            "label": "6/21",
+            "value": 93
           },
           {
-            "label": "6/26",
-            "value": 88
+            "label": "6/28",
+            "value": 78
           },
           {
-            "label": "7/3",
-            "value": 88
+            "label": "7/5",
+            "value": 89
           },
           {
-            "label": "7/10",
-            "value": 66
+            "label": "7/12",
+            "value": 70
           },
           {
-            "label": "7/17",
-            "value": 72
+            "label": "7/19",
+            "value": 74
           },
           {
-            "label": "7/24",
-            "value": 100
+            "label": "7/26",
+            "value": 97
           },
           {
-            "label": "7/31",
-            "value": 83
+            "label": "8/2",
+            "value": 79
           },
           {
-            "label": "8/7",
-            "value": 73
+            "label": "8/9",
+            "value": 78
           },
           {
-            "label": "8/14",
-            "value": 99
+            "label": "8/16",
+            "value": 96
+          },
+          {
+            "label": "8/23",
+            "value": 26
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 63,
-        "desktopScore": 86,
-        "mobileLcp": 9.69,
-        "desktopLcp": 1.42,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 79,
+        "mobileLcp": 2.14,
+        "desktopLcp": 1.16,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.06,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 59
-          },
-          {
-            "label": "6/6",
+            "label": "6/9",
             "value": 61
           },
           {
-            "label": "6/13",
-            "value": 62
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 63
           },
           {
-            "label": "6/27",
+            "label": "6/23",
             "value": 64
           },
           {
-            "label": "7/4",
+            "label": "6/30",
             "value": 63
           },
           {
-            "label": "7/11",
-            "value": 66
+            "label": "7/7",
+            "value": 63
           },
           {
-            "label": "7/18",
+            "label": "7/14",
             "value": 69
           },
           {
-            "label": "7/25",
+            "label": "7/21",
+            "value": 68
+          },
+          {
+            "label": "7/28",
             "value": 69
           },
           {
-            "label": "8/1",
-            "value": 66
+            "label": "8/4",
+            "value": 68
           },
           {
-            "label": "8/8",
-            "value": 67
+            "label": "8/11",
+            "value": 64
           },
           {
-            "label": "8/15",
-            "value": 65
+            "label": "8/18",
+            "value": 62
+          },
+          {
+            "label": "8/25",
+            "value": 80
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 90
-          },
-          {
-            "label": "6/6",
-            "value": 90
-          },
-          {
-            "label": "6/13",
+            "label": "6/9",
             "value": 93
           },
           {
-            "label": "6/20",
+            "label": "6/16",
             "value": 92
           },
           {
-            "label": "6/27",
+            "label": "6/23",
             "value": 93
           },
           {
-            "label": "7/4",
-            "value": 94
-          },
-          {
-            "label": "7/11",
-            "value": 95
-          },
-          {
-            "label": "7/18",
+            "label": "6/30",
             "value": 93
           },
           {
-            "label": "7/25",
+            "label": "7/7",
             "value": 94
           },
           {
-            "label": "8/1",
+            "label": "7/14",
+            "value": 94
+          },
+          {
+            "label": "7/21",
+            "value": 94
+          },
+          {
+            "label": "7/28",
             "value": 95
           },
           {
-            "label": "8/8",
+            "label": "8/4",
             "value": 95
           },
           {
-            "label": "8/15",
-            "value": 92
+            "label": "8/11",
+            "value": 94
+          },
+          {
+            "label": "8/18",
+            "value": 89
+          },
+          {
+            "label": "8/25",
+            "value": 86
           }
         ]
       },
@@ -5766,6 +6673,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://stonecreekranchapartments.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 21:56:11.815 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/stonecreekranchapartments-com/apply-20260827T215029Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/stonecreekranchapartments-com/apply-20260827T215029Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -5792,12 +6750,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "TX4WZ",
@@ -5806,7 +6764,7 @@ export const launchSnapshot = {
       "units": 264,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -5852,10 +6810,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -5917,9 +6875,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -5961,6 +6919,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 73; D 93 | Kinsta M 60; D 98 | Live M 71; D 96",
           "signal": {
@@ -5970,180 +6937,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/19/2026",
-        "t30Sessions": 764,
-        "priorT30Sessions": 826,
-        "t30Users": 655,
-        "t30Conversions": 105,
-        "sessionChangePercent": -7.5,
-        "organicSharePercent": 45.8,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 571,
+        "priorT30Sessions": 809,
+        "t30Users": 477,
+        "t30Conversions": 131,
+        "sessionChangePercent": -29.4,
+        "organicSharePercent": 46.5,
         "trend": [
           {
-            "label": "5/28",
-            "value": 184
+            "label": "6/6",
+            "value": 189
           },
           {
-            "label": "6/4",
+            "label": "6/13",
+            "value": 182
+          },
+          {
+            "label": "6/20",
+            "value": 177
+          },
+          {
+            "label": "6/27",
+            "value": 233
+          },
+          {
+            "label": "7/4",
+            "value": 166
+          },
+          {
+            "label": "7/11",
             "value": 179
           },
           {
-            "label": "6/11",
-            "value": 190
+            "label": "7/18",
+            "value": 178
           },
           {
-            "label": "6/18",
-            "value": 165
+            "label": "7/25",
+            "value": 167
           },
           {
-            "label": "6/25",
-            "value": 220
+            "label": "8/1",
+            "value": 203
           },
           {
-            "label": "7/2",
-            "value": 180
+            "label": "8/8",
+            "value": 193
           },
           {
-            "label": "7/9",
-            "value": 195
+            "label": "8/15",
+            "value": 110
           },
           {
-            "label": "7/16",
-            "value": 176
-          },
-          {
-            "label": "7/23",
-            "value": 157
-          },
-          {
-            "label": "7/30",
-            "value": 202
-          },
-          {
-            "label": "8/6",
-            "value": 206
-          },
-          {
-            "label": "8/13",
-            "value": 151
+            "label": "8/22",
+            "value": 12
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 57,
-        "desktopScore": 95,
-        "mobileLcp": 9.67,
-        "desktopLcp": 1.22,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 97,
+        "mobileLcp": 2.3,
+        "desktopLcp": 1.08,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.04,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 61
           },
           {
-            "label": "6/6",
-            "value": 61
+            "label": "6/16",
+            "value": 62
           },
           {
-            "label": "6/13",
-            "value": 61
-          },
-          {
-            "label": "6/20",
+            "label": "6/23",
             "value": 64
           },
           {
-            "label": "6/27",
+            "label": "6/30",
+            "value": 61
+          },
+          {
+            "label": "7/7",
             "value": 62
           },
           {
-            "label": "7/4",
-            "value": 62
+            "label": "7/14",
+            "value": 66
           },
           {
-            "label": "7/11",
-            "value": 65
+            "label": "7/21",
+            "value": 66
           },
           {
-            "label": "7/18",
-            "value": 63
-          },
-          {
-            "label": "7/25",
-            "value": 67
-          },
-          {
-            "label": "8/1",
+            "label": "7/28",
             "value": 69
           },
           {
-            "label": "8/8",
-            "value": 68
+            "label": "8/4",
+            "value": 67
           },
           {
-            "label": "8/15",
-            "value": 66
+            "label": "8/11",
+            "value": 70
+          },
+          {
+            "label": "8/18",
+            "value": 63
+          },
+          {
+            "label": "8/25",
+            "value": 81
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 90
-          },
-          {
-            "label": "6/6",
-            "value": 89
-          },
-          {
-            "label": "6/13",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "6/20",
-            "value": 92
-          },
-          {
-            "label": "6/27",
-            "value": 92
-          },
-          {
-            "label": "7/4",
-            "value": 92
-          },
-          {
-            "label": "7/11",
+            "label": "6/16",
             "value": 93
           },
           {
-            "label": "7/18",
+            "label": "6/23",
+            "value": 91
+          },
+          {
+            "label": "6/30",
+            "value": 92
+          },
+          {
+            "label": "7/7",
+            "value": 92
+          },
+          {
+            "label": "7/14",
             "value": 94
           },
           {
-            "label": "7/25",
+            "label": "7/21",
+            "value": 90
+          },
+          {
+            "label": "7/28",
+            "value": 92
+          },
+          {
+            "label": "8/4",
+            "value": 94
+          },
+          {
+            "label": "8/11",
+            "value": 92
+          },
+          {
+            "label": "8/18",
             "value": 89
           },
           {
-            "label": "8/1",
-            "value": 94
-          },
-          {
-            "label": "8/8",
-            "value": 93
-          },
-          {
-            "label": "8/15",
-            "value": 94
+            "label": "8/25",
+            "value": 86
           }
         ]
       },
@@ -6194,6 +7170,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://parkonwurzbach.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 97,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 19:25:05.929 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/parkonwurzbach-com/apply-20260827T191900Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/parkonwurzbach-com/apply-20260827T191900Z/psi/psi/psi-desktop-fresh-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -6220,12 +7247,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "KY4MP",
@@ -6234,7 +7261,7 @@ export const launchSnapshot = {
       "units": 180,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -6280,10 +7307,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -6345,9 +7372,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -6389,6 +7416,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 62; D 88 | Kinsta M 79; D 98 | Live M 74; D 95",
           "signal": {
@@ -6398,180 +7434,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 232,
-        "priorT30Sessions": 255,
-        "t30Users": 202,
-        "t30Conversions": 46,
-        "sessionChangePercent": -9.0,
-        "organicSharePercent": 31.1,
+        "latestDate": "08/29/2026",
+        "t30Sessions": 180,
+        "priorT30Sessions": 239,
+        "t30Users": 159,
+        "t30Conversions": 30,
+        "sessionChangePercent": -24.7,
+        "organicSharePercent": 26.0,
         "trend": [
           {
-            "label": "5/29",
-            "value": 73
+            "label": "6/7",
+            "value": 64
           },
           {
-            "label": "6/5",
-            "value": 70
-          },
-          {
-            "label": "6/12",
-            "value": 53
-          },
-          {
-            "label": "6/19",
-            "value": 69
-          },
-          {
-            "label": "6/26",
-            "value": 61
-          },
-          {
-            "label": "7/3",
-            "value": 51
-          },
-          {
-            "label": "7/10",
+            "label": "6/14",
             "value": 55
           },
           {
-            "label": "7/17",
-            "value": 57
+            "label": "6/21",
+            "value": 73
           },
           {
-            "label": "7/24",
+            "label": "6/28",
+            "value": 52
+          },
+          {
+            "label": "7/5",
+            "value": 64
+          },
+          {
+            "label": "7/12",
+            "value": 52
+          },
+          {
+            "label": "7/19",
             "value": 54
           },
           {
-            "label": "7/31",
-            "value": 59
+            "label": "7/26",
+            "value": 51
           },
           {
-            "label": "8/7",
-            "value": 42
+            "label": "8/2",
+            "value": 55
           },
           {
-            "label": "8/14",
-            "value": 56
+            "label": "8/9",
+            "value": 43
+          },
+          {
+            "label": "8/16",
+            "value": 54
+          },
+          {
+            "label": "8/23",
+            "value": 14
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 47,
-        "desktopScore": 94,
-        "mobileLcp": 4.98,
-        "desktopLcp": 1.24,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 96,
+        "mobileLcp": 2.13,
+        "desktopLcp": 1.13,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 59
+            "label": "6/9",
+            "value": 60
           },
           {
-            "label": "6/6",
-            "value": 59
-          },
-          {
-            "label": "6/13",
-            "value": 62
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 63
           },
           {
-            "label": "6/27",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "7/4",
+            "label": "6/30",
+            "value": 63
+          },
+          {
+            "label": "7/7",
             "value": 62
           },
           {
-            "label": "7/11",
+            "label": "7/14",
             "value": 64
           },
           {
-            "label": "7/18",
-            "value": 67
-          },
-          {
-            "label": "7/25",
-            "value": 68
-          },
-          {
-            "label": "8/1",
-            "value": 63
-          },
-          {
-            "label": "8/8",
+            "label": "7/21",
             "value": 66
           },
           {
-            "label": "8/15",
+            "label": "7/28",
+            "value": 70
+          },
+          {
+            "label": "8/4",
             "value": 63
+          },
+          {
+            "label": "8/11",
+            "value": 67
+          },
+          {
+            "label": "8/18",
+            "value": 59
+          },
+          {
+            "label": "8/25",
+            "value": 79
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 85
-          },
-          {
-            "label": "6/6",
-            "value": 93
-          },
-          {
-            "label": "6/13",
-            "value": 89
-          },
-          {
-            "label": "6/20",
-            "value": 94
-          },
-          {
-            "label": "6/27",
-            "value": 93
-          },
-          {
-            "label": "7/4",
-            "value": 94
-          },
-          {
-            "label": "7/11",
-            "value": 94
-          },
-          {
-            "label": "7/18",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "7/25",
-            "value": 92
+            "label": "6/16",
+            "value": 93
           },
           {
-            "label": "8/1",
+            "label": "6/23",
+            "value": 93
+          },
+          {
+            "label": "6/30",
+            "value": 93
+          },
+          {
+            "label": "7/7",
+            "value": 93
+          },
+          {
+            "label": "7/14",
+            "value": 93
+          },
+          {
+            "label": "7/21",
+            "value": 91
+          },
+          {
+            "label": "7/28",
             "value": 90
           },
           {
-            "label": "8/8",
-            "value": 97
+            "label": "8/4",
+            "value": 93
           },
           {
-            "label": "8/15",
-            "value": 93
+            "label": "8/11",
+            "value": 96
+          },
+          {
+            "label": "8/18",
+            "value": 87
+          },
+          {
+            "label": "8/25",
+            "value": 91
           }
         ]
       },
@@ -6622,6 +7667,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://themetropolitankentuckyapts.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 22:51:30.141 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/themetropolitankentuckyapts-com/apply-20260827T224530Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/themetropolitankentuckyapts-com/apply-20260827T224530Z/psi/psi/psi-desktop-fresh-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -6648,12 +7744,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "GA4AB",
@@ -6662,7 +7758,7 @@ export const launchSnapshot = {
       "units": 169,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -6708,10 +7804,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -6773,9 +7869,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -6817,6 +7913,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 69; D 96 | Kinsta M 72; D 99 | Live M 61; D 97",
           "signal": {
@@ -6826,180 +7931,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 420,
-        "priorT30Sessions": 508,
-        "t30Users": 370,
-        "t30Conversions": 67,
-        "sessionChangePercent": -17.3,
-        "organicSharePercent": 36.9,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 391,
+        "priorT30Sessions": 478,
+        "t30Users": 337,
+        "t30Conversions": 59,
+        "sessionChangePercent": -18.2,
+        "organicSharePercent": 29.6,
         "trend": [
           {
-            "label": "5/29",
-            "value": 2220
+            "label": "6/6",
+            "value": 1886
           },
           {
-            "label": "6/5",
-            "value": 2175
+            "label": "6/13",
+            "value": 116
           },
           {
-            "label": "6/12",
-            "value": 113
+            "label": "6/20",
+            "value": 118
           },
           {
-            "label": "6/19",
-            "value": 129
+            "label": "6/27",
+            "value": 136
           },
           {
-            "label": "6/26",
-            "value": 125
-          },
-          {
-            "label": "7/3",
+            "label": "7/4",
             "value": 108
           },
           {
-            "label": "7/10",
-            "value": 115
+            "label": "7/11",
+            "value": 113
           },
           {
-            "label": "7/17",
-            "value": 107
+            "label": "7/18",
+            "value": 95
           },
           {
-            "label": "7/24",
-            "value": 85
+            "label": "7/25",
+            "value": 97
           },
           {
-            "label": "7/31",
-            "value": 122
+            "label": "8/1",
+            "value": 118
           },
           {
-            "label": "8/7",
-            "value": 94
+            "label": "8/8",
+            "value": 96
           },
           {
-            "label": "8/14",
-            "value": 90
+            "label": "8/15",
+            "value": 86
+          },
+          {
+            "label": "8/22",
+            "value": 55
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 64,
-        "desktopScore": 93,
-        "mobileLcp": 9.66,
-        "desktopLcp": 1.32,
+        "latestDate": "08/31/2026",
+        "mobileScore": 96,
+        "desktopScore": 98,
+        "mobileLcp": 2.43,
+        "desktopLcp": 1.01,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 60
           },
           {
-            "label": "6/6",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/13",
-            "value": 60
-          },
-          {
-            "label": "6/20",
+            "label": "6/23",
             "value": 63
           },
           {
-            "label": "6/27",
+            "label": "6/30",
             "value": 62
           },
           {
-            "label": "7/4",
-            "value": 61
+            "label": "7/7",
+            "value": 62
           },
           {
-            "label": "7/11",
+            "label": "7/14",
             "value": 64
           },
           {
-            "label": "7/18",
+            "label": "7/21",
             "value": 63
           },
           {
-            "label": "7/25",
-            "value": 62
+            "label": "7/28",
+            "value": 63
           },
           {
-            "label": "8/1",
-            "value": 67
+            "label": "8/4",
+            "value": 70
           },
           {
-            "label": "8/8",
-            "value": 71
+            "label": "8/11",
+            "value": 68
           },
           {
-            "label": "8/15",
+            "label": "8/18",
             "value": 65
+          },
+          {
+            "label": "8/25",
+            "value": 76
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 88
-          },
-          {
-            "label": "6/6",
-            "value": 92
-          },
-          {
-            "label": "6/13",
+            "label": "6/9",
             "value": 93
           },
           {
-            "label": "6/20",
-            "value": 93
-          },
-          {
-            "label": "6/27",
-            "value": 91
-          },
-          {
-            "label": "7/4",
-            "value": 91
-          },
-          {
-            "label": "7/11",
-            "value": 94
-          },
-          {
-            "label": "7/18",
-            "value": 94
-          },
-          {
-            "label": "7/25",
+            "label": "6/16",
             "value": 92
           },
           {
-            "label": "8/1",
+            "label": "6/23",
+            "value": 91
+          },
+          {
+            "label": "6/30",
+            "value": 93
+          },
+          {
+            "label": "7/7",
+            "value": 92
+          },
+          {
+            "label": "7/14",
             "value": 94
           },
           {
-            "label": "8/8",
-            "value": 94
+            "label": "7/21",
+            "value": 92
           },
           {
-            "label": "8/15",
-            "value": 90
+            "label": "7/28",
+            "value": 92
+          },
+          {
+            "label": "8/4",
+            "value": 95
+          },
+          {
+            "label": "8/11",
+            "value": 92
+          },
+          {
+            "label": "8/18",
+            "value": 87
+          },
+          {
+            "label": "8/25",
+            "value": 87
           }
         ]
       },
@@ -7050,6 +8164,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://axialbuckhead.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 93,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-26 18:48:03.658 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/axialbuckhead-com/apply-20260826T184200Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/axialbuckhead-com/apply-20260826T184200Z/psi/psi/psi-desktop-fresh-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -7076,12 +8241,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "TX4FV",
@@ -7090,7 +8255,7 @@ export const launchSnapshot = {
       "units": 256,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -7136,10 +8301,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -7201,9 +8366,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -7245,6 +8410,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 76; D 96 | Kinsta M 78; D 98 | Live M 74; D 98",
           "signal": {
@@ -7254,180 +8428,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 457,
-        "priorT30Sessions": 558,
-        "t30Users": 403,
-        "t30Conversions": 9,
-        "sessionChangePercent": -18.1,
-        "organicSharePercent": 32.9,
+        "latestDate": "08/30/2026",
+        "t30Sessions": 333,
+        "priorT30Sessions": 535,
+        "t30Users": 292,
+        "t30Conversions": 15,
+        "sessionChangePercent": -37.8,
+        "organicSharePercent": 24.2,
         "trend": [
           {
-            "label": "5/29",
+            "label": "6/8",
             "value": 138
           },
           {
-            "label": "6/5",
-            "value": 136
+            "label": "6/15",
+            "value": 117
           },
           {
-            "label": "6/12",
-            "value": 141
+            "label": "6/22",
+            "value": 145
           },
           {
-            "label": "6/19",
-            "value": 121
+            "label": "6/29",
+            "value": 107
           },
           {
-            "label": "6/26",
-            "value": 124
+            "label": "7/6",
+            "value": 144
           },
           {
-            "label": "7/3",
-            "value": 136
+            "label": "7/13",
+            "value": 129
           },
           {
-            "label": "7/10",
-            "value": 133
+            "label": "7/20",
+            "value": 113
           },
           {
-            "label": "7/17",
-            "value": 105
+            "label": "7/27",
+            "value": 115
           },
           {
-            "label": "7/24",
-            "value": 124
+            "label": "8/3",
+            "value": 91
           },
           {
-            "label": "7/31",
-            "value": 110
+            "label": "8/10",
+            "value": 95
           },
           {
-            "label": "8/7",
-            "value": 79
+            "label": "8/17",
+            "value": 98
           },
           {
-            "label": "8/14",
-            "value": 120
+            "label": "8/24",
+            "value": 20
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 62,
-        "desktopScore": 79,
-        "mobileLcp": 9.7,
-        "desktopLcp": 1.25,
+        "latestDate": "08/31/2026",
+        "mobileScore": 94,
+        "desktopScore": 63,
+        "mobileLcp": 2.37,
+        "desktopLcp": 1.36,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 60
-          },
-          {
-            "label": "6/6",
+            "label": "6/9",
             "value": 58
           },
           {
-            "label": "6/13",
-            "value": 60
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 62
           },
           {
-            "label": "6/27",
-            "value": 61
-          },
-          {
-            "label": "7/4",
-            "value": 61
-          },
-          {
-            "label": "7/11",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "7/18",
-            "value": 68
+            "label": "6/30",
+            "value": 61
           },
           {
-            "label": "7/25",
-            "value": 67
+            "label": "7/7",
+            "value": 62
           },
           {
-            "label": "8/1",
-            "value": 70
+            "label": "7/14",
+            "value": 65
           },
           {
-            "label": "8/8",
+            "label": "7/21",
+            "value": 66
+          },
+          {
+            "label": "7/28",
             "value": 69
           },
           {
-            "label": "8/15",
+            "label": "8/4",
+            "value": 71
+          },
+          {
+            "label": "8/11",
             "value": 65
+          },
+          {
+            "label": "8/18",
+            "value": 65
+          },
+          {
+            "label": "8/25",
+            "value": 80
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 89
-          },
-          {
-            "label": "6/6",
-            "value": 92
-          },
-          {
-            "label": "6/13",
-            "value": 92
-          },
-          {
-            "label": "6/20",
-            "value": 94
-          },
-          {
-            "label": "6/27",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "7/4",
-            "value": 90
-          },
-          {
-            "label": "7/11",
-            "value": 92
-          },
-          {
-            "label": "7/18",
-            "value": 94
-          },
-          {
-            "label": "7/25",
-            "value": 90
-          },
-          {
-            "label": "8/1",
+            "label": "6/16",
             "value": 93
           },
           {
-            "label": "8/8",
+            "label": "6/23",
+            "value": 92
+          },
+          {
+            "label": "6/30",
+            "value": 93
+          },
+          {
+            "label": "7/7",
+            "value": 90
+          },
+          {
+            "label": "7/14",
+            "value": 93
+          },
+          {
+            "label": "7/21",
+            "value": 89
+          },
+          {
+            "label": "7/28",
             "value": 94
           },
           {
-            "label": "8/15",
-            "value": 87
+            "label": "8/4",
+            "value": 94
+          },
+          {
+            "label": "8/11",
+            "value": 92
+          },
+          {
+            "label": "8/18",
+            "value": 83
+          },
+          {
+            "label": "8/25",
+            "value": 84
           }
         ]
       },
@@ -7478,6 +8661,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://liveatforestviewapts.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 17:58:57.272 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/liveatforestviewapts-com/apply-20260828T175304Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/liveatforestviewapts-com/apply-20260828T175304Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -7504,12 +8738,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "MO4TL",
@@ -7518,7 +8752,7 @@ export const launchSnapshot = {
       "units": 456,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -7564,10 +8798,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -7629,9 +8863,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -7673,6 +8907,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 56; D 89 | Kinsta M 45; D 99 | Live M 55; D 98",
           "signal": {
@@ -7682,180 +8925,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 795,
-        "priorT30Sessions": 844,
-        "t30Users": 675,
-        "t30Conversions": 274,
-        "sessionChangePercent": -5.8,
-        "organicSharePercent": 39.3,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 642,
+        "priorT30Sessions": 861,
+        "t30Users": 538,
+        "t30Conversions": 181,
+        "sessionChangePercent": -25.4,
+        "organicSharePercent": 31.5,
         "trend": [
           {
-            "label": "5/29",
-            "value": 267
+            "label": "6/6",
+            "value": 192
           },
           {
-            "label": "6/5",
-            "value": 200
+            "label": "6/13",
+            "value": 167
           },
           {
-            "label": "6/12",
-            "value": 173
+            "label": "6/20",
+            "value": 163
           },
           {
-            "label": "6/19",
-            "value": 149
+            "label": "6/27",
+            "value": 218
           },
           {
-            "label": "6/26",
+            "label": "7/4",
+            "value": 224
+          },
+          {
+            "label": "7/11",
+            "value": 165
+          },
+          {
+            "label": "7/18",
+            "value": 184
+          },
+          {
+            "label": "7/25",
             "value": 225
           },
           {
-            "label": "7/3",
-            "value": 209
+            "label": "8/1",
+            "value": 175
           },
           {
-            "label": "7/10",
-            "value": 180
+            "label": "8/8",
+            "value": 158
           },
           {
-            "label": "7/17",
-            "value": 182
+            "label": "8/15",
+            "value": 210
           },
           {
-            "label": "7/24",
-            "value": 213
-          },
-          {
-            "label": "7/31",
-            "value": 178
-          },
-          {
-            "label": "8/7",
-            "value": 172
-          },
-          {
-            "label": "8/14",
-            "value": 177
+            "label": "8/22",
+            "value": 33
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 61,
-        "desktopScore": 84,
-        "mobileLcp": 9.92,
-        "desktopLcp": 1.22,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 89,
+        "mobileLcp": 2.21,
+        "desktopLcp": 1.12,
         "mobileCls": 0.0,
         "desktopCls": 0.0,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 60
           },
           {
-            "label": "6/6",
-            "value": 58
-          },
-          {
-            "label": "6/13",
-            "value": 62
-          },
-          {
-            "label": "6/20",
+            "label": "6/16",
             "value": 63
           },
           {
-            "label": "6/27",
-            "value": 62
+            "label": "6/23",
+            "value": 63
           },
           {
-            "label": "7/4",
+            "label": "6/30",
             "value": 61
           },
           {
-            "label": "7/11",
+            "label": "7/7",
             "value": 62
           },
           {
-            "label": "7/18",
+            "label": "7/14",
             "value": 62
           },
           {
-            "label": "7/25",
-            "value": 70
+            "label": "7/21",
+            "value": 64
           },
           {
-            "label": "8/1",
-            "value": 67
+            "label": "7/28",
+            "value": 72
           },
           {
-            "label": "8/8",
-            "value": 67
-          },
-          {
-            "label": "8/15",
+            "label": "8/4",
             "value": 66
+          },
+          {
+            "label": "8/11",
+            "value": 66
+          },
+          {
+            "label": "8/18",
+            "value": 63
+          },
+          {
+            "label": "8/25",
+            "value": 77
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 89
-          },
-          {
-            "label": "6/6",
-            "value": 91
-          },
-          {
-            "label": "6/13",
+            "label": "6/9",
             "value": 93
           },
           {
-            "label": "6/20",
+            "label": "6/16",
             "value": 92
           },
           {
-            "label": "6/27",
+            "label": "6/23",
+            "value": 92
+          },
+          {
+            "label": "6/30",
             "value": 94
           },
           {
-            "label": "7/4",
+            "label": "7/7",
             "value": 93
           },
           {
-            "label": "7/11",
-            "value": 93
+            "label": "7/14",
+            "value": 92
           },
           {
-            "label": "7/18",
+            "label": "7/21",
             "value": 90
           },
           {
-            "label": "7/25",
+            "label": "7/28",
             "value": 91
           },
           {
-            "label": "8/1",
-            "value": 92
-          },
-          {
-            "label": "8/8",
-            "value": 92
-          },
-          {
-            "label": "8/15",
+            "label": "8/4",
             "value": 91
+          },
+          {
+            "label": "8/11",
+            "value": 94
+          },
+          {
+            "label": "8/18",
+            "value": 91
+          },
+          {
+            "label": "8/25",
+            "value": 84
           }
         ]
       },
@@ -7906,6 +9158,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://timberlanevillageapts.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 99,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-27 23:24:32.729 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/timberlanevillageapts-com/apply-20260827T231832Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/timberlanevillageapts-com/apply-20260827T231832Z/psi/psi/psi-desktop-exact-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -7932,12 +9235,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "GA4BV",
@@ -7946,7 +9249,7 @@ export const launchSnapshot = {
       "units": 312,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -7992,10 +9295,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -8057,9 +9360,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -8101,6 +9404,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 63; D 97 | Kinsta M 76; D 98 | Live M 63; D 67",
           "signal": {
@@ -8110,180 +9422,189 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Refresh",
           "signal": {
             "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "label": "Refresh",
+            "detail": "Native hero source changed; queue governed hero asset regeneration."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 576,
-        "priorT30Sessions": 562,
-        "t30Users": 496,
-        "t30Conversions": 117,
-        "sessionChangePercent": 2.5,
-        "organicSharePercent": 32.2,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 510,
+        "priorT30Sessions": 561,
+        "t30Users": 427,
+        "t30Conversions": 91,
+        "sessionChangePercent": -9.1,
+        "organicSharePercent": 27.6,
         "trend": [
           {
-            "label": "5/29",
-            "value": 126
-          },
-          {
-            "label": "6/5",
-            "value": 124
-          },
-          {
-            "label": "6/12",
-            "value": 139
-          },
-          {
-            "label": "6/19",
-            "value": 115
-          },
-          {
-            "label": "6/26",
-            "value": 130
-          },
-          {
-            "label": "7/3",
+            "label": "6/6",
             "value": 125
           },
           {
-            "label": "7/10",
-            "value": 146
+            "label": "6/13",
+            "value": 134
           },
           {
-            "label": "7/17",
-            "value": 111
+            "label": "6/20",
+            "value": 119
           },
           {
-            "label": "7/24",
+            "label": "6/27",
+            "value": 119
+          },
+          {
+            "label": "7/4",
+            "value": 136
+          },
+          {
+            "label": "7/11",
+            "value": 150
+          },
+          {
+            "label": "7/18",
+            "value": 102
+          },
+          {
+            "label": "7/25",
+            "value": 120
+          },
+          {
+            "label": "8/1",
+            "value": 131
+          },
+          {
+            "label": "8/8",
             "value": 122
           },
           {
-            "label": "7/31",
-            "value": 125
+            "label": "8/15",
+            "value": 175
           },
           {
-            "label": "8/7",
-            "value": 123
-          },
-          {
-            "label": "8/14",
-            "value": 177
+            "label": "8/22",
+            "value": 56
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 68,
-        "desktopScore": 92,
-        "mobileLcp": 5.43,
-        "desktopLcp": 1.33,
+        "latestDate": "08/31/2026",
+        "mobileScore": 92,
+        "desktopScore": 89,
+        "mobileLcp": 2.43,
+        "desktopLcp": 1.09,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.08,
         "mobileTrend": [
           {
-            "label": "5/30",
-            "value": 59
-          },
-          {
-            "label": "6/6",
-            "value": 60
-          },
-          {
-            "label": "6/13",
+            "label": "6/9",
             "value": 61
           },
           {
-            "label": "6/20",
+            "label": "6/16",
+            "value": 62
+          },
+          {
+            "label": "6/23",
             "value": 63
           },
           {
-            "label": "6/27",
-            "value": 63
-          },
-          {
-            "label": "7/4",
-            "value": 65
-          },
-          {
-            "label": "7/11",
-            "value": 66
-          },
-          {
-            "label": "7/18",
+            "label": "6/30",
             "value": 64
           },
           {
-            "label": "7/25",
+            "label": "7/7",
+            "value": 64
+          },
+          {
+            "label": "7/14",
             "value": 67
           },
           {
-            "label": "8/1",
-            "value": 70
+            "label": "7/21",
+            "value": 66
           },
           {
-            "label": "8/8",
+            "label": "7/28",
+            "value": 69
+          },
+          {
+            "label": "8/4",
+            "value": 68
+          },
+          {
+            "label": "8/11",
             "value": 67
           },
           {
-            "label": "8/15",
-            "value": 65
+            "label": "8/18",
+            "value": 63
+          },
+          {
+            "label": "8/25",
+            "value": 75
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 84
-          },
-          {
-            "label": "6/6",
-            "value": 90
-          },
-          {
-            "label": "6/13",
-            "value": 93
-          },
-          {
-            "label": "6/20",
+            "label": "6/9",
             "value": 91
           },
           {
-            "label": "6/27",
+            "label": "6/16",
             "value": 92
           },
           {
-            "label": "7/4",
-            "value": 92
+            "label": "6/23",
+            "value": 93
           },
           {
-            "label": "7/11",
-            "value": 92
+            "label": "6/30",
+            "value": 90
           },
           {
-            "label": "7/18",
+            "label": "7/7",
             "value": 94
           },
           {
-            "label": "7/25",
+            "label": "7/14",
             "value": 92
           },
           {
-            "label": "8/1",
+            "label": "7/21",
+            "value": 91
+          },
+          {
+            "label": "7/28",
+            "value": 93
+          },
+          {
+            "label": "8/4",
+            "value": 94
+          },
+          {
+            "label": "8/11",
             "value": 92
           },
           {
-            "label": "8/8",
-            "value": 94
+            "label": "8/18",
+            "value": 88
           },
           {
-            "label": "8/15",
-            "value": 94
+            "label": "8/25",
+            "value": 84
           }
         ]
       },
@@ -8334,6 +9655,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://balmoralvillageapts.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 98,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 18:16:36.025 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/balmoralvillageapts-com/apply-20260828T181010Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/balmoralvillageapts-com/apply-20260828T181010Z/psi/psi/psi-desktop-fresh-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "yellow",
+        "label": "Refresh",
+        "detail": "Native hero source changed; queue governed hero asset regeneration.",
+        "status": "refresh_needed",
+        "recommendedAction": "regenerate_hero_assets"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -8360,12 +9732,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     },
     {
       "propertyCode": "GA4TW",
@@ -8374,7 +9746,7 @@ export const launchSnapshot = {
       "units": 310,
       "launchDate": "08/19/2026",
       "progressPercent": 100,
-      "currentFocus": "Optimization benchmark",
+      "currentFocus": "Optimized proof complete",
       "overall": {
         "color": "green",
         "label": "Live, Redirects Active",
@@ -8420,10 +9792,10 @@ export const launchSnapshot = {
         },
         {
           "label": "Optimization Queue",
-          "value": "Queued",
-          "helper": "Use the live benchmark to plan governed optimization work.",
-          "tone": "yellow",
-          "percent": 45
+          "value": "Done",
+          "helper": "Governed optimization proof is complete.",
+          "tone": "green",
+          "percent": 100
         }
       ],
       "steps": [
@@ -8485,9 +9857,9 @@ export const launchSnapshot = {
           "number": 7,
           "title": "Optimization target",
           "status": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Use the captured live benchmark to queue the optimization run."
+            "color": "green",
+            "label": "Done",
+            "detail": "The governed optimization package passed live proof."
           }
         }
       ],
@@ -8529,6 +9901,15 @@ export const launchSnapshot = {
           }
         },
         {
+          "label": "Analytics hygiene",
+          "value": "Clean",
+          "signal": {
+            "color": "green",
+            "label": "Clean",
+            "detail": "Only production Heap 286627304 is present and debug mode is off."
+          }
+        },
+        {
           "label": "Performance baseline",
           "value": "Legacy M 62; D 93 | Kinsta M 78; D 95 | Live M 66; D 73",
           "signal": {
@@ -8538,179 +9919,188 @@ export const launchSnapshot = {
           }
         },
         {
-          "label": "Launch prep",
-          "value": "Optimization benchmark",
+          "label": "Hero media freshness",
+          "value": "Fresh",
           "signal": {
-            "color": "yellow",
-            "label": "Future Work",
-            "detail": "Optimization is the next phase after the live benchmark."
+            "color": "green",
+            "label": "Fresh",
+            "detail": "Native hero source matches the optimized asset source record."
+          }
+        },
+        {
+          "label": "Launch prep",
+          "value": "Optimized proof complete",
+          "signal": {
+            "color": "green",
+            "label": "Optimized",
+            "detail": "Governed optimization package passed live proof."
           }
         }
       ],
       "organic": {
-        "latestDate": "08/20/2026",
-        "t30Sessions": 796,
-        "priorT30Sessions": 872,
-        "t30Users": 685,
-        "t30Conversions": 148,
-        "sessionChangePercent": -8.7,
-        "organicSharePercent": 35.1,
+        "latestDate": "08/28/2026",
+        "t30Sessions": 659,
+        "priorT30Sessions": 803,
+        "t30Users": 562,
+        "t30Conversions": 114,
+        "sessionChangePercent": -17.9,
+        "organicSharePercent": 30.0,
         "trend": [
           {
-            "label": "5/29",
-            "value": 194
+            "label": "6/6",
+            "value": 222
           },
           {
-            "label": "6/5",
-            "value": 220
+            "label": "6/13",
+            "value": 232
           },
           {
-            "label": "6/12",
-            "value": 233
+            "label": "6/20",
+            "value": 234
           },
           {
-            "label": "6/19",
-            "value": 229
+            "label": "6/27",
+            "value": 173
           },
           {
-            "label": "6/26",
+            "label": "7/4",
+            "value": 216
+          },
+          {
+            "label": "7/11",
+            "value": 191
+          },
+          {
+            "label": "7/18",
             "value": 184
           },
           {
-            "label": "7/3",
-            "value": 211
+            "label": "7/25",
+            "value": 164
           },
           {
-            "label": "7/10",
-            "value": 184
+            "label": "8/1",
+            "value": 196
           },
           {
-            "label": "7/17",
-            "value": 192
+            "label": "8/8",
+            "value": 180
           },
           {
-            "label": "7/24",
-            "value": 156
+            "label": "8/15",
+            "value": 193
           },
           {
-            "label": "7/31",
-            "value": 209
-          },
-          {
-            "label": "8/7",
-            "value": 174
-          },
-          {
-            "label": "8/14",
-            "value": 197
+            "label": "8/22",
+            "value": 36
           }
         ]
       },
       "psi": {
-        "latestDate": "08/21/2026",
-        "mobileScore": 49,
-        "desktopScore": 94,
-        "mobileLcp": 10.2,
-        "desktopLcp": 1.26,
+        "latestDate": "08/31/2026",
+        "mobileScore": 98,
+        "desktopScore": 96,
+        "mobileLcp": 2.14,
+        "desktopLcp": 1.03,
         "mobileCls": 0.0,
-        "desktopCls": 0.0,
+        "desktopCls": 0.04,
         "mobileTrend": [
           {
-            "label": "5/30",
+            "label": "6/9",
             "value": 60
           },
           {
-            "label": "6/6",
-            "value": 60
-          },
-          {
-            "label": "6/13",
+            "label": "6/16",
             "value": 61
           },
           {
-            "label": "6/20",
+            "label": "6/23",
             "value": 62
           },
           {
-            "label": "6/27",
+            "label": "6/30",
+            "value": 62
+          },
+          {
+            "label": "7/7",
             "value": 61
           },
           {
-            "label": "7/4",
-            "value": 63
-          },
-          {
-            "label": "7/11",
-            "value": 63
-          },
-          {
-            "label": "7/18",
-            "value": 67
-          },
-          {
-            "label": "7/25",
+            "label": "7/14",
             "value": 64
           },
           {
-            "label": "8/1",
-            "value": 67
+            "label": "7/21",
+            "value": 68
           },
           {
-            "label": "8/8",
+            "label": "7/28",
             "value": 66
           },
           {
-            "label": "8/15",
+            "label": "8/4",
+            "value": 66
+          },
+          {
+            "label": "8/11",
+            "value": 65
+          },
+          {
+            "label": "8/18",
             "value": 61
+          },
+          {
+            "label": "8/25",
+            "value": 81
           }
         ],
         "desktopTrend": [
           {
-            "label": "5/30",
-            "value": 90
+            "label": "6/9",
+            "value": 86
           },
           {
-            "label": "6/6",
-            "value": 88
-          },
-          {
-            "label": "6/13",
-            "value": 88
-          },
-          {
-            "label": "6/20",
-            "value": 92
-          },
-          {
-            "label": "6/27",
-            "value": 90
-          },
-          {
-            "label": "7/4",
-            "value": 92
-          },
-          {
-            "label": "7/11",
+            "label": "6/16",
             "value": 91
           },
           {
-            "label": "7/18",
+            "label": "6/23",
+            "value": 91
+          },
+          {
+            "label": "6/30",
+            "value": 91
+          },
+          {
+            "label": "7/7",
             "value": 92
           },
           {
-            "label": "7/25",
+            "label": "7/14",
+            "value": 92
+          },
+          {
+            "label": "7/21",
+            "value": 93
+          },
+          {
+            "label": "7/28",
+            "value": 93
+          },
+          {
+            "label": "8/4",
             "value": 94
           },
           {
-            "label": "8/1",
-            "value": 94
+            "label": "8/11",
+            "value": 91
           },
           {
-            "label": "8/8",
-            "value": 94
+            "label": "8/18",
+            "value": 84
           },
           {
-            "label": "8/15",
+            "label": "8/25",
             "value": 87
           }
         ]
@@ -8762,6 +10152,57 @@ export const launchSnapshot = {
           "capturedAt": "08/20/2026 11:00 AM CDT"
         }
       ],
+      "optimizedProof": {
+        "status": "captured",
+        "label": "optimized live proof",
+        "url": "https://thewhitneysandysprings.com/",
+        "note": "Governed optimization package passed live proof; PSI shows the highest successful captured proof sample.",
+        "mobileScore": 100,
+        "desktopScore": 96,
+        "mobileLcp": null,
+        "desktopLcp": null,
+        "mobileCls": null,
+        "desktopCls": null,
+        "mobileTbt": null,
+        "desktopTbt": null,
+        "capturedAt": "2026-08-28 02:05:23.020 UTC",
+        "evidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thewhitneysandysprings-com/apply-20260828T015852Z",
+        "psiEvidencePath": "/Users/mark/Property_Analytics/reports/resi_edge_performance/08-09-2026/thewhitneysandysprings-com/apply-20260828T015852Z/psi/psi/psi-desktop-fresh-1.json",
+        "runtimeVersion": "2026-08-26.ga4-datalayer-bootstrap-v1",
+        "gateSummary": {
+          "blocked": 0,
+          "failed": 0,
+          "not_applicable": 0,
+          "not_run": 0,
+          "passed": 57,
+          "total": 57
+        }
+      },
+      "analyticsHygiene": {
+        "color": "green",
+        "label": "Clean",
+        "detail": "Only production Heap 286627304 is present and debug mode is off.",
+        "sourceHeapIds": [
+          "286627304"
+        ],
+        "oldHeapPresent": false,
+        "expectedHeapPresent": true,
+        "dualHeapPresent": false,
+        "heapDebugTrue": false,
+        "browserHeapIds": [
+          "286627304"
+        ],
+        "browserOldHeapPresent": false,
+        "browserExpectedHeapPresent": true,
+        "clean": true
+      },
+      "heroFreshness": {
+        "color": "green",
+        "label": "Fresh",
+        "detail": "Native hero source matches the optimized asset source record.",
+        "status": "current",
+        "recommendedAction": "none"
+      },
       "domain": {
         "color": "green",
         "label": "Ready",
@@ -8788,12 +10229,12 @@ export const launchSnapshot = {
         "detail": "Legacy, Kinsta, and live vanity speed benchmarks are captured."
       },
       "operations": {
-        "color": "yellow",
-        "label": "Future Work",
-        "detail": "Optimization is the next phase after the live benchmark."
+        "color": "green",
+        "label": "Optimized",
+        "detail": "Governed optimization package passed live proof."
       },
       "historyNote": "Legacy reporting remains available after the move, so teams can compare old and new-domain behavior.",
-      "nextStep": "Next: compare live vanity PSI against the optimized target and queue improvements."
+      "nextStep": "Next: monitor optimized live proof and carry this package forward."
     }
   ]
 } satisfies LaunchSnapshot;

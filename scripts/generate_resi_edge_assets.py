@@ -39,7 +39,7 @@ MOBILE_HERO_AVIF_MAX_BYTES = 80_000
 MOBILE_HERO_WEBP_MAX_BYTES = 80_000
 CONTENT_BLOCK_AVIF_MAX_BYTES = 55_000
 MIN_AVIF_QUALITY = 42
-MIN_WEBP_QUALITY = 24
+MIN_WEBP_QUALITY = 18
 SHARED_LBLE_SVG = Path(__file__).resolve().parents[1] / "ops/cloudflare/shared/resi-edge-package/lble.svg"
 FALLBACK_TAGLINE_FONT = Path("/System/Library/Fonts/Supplemental/Georgia Italic.ttf")
 
@@ -118,21 +118,28 @@ def save_avif(image: Image.Image, path: Path, quality: int) -> bool:
         return False
 
 
+def quality_candidates(start_quality: int, min_quality: int, step: int = 4) -> list[int]:
+    candidates = list(range(start_quality, min_quality - 1, -step))
+    if not candidates or candidates[-1] != min_quality:
+        candidates.append(min_quality)
+    return candidates
+
+
 def save_avif_to_budget(image: Image.Image, path: Path, quality: int, max_bytes: int) -> tuple[bool, int]:
-    for candidate_quality in range(quality, MIN_AVIF_QUALITY - 1, -4):
+    for candidate_quality in quality_candidates(quality, MIN_AVIF_QUALITY):
         if not save_avif(image, path, candidate_quality):
             return False, candidate_quality
         if path.stat().st_size <= max_bytes:
             return True, candidate_quality
-    return True, MIN_AVIF_QUALITY
+    return False, MIN_AVIF_QUALITY
 
 
 def save_webp_to_budget(image: Image.Image, path: Path, quality: int, max_bytes: int) -> tuple[bool, int]:
-    for candidate_quality in range(quality, MIN_WEBP_QUALITY - 1, -4):
+    for candidate_quality in quality_candidates(quality, MIN_WEBP_QUALITY, step=2):
         save_webp(image, path, candidate_quality)
         if path.stat().st_size <= max_bytes:
             return True, candidate_quality
-    return True, MIN_WEBP_QUALITY
+    return False, MIN_WEBP_QUALITY
 
 
 def file_record(path: Path, public_url: str | None, source_url: str, role: str, variant: str, transform: dict[str, Any]) -> dict[str, Any]:

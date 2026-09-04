@@ -1,0 +1,394 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "existing_project_id": "10240453",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_domain_profile; retain_legacy_venterra_path_project_in_legacy_folder_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "carlyleplacesa.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHCP",
+      "legacy_project_id": "10125770",
+      "data_key_status": "existing_vanity_project_found_in_phase2_analytics_profile_evidence"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "measurement_id": "G-2L31Z7RXDX",
+      "measurement_id_status": "configured_in_ga4_admin_after_08_17_2026_default_uri_patch_pending_zaraz_readback",
+      "expected_stream_name": "Carlyle Place",
+      "owner": "cloudflare_zaraz",
+      "property_id": "378149021",
+      "zaraz_tool_name": "GA4CP"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HCP"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBTX4CP"
+    }
+  },
+  "captain": {
+    "evidence_path": "reports/captains_log/activation/chunks_seed_only/captain_activation_tx4cp_2026-05-04.sql",
+    "fresh_update_record": "reports/captains_log/activation/chunks_seed_only/captain_activation_tx4cp_2026-05-04.sql",
+    "id": "TX4CP-captain"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-summary.json",
+      "reports/domain_ops/20260825_092028_vanity_qa/vanity-qa-results.csv",
+      "reports/domain_ops/20260825_092028_vanity_qa/screenshots/carlyleplacesa.com.png",
+      "reports/resi_edge_performance/performance-baselines/performance-baseline-20260820T160054Z-final-vanity-merged/performance-baseline-results.csv",
+      "reports/ahrefs_admin/phase2_vanity_projects/phase2-ahrefs-vanity-projects-20260815T234731Z/PHASE2_AHREFS_VANITY_PROJECT_READOUT.md",
+      "reports/ga4_admin/phase2_default_uri/phase2-ga4-default-uri-20260817T185637Z/PHASE2_GA4_DEFAULT_URI_READOUT.md",
+      "reports/resi_edge_performance/heap-hygiene/heap-hygiene-20260824T205033Z/heap-hygiene-evidence.json",
+      "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+      "reports/resi_edge_performance/08-09-2026/carlyleplacesa-com/source-scrape-prep/carlyleplacesa.com_.html",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json",
+      "reports/captains_log/activation/chunks_seed_only/captain_activation_tx4cp_2026-05-04.sql"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "present": true,
+      "source": "live native home content exposes Kingsley award, verified 08/25/2026",
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg",
+          "alt": "Kingsley Excellence of resident satisfaction award badge"
+        }
+      ]
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "Carlyle Place live source theme tokens and canonical Venterra palette, verified 08/25/2026"
+    },
+    "content_blocks": [
+      {
+        "sequence": 1,
+        "kind": "welcome",
+        "heading": "Welcome to Carlyle Place Apartments",
+        "subheading": "Choose the perfect layout for your lifestyle.",
+        "body": "In San Antonio, Carlyle Place pairs a relaxed, resort-inspired atmosphere with a location that keeps the city within easy reach. Open, inviting interiors create a comfortable retreat, while the surrounding San Antonio energy adds a vibrant backdrop\u2014bringing together calm and connection in a way that feels naturally balanced.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://carlyleplacesa.com/apartments/",
+        "image_url": "/assets/resi-edge-assets/TX4CP/home/welcome-640.avif",
+        "source_image_url": "https://dam.getresi.co/20027/conversions/Home-Welcome-full.jpg",
+        "image_alt": "Three-story beige apartment building with white trim, large windows, and landscaped greenery under a blue sky."
+      },
+      {
+        "sequence": 2,
+        "kind": "features",
+        "eyebrow": "Apartment Features",
+        "heading": "Stylish Living Spaces",
+        "body": "Enjoy open-concept interiors with wood-burning fireplaces, full-size washers and dryers, black and stainless appliances, and private patios or balconies\u2014creating a warm, inviting home base with sleek touches and space to unwind.",
+        "bullets": [
+          "Wood-Burning Fireplaces",
+          "Full-Size Washer/Dryer",
+          "Private Patio Or Balcony",
+          "Stainless Appliances"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://carlyleplacesa.com/features/",
+        "image_url": "/assets/resi-edge-assets/TX4CP/home/features-900.avif",
+        "source_image_url": "https://dam.getresi.co/20024/conversions/Home-Features-full.jpg",
+        "image_alt": "Modern kitchen with dark cabinets, stainless steel appliances, double sink, and granite countertops."
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-71f7cc3a.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-9b155c87.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-194b0294.woff2",
+        "weight": 700
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Noto Serif",
+    "hero": {
+      "headline": "1 and 2 Bedroom Apartments in San Antonio, TX",
+      "image_mobile": "/assets/resi-edge-assets/TX4CP/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://carlyleplacesa.com/apartments/",
+      "source_image": "https://dam.getresi.co/20026/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "Carlyle Place Phase 2 draft from rollout matrix and Kinsta staging URL, generated 08/15/2026 12:55 PM CDT",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/TX4CP",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/TX4CP",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://carlyleplacesa.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://carlyleplacesa.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://carlyleplacesa.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://carlyleplacesa.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://carlyleplacesa.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://carlyleplacesa.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://carlyleplacesa.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://carlyleplacesa.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://carlyleplacesa.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ]
+    },
+    "promo": {
+      "present": false,
+      "source": "feed_backed_no_active_homepage_or_source_lookup_special_observed_in_live_source_capture_08_25_2026"
+    },
+    "reviews": {
+      "present": true,
+      "source": "live origin review row, verified 08/25/2026",
+      "rating": 4.5,
+      "count": 99,
+      "url": "https://carlyleplacesa.com/reviews/",
+      "last_verified": "08/25/2026",
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "link_required": true
+    },
+    "title_font": "Noto Serif"
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(210) 794-7258",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "TX4CP30L",
+        "phone": "(210) 794-7258",
+        "source": "VWS"
+      },
+      {
+        "code": "TX4CPAG",
+        "phone": "(210) 361-4121",
+        "source": "AG-VL"
+      },
+      {
+        "code": "TX4CPAH",
+        "phone": "(210) 794-7258",
+        "source": "AH"
+      },
+      {
+        "code": "TX4CPALIST",
+        "phone": "(844) 446-0998",
+        "source": "APL"
+      },
+      {
+        "code": "TX4CPAPT",
+        "phone": "(210) 405-0926",
+        "source": "ADC-VL"
+      },
+      {
+        "code": "TX4CPAR",
+        "phone": "(210) 794-7258",
+        "source": "APR"
+      },
+      {
+        "code": "TX4CPBNG",
+        "phone": "(210) 880-6038",
+        "source": "BNG"
+      },
+      {
+        "code": "TX4CPGOA",
+        "phone": "(210) 871-9246",
+        "source": "GOA"
+      },
+      {
+        "code": "TX4CPGOO",
+        "phone": "(210) 880-6038",
+        "source": "GOO-VL"
+      },
+      {
+        "code": "TX4CPSOC",
+        "phone": "(210) 796-1165",
+        "source": "SOC"
+      },
+      {
+        "code": "TX4CPUNA",
+        "phone": "(210) 794-7258",
+        "source": "UNA"
+      },
+      {
+        "code": "TX4CPYAH",
+        "phone": "(210) 880-6038",
+        "source": "YHO"
+      },
+      {
+        "code": "TX4CPZI",
+        "phone": "(210) 794-7258",
+        "source": "ZIL-VL"
+      }
+    ]
+  },
+  "rollback": {
+    "strategy": "no_live_mutation_yet; before any explicit apply, record existing Cloudflare route/worker state and restore prior route/script if any live proof fails",
+    "previous_worker_script": "not_yet_recorded",
+    "no_wordpress_mutation_required": true
+  },
+  "routing": {
+    "cloudflare_zone_name": "carlyleplacesa.com",
+    "existing_worker_script": "not_yet_recorded",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "carlyleplacesa.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "llms_url": "https://carlyleplacesa.com/llms.txt",
+    "meta_description": "Welcome home to Carlyle Place Apartments in San Antonio, TX - Discover luxury living in our 1- and 2-bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Carlyle Place Apartments",
+    "og_image": "https://carlyleplacesa.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "sitemap_url": "https://carlyleplacesa.com/sitemap_index.xml",
+    "stale_identity_scan_required": true
+  },
+  "target": {
+    "canonical_url": "https://carlyleplacesa.com/",
+    "city": "San Antonio",
+    "community_id": "1ec85f98-4a14-4415-ad13-d4e1af7ea627",
+    "domain": "carlyleplacesa.com",
+    "ga4_measurement_id": "G-2L31Z7RXDX",
+    "ga4_property_id": "378149021",
+    "governed_reference_url": "https://venterraliving.com/apartments/carlyle-place-apartments/",
+    "gsc_property": "sc-domain:carlyleplacesa.com",
+    "property_code": "TX4CP",
+    "property_name": "Carlyle Place",
+    "source_property_code": "TX4CP",
+    "staging_kinsta_url": "https://carlyleplaceapartments.kinsta.cloud/",
+    "state": "TX"
+  }
+}

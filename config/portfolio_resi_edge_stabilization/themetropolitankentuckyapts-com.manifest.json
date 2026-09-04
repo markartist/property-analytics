@@ -1,0 +1,369 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "existing_project_id": "10240471",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_project_if_present_else_create_new_vanity_project_with_explicit_approval; retain_legacy_venterra_path_project_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "themetropolitankentuckyapts.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHMP",
+      "data_key_status": "web_analytics_data_key_present_in_phase2_readback"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "measurement_id": "G-EZ145693L6",
+      "measurement_id_status": "configured_zaraz_owned_default_uri_current_vanity",
+      "owner": "cloudflare_zaraz",
+      "property_id": "378702557",
+      "zaraz_tool_name": "GA4MP",
+      "expected_stream_name": "The Metropolitan"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HMP"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBKY4MP"
+    }
+  },
+  "captain": {
+    "evidence_path": "reports/resi_edge_performance/08-09-2026/themetropolitankentuckyapts-com/manifest-promotion-20260827T000000Z/source-harvest.json",
+    "fresh_update_record": "reports/resi_edge_performance/08-09-2026/themetropolitankentuckyapts-com/manifest-promotion-20260827T000000Z/source-harvest.json",
+    "id": "KY4MP-captain"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/resi_edge_performance/08-09-2026/themetropolitankentuckyapts-com/manifest-promotion-20260827T000000Z/source-harvest.json",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "present": true,
+      "source": "live_source_08_27_2026",
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg"
+        }
+      ]
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "live_source_08_27_2026_brand_theme"
+    },
+    "content_blocks": [
+      {
+        "body": "Choose the perfect layout for your lifestyle.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://themetropolitankentuckyapts.com/apartments/",
+        "heading": "Welcome to The Metropolitan",
+        "image_alt": "The Metropolitan apartment community photo",
+        "image_url": "/assets/resi-edge-assets/KY4MP/home/welcome-640.avif",
+        "kind": "welcome",
+        "sequence": 1,
+        "source_image_url": "https://dam.getresi.co/21829/conversions/Home-Welcome-full.jpg"
+      },
+      {
+        "body": "Enjoy apartment interiors and community conveniences designed to support an easy everyday rhythm at home.",
+        "bullets": [
+          "Stainless Steel Appliances",
+          "Granite Countertops",
+          "Private Patios"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://themetropolitankentuckyapts.com/features/",
+        "heading": "Smart Home Technology",
+        "image_alt": "The Metropolitan apartment feature photo",
+        "image_url": "/assets/resi-edge-assets/KY4MP/home/features-900.avif",
+        "kind": "features",
+        "sequence": 2,
+        "source_image_url": "https://dam.getresi.co/21827/conversions/Home-Features-full.jpg"
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-0d723976.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-06b438a1.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Noto Serif",
+    "hero": {
+      "headline": "1 and 2 Bedroom Apartments in Louisville, KY",
+      "image_mobile": "/assets/resi-edge-assets/KY4MP/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://themetropolitankentuckyapts.com/apartments/",
+      "source_image": "https://dam.getresi.co/21818/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "The Metropolitan Phase 2 draft from rollout matrix and Kinsta staging URL, generated 08/15/2026 12:55 PM CDT",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/KY4MP",
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://themetropolitankentuckyapts.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://themetropolitankentuckyapts.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://themetropolitankentuckyapts.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://themetropolitankentuckyapts.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://themetropolitankentuckyapts.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://themetropolitankentuckyapts.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://themetropolitankentuckyapts.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://themetropolitankentuckyapts.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://themetropolitankentuckyapts.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ],
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/KY4MP"
+    },
+    "promo": {
+      "present": false,
+      "source": "feed_backed_absent_live_source_08_27_2026_no_active_promo_rendered"
+    },
+    "reviews": {
+      "present": true,
+      "source": "live_source_08_27_2026_review_row",
+      "last_verified": "08/27/2026",
+      "link_required": true,
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false,
+      "url": "https://themetropolitankentuckyapts.com/reviews/",
+      "rating": 4.0,
+      "count": 147
+    }
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(502) 586-4155",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "KY4MP30L",
+        "phone": "(502) 586-4155",
+        "source": "VWS"
+      },
+      {
+        "code": "KY4MPAH",
+        "phone": "(502) 586-4155",
+        "source": "AH"
+      },
+      {
+        "code": "KY4MPALIST",
+        "phone": "(844) 443-0467",
+        "source": "APL"
+      },
+      {
+        "code": "KY4MPAPT",
+        "phone": "(502) 586-4127",
+        "source": "ADC-VL"
+      },
+      {
+        "code": "KY4MPAR",
+        "phone": "(502) 586-4155",
+        "source": "APR"
+      },
+      {
+        "code": "KY4MPBNG",
+        "phone": "(502) 586-4162",
+        "source": "BNG"
+      },
+      {
+        "code": "KY4MPGOA",
+        "phone": "(904) 643-6445",
+        "source": "GOA"
+      },
+      {
+        "code": "KY4MPGOO",
+        "phone": "(502) 586-4162",
+        "source": "GOO-VL"
+      },
+      {
+        "code": "KY4MPSOC",
+        "phone": "(502) 586-4360",
+        "source": "SOC"
+      },
+      {
+        "code": "KY4MPUNA",
+        "phone": "(502) 586-4155",
+        "source": "UNA"
+      },
+      {
+        "code": "KY4MPYAH",
+        "phone": "(502) 586-4162",
+        "source": "YHO"
+      },
+      {
+        "code": "KY4MPZI",
+        "phone": "(502) 915-2236",
+        "source": "ZIL-VL"
+      }
+    ]
+  },
+  "rollback": {
+    "no_wordpress_mutation_required": true,
+    "previous_worker_script": "not_yet_recorded",
+    "strategy": "existing_worker_no_delete; preserve no-WordPress-mutation boundary and restore/remove only the Cloudflare route/worker state introduced by this governed apply if live proof fails"
+  },
+  "routing": {
+    "cloudflare_zone_name": "themetropolitankentuckyapts.com",
+    "existing_worker_script": "not_yet_assigned_in_governed_package",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "themetropolitankentuckyapts.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "llms_url": "https://themetropolitankentuckyapts.com/llms.txt",
+    "meta_description": "Welcome home to The Metropolitan in Louisville, KY \u2014 Discover luxury living in our one and two-bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "The Metropolitan",
+    "og_image": "https://themetropolitankentuckyapts.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "sitemap_url": "https://themetropolitankentuckyapts.com/sitemap_index.xml",
+    "stale_identity_scan_required": true,
+    "canonical_url": "https://themetropolitankentuckyapts.com/"
+  },
+  "target": {
+    "canonical_url": "https://themetropolitankentuckyapts.com/",
+    "city": "Louisville",
+    "community_id": "11376862-a8e9-4c35-9997-8307130f0a7b",
+    "domain": "themetropolitankentuckyapts.com",
+    "ga4_measurement_id": "G-EZ145693L6",
+    "ga4_property_id": "378702557",
+    "governed_reference_url": "https://venterraliving.com/apartments/the-metropolitan/",
+    "gsc_property": "sc-domain:themetropolitankentuckyapts.com",
+    "property_code": "KY4MP",
+    "property_name": "The Metropolitan",
+    "source_property_code": "KY4MP",
+    "staging_kinsta_url": "https://themetropolitan.kinsta.cloud/",
+    "state": "KY"
+  }
+}

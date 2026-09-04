@@ -9,6 +9,7 @@ import {
   isContentsquareVerifySuppressionRequest,
   isNativeAssetRepairRequest,
   isResiEdgeAssetRequest,
+  loadEdgePromoRecord,
   mobileShellHeaders,
   renderDesktopPassthrough,
   renderMobileShell,
@@ -55,6 +56,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/__resi-edge/health") {
+      const promoReadout = await loadEdgePromoRecord(env, manifest);
       return Response.json({
         ok: true,
         package_id: RESI_EDGE_PACKAGE_ID,
@@ -63,6 +65,13 @@ export default {
         manifest_property: manifest.target.property_name,
         manifest_domain: manifest.target.domain,
         desktop_topper_allowed: manifest.desktop.desktop_topper_allowed,
+        promo_record: {
+          key: promoReadout.key,
+          status: promoReadout.status,
+          source: promoReadout.source,
+          fetched_at: promoReadout.fetched_at,
+          present: promoReadout.promo?.present !== false,
+        },
       });
     }
 
@@ -86,8 +95,9 @@ export default {
     if (isNativeContinuation(url)) return renderNativeContinuationResponse(request, manifest);
 
     if (isHomepage(url) && isMobileRequest(request)) {
-      return new Response(renderMobileShell(request, manifest), {
-        headers: mobileShellHeaders(),
+      const promoReadout = await loadEdgePromoRecord(env, manifest);
+      return new Response(renderMobileShell(request, manifest, promoReadout.promo), {
+        headers: mobileShellHeaders(promoReadout),
       });
     }
 

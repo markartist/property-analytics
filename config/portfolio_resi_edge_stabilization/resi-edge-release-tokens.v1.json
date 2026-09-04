@@ -5,9 +5,23 @@
   "source_of_truth": {
     "runtime": "ops/cloudflare/shared/resi-edge-package/runtime.mjs",
     "worker": "ops/cloudflare/resi-edge-canonical-worker/worker.js",
+    "central_topper_contract": "config/portfolio_resi_edge_stabilization/resi-edge-central-topper-runtime.v1.json",
+    "central_topper_service_worker": "ops/cloudflare/resi-edge-topper-service/worker.js",
+    "thin_property_worker": "ops/cloudflare/resi-edge-thin-property-worker/worker.js",
+    "central_topper_record_builder": "scripts/build_resi_edge_topper_config_records.py",
     "manifest_schema": "config/portfolio_resi_edge_stabilization/resi-edge-manifest.schema.json",
-    "canary_manifest": "config/portfolio_resi_edge_stabilization/townestoneat359-com-v2-canary.manifest.json",
+    "canary_manifest": "config/portfolio_resi_edge_stabilization/townestoneat359-com.manifest.json",
     "canary_evidence": "reports/resi_edge_performance/08-09-2026/townestoneat359-com/apply-20260813T213750Z"
+  },
+  "topper_delivery": {
+    "current_default": "bundled_property_worker",
+    "migration_target": "centralized_topper_service_with_thin_property_workers",
+    "central_config_records": "resi-edge-topper-config/<property-code>-<domain>/current.json",
+    "promo_records": "resi-edge-promo/<property-code>-<domain>/current.json",
+    "hero_freshness_records": "resi-edge-hero-freshness/<property-code>-<domain>/current.json",
+    "property_data_mutation_surface": "R2 config/freshness records only",
+    "shared_runtime_mutation_surface": "one versioned central topper service",
+    "canary_required_before_default_change": true
   },
   "release_rules": {
     "desktop_topper_allowed": false,
@@ -51,8 +65,8 @@
         "image_budget_bytes": 55000
       },
       "consent": {
-        "version": "compact-finalized-v27",
-        "source": "ops/cloudflare/shared/resi-edge-package/runtime.mjs",
+        "version": "compact_shell_pill_v29_2026_08_20",
+        "source": "ops/cloudflare/shared/resi-consent-widget/widget.mjs",
         "preferences_modal_max_width_px": 720,
         "full_width_preferences_allowed": false
       }

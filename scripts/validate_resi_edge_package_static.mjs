@@ -6,12 +6,24 @@ import { spawnSync } from "node:child_process";
 const root = resolve(new URL("..", import.meta.url).pathname);
 const runtimePath = resolve(root, "ops/cloudflare/shared/resi-edge-package/runtime.mjs");
 const workerPath = resolve(root, "ops/cloudflare/resi-edge-canonical-worker/worker.js");
+const centralTopperContractPath = resolve(root, "config/portfolio_resi_edge_stabilization/resi-edge-central-topper-runtime.v1.json");
+const centralTopperServicePath = resolve(root, "ops/cloudflare/resi-edge-topper-service/worker.js");
+const thinPropertyWorkerPath = resolve(root, "ops/cloudflare/resi-edge-thin-property-worker/worker.js");
+const heroMediaRefreshWorkerPath = resolve(root, "ops/cloudflare/resi-edge-hero-media-refresh-worker/worker.mjs");
+const heroMediaRefreshCanaryRunnerPath = resolve(root, "scripts/run_resi_edge_hero_media_refresh_canary.py");
+const apiHeroFreshnessSyncPath = resolve(root, "apps/api/src/platform/resi-edge/hero-freshness-sync.ts");
+const apiWranglerPath = resolve(root, "apps/api/wrangler.toml");
 const runnerPath = resolve(root, "scripts/run_resi_edge_upgrade.py");
+const processAuditorPath = resolve(root, "scripts/audit_resi_edge_rollout_process.py");
+const batchAuditorPath = resolve(root, "scripts/audit_resi_edge_rollout_batch.py");
 const mobileShellByteForecastPath = resolve(root, "scripts/forecast_resi_edge_mobile_shell_bytes.mjs");
 const mobileValidatorPath = resolve(root, "scripts/validate_resi_mobile_shell_contract.mjs");
 const generatorPath = resolve(root, "scripts/generate_resi_edge_assets.py");
 const uploaderPath = resolve(root, "scripts/upload_resi_edge_assets_to_r2.py");
 const deployAdapterPath = resolve(root, "scripts/resi_edge_deploy_adapter.py");
+const promoRecordSyncPath = resolve(root, "scripts/sync_resi_edge_promo_records.py");
+const topperConfigRecordBuilderPath = resolve(root, "scripts/build_resi_edge_topper_config_records.py");
+const zarazAnalyticsPackagePath = resolve(root, "scripts/apply_resi_zaraz_analytics_package.py");
 const releaseControlValidatorPath = resolve(root, "scripts/validate_resi_edge_release_control.py");
 const releaseTokensPath = resolve(root, "config/portfolio_resi_edge_stabilization/resi-edge-release-tokens.v1.json");
 const consentContractPath = resolve(root, "ops/cloudflare/shared/resi-consent-widget/contract.json");
@@ -31,12 +43,24 @@ function fail(message) {
 
 const runtime = readFileSync(runtimePath, "utf8");
 const worker = readFileSync(workerPath, "utf8");
+const centralTopperContract = JSON.parse(readFileSync(centralTopperContractPath, "utf8"));
+const centralTopperService = readFileSync(centralTopperServicePath, "utf8");
+const thinPropertyWorker = readFileSync(thinPropertyWorkerPath, "utf8");
+const heroMediaRefreshWorker = readFileSync(heroMediaRefreshWorkerPath, "utf8");
+const heroMediaRefreshCanaryRunner = readFileSync(heroMediaRefreshCanaryRunnerPath, "utf8");
+const apiHeroFreshnessSync = readFileSync(apiHeroFreshnessSyncPath, "utf8");
+const apiWrangler = readFileSync(apiWranglerPath, "utf8");
 const runner = readFileSync(runnerPath, "utf8");
+const processAuditor = readFileSync(processAuditorPath, "utf8");
+const batchAuditor = readFileSync(batchAuditorPath, "utf8");
 const mobileShellByteForecast = readFileSync(mobileShellByteForecastPath, "utf8");
 const mobileValidator = readFileSync(mobileValidatorPath, "utf8");
 const generator = readFileSync(generatorPath, "utf8");
 const uploader = readFileSync(uploaderPath, "utf8");
 const deployAdapter = readFileSync(deployAdapterPath, "utf8");
+const promoRecordSync = readFileSync(promoRecordSyncPath, "utf8");
+const topperConfigRecordBuilder = readFileSync(topperConfigRecordBuilderPath, "utf8");
+const zarazAnalyticsPackage = readFileSync(zarazAnalyticsPackagePath, "utf8");
 const releaseControlValidator = readFileSync(releaseControlValidatorPath, "utf8");
 const releaseTokens = JSON.parse(readFileSync(releaseTokensPath, "utf8"));
 const consentWidget = readFileSync(resolve(root, "ops/cloudflare/shared/resi-consent-widget/widget.mjs"), "utf8");
@@ -71,6 +95,120 @@ for (const needle of ["Apex West Midtown", "Now Offering", "(470)", "GA4AX"]) {
 
 if (!worker.includes("../shared/resi-edge-package/runtime.mjs")) {
   fail("Worker does not import the shared runtime");
+}
+if (
+  centralTopperContract.schema_version !== "resi_edge_central_topper_runtime_v1" ||
+  centralTopperContract.non_deviation_contract?.one_shared_topper_runtime !== true ||
+  centralTopperContract.non_deviation_contract?.property_specific_topper_scripts_allowed !== false ||
+  centralTopperContract.non_deviation_contract?.unversioned_fleet_hotload_allowed !== false ||
+  centralTopperContract.delivery_model?.production_default !== "bundled_until_mark_approves_central_canary" ||
+  centralTopperContract.edge_record_contract?.config_key_pattern !== "resi-edge-topper-config/<property-code>-<domain>/current.json" ||
+  centralTopperContract.edge_record_contract?.promo_key_pattern !== "resi-edge-promo/<property-code>-<domain>/current.json" ||
+  centralTopperContract.edge_record_contract?.hero_freshness_key_pattern !== "resi-edge-hero-freshness/<property-code>-<domain>/current.json" ||
+  centralTopperContract.edge_record_contract?.hero_media_state_key_pattern !== "resi-edge-media-state/<property-code>-<domain>/current.json" ||
+  centralTopperContract.edge_record_contract?.hero_media_refresh_queue !== "resi-edge-hero-media-refresh"
+) {
+  fail("Central topper contract must preserve the versioned shared runtime plus tokenized config/freshness record model");
+}
+if (
+  !apiWrangler.includes('crons = ["*/15 * * * *"]') ||
+  !apiWrangler.includes('binding = "RESI_EDGE_HERO_MEDIA_REFRESH_QUEUE"') ||
+  !apiWrangler.includes('queue = "resi-edge-hero-media-refresh"') ||
+  !apiWrangler.includes('RESI_EDGE_HERO_MEDIA_QUEUE_ENABLED = "false"') ||
+  !apiHeroFreshnessSync.includes("MEDIA_REFRESH_QUEUE_SCHEMA_VERSION") ||
+  !apiHeroFreshnessSync.includes("resi_edge_hero_media_refresh_queue.v1") ||
+  !apiHeroFreshnessSync.includes("edgeHeroMediaStateKey") ||
+  !apiHeroFreshnessSync.includes("baselineFor") ||
+  !apiHeroFreshnessSync.includes("RESI_EDGE_HERO_MEDIA_QUEUE_ENABLED") ||
+  !apiHeroFreshnessSync.includes("RESI_EDGE_HERO_MEDIA_REFRESH_QUEUE.send") ||
+  !apiHeroFreshnessSync.includes("shouldQueueMediaRefresh") ||
+  !apiHeroFreshnessSync.includes("cloudflare-images-canary") ||
+  !apiHeroFreshnessSync.includes("min_webp_quality: 8")
+) {
+  fail("Hero freshness sync must keep the 15-minute Cloudflare queue producer disabled by default and media-state aware");
+}
+if (
+  !heroMediaRefreshWorker.includes("resi_edge_hero_media_refresh_queue.v1") ||
+  !heroMediaRefreshWorker.includes("resi_edge_hero_media_state.v1") ||
+  !heroMediaRefreshWorker.includes("env.IMAGES") ||
+  !heroMediaRefreshWorker.includes("RESI_EDGE_HERO_MEDIA_REFRESH_MODE") ||
+  !heroMediaRefreshWorker.includes("RESI_EDGE_HERO_MEDIA_CANARY_ALLOWLIST") ||
+  !heroMediaRefreshWorker.includes("NonRetryableRefreshError") ||
+  !heroMediaRefreshWorker.includes("budgetQualityCandidates") ||
+  !heroMediaRefreshWorker.includes("candidatePrefix") ||
+  !heroMediaRefreshWorker.includes("candidate_readbacks") ||
+  !heroMediaRefreshWorker.includes("retryable: false") ||
+  !heroMediaRefreshWorker.includes("resi-edge-media-state/") ||
+  !heroMediaRefreshWorker.includes("resi-edge-media-refresh/_runs/") ||
+  !heroMediaRefreshWorker.includes("resi-edge-media-refresh/_candidates/") ||
+  !heroMediaRefreshWorker.includes("live_traffic_changed: false") ||
+  !heroMediaRefreshWorker.includes("message.retry") ||
+  !heroMediaRefreshWorker.includes("RESI_EDGE_ASSETS") ||
+  heroMediaRefreshWorker.includes("routes =") ||
+  heroMediaRefreshWorker.includes("DNS")
+) {
+  fail("Hero media refresh Worker must be a Cloudflare Images queue consumer with media-state/readback evidence and no live traffic ownership");
+}
+if (
+  !heroMediaRefreshCanaryRunner.includes("--apply") ||
+  !heroMediaRefreshCanaryRunner.includes("worker_config_for_mode") ||
+  !heroMediaRefreshCanaryRunner.includes("wrangler.{mode}.toml") ||
+  !heroMediaRefreshCanaryRunner.includes("deploy_worker(env, \"disabled\", out_dir=out_dir)") ||
+  !heroMediaRefreshCanaryRunner.includes("deploy_worker(env, \"canary\"") ||
+  !heroMediaRefreshCanaryRunner.includes("purge_queue(env, QUEUE_NAME)") ||
+  !heroMediaRefreshCanaryRunner.includes("purge_queue(env, DLQ_NAME)") ||
+  !heroMediaRefreshCanaryRunner.includes("cloudflare_post_message") ||
+  !heroMediaRefreshCanaryRunner.includes("read_r2_json") ||
+  !heroMediaRefreshCanaryRunner.includes("same_origin_readback") ||
+  !heroMediaRefreshCanaryRunner.includes("canary_passed") ||
+  !heroMediaRefreshCanaryRunner.includes("resolve_property_identity") ||
+  !heroMediaRefreshCanaryRunner.includes("build_runtime_env") ||
+  !heroMediaRefreshCanaryRunner.includes("npx_wrangler_prefix") ||
+  !heroMediaRefreshCanaryRunner.includes("live_traffic_changed") ||
+  !heroMediaRefreshCanaryRunner.includes("mutation_performed")
+) {
+  fail("Hero media refresh canary runner must stay dry-run-first, Keeper-backed, identity-governed, and apply-capable");
+}
+if (
+  !centralTopperService.includes("../shared/resi-edge-package/runtime.mjs") ||
+  !centralTopperService.includes("loadTopperConfig") ||
+  !centralTopperService.includes("x-vtr-topper-config-key") ||
+  !centralTopperService.includes("/__resi-edge/render/mobile-shell") ||
+  !centralTopperService.includes("renderMobileShell(request, manifest, promoReadout.promo)") ||
+  centralTopperService.includes("renderDesktopPassthrough(request, manifest)") ||
+  centralTopperService.includes("renderNativeContinuationResponse(request, manifest)") ||
+  centralTopperService.includes("return fetch(request)") ||
+  !centralTopperService.includes('service_role: "render_only"') ||
+  !centralTopperService.includes("centralized_topper: true")
+) {
+  fail("Central topper service must be render-only and must not own desktop, native continuation, or origin fallback traffic");
+}
+if (
+  !thinPropertyWorker.includes("../shared/resi-edge-package/runtime.mjs") ||
+  !thinPropertyWorker.includes("env.RESI_EDGE_TOPPER.fetch") ||
+  !thinPropertyWorker.includes("/__resi-edge/render/mobile-shell") ||
+  !thinPropertyWorker.includes("resi-edge-topper-config/") ||
+  !thinPropertyWorker.includes("isWordPressControlRequest") ||
+  !thinPropertyWorker.includes("originTransparent") ||
+  !thinPropertyWorker.includes("renderDesktopPassthrough(request, manifest)") ||
+  !thinPropertyWorker.includes("renderNativeContinuationResponse(request, manifest)") ||
+  !thinPropertyWorker.includes('property_worker_mode: "traffic_owner_render_delegate"') ||
+  !thinPropertyWorker.includes("x-vtr-topper-config-key") ||
+  !thinPropertyWorker.includes("centralized_topper: true")
+) {
+  fail("Centralized property Worker must own traffic/native/desktop paths and delegate only mobile shell rendering to the central service");
+}
+if (
+  !topperConfigRecordBuilder.includes("resi-edge-topper-config/") ||
+  !topperConfigRecordBuilder.includes("resi-edge-promo/") ||
+  !topperConfigRecordBuilder.includes("resi-edge-hero-freshness/") ||
+  !topperConfigRecordBuilder.includes("build_runtime_env") ||
+  !topperConfigRecordBuilder.includes("npx_wrangler_prefix") ||
+  !topperConfigRecordBuilder.includes("--upload") ||
+  !topperConfigRecordBuilder.includes("compact_shell_pill_v29_2026_08_20") ||
+  !topperConfigRecordBuilder.includes("286627304")
+) {
+  fail("Central topper config record builder must emit tokenized property records with promo/hero freshness keys and Keeper-backed optional upload");
 }
 if (!worker.includes("serveResiEdgeAsset") || !worker.includes("isResiEdgeAssetRequest")) {
   fail("Worker does not expose the canonical R2 asset route");
@@ -112,6 +250,27 @@ if (
   fail("Runtime must render differentiated Heap/Zaraz tracking attributes for all mobile shell/topper actions");
 }
 if (
+  !runtime.includes('emit("page_view"') ||
+  !runtime.includes('vtr_event_family:"page_lifecycle"') ||
+  !runtime.includes("vtr_resi_view_event:c[5]") ||
+  !runtime.includes("w.__vtrEdgeQueue=w.__vtrEdgeQueue||[]") ||
+  !runtime.includes("w.GA_MEASUREMENT_ID=w.GA_MEASUREMENT_ID||g") ||
+  !runtime.includes('w.gtag("config",g)') ||
+  !runtime.includes("w.vtrEdgeFlush=flush") ||
+  !runtime.includes("emit(c[5]") ||
+  !runtime.includes('vtr_event_family:"resi_edge_view"')
+) {
+  fail("Runtime must emit an explicit package-owned GA4 page_view before the Resi custom view event and queue Zaraz events until ready");
+}
+if (
+  !zarazAnalyticsPackage.includes('"ResiEdgePageview"') ||
+  !zarazAnalyticsPackage.includes('"value": "^page_view$"') ||
+  !zarazAnalyticsPackage.includes('"value": "page_view"') ||
+  !zarazAnalyticsPackage.includes('"firingTriggers": ["ResiEdgePageview"]')
+) {
+  fail("Zaraz analytics package must map package-owned page_view events to the GA4 pageview action without sending them as generic custom events");
+}
+if (
   !runtime.includes("function compactSameOriginUrl") ||
   !runtime.includes("function renderNavLinks(manifest)") ||
   !runtime.includes("manifest.mobile_shell.navigation?.links") ||
@@ -146,8 +305,20 @@ if (
   fail("Runtime desktop pass-through must use the canonical normalized origin request with browser-like navigation headers and no Cloudflare caching");
 }
 if (
+  !runtime.includes("googletagmanager\\.com\\/gtm\\.js") ||
+  !runtime.includes("/\\bGTM-[A-Z0-9]+\\b/i") ||
+  !runtime.includes("/\\bdataLayer\\b/i") ||
+  !runtime.includes("stripMatchingScriptBlocks(cleaned, (_attrs, body) => {")
+) {
+  fail("Runtime desktop pass-through must strip native GTM bootstrap scripts while preserving the Zaraz-owned analytics bridge");
+}
+if (
   !runner.includes("MOBILE_SHELL_BYTE_FORECAST") ||
   !runner.includes("MOBILE_SHELL_INITIAL_HTML_MAX_BYTES = 40_000") ||
+  !runner.includes("DESKTOP_PSI_TARGET = 90") ||
+  !runner.includes('"desktop_native_passthrough": DESKTOP_PSI_TARGET') ||
+  runner.includes('"desktop": "recorded_only_native_passthrough_not_blocking"') ||
+  !runner.includes('"below_target_scores_retry": True') ||
   !runner.includes("mobile_shell_byte_forecast") ||
   !runner.includes("--max-bytes") ||
   !runner.includes("existing_worker_no_delete") ||
@@ -175,6 +346,50 @@ if (
   fail("Runner must browser-prove Heap environment preservation, full manifest drawer nav, and differentiated mobile shell/topper event payloads");
 }
 if (
+  !runner.includes('EXPECTED_HEAP_APP_ID = "286627304"') ||
+  !runner.includes("REQUIRED_MOBILE_NAV_LABELS") ||
+  !runner.includes("promoted manifest must not retain draft-only field") ||
+  !runner.includes("analytics.ga4.measurement_id_status must declare a configured/Zaraz-owned state") ||
+  !runner.includes("analytics.heap.app_id must be production Heap app id") ||
+  !runner.includes("mobile_shell.navigation.links missing required labels") ||
+  !runner.includes("must not use the draft placeholder lato-regular.woff2 path") ||
+  !runner.includes("analytics.ahrefs.existing_project_id must be a numeric verified vanity project id") ||
+  !runner.includes("rollback.no_wordpress_mutation_required must be true for the Resi Edge package")
+) {
+  fail("Runner must include the promoted-manifest drift guard for stale draft fields, analytics ownership, Heap, nav, Ahrefs, and rollback");
+}
+if (!runner.includes('"--force-republish"') || !runner.includes('"republished"')) {
+  fail("Runner must force-republish canonical Zaraz analytics config and accept the republished status before live proof");
+}
+if (
+  !runner.includes("PROCESS_AUDITOR") ||
+  !runner.includes("BATCH_AUDITOR") ||
+  !runner.includes("batch_inventory_audit_passed") ||
+  !runner.includes("process_scenario_audit_passed") ||
+  !runner.includes("run_batch_inventory_audit") ||
+  !runner.includes("run_process_scenario_audit") ||
+  !runner.includes("run_dashboard_finalization") ||
+  !runner.includes("dashboard-finalization.json") ||
+  !runner.includes("phase-timings.json") ||
+  !runner.includes("phase_timings") ||
+  !processAuditor.includes("resi_edge_process_scenario_audit_v1") ||
+  !processAuditor.includes("draft_stage_retained") ||
+  !processAuditor.includes("stale_consent_version") ||
+  !processAuditor.includes("ga4_status_wordpress_owned") ||
+  !processAuditor.includes("wrong_heap_id") ||
+  !processAuditor.includes("incomplete_drawer_nav_reviews_missing") ||
+  !processAuditor.includes("bad_tour_url") ||
+  !processAuditor.includes("desktop_topper_allowed") ||
+  !processAuditor.includes("property_specific_variant_allowed") ||
+  !processAuditor.includes("hero_asset_not_same_origin_avif") ||
+  !batchAuditor.includes("resi_edge_batch_rollout_audit_v1") ||
+  !batchAuditor.includes("duplicate active production domain manifest") ||
+  !batchAuditor.includes("duplicate active production property-code manifest") ||
+  !batchAuditor.includes("release token canary_manifest is not an active production manifest")
+) {
+  fail("Runner must include the blocking batch inventory and process scenario audits for known rollout drift states");
+}
+if (
   !runtime.includes("resi-edge-release-tokens.v1.json") ||
   !runtime.includes("RESI_EDGE_RELEASE_TOKEN_VERSION") ||
   !runtime.includes("data-vtr-release-token") ||
@@ -184,6 +399,36 @@ if (
   !worker.includes("release_token_version")
 ) {
   fail("Runtime/worker do not consume and expose the canonical release token contract");
+}
+if (
+  !runtime.includes("EDGE_PROMO_RECORD_SCHEMA_VERSION") ||
+  !runtime.includes("EDGE_PROMO_RECORD_MAX_AGE_MS") ||
+  !runtime.includes("export function edgePromoRecordKey") ||
+  !runtime.includes("export async function loadEdgePromoRecord") ||
+  !runtime.includes("normalizeEdgePromoRecord") ||
+  !runtime.includes("propertyBannerSpecial") ||
+  !runtime.includes("manifest_fallback_missing_record") ||
+  !runtime.includes("edge_record_current") ||
+  !runtime.includes("edge_record_absent") ||
+  !runtime.includes("x-vtr-promo-state") ||
+  !runtime.includes("x-vtr-promo-source") ||
+  !worker.includes("loadEdgePromoRecord") ||
+  !worker.includes("promo_record") ||
+  !worker.includes("mobileShellHeaders(promoReadout)") ||
+  !worker.includes("renderMobileShell(request, manifest, promoReadout.promo)") ||
+  !runner.includes('startswith("manifest_fallback_")') ||
+  !runner.includes("manifest fallback is not allowed for live proof") ||
+  !promoRecordSync.includes("propertyBannerSpecial") ||
+  !promoRecordSync.includes("thirtylines_feed_snapshots") ||
+  !promoRecordSync.includes("edge_promo_record_key") ||
+  !promoRecordSync.includes('"--upload"') ||
+  !promoRecordSync.includes("build_runtime_env") ||
+  !promoRecordSync.includes("npx_wrangler_prefix") ||
+  !promoRecordSync.includes('"r2"') ||
+  !promoRecordSync.includes('"object"') ||
+  !promoRecordSync.includes('"put"')
+) {
+  fail("Runtime must read feed-backed promo records from edge storage and the sync tool must build/upload those records from Data Pond propertyBannerSpecial");
 }
 if (
   !runtime.includes('OFFICIAL_LBLE_SVG_PATH = "/assets/resi-edge-assets/shared/lble.svg"') ||
@@ -347,13 +592,26 @@ if (
   !deployAdapter.includes("RELEASE_TOKENS") ||
   !deployAdapter.includes("release-tokens.json") ||
   !deployAdapter.includes("UNASSIGNED_WORKER_SENTINELS") ||
+  !deployAdapter.includes('"not_yet_recorded"') ||
+  !deployAdapter.includes('return f"resi-edge-canonical-{slugify(domain)}"') ||
+  !deployAdapter.includes("STALE_ROUTE_OWNER_SENTINELS") ||
+  !deployAdapter.includes("remove_stale_sentinel_route") ||
   !deployAdapter.includes("selected_worker_name") ||
   !deployAdapter.includes('routing.get("existing_worker_script")') ||
   !deployAdapter.includes("def validate_deploy_bundle") ||
   !deployAdapter.includes("--validate-bundle") ||
-  !deployAdapter.includes("./resi-consent-widget/widget.mjs")
+  !deployAdapter.includes("./resi-consent-widget/widget.mjs") ||
+  !deployAdapter.includes("--topper-mode") ||
+  !deployAdapter.includes("topper_mode == \"centralized\"") ||
+  !deployAdapter.includes("THIN_PROPERTY_WORKER") ||
+  !deployAdapter.includes("CENTRAL_TOPPER_SERVICE") ||
+  !deployAdapter.includes("validate_centralized_apply_proof") ||
+  !deployAdapter.includes("latest-central-topper-local-proof.json") ||
+  !deployAdapter.includes('binding = "RESI_EDGE_TOPPER"') ||
+  !deployAdapter.includes('service = "resi-edge-topper-service"') ||
+  !deployAdapter.includes("Centralized property Worker must delegate mobile shell rendering to the central service")
 ) {
-  fail("Deploy adapter must prove generated bundle closure for shared runtime dependencies before live route work");
+  fail("Deploy adapter must prove generated bundle closure and canonical Worker naming before live route work");
 }
 if (
   releaseTokens.schema_version !== "resi_edge_release_tokens_v1" ||

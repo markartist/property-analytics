@@ -71,25 +71,25 @@
     "fonts": [
       {
         "family": "Montserrat",
-        "url": "https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/montserrat-ab105b20.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/montserrat-ab105b20.woff2",
         "weight": 400,
         "style": "normal"
       },
       {
         "family": "Montserrat",
-        "url": "https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/montserrat-a77dae9d.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/montserrat-a77dae9d.woff2",
         "weight": 600,
         "style": "normal"
       },
       {
         "family": "Montserrat",
-        "url": "https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/montserrat-67e78cf5.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/montserrat-67e78cf5.woff2",
         "weight": 700,
         "style": "normal"
       },
       {
         "family": "ms_madiregular",
-        "url": "https://thevinekyle.com/wp-content/themes/resi-child-theme/fonts/msmadi-regular-webfont.woff2",
+        "url": "/wp-content/themes/resi-child-theme/fonts/msmadi-regular-webfont.woff2",
         "weight": 400,
         "style": "normal"
       }
@@ -122,7 +122,7 @@
     },
     "hero": {
       "image_mobile": "/assets/resi-edge-assets/TX4EK/home/hero-mobile-750x1000.avif",
-      "source_image": "https://dam.getresi.co/28429/Vine_Hero_06-19-26.jpg",
+      "source_image": "https://dam.getresi.co/67405/conversions/Vine_Hero_08-31-26-full.jpg",
       "tm_allowed": false,
       "headline": "1 and 2 Bedroom Apartments in Kyle, TX",
       "headline_lines": [

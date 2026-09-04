@@ -80,6 +80,8 @@
     "asset_budget_manifest_present",
     "asset_generation_upload_passed",
     "static_package_validation_passed",
+    "batch_inventory_audit_passed",
+    "process_scenario_audit_passed",
     "deploy_bundle_closure_verified",
     "cloudflare_route_interception_probe_passed",
     "cloudflare_package_health_probe_passed",

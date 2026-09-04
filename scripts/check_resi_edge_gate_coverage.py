@@ -14,6 +14,8 @@ CONTRACT_PATH = REPO_ROOT / "ops/cloudflare/shared/resi-edge-package/contract.js
 CONSENT_CONTRACT_PATH = REPO_ROOT / "ops/cloudflare/shared/resi-consent-widget/contract.json"
 STANDARDS_REGISTRY_PATH = REPO_ROOT / "ops/cloudflare/shared/resi-standards/registry.json"
 RUNNER_PATH = REPO_ROOT / "scripts/run_resi_edge_upgrade.py"
+PROCESS_AUDITOR_PATH = REPO_ROOT / "scripts/audit_resi_edge_rollout_process.py"
+BATCH_AUDITOR_PATH = REPO_ROOT / "scripts/audit_resi_edge_rollout_batch.py"
 MANIFEST_DIR = REPO_ROOT / "config/portfolio_resi_edge_stabilization"
 ASSET_GENERATOR_PATH = REPO_ROOT / "scripts/generate_resi_edge_assets.py"
 ASSET_UPLOADER_PATH = REPO_ROOT / "scripts/upload_resi_edge_assets_to_r2.py"
@@ -30,6 +32,8 @@ def main() -> int:
     consent_contract = json.loads(CONSENT_CONTRACT_PATH.read_text())
     standards_registry = json.loads(STANDARDS_REGISTRY_PATH.read_text())
     runner = RUNNER_PATH.read_text()
+    process_auditor = PROCESS_AUDITOR_PATH.read_text()
+    batch_auditor = BATCH_AUDITOR_PATH.read_text()
     generator = ASSET_GENERATOR_PATH.read_text()
     uploader = ASSET_UPLOADER_PATH.read_text()
     deploy_adapter = DEPLOY_ADAPTER_PATH.read_text()
@@ -68,6 +72,49 @@ def main() -> int:
     if "EXPECTED_HEAP_MODE = \"interaction_only_queue_v6_input_only_cs_verify_home_204\"" not in runner:
         print("Resi Edge gate coverage failed. Runner does not preserve Heap v6 interaction-only mode.")
         return 1
+    process_audit_terms = [
+        "PROCESS_AUDITOR",
+        "BATCH_AUDITOR",
+        "batch_inventory_audit_passed",
+        "process_scenario_audit_passed",
+        "run_batch_inventory_audit",
+        "run_process_scenario_audit",
+        "run_dashboard_finalization",
+        "dashboard-finalization.json",
+        "phase-timings.json",
+        "phase_timings",
+    ]
+    for term in process_audit_terms:
+        if term not in runner:
+            print(f"Resi Edge gate coverage failed. Runner does not enforce the process scenario audit term: {term}")
+            return 1
+    process_auditor_terms = [
+        "draft_stage_retained",
+        "stale_consent_version",
+        "ga4_status_wordpress_owned",
+        "wrong_heap_id",
+        "incomplete_drawer_nav_reviews_missing",
+        "bad_tour_url",
+        "desktop_topper_allowed",
+        "property_specific_variant_allowed",
+        "hero_asset_not_same_origin_avif",
+    ]
+    for term in process_auditor_terms:
+        if term not in process_auditor:
+            print(f"Resi Edge gate coverage failed. Process scenario audit is missing required drift scenario: {term}")
+            return 1
+    batch_auditor_terms = [
+        "resi_edge_batch_rollout_audit_v1",
+        "duplicate active production domain manifest",
+        "duplicate active production property-code manifest",
+        "filename does not match target.domain",
+        "release token canary_manifest is not an active production manifest",
+        "rollout register property",
+    ]
+    for term in batch_auditor_terms:
+        if term not in batch_auditor:
+            print(f"Resi Edge gate coverage failed. Batch rollout audit is missing required inventory guard: {term}")
+            return 1
 
     if "CONSENT_CONTRACT_PATH" not in runner or "EXPECTED_CONSENT_WIDGET_VERSION" not in runner:
         print("Resi Edge gate coverage failed. Runner does not load the shared consent widget contract.")

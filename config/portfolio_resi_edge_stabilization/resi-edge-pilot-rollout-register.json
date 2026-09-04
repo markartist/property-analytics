@@ -177,7 +177,7 @@
       "id": "townestoneat359-com",
       "last_live_proof_date": "2026-08-13",
       "live_evidence": "reports/resi_edge_performance/08-09-2026/townestoneat359-com/apply-20260814T000535Z",
-      "manifest": "config/portfolio_resi_edge_stabilization/townestoneat359-com-v2-canary.manifest.json",
+      "manifest": "config/portfolio_resi_edge_stabilization/townestoneat359-com.manifest.json",
       "mobile_psi": 100,
       "mobile_state": "topper_live_proven_token_v2_canary",
       "next_action": "Active token v2 canary. Shared token changes must canary here first, then promote only through plan -> stage -> apply --require-live-proof with explicit evidence.",

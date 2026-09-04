@@ -88,6 +88,35 @@ export type PsiLaunchTarget = {
   capturedAt: string;
 };
 
+export type OptimizedProof = PsiLaunchTarget & {
+  evidencePath: string;
+  psiEvidencePath?: string;
+  runtimeVersion: string;
+  gateSummary: {
+    total?: number;
+    passed?: number;
+    failed?: number;
+    blocked?: number;
+    not_run?: number;
+    not_applicable?: number;
+  };
+};
+
+export type AnalyticsHygiene = {
+  color: SignalColor;
+  label: string;
+  detail: string;
+  sourceHeapIds: string[];
+  oldHeapPresent: boolean;
+  expectedHeapPresent: boolean;
+  dualHeapPresent: boolean;
+  heapDebugTrue: boolean;
+  browserHeapIds: string[];
+  browserOldHeapPresent: boolean | null;
+  browserExpectedHeapPresent: boolean | null;
+  clean: boolean;
+};
+
 export type LaunchProperty = {
   propertyCode: string;
   propertyName: string;
@@ -106,6 +135,12 @@ export type LaunchProperty = {
   organic: OrganicTrendSummary;
   psi: PsiTrendSummary;
   psiLaunchTargets: PsiLaunchTarget[];
+  optimizedProof: OptimizedProof;
+  analyticsHygiene: AnalyticsHygiene;
+  heroFreshness: LaunchSignal & {
+    status: string;
+    recommendedAction: string;
+  };
   domain: LaunchSignal;
   routing: LaunchSignal;
   indexing: LaunchSignal;
@@ -153,6 +188,7 @@ export type LaunchSnapshot = {
     freshPsiPropertiesCompleted: number;
     freshPsiLatestDate: string;
     finalVanityPsiStatus: string;
+    optimizedProofProperties: number;
     vanityQaGreen: number;
     vanityQaYellow: number;
     vanityQaRed: number;
@@ -169,6 +205,27 @@ export type LaunchSnapshot = {
     vanityQaLatestDate: string;
     vanityQaEvidencePath: string | null;
     promoBannerStatus: string;
+    analyticsHygieneStatus: string;
+    analyticsHygieneClean: number;
+    analyticsHygieneSourceChecked: number;
+    analyticsHygieneOldHeapPresent: number;
+    analyticsHygieneExpectedHeapPresent: number;
+    analyticsHygieneDualHeapPresent: number;
+    analyticsHygieneDebugTrue: number;
+    analyticsHygieneBrowserChecked: number;
+    analyticsHygieneBrowserOldHeapPresent: number;
+    analyticsHygieneBrowserExpectedHeapPresent: number;
+    analyticsHygieneExpectedHeapId: string;
+    analyticsHygieneOldHeapId: string;
+    analyticsHygieneEvidencePath: string | null;
+    heroFreshnessStatus: string;
+    heroFreshnessChecked: number;
+    heroFreshnessCurrent: number;
+    heroFreshnessRefreshNeeded: number;
+    heroFreshnessSourceMissing: number;
+    heroFreshnessSourceError: number;
+    heroFreshnessLatestDate: string;
+    heroFreshnessEvidencePath: string | null;
   };
   properties: LaunchProperty[];
 };

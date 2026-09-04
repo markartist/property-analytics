@@ -1,8 +1,10 @@
 export const RESI_EDGE_PACKAGE_ID = "resi-edge-canonical-upgrade-package";
-export const RESI_EDGE_RUNTIME_VERSION = "2026-08-20.shell-payload-optimizer-v1";
+export const RESI_EDGE_RUNTIME_VERSION = "2026-08-31.edge-promo-record-v1";
 export const CONTENTSQUARE_VERIFY_SUPPRESS_PATH = "/?vtr_cs_verify_suppressed=1";
 export const OFFICIAL_LBLE_SVG_PATH = "/assets/resi-edge-assets/shared/lble.svg";
 export const SHARED_LBLE_TITLE_TEXT = "Live Better. Live Easy.";
+export const EDGE_PROMO_RECORD_SCHEMA_VERSION = "resi_edge_promo_record.v1";
+export const EDGE_PROMO_RECORD_MAX_AGE_MS = 36 * 60 * 60 * 1000;
 
 import releaseTokens from "../../../../config/portfolio_resi_edge_stabilization/resi-edge-release-tokens.v1.json";
 import { renderZarazConsentPillScript } from "../resi-consent-widget/widget.mjs";
@@ -178,6 +180,126 @@ function promoIsPresent(promo) {
   );
 }
 
+function cleanPromoText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function promoRecordSource(record) {
+  const source = record?.source || {};
+  const system = cleanPromoText(source.system) || "thirtylines_feed_snapshots";
+  const field = cleanPromoText(source.field) || "propertyBannerSpecial";
+  const snapshot = cleanPromoText(source.snapshot_date || source.fetched_at || record?.generated_at);
+  return snapshot ? `edge_record:${system}:${field}:${snapshot}` : `edge_record:${system}:${field}`;
+}
+
+export function edgePromoRecordKey(manifest) {
+  const code = slug(manifest?.target?.source_property_code || manifest?.target?.property_code || "unknown");
+  const domain = slug(manifest?.target?.domain || "unknown");
+  return `resi-edge-promo/${code}-${domain}/current.json`;
+}
+
+export function normalizeEdgePromoRecord(record, manifest) {
+  if (!record || typeof record !== "object") return null;
+  const base = manifest?.mobile_shell?.promo || {};
+  const special = cleanPromoText(
+    record.propertyBannerSpecial ||
+      record.property_banner_special ||
+      record.banner_special ||
+      record.title ||
+      record.bar_label
+  );
+  const source = promoRecordSource(record);
+  const primaryLabel = cleanPromoText(record.primary_cta_label) || cleanPromoText(base.primary_cta_label) || "See Availability";
+  const primaryUrl = cleanPromoText(record.primary_cta_url) || cleanPromoText(base.primary_cta_url) || "/apartments/";
+  const secondaryLabel = cleanPromoText(record.secondary_cta_label) || cleanPromoText(base.secondary_cta_label) || "Contact Us";
+  const secondaryUrl = cleanPromoText(record.secondary_cta_url) || cleanPromoText(base.secondary_cta_url) || "/contact/";
+
+  if (record.present === false || !special) {
+    return {
+      ...base,
+      present: false,
+      source,
+      bar_label: "",
+      title: "",
+      body: "",
+      primary_cta_label: primaryLabel,
+      primary_cta_url: primaryUrl,
+      secondary_cta_label: secondaryLabel,
+      secondary_cta_url: secondaryUrl,
+    };
+  }
+
+  const title = cleanPromoText(record.title) || special;
+  return {
+    ...base,
+    present: true,
+    source,
+    bar_label: cleanPromoText(record.bar_label) || title,
+    title,
+    body: cleanPromoText(record.body) || title,
+    disclaimer: cleanPromoText(record.disclaimer) || cleanPromoText(base.disclaimer) || "*Restrictions apply. Contact us for details.",
+    primary_cta_label: primaryLabel,
+    primary_cta_url: primaryUrl,
+    secondary_cta_label: secondaryLabel,
+    secondary_cta_url: secondaryUrl,
+  };
+}
+
+function promoRecordTime(record) {
+  const source = record?.source || {};
+  const raw = source.fetched_at || source.snapshot_date || record?.generated_at;
+  const parsed = Date.parse(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function promoReadout(status, manifest, fields = {}) {
+  const fallback = manifest?.mobile_shell?.promo || { present: false, source: "manifest_missing" };
+  return {
+    key: edgePromoRecordKey(manifest),
+    status,
+    promo: fields.promo || fallback,
+    source: fields.source || "manifest_fallback",
+    fetched_at: fields.fetched_at || "",
+    age_ms: fields.age_ms ?? null,
+    error: fields.error || "",
+  };
+}
+
+export async function loadEdgePromoRecord(env, manifest) {
+  const key = edgePromoRecordKey(manifest);
+  if (!env?.RESI_EDGE_ASSETS) {
+    return promoReadout("manifest_fallback_no_binding", manifest, { key });
+  }
+  try {
+    const object = await env.RESI_EDGE_ASSETS.get(key);
+    if (!object) {
+      return promoReadout("manifest_fallback_missing_record", manifest, { key });
+    }
+    const record = JSON.parse(await object.text());
+    const promo = normalizeEdgePromoRecord(record, manifest);
+    if (!promo) {
+      return promoReadout("manifest_fallback_invalid_record", manifest, { key, error: "invalid promo record" });
+    }
+    const recordTime = promoRecordTime(record);
+    const age = recordTime === null ? null : Math.max(0, Date.now() - recordTime);
+    const stale = age === null || age > EDGE_PROMO_RECORD_MAX_AGE_MS;
+    return {
+      key,
+      status: stale ? "edge_record_stale" : promo.present ? "edge_record_current" : "edge_record_absent",
+      promo,
+      source: promo.source,
+      fetched_at: cleanPromoText(record?.source?.fetched_at || record?.source?.snapshot_date || record?.generated_at),
+      age_ms: age,
+      error: "",
+    };
+  } catch (error) {
+    return promoReadout("manifest_fallback_read_error", manifest, {
+      key,
+      error: error?.message || "promo record read failed",
+    });
+  }
+}
+
 function linkAction(label, href) {
   const low = `${label || ""} ${href || ""}`.toLowerCase();
   if (low.includes("find your home") || low.includes("see availability") || String(href || "").includes("/apartments")) return "find_your_home_click";
@@ -324,6 +446,7 @@ function contentTypeForAsset(pathOrUrl) {
   if (lower.endsWith(".webp")) return "image/webp";
   if (lower.endsWith(".svg")) return "image/svg+xml; charset=utf-8";
   if (lower.endsWith(".woff2")) return "font/woff2";
+  if (lower.endsWith(".json")) return "application/json; charset=utf-8";
   if (lower.endsWith(".png")) return "image/png";
   if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
   return "application/octet-stream";
@@ -335,9 +458,37 @@ export function isResiEdgeAssetRequest(url) {
 
 export function isNativeAssetRepairRequest(url) {
   return (
+    isNativeDamAssetProxyRequest(url) ||
     /^\/wp-content\/themes\/resi-child-theme\/fontsgotham-(book|medium)-webfont\.woff2$/i.test(url.pathname) ||
     isYooThemeUploadThumbnailRepairRequest(url)
   );
+}
+
+function isNativeDamAssetProxyRequest(url) {
+  return url.pathname === "/__resi-edge/native-dam-asset" && isSafeNativeDamAssetUrl(url.searchParams.get("src"));
+}
+
+function isSafeNativeDamAssetUrl(value) {
+  try {
+    const source = new URL(String(value || ""));
+    return (
+      source.protocol === "https:" &&
+      source.hostname === "dam.getresi.co" &&
+      /^\/[^"'<>\\\s]+\.(?:png|jpe?g|webp|avif|svg)$/i.test(source.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function nativeDamAssetProxyPath(value) {
+  return `/__resi-edge/native-dam-asset?src=${encodeURIComponent(value)}`;
+}
+
+function rewriteNativeDamAssetUrls(html) {
+  return String(html || "").replace(/https:\/\/dam\.getresi\.co\/[^"'<>\\)\s]+/gi, (match) => (
+    isSafeNativeDamAssetUrl(match) ? nativeDamAssetProxyPath(match) : match
+  ));
 }
 
 function isSafeUploadSrc(value) {
@@ -354,6 +505,30 @@ function isYooThemeUploadThumbnailRepairRequest(url) {
 export async function serveNativeAssetRepair(request) {
   const url = new URL(request.url);
   const repaired = new URL(request.url);
+  if (isNativeDamAssetProxyRequest(url)) {
+    const sourceUrl = url.searchParams.get("src");
+    const sourceHeaders = new Headers(request.headers);
+    sourceHeaders.delete("host");
+    sourceHeaders.set("accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
+    const originResponse = await fetch(new Request(sourceUrl, {
+      method: request.method,
+      headers: sourceHeaders,
+      redirect: "follow",
+    }), {
+      cf: { cacheEverything: true, cacheTtl: 604800 },
+    });
+    const headers = new Headers(originResponse.headers);
+    headers.delete("set-cookie");
+    headers.set("content-type", headers.get("content-type") || contentTypeForAsset(sourceUrl));
+    headers.set("cache-control", "public, max-age=604800, stale-while-revalidate=86400");
+    headers.set("access-control-allow-origin", "*");
+    headers.set("x-vtr-native-asset-repair", "dam-proxy");
+    return new Response(request.method === "HEAD" ? null : originResponse.body, {
+      status: originResponse.status,
+      statusText: originResponse.statusText,
+      headers,
+    });
+  }
   if (isYooThemeUploadThumbnailRepairRequest(url)) {
     repaired.pathname = `/${url.searchParams.get("src")}`;
     repaired.search = "";
@@ -519,23 +694,23 @@ export function serveLlmsTxt(request, manifest) {
 
 function renderAnalyticsScript(manifest, surface = "mobile_topper", viewEvent = "edge_mobile_topper_view") {
   const heap = manifest.analytics?.heap || {};
-  const payload = JSON.stringify({
-    site: manifest.target.domain,
-    propertyCode: manifest.target.source_property_code,
-    propertyName: manifest.target.property_name,
-    communityId: manifest.target.community_id,
+  const ga4 = manifest.analytics?.ga4 || {};
+  const payload = JSON.stringify([
+    manifest.target.domain,
+    manifest.target.source_property_code,
+    manifest.target.property_name,
+    manifest.target.community_id,
     surface,
     viewEvent,
-    heap: {
+    {
       owner: heap.owner || "cloudflare_zaraz",
       appId: heap.app_id || "",
       mode: heap.mode || "",
       passiveTimerAllowed: heap.passive_timer_allowed === true,
-      packageId: RESI_EDGE_PACKAGE_ID,
-      runtimeVersion: RESI_EDGE_RUNTIME_VERSION,
     },
-  });
-  return `<script data-vtr-edge-analytics="1" data-vtr-heap-environment="1">(function(w,d){var c=${payload},h=c.heap||{};w.__vtrHeapEnvironment=Object.assign({},w.__vtrHeapEnvironment||{},h);w.HEAP_APP_ID=w.HEAP_APP_ID||h.appId;w.HEAP_ENVIRONMENT=w.HEAP_ENVIRONMENT||"production";w.HEAP_MODE=w.HEAP_MODE||h.mode;if(typeof w.HEAP_JS_DEBUG==="undefined")w.HEAP_JS_DEBUG=false;w.dataLayer=w.dataLayer||[];function clean(v){return String(v||"").replace(/\\s+/g," ").trim()}function elementPayload(el){var ds=el&&el.dataset?el.dataset:{},body=d.body||{};var label=clean(ds.vtrLabel||(el&&el.getAttribute&&el.getAttribute("aria-label"))||(el&&el.textContent)||"");var href=ds.vtrHref||(el&&el.getAttribute&&el.getAttribute("href"))||"";var path="",host="";try{if(href){var u=new URL(href,w.location.href);path=u.pathname;host=u.host}}catch(e){}return{vtr_action:ds.vtrAction||"",vtr_surface:ds.vtrSurface||c.surface,vtr_element:ds.vtrElement||"",vtr_destination:ds.vtrDestination||"",vtr_label:label,cta_label:label,cta_href:href,link_url:href,link_path:path,link_host:host,vtr_source_code:ds.vtrSourceCode||(body.getAttribute&&body.getAttribute("data-source-code"))||"",vtr_phone_source:ds.vtrPhoneSource||(body.getAttribute&&body.getAttribute("data-phone-source"))||"",vtr_phone_number:ds.vtrPhoneNumber||(body.getAttribute&&body.getAttribute("data-phone-number"))||""}}function actionFor(el,p){var href=p.cta_href||"",low=(p.cta_label+" "+href).toLowerCase();return p.vtr_action||((low.indexOf("find your home")!==-1||low.indexOf("see availability")!==-1||href.indexOf("/apartments")!==-1)?"find_your_home_click":(href.indexOf("scheduleTour")!==-1||low.indexOf("tour")!==-1)?"schedule_tour_click":(href.indexOf("createPipelineApplication")!==-1||low.indexOf("apply")!==-1)?"apply_now_click":href.indexOf("tel:")===0?"phone_click":low.indexOf("special")!==-1?"promo_cta_click":"mobile_nav_link_click")}function emit(name,data){var p=Object.assign({event:name,vtr_surface:c.surface,vtr_site:c.site,property_code:c.propertyCode,property_name:c.propertyName,community_id:c.communityId,page_url:w.location.href,page_path:w.location.pathname},data||{});w.dataLayer.push(p);if(w.zaraz&&typeof w.zaraz.track==="function"){try{w.zaraz.track(name,p)}catch(e){}}}function afterFirstPaint(fn){if("requestIdleCallback"in w)w.requestIdleCallback(fn,{timeout:2500});else w.setTimeout(fn,1800)}w.vtrEdgeTrack=emit;w.vtrEdgeElementPayload=elementPayload;afterFirstPaint(function(){emit(c.viewEvent)});d.addEventListener("click",function(e){var tracked=e.target&&e.target.closest?e.target.closest('[data-vtr-track="click"]'):null;if(tracked){var p=elementPayload(tracked);emit(actionFor(tracked,p),p);return}var el=e.target&&e.target.closest?e.target.closest("a[href],button"):null;if(!el)return;var fallback=elementPayload(el);var a=actionFor(el,fallback);if(a!=="mobile_nav_link_click")emit(a,fallback)},{passive:true});})(window,document);</script>`;
+    ga4.measurement_id || "",
+  ]);
+  return `<script data-vtr-edge-analytics="1" data-vtr-heap-environment="1">(function(w,d){var c=${payload},h=c[6]||{},g=c[7]||"",q=w.__vtrEdgeQueue=w.__vtrEdgeQueue||[];w.__vtrHeapEnvironment=Object.assign({},w.__vtrHeapEnvironment||{},h);w.HEAP_APP_ID=w.HEAP_APP_ID||h.appId;w.HEAP_ENVIRONMENT=w.HEAP_ENVIRONMENT||"production";w.HEAP_MODE=w.HEAP_MODE||h.mode;if(typeof w.HEAP_JS_DEBUG==="undefined")w.HEAP_JS_DEBUG=false;w.dataLayer=w.dataLayer||[];if(g){w.GA_MEASUREMENT_ID=w.GA_MEASUREMENT_ID||g;if(typeof w.gtag!=="function")w.gtag=function(){w.dataLayer.push(arguments)};var hasGa=w.dataLayer.some(function(a){return Array.isArray(a)&&a[0]==="config"&&a[1]===g});if(!hasGa){w.gtag("js",new Date());w.gtag("config",g)}}function clean(v){return String(v||"").replace(/\\s+/g," ").trim()}function ep(el){var ds=el&&el.dataset?el.dataset:{},body=d.body||{};var label=clean(ds.vtrLabel||(el&&el.getAttribute&&el.getAttribute("aria-label"))||(el&&el.textContent)||"");var href=ds.vtrHref||(el&&el.getAttribute&&el.getAttribute("href"))||"";var path="",host="";try{if(href){var u=new URL(href,w.location.href);path=u.pathname;host=u.host}}catch(e){}return{vtr_action:ds.vtrAction||"",vtr_surface:ds.vtrSurface||c[4],vtr_element:ds.vtrElement||"",vtr_destination:ds.vtrDestination||"",vtr_label:label,cta_label:label,cta_href:href,link_url:href,link_path:path,link_host:host,vtr_source_code:ds.vtrSourceCode||(body.getAttribute&&body.getAttribute("data-source-code"))||"",vtr_phone_source:ds.vtrPhoneSource||(body.getAttribute&&body.getAttribute("data-phone-source"))||"",vtr_phone_number:ds.vtrPhoneNumber||(body.getAttribute&&body.getAttribute("data-phone-number"))||""}}function actionFor(el,p){var href=p.cta_href||"",low=(p.cta_label+" "+href).toLowerCase();return p.vtr_action||((low.indexOf("find your home")!==-1||low.indexOf("see availability")!==-1||href.indexOf("/apartments")!==-1)?"find_your_home_click":(href.indexOf("scheduleTour")!==-1||low.indexOf("tour")!==-1)?"schedule_tour_click":(href.indexOf("createPipelineApplication")!==-1||low.indexOf("apply")!==-1)?"apply_now_click":href.indexOf("tel:")===0?"phone_click":low.indexOf("special")!==-1?"promo_cta_click":"mobile_nav_link_click")}function base(data){return Object.assign({vtr_surface:c[4],vtr_site:c[0],property_code:c[1],property_name:c[2],community_id:c[3],page_url:w.location.href,page_path:w.location.pathname},data||{})}function send(name,p){if(w.zaraz&&typeof w.zaraz.track==="function"){try{w.zaraz.track(name,p);return true}catch(e){}}return false}function flush(){if(!w.zaraz||typeof w.zaraz.track!=="function")return false;while(q.length){var item=q.shift();send(item.name,item.payload)}return true}function emit(name,data){var p=base(data);p.event=name;w.dataLayer.push(p);if(!send(name,p)){q.push({name:name,payload:p});if(q.length>25)q.shift()}}function afterFirstPaint(fn){if("requestIdleCallback"in w)w.requestIdleCallback(fn,{timeout:2500});else w.setTimeout(fn,1800)}w.vtrEdgeTrack=emit;w.vtrEdgeElementPayload=ep;w.vtrEdgeFlush=flush;var tries=0,t=w.setInterval(function(){tries+=1;if(flush()||tries>40)w.clearInterval(t)},250);w.addEventListener("load",function(){setTimeout(flush,0)},{once:true});afterFirstPaint(function(){emit("page_view",{page_title:d.title||"",page_location:w.location.href,page_referrer:d.referrer||"",vtr_event_family:"page_lifecycle",vtr_resi_view_event:c[5]});emit(c[5],{vtr_event_family:"resi_edge_view"});flush()});d.addEventListener("click",function(e){var tracked=e.target&&e.target.closest?e.target.closest('[data-vtr-track="click"]'):null;if(tracked){var p=ep(tracked);emit(actionFor(tracked,p),p);return}var el=e.target&&e.target.closest?e.target.closest("a[href],button"):null;if(!el)return;var fallback=ep(el);var a=actionFor(el,fallback);if(a!=="mobile_nav_link_click")emit(a,fallback)},{passive:true});})(window,document);</script>`;
 }
 
 function renderBehaviorScript(hasPromo = true) {
@@ -556,8 +731,6 @@ function renderHeapEnvironmentScript(manifest) {
     appId: heap.app_id || "",
     mode: heap.mode || "",
     passiveTimerAllowed: heap.passive_timer_allowed === true,
-    packageId: RESI_EDGE_PACKAGE_ID,
-    runtimeVersion: RESI_EDGE_RUNTIME_VERSION,
   });
   return `<script data-vtr-heap-environment="1">(function(w){var c=${payload};w.__vtrHeapEnvironment=Object.assign({},w.__vtrHeapEnvironment||{},c);w.HEAP_APP_ID=w.HEAP_APP_ID||c.appId;w.HEAP_ENVIRONMENT=w.HEAP_ENVIRONMENT||"production";w.HEAP_MODE=w.HEAP_MODE||c.mode;if(typeof w.HEAP_JS_DEBUG==="undefined")w.HEAP_JS_DEBUG=false;})(window);</script>`;
 }
@@ -589,7 +762,7 @@ function continuationHref(request, manifest) {
 }
 
 function renderContinuationShell(request, manifest) {
-  return `<section class="native-continuation" data-vtr-native-continuation data-native-continuation-state="idle" aria-label="Native site continuation"><iframe class="native-continuation-frame" title="${escapeAttr(manifest.target.property_name)} native site continuation" loading="lazy" data-src="${escapeAttr(continuationHref(request, manifest))}" hidden></iframe></section>`;
+  return `<section class="native-continuation" data-vtr-native-continuation data-native-continuation-state="idle" aria-label="Native site continuation"><iframe class="native-continuation-frame" title="Native site continuation" loading="lazy" data-src="${escapeAttr(continuationHref(request, manifest))}" hidden></iframe></section>`;
 }
 
 function renderContinuationLoader() {
@@ -631,11 +804,11 @@ function renderContentBlocks(manifest) {
     .join("");
 }
 
-export function renderMobileShell(request, manifest) {
+export function renderMobileShell(request, manifest, promoOverride = null) {
   const phone = currentPhone(request, manifest);
   const phoneHref = cleanTel(phone.phone);
   const hero = manifest.mobile_shell.hero;
-  const promo = manifest.mobile_shell.promo;
+  const promo = promoOverride || manifest.mobile_shell.promo;
   const hasPromo = promoIsPresent(promo);
   const promoBarLabel = promo?.bar_label || promo?.title;
   const rating = manifest.mobile_shell.reviews;
@@ -671,13 +844,21 @@ export function renderMobileShell(request, manifest) {
   const promoPrimaryHref = pathOrAbsolute(promo?.primary_cta_url, manifest);
   const promoSecondaryHref = pathOrAbsolute(promo?.secondary_cta_url, manifest);
   const heroPrimaryHref = pathOrAbsolute(hero.primary_cta_url, manifest);
-  const navTourHref = pathOrAbsolute(nav.tour_url || "#", manifest, "#");
+  const hasTour = nav.tour_enabled !== false && Boolean(String(nav.tour_url || "").trim());
+  const bodyClass = [hasPromo ? "" : "no-promo", hasTour ? "" : "no-tour"].filter(Boolean).join(" ");
+  const navTourHref = hasTour ? pathOrAbsolute(nav.tour_url, manifest, "#") : "";
   const navApplyHref = pathOrAbsolute(nav.apply_url || "#", manifest, "#");
   const phoneTracking = {
     "data-vtr-source-code": sourceCode,
     "data-vtr-phone-source": phone.source || sourceCode,
     "data-vtr-phone-number": phone.phone,
   };
+  const headerTourCta = hasTour
+    ? `<a class="tour" href="${escapeAttr(navTourHref)}" ${trackingAttrs("schedule_tour_click", "mobile_header", "header_tour", "Tour", navTourHref)}>Tour</a>`
+    : "";
+  const drawerTourCta = hasTour
+    ? `<a href="${escapeAttr(navTourHref)}" ${trackingAttrs("schedule_tour_click", "mobile_drawer", "drawer_tour", "Tour", navTourHref)}>Tour</a>`
+    : "";
 
   const shellHtml = `<!doctype html>
 <html lang="en" data-vtr-edge-topper="canonical" data-vtr-package="${RESI_EDGE_RUNTIME_VERSION}" data-vtr-release-token="${RESI_EDGE_RELEASE_TOKEN_VERSION}">
@@ -697,7 +878,7 @@ ${renderFontFaces(manifest)}
 :root{${renderThemeVars(manifest)};--body-font:${bodyFont};--title-font:${titleFont};--heading-font:${headingFont};--white:#fff;--quill:#D6D6D2;--shadow:rgba(21,40,75,.22)}
 *{box-sizing:border-box}html{font-size:18px;background:#fff;color:var(--body-text)}body{margin:0;background:#fff;color:var(--body-text);font-family:var(--body-font),Arial,sans-serif;font-size:18px;font-weight:400;line-height:1.625;text-rendering:optimizeLegibility}a{color:inherit;text-decoration:none}button{font:inherit}img{max-width:100%;height:auto;display:block}.drawer-open{overflow:hidden}
 .promo-wrap{position:relative;z-index:1100}.promo{width:100%;height:var(--promo-bar-height);border:0;border-radius:0;background:var(--promo-bg);color:var(--promo-text);display:flex;align-items:center;justify-content:center;gap:10px;padding:0 18px;font-size:clamp(15px,4.35vw,var(--promo-font-size));font-weight:var(--promo-font-weight);line-height:1.1;letter-spacing:var(--promo-letter-spacing);text-transform:var(--promo-text-transform);text-align:center;white-space:nowrap;overflow:hidden}.promo-label{display:block;min-width:0;white-space:nowrap;overflow:hidden}.promo svg{flex:0 0 auto;width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none;transition:transform .15s ease}.promo[aria-expanded="true"] svg{transform:rotate(180deg)}.promo-drop{position:absolute;top:var(--promo-bar-height);left:0;width:100%;z-index:1020;background:var(--promo-surface);color:var(--promo-panel-text);padding:20px 20px 22px;text-align:center;box-shadow:0 18px 35px rgba(0,0,0,.15)}.promo-drop[hidden]{display:none}.promo-close{position:absolute;right:15px;top:10px;width:24px;height:24px;border:0;background:transparent;color:var(--promo-panel-text);font-size:28px;line-height:24px;padding:0}.promo-drop h3{margin:0 28px 16px;color:var(--promo-panel-text);font-size:24px;font-weight:700;line-height:1.2}.promo-drop p{margin:0 auto 20px;max-width:340px;color:var(--promo-panel-text);font-size:16px;line-height:1.55}.promo-disclaimer{display:block;margin:0 auto 28px;font-style:italic;color:var(--promo-panel-text);font-size:15px}.promo-actions{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}.promo-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:50px;min-width:180px;padding:0 20px;border:2px solid var(--navy);border-radius:50px;background:var(--navy);color:#fff;font-size:14px;font-weight:900;line-height:46px;letter-spacing:1.2px}.promo-actions a.secondary{min-width:0;min-height:0;height:28px;border:0;background:transparent;color:var(--promo-panel-text);padding:0;font-size:14px;line-height:28px;letter-spacing:1.2px}
-.bar{height:var(--header-height);background:var(--header-bg);display:flex;align-items:center;justify-content:space-between;padding:0 15px;color:var(--header-text);position:relative;z-index:990}.brand{height:var(--header-height);display:flex;align-items:center;flex:1 1 auto;min-width:0;max-width:calc(100% - 174px);font-size:10px;font-weight:700;line-height:14px;letter-spacing:var(--header-letter-spacing);text-transform:uppercase;white-space:normal;overflow-wrap:normal;word-break:normal}.actions{height:var(--header-height);display:flex;align-items:center;flex:0 0 auto;gap:20px}.phone{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:var(--header-text)}.phone svg{display:block;width:20px;height:20px;fill:currentColor}.tour{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:2px solid var(--header-tour-border);border-radius:50px;color:var(--header-tour-text);background:#fff;font-size:11.5px;font-weight:900;line-height:40px;letter-spacing:1.5px}.hamb{position:relative;width:20px;height:var(--header-height);border:0;background:transparent;color:var(--header-text);padding:0;cursor:pointer}.hamb:before,.hamb:after,.hamb span{content:"";position:absolute;left:0;right:0;height:2px;background:currentColor}.hamb:before{top:31px}.hamb span{top:39px}.hamb:after{top:47px}
+.bar{height:var(--header-height);background:var(--header-bg);display:flex;align-items:center;justify-content:space-between;padding:0 15px;color:var(--header-text);position:relative;z-index:990}.brand{height:var(--header-height);display:flex;align-items:center;flex:1 1 auto;min-width:0;max-width:calc(100% - 174px);font-size:10px;font-weight:700;line-height:14px;letter-spacing:var(--header-letter-spacing);text-transform:uppercase;white-space:normal;overflow-wrap:normal;word-break:normal}body.no-tour .brand{max-width:calc(100% - 84px)}.actions{height:var(--header-height);display:flex;align-items:center;flex:0 0 auto;gap:20px}.phone{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;color:var(--header-text)}.phone svg{display:block;width:20px;height:20px;fill:currentColor}.tour{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:2px solid var(--header-tour-border);border-radius:50px;color:var(--header-tour-text);background:#fff;font-size:11.5px;font-weight:900;line-height:40px;letter-spacing:1.5px}.hamb{position:relative;width:20px;height:var(--header-height);border:0;background:transparent;color:var(--header-text);padding:0;cursor:pointer}.hamb:before,.hamb:after,.hamb span{content:"";position:absolute;left:0;right:0;height:2px;background:currentColor}.hamb:before{top:31px}.hamb span{top:39px}.hamb:after{top:47px}
 @keyframes vtrFadeUp{from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 .hero{height:calc(100svh - var(--promo-bar-height) - var(--header-height));min-height:calc(100svh - var(--promo-bar-height) - var(--header-height));position:relative;overflow:hidden;background:var(--hero-bg);display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;padding:0 15px}body.no-promo .hero{height:calc(100svh - var(--header-height));min-height:calc(100svh - var(--header-height))}@supports not (height:100svh){.hero{height:calc(100vh - var(--promo-bar-height) - var(--header-height));min-height:calc(100vh - var(--promo-bar-height) - var(--header-height))}body.no-promo .hero{height:calc(100vh - var(--header-height));min-height:calc(100vh - var(--header-height))}}.hero-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0}.hero:after{content:"";position:absolute;inset:0;background:var(--hero-overlay);z-index:1}.hero-inner{width:360px;max-width:100%;position:relative;z-index:2;margin-top:4px}.rating{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 18px;color:#fff;font-size:12px;font-weight:900;line-height:20px;letter-spacing:2px;text-transform:uppercase;text-shadow:0 1px 8px rgba(0,0,0,.32);white-space:nowrap}.rating-stars{position:relative;display:inline-block;font-size:24px;line-height:1;letter-spacing:2px;color:rgba(255,255,255,.42)}.rating-stars span+span{position:absolute;left:0;top:0;width:var(--rating-percent);overflow:hidden;color:#fff;white-space:nowrap}.hero-title-art{width:min(var(--hero-title-display-width,318px),var(--hero-title-max-width,84vw));height:auto;margin:0 auto 24px;filter:drop-shadow(0 2px 14px rgba(0,0,0,.26))}.hero-title-art img{display:block;width:100%;height:auto}.hero-headline{font-size:19px;line-height:27px;margin:0 auto 32px;font-weight:600;max-width:360px;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.34)}.hero-headline span{display:block}.cta{display:inline-flex;align-items:center;justify-content:center;min-width:197px;min-height:50px;border:2px solid #fff;border-radius:50px;padding:0 30px;background:#fff;color:var(--button-text);font-size:14px;font-weight:600;line-height:46px;letter-spacing:1.5px}.cta span{font-size:18px;margin-left:10px}
 .hero .rating,.hero .hero-title-art,.hero .hero-headline,.hero .cta{opacity:0;animation:vtrFadeUp .55s cubic-bezier(.22,.61,.36,1) forwards}.hero .rating{animation-delay:.08s}.hero .hero-title-art{animation-delay:.18s}.hero .hero-headline{animation-delay:.28s}.hero .cta{animation-delay:.38s}
@@ -707,11 +888,11 @@ ${renderFontFaces(manifest)}
 @media(prefers-reduced-motion:reduce){.hero .rating,.hero .hero-title-art,.hero .hero-headline,.hero .cta{opacity:1;animation:none;transform:none}}
 </style>
 </head>
-<body class="${hasPromo ? "" : "no-promo"}" data-vtr-edge-mobile-shell="1" data-vtr-release-token="${RESI_EDGE_RELEASE_TOKEN_VERSION}" data-property-name="${escapeAttr(manifest.target.property_name)}" data-property-code="${escapeAttr(manifest.target.source_property_code)}"${sourcePhoneAttr}>
+<body class="${escapeAttr(bodyClass)}" data-vtr-edge-mobile-shell="1" data-vtr-release-token="${RESI_EDGE_RELEASE_TOKEN_VERSION}" data-property-name="${escapeAttr(manifest.target.property_name)}" data-property-code="${escapeAttr(manifest.target.source_property_code)}"${sourcePhoneAttr}>
 ${hasPromo ? `<div class="promo-wrap"><button class="promo" data-edge-promo-toggle ${trackingAttrs("promo_open", "promo_bar", "promo_bar_toggle", promoBarLabel, "", {"data-vtr-track": "state"})} aria-expanded="false"><span class="promo-label">${escapeHtml(promoBarLabel)}</span>${renderChevron()}</button><div class="promo-drop" data-edge-promo-drop hidden><button class="promo-close" data-edge-promo-close ${trackingAttrs("promo_close", "promo_drawer", "promo_drawer_close", "Close special", "", {"data-vtr-track": "state"})} aria-label="Close special">&times;</button><h3>${escapeHtml(promo.title)}</h3><p>${escapeHtml(promo.body)}</p><span class="promo-disclaimer">${escapeHtml(promo.disclaimer)}</span><div class="promo-actions"><a href="${escapeAttr(promoPrimaryHref)}" ${trackingAttrs(linkAction(promo.primary_cta_label, promoPrimaryHref), "promo_drawer", "promo_primary_cta", promo.primary_cta_label, promoPrimaryHref)}>${escapeHtml(promo.primary_cta_label)}</a><a class="secondary" href="${escapeAttr(promoSecondaryHref)}" ${trackingAttrs(linkAction(promo.secondary_cta_label, promoSecondaryHref), "promo_drawer", "promo_secondary_cta", promo.secondary_cta_label, promoSecondaryHref)}>${escapeHtml(promo.secondary_cta_label)}</a></div></div></div>` : ""}
-<header class="bar"><a class="brand" href="/" ${trackingAttrs("mobile_nav_link_click", "mobile_header", "header_brand_home", manifest.target.property_name, "/")}>${escapeHtml(manifest.target.property_name)}</a><div class="actions"><a class="phone" href="${escapeAttr(phoneHref)}" ${trackingAttrs("phone_click", "mobile_header", "header_phone", "Phone", phoneHref, phoneTracking)} aria-label="Call ${escapeAttr(manifest.target.property_name)}">${renderPhoneIcon()}</a><a class="tour" href="${escapeAttr(navTourHref)}" ${trackingAttrs("schedule_tour_click", "mobile_header", "header_tour", "Tour", navTourHref)}>Tour</a><button class="hamb" data-edge-drawer-open ${trackingAttrs("mobile_menu_open", "mobile_header", "header_menu_open", "Menu", "", {"data-vtr-track": "state"})} aria-label="Menu" aria-controls="mobile-drawer" aria-expanded="false"><span></span></button></div></header>
+<header class="bar"><a class="brand" href="/" ${trackingAttrs("mobile_nav_link_click", "mobile_header", "header_brand_home", manifest.target.property_name, "/")}>${escapeHtml(manifest.target.property_name)}</a><div class="actions"><a class="phone" href="${escapeAttr(phoneHref)}" ${trackingAttrs("phone_click", "mobile_header", "header_phone", "Phone", phoneHref, phoneTracking)} aria-label="Call">${renderPhoneIcon()}</a>${headerTourCta}<button class="hamb" data-edge-drawer-open ${trackingAttrs("mobile_menu_open", "mobile_header", "header_menu_open", "Menu", "", {"data-vtr-track": "state"})} aria-label="Menu" aria-controls="mobile-drawer" aria-expanded="false"><span></span></button></div></header>
 <div class="drawer-scrim" data-edge-drawer-scrim ${trackingAttrs("mobile_menu_close", "mobile_drawer", "drawer_scrim", "Close menu", "", {"data-vtr-track": "state"})} hidden></div>
-<aside class="drawer" id="mobile-drawer" data-edge-drawer data-open="false" aria-hidden="true" inert><button class="drawer-close" data-edge-drawer-close ${trackingAttrs("mobile_menu_close", "mobile_drawer", "drawer_close", "Close menu", "", {"data-vtr-track": "state"})} aria-label="Close menu">&times;</button><a class="drawer-logo" href="/" ${trackingAttrs("mobile_nav_link_click", "mobile_drawer", "drawer_logo_home", manifest.target.property_name, "/")} aria-label="${escapeAttr(manifest.target.property_name)} home">${escapeHtml(manifest.target.property_name)}</a><nav aria-label="Mobile menu">${renderNavLinks(manifest)}</nav><div class="drawer-actions"><a href="${escapeAttr(navTourHref)}" ${trackingAttrs("schedule_tour_click", "mobile_drawer", "drawer_tour", "Tour", navTourHref)}>Tour</a><a href="${escapeAttr(navApplyHref)}" ${trackingAttrs("apply_now_click", "mobile_drawer", "drawer_apply", "Apply", navApplyHref)}>Apply</a></div><a class="drawer-phone" href="${escapeAttr(phoneHref)}" ${trackingAttrs("phone_click", "mobile_drawer", "drawer_phone", phone.phone, phoneHref, phoneTracking)}>${escapeHtml(phone.phone)}</a></aside>
+<aside class="drawer" id="mobile-drawer" data-edge-drawer data-open="false" aria-hidden="true" inert><button class="drawer-close" data-edge-drawer-close ${trackingAttrs("mobile_menu_close", "mobile_drawer", "drawer_close", "Close menu", "", {"data-vtr-track": "state"})} aria-label="Close menu">&times;</button><a class="drawer-logo" href="/" ${trackingAttrs("mobile_nav_link_click", "mobile_drawer", "drawer_logo_home", manifest.target.property_name, "/")} aria-label="Home">${escapeHtml(manifest.target.property_name)}</a><nav aria-label="Mobile menu">${renderNavLinks(manifest)}</nav><div class="drawer-actions">${drawerTourCta}<a href="${escapeAttr(navApplyHref)}" ${trackingAttrs("apply_now_click", "mobile_drawer", "drawer_apply", "Apply", navApplyHref)}>Apply</a></div><a class="drawer-phone" href="${escapeAttr(phoneHref)}" ${trackingAttrs("phone_click", "mobile_drawer", "drawer_phone", phone.phone, phoneHref, phoneTracking)}>${escapeHtml(phone.phone)}</a></aside>
 <main><section class="hero"><img class="hero-media" src="${escapeAttr(heroImage)}" width="750" height="1000" alt="" fetchpriority="high" decoding="sync"><div class="hero-inner">${renderReviewLink(rating, manifest)}${renderHeroTitle(hero)}<p class="hero-headline">${renderHeroHeadline(hero)}</p><a class="cta" href="${escapeAttr(heroPrimaryHref)}" ${trackingAttrs(linkAction(hero.primary_cta_label, heroPrimaryHref), "hero", "hero_primary_cta", hero.primary_cta_label, heroPrimaryHref)}>${escapeHtml(hero.primary_cta_label)} <span>&rarr;</span></a></div></section>${renderContentBlocks(manifest)}${renderContinuationShell(request, manifest)}</main>
 ${renderContentsquareVerifySuppressScript()}
 ${renderZarazConsentPillScript({ compactOnly: true })}
@@ -753,9 +934,13 @@ function stripDirectAnalytics(html) {
     .replace(/\s*<!--\s*Google Tag Manager[\s\S]*?<!--\s*End Google Tag Manager\s*-->\s*/gi, "\n")
     .replace(/\s*<!--\s*Google Tag Manager \(noscript\)[\s\S]*?<!--\s*End Google Tag Manager \(noscript\)\s*-->\s*/gi, "\n")
     .replace(/\s*<noscript><iframe[^>]+googletagmanager\.com\/ns\.html[\s\S]*?<\/iframe><\/noscript>\s*/gi, "\n")
+    .replace(/\s*<script[^>]+googletagmanager\.com\/gtm\.js[^>]*><\/script>\s*/gi, "\n")
     .replace(/\s*<script[^>]+googletagmanager\.com\/gtag\/js[^>]*><\/script>\s*/gi, "\n")
     .replace(/\s*<script[^>]+analytics\.ahrefs\.com\/analytics\.js[^>]*><\/script>\s*/gi, "\n")
     .replace(/\s*<script[^>]+js\.getresi\.co\/pixel\/[^"'\s<>]+\/resi-pixel\.iife\.js[^>]*><\/script>\s*/gi, "\n");
+  cleaned = stripMatchingScriptBlocks(cleaned, (_attrs, body) => {
+    return /googletagmanager\.com\/gtm\.js/i.test(body) || (/\bGTM-[A-Z0-9]+\b/i.test(body) && /\bdataLayer\b/i.test(body));
+  });
   cleaned = stripMatchingScriptBlocks(cleaned, (_attrs, body) => /\bheap\.load\s*\(/i.test(body));
   cleaned = stripMatchingScriptBlocks(cleaned, (_attrs, body) => /tcvsapi\.contentsquare\.com\/v2\/projects\/[^"']*verify-installation\/auto/i.test(body));
   return cleaned;
@@ -777,6 +962,10 @@ body.vtr-native-continuation [data-component-name="open_promo_bar"],
 body.vtr-native-continuation [data-page-section="hero"],
 body.vtr-native-continuation [data-page-section="welcome"],
 body.vtr-native-continuation [data-page-section="apartment_features"]{display:none!important}`;
+}
+
+function renderDesktopConsentPillSizeOverrideStyle() {
+  return `<style data-vtr-desktop-consent-compact="1">@media (min-width:741px){#vtr-cookie-notice:not([data-vtr-compact='1']){bottom:16px!important;gap:10px!important;min-height:52px!important;padding:6px 10px 6px 12px!important;box-shadow:0 10px 22px rgba(0,0,0,.15),0 2px 6px rgba(21,40,75,.08)!important}#vtr-cookie-notice:not([data-vtr-compact='1']) #vtr-cookie-icon{width:28px!important;height:28px!important}#vtr-cookie-notice:not([data-vtr-compact='1']) #vtr-cookie-icon svg{width:23px!important;height:23px!important}#vtr-cookie-notice:not([data-vtr-compact='1']) p{font-size:15px!important;line-height:1.2!important}#vtr-cookie-notice:not([data-vtr-compact='1']) #vtr-cookie-notice-actions{gap:7px!important}#vtr-cookie-notice:not([data-vtr-compact='1']) button{height:40px!important;padding:0 18px!important;font-size:15px!important;line-height:38px!important}#vtr-cookie-notice:not([data-vtr-compact='1']) #vtr-cookie-manage{min-width:132px!important}#vtr-cookie-notice:not([data-vtr-compact='1']) #vtr-cookie-accept{min-width:96px!important}}</style>`;
 }
 
 class ContinuationHeadRewriter {
@@ -807,6 +996,7 @@ export async function renderNativeContinuationResponse(request, manifest) {
   const phone = currentPhone(request, manifest);
   let html = await originResponse.text();
   html = normalizeIdentityAndPhone(stripDirectAnalytics(html), manifest, phone);
+  html = rewriteNativeDamAssetUrls(html);
   const headers = new Headers(originResponse.headers);
   headers.delete("content-length");
   headers.delete("set-cookie");
@@ -830,6 +1020,7 @@ export async function renderDesktopPassthrough(request, manifest) {
   const phone = currentPhone(request, manifest);
   let html = await originResponse.text();
   html = normalizeIdentityAndPhone(stripDirectAnalytics(html), manifest, phone);
+  html = rewriteNativeDamAssetUrls(html);
   if (!html.includes("data-vtr-edge-analytics")) {
     html = html.includes("</body>") ? html.replace("</body>", `${renderAnalyticsScript(manifest, "desktop_native", "edge_desktop_native_view")}</body>`) : `${html}${renderAnalyticsScript(manifest, "desktop_native", "edge_desktop_native_view")}`;
   }
@@ -837,7 +1028,8 @@ export async function renderDesktopPassthrough(request, manifest) {
     html = html.includes("</head>") ? html.replace("</head>", `${renderHeapEnvironmentScript(manifest)}</head>`) : `${renderHeapEnvironmentScript(manifest)}${html}`;
   }
   if (!html.includes("data-vtr-zaraz-consent-pill")) {
-    html = html.includes("</body>") ? html.replace("</body>", `${renderZarazConsentPillScript()}</body>`) : `${html}${renderZarazConsentPillScript()}`;
+    const consentPill = `${renderZarazConsentPillScript()}${renderDesktopConsentPillSizeOverrideStyle()}`;
+    html = html.includes("</body>") ? html.replace("</body>", `${consentPill}</body>`) : `${html}${consentPill}`;
   }
   if (!html.includes("data-vtr-cs-verify-suppress")) {
     html = html.includes("</head>") ? html.replace("</head>", `${renderContentsquareVerifySuppressScript()}</head>`) : `${renderContentsquareVerifySuppressScript()}${html}`;
@@ -851,7 +1043,11 @@ export async function renderDesktopPassthrough(request, manifest) {
   return new Response(html, { status: originResponse.status, statusText: originResponse.statusText, headers });
 }
 
-export function mobileShellHeaders() {
+function safeHeaderValue(value) {
+  return cleanPromoText(value).replace(/[^\x20-\x7E]/g, "").slice(0, 180);
+}
+
+export function mobileShellHeaders(promoReadoutData = null) {
   const headers = new Headers({
     "content-type": "text/html; charset=utf-8",
     "cache-control": "no-store",
@@ -859,6 +1055,13 @@ export function mobileShellHeaders() {
     "x-vtr-release-token": RESI_EDGE_RELEASE_TOKEN_VERSION,
     "x-vtr-mobile-topper-production": "1",
   });
+  if (promoReadoutData) {
+    headers.set("x-vtr-promo-state", safeHeaderValue(promoReadoutData.status));
+    headers.set("x-vtr-promo-source", safeHeaderValue(promoReadoutData.source));
+    headers.set("x-vtr-promo-key", safeHeaderValue(promoReadoutData.key));
+    headers.set("x-vtr-promo-present", promoReadoutData.promo?.present !== false ? "true" : "false");
+    if (promoReadoutData.fetched_at) headers.set("x-vtr-promo-fetched-at", safeHeaderValue(promoReadoutData.fetched_at));
+  }
   headers.set("vary", "User-Agent");
   headers.append("server-timing", 'vtr_mobile_topper;desc="canonical"');
   return headers;

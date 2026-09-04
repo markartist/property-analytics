@@ -1,0 +1,404 @@
+{
+  "analytics": {
+    "ahrefs": {
+      "existing_project_id": "10240469",
+      "owner": "cloudflare_zaraz",
+      "profile_policy": "use_existing_vanity_project_if_present_else_create_new_vanity_project_with_explicit_approval; retain_legacy_venterra_path_project_for_history",
+      "project_policy": "lookup_existing_project_before_create",
+      "target": "stonecreekranchapartments.com/",
+      "verified": true,
+      "zaraz_tool_name": "AHST",
+      "data_key_status": "web_analytics_data_key_present_in_phase2_readback"
+    },
+    "cloudflare_analytics": {
+      "owner": "cloudflare",
+      "state_record_required": true
+    },
+    "ga4": {
+      "measurement_id": "G-W951WW207H",
+      "measurement_id_status": "configured_zaraz_owned_default_uri_current_vanity",
+      "owner": "cloudflare_zaraz",
+      "property_id": "378409482",
+      "zaraz_tool_name": "GA4ST",
+      "expected_stream_name": "Stonecreek Ranch"
+    },
+    "heap": {
+      "app_id": "286627304",
+      "contentsquare_verify_guard": {
+        "enabled": true,
+        "endpoint_pattern": "tcvsapi.contentsquare.com/v2/projects/*/verify-installation/auto",
+        "expected_status": 204,
+        "same_origin_path": "/?vtr_cs_verify_suppressed=1"
+      },
+      "mode": "interaction_only_queue_v6_input_only_cs_verify_home_204",
+      "owner": "cloudflare_zaraz",
+      "passive_timer_allowed": false,
+      "zaraz_tool_name": "HST"
+    },
+    "owner": "cloudflare_zaraz",
+    "resi_event_bridge": {
+      "owner": "worker_or_zaraz_bridge",
+      "required_events": [
+        "page_view",
+        "find_your_home_click",
+        "schedule_tour_click",
+        "apply_now_click",
+        "phone_click",
+        "menu_open"
+      ],
+      "zaraz_tool_name": "RBTX4ST"
+    }
+  },
+  "captain": {
+    "id": "TX4ST-captain",
+    "evidence_path": "reports/resi_edge_performance/08-09-2026/stonecreekranchapartments-com/manifest-promotion-20260827T000000Z/source-harvest.json",
+    "fresh_update_record": "reports/resi_edge_performance/08-09-2026/stonecreekranchapartments-com/manifest-promotion-20260827T000000Z/source-harvest.json"
+  },
+  "concessions": {
+    "lease_up_or_newer_property_policy": {
+      "awards": "If no sourced award exists, set mobile_shell.awards.present=false with empty assets; do not render a placeholder badge.",
+      "content_blocks": "First two source-owned content blocks remain mandatory unless an approved exception file names the missing block and replacement source.",
+      "reviews": "If no sourced review row exists, set mobile_shell.reviews.present=false, link_required=false, and do not emit aggregateRating.",
+      "specials": "If no active feed-backed special exists, set mobile_shell.promo.present=false; do not scrape the Specials page or invent copy."
+    }
+  },
+  "consent": {
+    "mode": "finalized_cmp_required",
+    "owner": "cloudflare_zaraz_consent",
+    "purposes": [
+      "analytics",
+      "measurement",
+      "leasing_activity"
+    ],
+    "required_proofs": [
+      "first_visit_ui",
+      "accept_behavior",
+      "reject_behavior",
+      "preferences_behavior",
+      "no_pre_consent_leakage"
+    ],
+    "widget_version": "compact_shell_pill_v29_2026_08_20"
+  },
+  "desktop": {
+    "desktop_topper_allowed": false,
+    "mode": "native_passthrough_with_analytics_guards",
+    "native_render_required": true,
+    "visual_mutation_allowed_without_explicit_approval": false
+  },
+  "evidence": {
+    "required_live_proofs": [
+      "reports/resi_edge_performance/08-09-2026/stonecreekranchapartments-com/manifest-promotion-20260827T000000Z/source-harvest.json",
+      "reports/resi_source_lookup/latest-resi-source-lookup.kv.json"
+    ]
+  },
+  "mobile_shell": {
+    "awards": {
+      "present": true,
+      "source": "live_source_08_27_2026",
+      "assets": [
+        {
+          "label": "Kingsley Excellence Award",
+          "url": "https://dam.getresi.co/2949/Kingsley_Award.svg"
+        }
+      ]
+    },
+    "body_font": "Lato",
+    "brand_theme": {
+      "body_text": "#15284B",
+      "button_background": "#FFFFFF",
+      "button_text": "#15284B",
+      "drawer_background": "#15284B",
+      "drawer_text": "#FFFFFF",
+      "hero_background": "#15284B",
+      "hero_overlay": "rgba(21,40,75,.38)",
+      "panel_background": "#F6F6F5",
+      "primary_text": "#15284B",
+      "promo_background": "#15284B",
+      "promo_panel_text": "#15284B",
+      "promo_surface": "#F6F6F5",
+      "promo_text": "#FFFFFF",
+      "source": "official_venterra_palette"
+    },
+    "content_blocks": [
+      {
+        "body": "In Austin, Stonecreek Ranch offers a lively, connected residential setting shaped by comfort and contemporary design. Thoughtful interiors create a place to recharge, while the surrounding South Austin energy brings creativity, movement, and everyday convenience into the rhythm of home.",
+        "cta_label": "See Available Homes",
+        "cta_url": "https://stonecreekranchapartments.com/apartments/",
+        "heading": "Welcome to Stonecreek Ranch",
+        "image_alt": "Exterior of a three-story stone-and-stucco apartment building with balconies and an exterior staircase, beside a parking lot framed by mature trees.",
+        "image_url": "/assets/resi-edge-assets/TX4ST/home/welcome-640.avif",
+        "kind": "welcome",
+        "sequence": 1,
+        "source_image_url": "https://dam.getresi.co/23154/conversions/Home-Welcome-full.jpg"
+      },
+      {
+        "body": "Elevate your lifestyle with contemporary interiors showcasing quartz countertops, custom cabinetry, stainless steel appliances, wood-style flooring, and high ceilings, complemented by in-home washers and dryers and spa-inspired soaking tubs.",
+        "bullets": [
+          "Quartz Countertops",
+          "Stainless Steel Appliances",
+          "High Ceilings",
+          "Soaking Tubs"
+        ],
+        "cta_label": "See Features",
+        "cta_url": "https://stonecreekranchapartments.com/features/",
+        "heading": "Stylish Living Spaces",
+        "image_alt": "Apartment kitchen with white cabinets, speckled countertops, subway tile backsplash, black appliances, and a stainless steel refrigerator.",
+        "image_url": "/assets/resi-edge-assets/TX4ST/home/features-900.avif",
+        "kind": "features",
+        "sequence": 2,
+        "source_image_url": "https://dam.getresi.co/23153/conversions/Home-Features-full.jpg"
+      }
+    ],
+    "fonts": [
+      {
+        "family": "Lato",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/lato-0d723976.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Noto Serif",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/notoserif-06b438a1.woff2",
+        "weight": 400
+      },
+      {
+        "family": "Brittany Signature",
+        "style": "normal",
+        "url": "/wp-content/themes/resi-child-theme/fonts/BrittanySignature.woff2",
+        "weight": 400
+      }
+    ],
+    "heading_font": "Noto Serif",
+    "hero": {
+      "headline": "1, 2, and 3 Bedroom Apartments in Austin, TX",
+      "image_mobile": "/assets/resi-edge-assets/TX4ST/home/hero-mobile-750x1000.avif",
+      "primary_cta_label": "Find Your Home",
+      "primary_cta_url": "https://stonecreekranchapartments.com/apartments/",
+      "source_image": "https://dam.getresi.co/23155/conversions/Home-Hero-full.jpg",
+      "title_text": "Live Better. Live Easy.",
+      "tm_allowed": false
+    },
+    "layout_contract": {
+      "desktop_topper_allowed": false,
+      "full_height_mobile_hero_required": true,
+      "header_height_px": 80,
+      "mobile_only": true,
+      "native_dam_image_references_in_initial_mobile_html_allowed": false,
+      "native_wordpress_runtime_in_initial_mobile_html_allowed": false,
+      "promo_bar_height_px": 60,
+      "property_specific_variants_allowed": false,
+      "source_reference": "Stonecreek Ranch Phase 2 draft from rollout matrix and Kinsta staging URL, generated 08/15/2026 12:55 PM CDT",
+      "standalone_edge_owned_initial_response_required": true
+    },
+    "native_continuation": {
+      "dedupe_required": true,
+      "first_two_blocks_must_not_repeat": true,
+      "required_after_edge_shell": true
+    },
+    "navigation": {
+      "links": [
+        {
+          "label": "Apartments & Pricing",
+          "url": "https://stonecreekranchapartments.com/apartments/"
+        },
+        {
+          "label": "Features",
+          "url": "https://stonecreekranchapartments.com/features/"
+        },
+        {
+          "label": "Amenities",
+          "url": "https://stonecreekranchapartments.com/amenities/"
+        },
+        {
+          "label": "Gallery",
+          "url": "https://stonecreekranchapartments.com/gallery/"
+        },
+        {
+          "label": "Location",
+          "url": "https://stonecreekranchapartments.com/neighborhood/"
+        },
+        {
+          "label": "FAQs",
+          "url": "https://stonecreekranchapartments.com/faqs/"
+        },
+        {
+          "label": "Reviews",
+          "url": "https://stonecreekranchapartments.com/reviews/"
+        },
+        {
+          "label": "Contact",
+          "url": "https://stonecreekranchapartments.com/contact/"
+        },
+        {
+          "label": "About Venterra",
+          "url": "https://stonecreekranchapartments.com/about/"
+        },
+        {
+          "label": "SMARTHUB",
+          "url": "https://online.venterraliving.com/smarthub/login"
+        }
+      ],
+      "tour_url": "https://online.venterraliving.com/eOnlineLease/portal/scheduleTour/TX4ST",
+      "apply_url": "https://online.venterraliving.com/eOnlineLease/portal/createPipelineApplication/TX4ST"
+    },
+    "promo": {
+      "present": false,
+      "source": "feed_backed_absent_live_source_08_27_2026_no_active_promo_rendered"
+    },
+    "reviews": {
+      "present": true,
+      "source": "live_source_08_27_2026_review_row",
+      "last_verified": "08/27/2026",
+      "link_required": true,
+      "url": "https://stonecreekranchapartments.com/reviews/",
+      "rating": 4.1,
+      "count": 128,
+      "fractional_stars_required": true,
+      "full_star_rounding_allowed": false
+    }
+  },
+  "package_contract_id": "resi-edge-canonical-upgrade-package",
+  "phone_attribution": {
+    "default_display_phone": "(737) 530-4395",
+    "default_source": "VWS",
+    "lookup_trigger": "incoming URL source/id string",
+    "office_phone_must_not_be_default": "default display must be the VWS attribution phone from the governed source lookup",
+    "source_lookup": [
+      {
+        "code": "TX4ST30L",
+        "phone": "(737) 530-4395",
+        "source": "VWS"
+      },
+      {
+        "code": "TX4STAG",
+        "phone": "(737) 530-4395",
+        "source": "AG-VL"
+      },
+      {
+        "code": "TX4STAH",
+        "phone": "(737) 530-4395",
+        "source": "AH"
+      },
+      {
+        "code": "TX4STALIST",
+        "phone": "(833) 606-2103",
+        "source": "APL"
+      },
+      {
+        "code": "TX4STAPT",
+        "phone": "(737) 299-0197",
+        "source": "ADC-VL"
+      },
+      {
+        "code": "TX4STAR",
+        "phone": "(737) 530-4395",
+        "source": "APR"
+      },
+      {
+        "code": "TX4STBNG",
+        "phone": "(737) 373-4589",
+        "source": "BNG"
+      },
+      {
+        "code": "TX4STGOA",
+        "phone": "(737) 201-1765",
+        "source": "GOA"
+      },
+      {
+        "code": "TX4STGOO",
+        "phone": "(737) 373-4589",
+        "source": "GOO-VL"
+      },
+      {
+        "code": "TX4STPOP",
+        "phone": "(737) 530-4395",
+        "source": "POP"
+      },
+      {
+        "code": "TX4STSOC",
+        "phone": "(737) 530-4250",
+        "source": "SOC"
+      },
+      {
+        "code": "TX4STUNA",
+        "phone": "(737) 530-4395",
+        "source": "UNA"
+      },
+      {
+        "code": "TX4STYAH",
+        "phone": "(737) 373-4589",
+        "source": "YHO"
+      },
+      {
+        "code": "TX4STZI",
+        "phone": "(737) 530-4395",
+        "source": "ZIL-VL"
+      }
+    ]
+  },
+  "rollback": {
+    "no_wordpress_mutation_required": true,
+    "previous_worker_script": "not_yet_recorded",
+    "strategy": "existing_worker_no_delete; preserve no-WordPress-mutation boundary and restore/remove only the Cloudflare route/worker state introduced by this governed apply if live proof fails"
+  },
+  "routing": {
+    "cloudflare_zone_name": "stonecreekranchapartments.com",
+    "existing_worker_script": "not_yet_assigned_in_governed_package",
+    "mutation_policy": "selected_target_no_live_mutation_without_explicit_approval_and_all_gates_green",
+    "route_pattern": "stonecreekranchapartments.com/*",
+    "wordpress_control_path_policy": "transparent_no_cache_bypass_required"
+  },
+  "schema_version": "resi_edge_manifest_v1",
+  "seo": {
+    "gsc_indexing_record": "reports/resi_edge_performance/indexing-viability/20260824_212429_indexing_viability/indexing-viability.json",
+    "llms_url": "https://stonecreekranchapartments.com/llms.txt",
+    "meta_description": "Welcome home to Stonecreek Ranch Apartments in Austin, TX \u2014 Discover luxury living in our 1-, 2-, and 3-bedroom homes.",
+    "meta_og_policy": "current_property_identity_only",
+    "meta_title": "Stonecreek Ranch",
+    "og_image": "https://stonecreekranchapartments.com/wp-content/uploads/2026/05/Home-Hero.jpg",
+    "schema_url_policy": "absolute_current_domain_urls_only",
+    "sitemap_url": "https://stonecreekranchapartments.com/sitemap_index.xml",
+    "stale_identity_scan_required": true,
+    "canonical_url": "https://stonecreekranchapartments.com/"
+  },
+  "target": {
+    "canonical_url": "https://stonecreekranchapartments.com/",
+    "city": "Austin",
+    "community_id": "a49ec15b-71b0-419d-ae9a-624e73dbf51c",
+    "domain": "stonecreekranchapartments.com",
+    "ga4_measurement_id": "G-W951WW207H",
+    "ga4_property_id": "378409482",
+    "governed_reference_url": "https://venterraliving.com/apartments/stonecreek-ranch/",
+    "gsc_property": "sc-domain:stonecreekranchapartments.com",
+    "property_code": "TX4ST",
+    "property_name": "Stonecreek Ranch",
+    "source_property_code": "TX4ST",
+    "staging_kinsta_url": "https://stonecreekranch.kinsta.cloud/",
+    "state": "TX"
+  },
+  "property_code": "TX4ST",
+  "domain": "stonecreekranchapartments.com",
+  "site": {
+    "name": "Stonecreek Ranch",
+    "city": "Austin",
+    "state": "TX",
+    "community_id": "a49ec15b-71b0-419d-ae9a-624e73dbf51c",
+    "homes": null
+  },
+  "source_urls": {
+    "legacy": "https://venterraliving.com/apartments/stonecreek-ranch/",
+    "staging_kinsta": "https://stonecreekranch.kinsta.cloud/",
+    "live_vanity": "https://stonecreekranchapartments.com/"
+  },
+  "source_attribution": {
+    "domain": "stonecreekranchapartments.com",
+    "canonical_url": "https://stonecreekranchapartments.com/",
+    "governed_reference_url": "https://venterraliving.com/apartments/stonecreek-ranch/",
+    "gsc_property": "sc-domain:stonecreekranchapartments.com",
+    "property_code": "TX4ST",
+    "property_name": "Stonecreek Ranch",
+    "source_property_code": "TX4ST",
+    "staging_kinsta_url": "https://stonecreekranch.kinsta.cloud/"
+  }
+}
