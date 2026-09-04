@@ -8,6 +8,7 @@ export type SurfaceId =
   | "fish"
   | "tracker"
   | "popBrief"
+  | "commodoreBridge"
   | "captainOffice"
   | "captainBrief"
   | "pibBuilder"
@@ -152,9 +153,20 @@ export const OFFERING_ACCESS: Record<SurfaceId, SurfaceAccessDefinition> = {
     audience: "curator",
     summary: "Captain's Log readout, active watch items, and source-grounded property resolution brief.",
   },
+  commodoreBridge: {
+    id: "commodoreBridge",
+    href: "/commodores",
+    label: "Commodore’s Bridge",
+    category: "Briefing",
+    minRole: "editor",
+    actionRole: "editor",
+    actions: { view: "editor", draft: "editor", approve: "admin", administer: "admin" },
+    audience: "curator",
+    summary: "Regional Captain rollup for trends, outliers, shared lessons, and escalation candidates.",
+  },
   captainOffice: {
     id: "captainOffice",
-    href: "/captains",
+    href: "/captains/AR4PB",
     label: "Captain’s Office",
     category: "Briefing",
     minRole: "editor",
@@ -199,13 +211,13 @@ export const OFFERING_ACCESS: Record<SurfaceId, SurfaceAccessDefinition> = {
   contentOffice: {
     id: "contentOffice",
     href: "/content-office",
-    label: "Content Office",
+    label: "Legacy Content Office",
     category: "Content Ops",
-    minRole: "editor",
-    actionRole: "editor",
-    actions: { view: "editor", draft: "editor", approve: "editor", administer: "admin" },
-    audience: "curator",
-    summary: "Stewarded workspace for turning Captain and Data Pond intelligence into channel-ready content.",
+    minRole: "admin",
+    actionRole: "admin",
+    actions: { view: "admin", draft: "admin", approve: "admin", administer: "admin" },
+    audience: "steward",
+    summary: "Legacy channel dashboard retained for historical access; active site content work belongs in AI Content Suite.",
   },
   gscReport: {
     id: "gscReport",
@@ -243,13 +255,13 @@ export const OFFERING_ACCESS: Record<SurfaceId, SurfaceAccessDefinition> = {
   siteContent: {
     id: "siteContent",
     href: "/site-content",
-    label: "Site Content Creator",
+    label: "AI Content Suite",
     category: "Content Ops",
-    minRole: "admin",
-    actionRole: "admin",
-    actions: { view: "admin", draft: "admin", approve: "admin", administer: "admin" },
-    audience: "steward",
-    summary: "Governed crawl, mapping, assessment, and rewrite workflow.",
+    minRole: "editor",
+    actionRole: "editor",
+    actions: { view: "editor", draft: "editor", approve: "admin", administer: "admin" },
+    audience: "curator",
+    summary: "In-Pond live-page mapping, section assessment, VACS drafting, and editable rewrite workflow.",
   },
   resiEdgeLaunch: {
     id: "resiEdgeLaunch",
@@ -308,14 +320,14 @@ export const OFFERING_ACCESS: Record<SurfaceId, SurfaceAccessDefinition> = {
   },
   vacs: {
     id: "vacs",
-    href: "/vacs",
+    href: "/site-content",
     label: "VACS",
     category: "Content Ops",
-    minRole: "editor",
-    actionRole: "editor",
-    actions: { view: "editor", draft: "editor", approve: "editor", administer: "admin" },
-    audience: "curator",
-    summary: "Machine-first content execution lane with governed bridge surface.",
+    minRole: "admin",
+    actionRole: "admin",
+    actions: { view: "admin", draft: "admin", approve: "admin", administer: "admin" },
+    audience: "steward",
+    summary: "Legacy VACS surface alias; active VACS capability is embedded in AI Content Suite.",
   },
   evs: {
     id: "evs",
@@ -369,20 +381,18 @@ export const OFFERING_ORDER: SurfaceId[] = [
   "dock",
   "fish",
   "tracker",
-  "popBrief",
+  "commodoreBridge",
   "captainOffice",
-  "captainBrief",
   "pibBuilder",
   "searchIntelligence",
   "gbpPosts",
   "gscReport",
-  "contentOffice",
   "intelligenceOffice",
   "siteContent",
-  "resiEdgeLaunch",
   "experiments",
-  "vacs",
   "evs",
+  "directiveControlCenter",
+  "resiEdgeLaunch",
   "routingOps",
   "controlPlane",
   "backup",
@@ -391,25 +401,25 @@ export const OFFERING_ORDER: SurfaceId[] = [
 
 const EDITOR_ALLOWED_OFFERINGS = new Set<SurfaceId>([
   "pond",
-  "popBrief",
+  "commodoreBridge",
   "captainOffice",
-  "captainBrief",
+  "pibBuilder",
   "gbpPosts",
-  "contentOffice",
+  "siteContent",
 ]);
 
 const EDITOR_ALLOWED_PATH_PREFIXES = [
   "/",
   "/pond",
-  "/analysis",
+  "/commodores",
+  "/analysis/pib",
   "/captains",
   "/communities",
-  "/t7-metrics",
-  "/t30-metrics",
-  "/marketing",
   "/backup",
   "/gbp-posts",
   "/content-office",
+  "/vacs",
+  "/site-content",
 ];
 
 export function hasRole(userRole: AppRole | undefined | null, minRole: AppRole): boolean {

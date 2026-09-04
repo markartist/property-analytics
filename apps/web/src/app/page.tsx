@@ -19,7 +19,7 @@ import {
   TrendingUp, TrendingDown, AlertTriangle, Trophy, Zap, BarChart3,
   Loader2, Waves, Clock, Database, Gauge, FlaskConical, Route,
   BriefcaseBusiness, ClipboardCheck, FileText, ShieldCheck, ListChecks,
-  MonitorCheck,
+  MonitorCheck, Bot, Radar,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO } from "date-fns";
 
@@ -114,6 +114,15 @@ const FEATURED_ZONE_DECOR: Record<
     iconBg: "bg-white/[0.18]",
     icon: BarChart3,
   },
+  commodoreBridge: {
+    kicker: "Regional",
+    title: "Commodore’s Bridge",
+    subtitle: "Read regional pressure",
+    description: "Roll Captain signals into regional patterns, outliers, shared lessons, and escalation candidates.",
+    gradient: "from-[#294782]/30 via-white/[0.055] to-[#3B9189]/12",
+    iconBg: "bg-white/[0.18]",
+    icon: Radar,
+  },
   captainBrief: {
     kicker: "Resolve",
     title: "Captain Brief",
@@ -170,9 +179,9 @@ const FEATURED_ZONE_DECOR: Record<
   },
   contentOffice: {
     kicker: "Content",
-    title: "Content Office",
-    subtitle: "Coordinate channel work",
-    description: "Turn Captain and Data Pond intelligence into governed drafts, approvals, and handoffs.",
+    title: "Legacy Content Office",
+    subtitle: "Historical channel work",
+    description: "Retained for older channel queues; active site content editing now lives in AI Content Suite.",
     gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
     iconBg: "bg-white/[0.18]",
     icon: BriefcaseBusiness,
@@ -197,9 +206,9 @@ const FEATURED_ZONE_DECOR: Record<
   },
   siteContent: {
     kicker: "Content",
-    title: "Site Content Creator",
-    subtitle: "Run governed rewrites",
-    description: "Map, assess, and rewrite site sections in the governed content lane.",
+    title: "AI Content Suite",
+    subtitle: "Edit mapped live pages",
+    description: "Map each property page, inspect live sections, and draft replacement copy inside the Pond.",
     gradient: "from-[#3B9189]/30 via-white/[0.055] to-[#294782]/12",
     iconBg: "bg-white/[0.18]",
     icon: BarChart3,
@@ -234,11 +243,11 @@ const FEATURED_ZONE_DECOR: Record<
   vacs: {
     kicker: "Execute",
     title: "VACS",
-    subtitle: "Drive content execution",
-    description: "Machine-first content execution lane with governed bridge posture.",
-    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#000000]/12",
+    subtitle: "Embedded drafting layer",
+    description: "VACS capability is now embedded in the AI Content Suite rather than launched as a separate workspace.",
+    gradient: "from-[#15284B]/30 via-white/[0.055] to-[#7DCAC2]/12",
     iconBg: "bg-white/[0.18]",
-    icon: BarChart3,
+    icon: Bot,
   },
   evs: {
     kicker: "Validate",
@@ -383,13 +392,14 @@ const ROLE_EXPERIENCE: Record<AppRole, {
     summary: "Operate the active workflows. Move from governed reporting into search, local, content, and validation execution.",
     operatorFlow: [
       { title: "Start from the signal", detail: "Use Watchtower and The Dock to understand what changed before taking action." },
-      { title: "Work the operating lanes", detail: "Move into search, local, VACS, or EVS with governed context already attached." },
+      { title: "Work the operating lanes", detail: "Move into search, local, AI Content Suite, or EVS with governed context already attached." },
       { title: "Close the loop", detail: "Use Fishing Hole when you need exports, synthesis, or a guided next move." },
     ],
     quickLinks: [
       { href: "/dock", label: "Browse The Dock" },
+      { href: "/commodores", label: "Open Commodore’s Bridge" },
       { href: "/analysis/search-intelligence", label: "Open Search Intelligence" },
-      { href: "/evs", label: "Review EVS" },
+      { href: "/site-content", label: "Open AI Content Suite" },
     ],
   },
   admin: {
@@ -397,12 +407,13 @@ const ROLE_EXPERIENCE: Record<AppRole, {
     summary: "Shape the governed system. Maintain directives, steward content operations, and inspect the platform from the toolbox tier.",
     operatorFlow: [
       { title: "Read the platform posture", detail: "Start with Watchtower to understand operational and trust pressure before intervening." },
-      { title: "Guide the governed lanes", detail: "Use Intelligence Office and Site Content to shape claims, directives, and rewrite work." },
+      { title: "Guide the governed lanes", detail: "Use Intelligence Office and AI Content Suite to shape claims, directives, and rewrite work." },
       { title: "Use the toolbox deliberately", detail: "Open Control Plane and Admin only when system ownership or remediation work is needed." },
     ],
     quickLinks: [
       { href: "/watchtower", label: "Open Watchtower" },
-      { href: "/site-content", label: "Open Site Content" },
+      { href: "/commodores", label: "Open Commodore’s Bridge" },
+      { href: "/site-content", label: "Open AI Content Suite" },
       { href: "/system", label: "Open Control Plane" },
     ],
   },
@@ -693,10 +704,16 @@ export default function DataPondLanding() {
                   Open Watchtower
                 </Link>
                 <Link
-                  href="/captains"
+                  href="/captains/AR4PB"
                   className="inline-flex items-center rounded-xl border border-white/12 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white"
                 >
                   Captain Queue
+                </Link>
+                <Link
+                  href="/commodores"
+                  className="inline-flex items-center rounded-xl border border-white/12 px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-white/72 transition-colors hover:bg-white/[0.08] hover:text-white"
+                >
+                  Commodore Bridge
                 </Link>
               </div>
             </div>
@@ -891,17 +908,19 @@ export default function DataPondLanding() {
         {/* Quick links footer */}
         <div className="border-t border-white/12 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-4 text-xs text-white/46">
+            <Link href="/watchtower" className="transition-colors hover:text-white">Watchtower</Link>
+            <span>·</span>
+            <Link href="/dock" className="transition-colors hover:text-white">The Dock</Link>
+            <span>·</span>
+            <Link href="/captains/AR4PB" className="transition-colors hover:text-white">Captain’s Office</Link>
+            <span>·</span>
+            <Link href="/commodores" className="transition-colors hover:text-white">Commodore’s Bridge</Link>
+            <span>·</span>
             <Link href="/analysis/pib" className="transition-colors hover:text-white">PIB Builder</Link>
             <span>·</span>
-            <Link href="/marketing" className="transition-colors hover:text-white">Marketing Data</Link>
+            <Link href="/site-content" className="transition-colors hover:text-white">AI Content Suite</Link>
             <span>·</span>
-            <Link href="/analysis" className="transition-colors hover:text-white">Analysis</Link>
-            <span>·</span>
-            <Link href="/t7-metrics" className="transition-colors hover:text-white">T7 Metrics</Link>
-            <span>·</span>
-            <Link href="/t30-metrics" className="transition-colors hover:text-white">T30 Metrics</Link>
-            <span>·</span>
-            <Link href="/backup" className="transition-colors hover:text-white">Backup & Export</Link>
+            <Link href="/resi-edge/launch" className="transition-colors hover:text-white">Resi Edge Launch</Link>
             <div className="ml-auto flex items-center gap-2">
               <Image src="/velo-current.svg" alt="" width={12} height={7} className="shrink-0 opacity-40" />
               <span>Produced by WebOps</span>
