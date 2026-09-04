@@ -4,6 +4,10 @@
 
 ---
 
+### 09/04/2026 - Ad hoc source coverage filtering cleanup
+- Final corporate cleanup found one remaining `utils/adhoc_report_sources.py` change after the reporting commit: search source coverage now accepts an explicit property-id filter and labels stale rows as governed-portfolio coverage rather than local-row coverage.
+- Commit this with the required context updates so ad hoc search reports keep source-readiness scoped to the requested property set.
+
 ### 09/04/2026 - Corporate git cleanup and workstream commit organization
 - Mark asked to clean the tree and organize the remaining uncommitted work into coherent commits after the Commodore Bridge work was committed. Proceed by grouping remaining changes by workstream instead of making one broad mixed commit.
 - Intended groupings: Captain Ticket Wall/Jira SOP, AI Content Suite/VACS-in-Pond, Captain routine scheduler, Resi Edge Cloudflare/hero/runtime work, Agent Readiness monitor, and ad hoc/source reporting utilities.

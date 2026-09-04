@@ -1,5 +1,10 @@
 # Capability Register
 
+## 09/04/2026 Ad Hoc Source Coverage Filtering Cleanup
+
+- Finalized the remaining `utils/adhoc_report_sources.py` cleanup so ad hoc search-source coverage can be filtered to an explicit governed property set and freshness wording reflects governed-portfolio rows.
+- This belongs to the GSC indexing/ad hoc reporting capability lane and prevents requested-property reports from inheriting unrelated portfolio coverage rows.
+
 ## 09/04/2026 Corporate Git Cleanup Workstream Organization
 
 - Mark approved cleaning and organizing the remaining dirty corporate git tree after the Commodore Bridge commits.

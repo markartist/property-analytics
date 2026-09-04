@@ -1258,7 +1258,12 @@ def source_table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
     return bool(row)
 
 
-def build_search_source_coverage_rows(conn: sqlite3.Connection, start: date, end: date) -> list[dict[str, object]]:
+def build_search_source_coverage_rows(
+    conn: sqlite3.Connection,
+    start: date,
+    end: date,
+    property_ids: list[str] | None = None,
+) -> list[dict[str, object]]:
     source_specs = [
         ("GA4 daily performance", "ga4_daily_metrics", "metric_date", "property_id", "Complete owned-site traffic backbone."),
         ("GA4 channel mix", "ga4_traffic_sources", "metric_date", "property_id", "Organic Search sessions, engagement, and key events."),
@@ -1286,6 +1291,11 @@ def build_search_source_coverage_rows(conn: sqlite3.Connection, start: date, end
                 }
             )
             continue
+        property_filter = ""
+        params: tuple[object, ...] = (start.isoformat(), end.isoformat())
+        if property_ids:
+            property_filter = f" AND {property_expr} IN ({placeholders(property_ids)})"
+            params = (start.isoformat(), end.isoformat(), *property_ids)
         row = conn.execute(
             f"""
             SELECT
@@ -1294,16 +1304,16 @@ def build_search_source_coverage_rows(conn: sqlite3.Connection, start: date, end
               COUNT(*) AS rows,
               COUNT(DISTINCT {property_expr}) AS properties
             FROM {table_name}
-            WHERE {date_expr} BETWEEN ? AND ?
+            WHERE {date_expr} BETWEEN ? AND ?{property_filter}
             """,
-            (start.isoformat(), end.isoformat()),
+            params,
         ).fetchone()
         first_available = str(row["min_date"]) if row and row["min_date"] else None
         latest_available = str(row["max_date"]) if row and row["max_date"] else None
         if not latest_available:
             coverage_read = "No rows inside the selected window."
         elif latest_available < end.isoformat():
-            coverage_read = f"{read} Latest local row is {fmt_date(latest_available)}."
+            coverage_read = f"{read} Latest governed-portfolio row is {fmt_date(latest_available)}."
         else:
             coverage_read = read
         rows.append(
@@ -1334,7 +1344,7 @@ def build_organic_nonbrand_search_terms(conn: sqlite3.Connection, request: Repor
     core_source_tables = {"ga4_daily_metrics", "ga4_traffic_sources", "gsc_daily_metrics", "gsc_queries"}
     source_rows = [
         row
-        for row in build_search_source_coverage_rows(conn, start, end)
+        for row in build_search_source_coverage_rows(conn, start, end, property_ids)
         if str(row.get("table", "")) in core_source_tables
     ]
 
