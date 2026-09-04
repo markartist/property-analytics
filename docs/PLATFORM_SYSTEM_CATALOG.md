@@ -420,13 +420,14 @@ Primary outputs:
 
 Current maturity:
 
+- 08/27/2026 supersession: Mark redirected VACS from a standalone/bridge product surface into the in-Pond AI Content Suite. Treat `/site-content` as the active operator workspace for VACS-capable live page editing; `/vacs` is compatibility access to that same Pond editor, not a separate place to work. Old Content Office is legacy for this lane.
 - live governed API surface
 - strongest current path: one strong Property Narrative Canon for one property, then one long-form artifact and one channel derivative package from that canon
-- `vacs.venterradev.com` remains the intended canonical product surface in architecture, while the current repo-verified implementation is the protected API route family at `api.venterradev.com/v1/vacs/*`
+- `vacs.venterradev.com` is superseded as an operator destination for this lane; the current repo-verified implementation is the protected API route family at `api.venterradev.com/v1/vacs/*` plus the in-Pond AI Content Suite at `/site-content`
 
-Relationship note:
+Superseded relationship note:
 
-VACS should remain a distinct execution workspace within `Content Operations`, sharing Data Pond, Intelligence Office, Specs, and advocate context with Site Content Creator instead of duplicating them.
+VACS should not be promoted as a distinct operator workspace for the Pond content lane. Its drafting capability belongs inside AI Content Suite over mapped live Site Content records, sharing Data Pond, Intelligence Office, Specs, and Captain context instead of duplicating them.
 
 The Property Narrative Canon v1 is now the governing core artifact for VACS strategy. It is the durable narrative layer from which Site Content Creator recommendations, VACS drafts, Content Office channel packages, and future publishing artifacts should be derived. See `/Users/mark/Property_Analytics/docs/PROPERTY_NARRATIVE_CANON_V1_2026-05-17.md`.
 

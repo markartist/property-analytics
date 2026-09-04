@@ -26,7 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FileSearch, Loader2, RefreshCw, Sparkles } from "lucide-react";
+import { FileSearch, Loader2, Lock, RefreshCw, Sparkles, Wand2, X } from "lucide-react";
 
 type Flash = { type: "success" | "error"; text: string } | null;
 
@@ -37,7 +37,13 @@ function formatStamp(value: string | null | undefined): string {
   return date.toLocaleString();
 }
 
-export function SiteContentCreatorPage() {
+export function SiteContentCreatorPage({
+  title = "AI Content Suite",
+  eyebrow = "Live content editor",
+}: {
+  title?: string;
+  eyebrow?: string;
+}) {
   const { user } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [crawling, setCrawling] = React.useState(false);
@@ -250,16 +256,30 @@ export function SiteContentCreatorPage() {
   );
   const isBriefReady = readiness?.completeness_status === "ready";
   const missingComponents = readiness?.missing_components ?? [];
+  const mappedSectionCount = selectedPages.reduce((count, page) => count + page.section_mappings.length, 0);
+  const editableSectionCount = selectedPages.reduce(
+    (count, page) => count + page.section_mappings.filter((mapping) => mapping.match_status !== "missing-from-live").length,
+    0
+  );
+  const draftCount = selectedPages.reduce(
+    (count, page) => count + page.section_rewrites.filter((rewrite) => rewrite.draft_status !== "not_started").length,
+    0
+  );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="mx-auto max-w-[1500px] space-y-6 p-6">
       <div className="px-1">
-        <div className="flex items-center gap-3">
-          <FileSearch className="h-5 w-5 text-[#0D5E6D]" />
-          <h1 className="text-3xl font-black tracking-[-0.04em] text-slate-900">Site Content</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#15284B] text-white">
+            <FileSearch className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#3B9189]">{eyebrow}</p>
+            <h1 className="text-3xl font-black tracking-[-0.04em] text-slate-900">{title}</h1>
+          </div>
         </div>
         <p className="mt-2 text-sm leading-7 text-slate-600">
-          Pick a property, pick a page, then click the section you want to rewrite.
+          Pick a property and page, review the mapped live sections, then edit the selected block in place.
         </p>
       </div>
 
@@ -322,6 +342,15 @@ export function SiteContentCreatorPage() {
           </div>
         </CardContent>
       </Card>
+
+      {selectedPages.length > 0 ? (
+        <div className="grid gap-3 md:grid-cols-4">
+          <WorkspaceMetric label="Pages captured" value={String(selectedPages.length)} />
+          <WorkspaceMetric label="Mapped sections" value={String(mappedSectionCount)} />
+          <WorkspaceMetric label="Editable live sections" value={String(editableSectionCount)} />
+          <WorkspaceMetric label="Drafts in progress" value={String(draftCount)} />
+        </div>
+      ) : null}
 
       {readiness && !isBriefReady && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 shadow-sm">
@@ -388,6 +417,15 @@ export function SiteContentCreatorPage() {
           </div>
         </div>
       </details>
+    </div>
+  );
+}
+
+function WorkspaceMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[18px] border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-black text-[#15284B]">{value}</p>
     </div>
   );
 }
@@ -734,9 +772,6 @@ function PageMappingWorkspace({
   draftRoleTitle: string;
   onRewriteSaved: () => Promise<void>;
 }) {
-  const actualSectionById = new Map(page.sections.map((section) => [section.id ?? "", section]));
-  const assessmentByMappingId = new Map(page.section_assessments.map((assessment) => [assessment.mapping_id, assessment]));
-  const rewriteByMappingId = new Map(page.section_rewrites.map((rewrite) => [rewrite.mapping_id, rewrite]));
   type MappingItem = {
     mapping: SiteContentSectionMapping;
     section: SiteContentSection | null;
@@ -751,8 +786,12 @@ function PageMappingWorkspace({
         variants: Array<{ tabLabel: string; item: MappingItem }>;
       };
   const mappingItems = React.useMemo(
-    () =>
-      [...page.section_mappings]
+    () => {
+      const actualSectionById = new Map(page.sections.map((section) => [section.id ?? "", section]));
+      const assessmentByMappingId = new Map(page.section_assessments.map((assessment) => [assessment.mapping_id, assessment]));
+      const rewriteByMappingId = new Map(page.section_rewrites.map((rewrite) => [rewrite.mapping_id, rewrite]));
+
+      return [...page.section_mappings]
         .map((mapping) => {
           const section = mapping.section_id ? actualSectionById.get(mapping.section_id) ?? null : null;
           const assessment = assessmentByMappingId.get(mapping.id) ?? null;
@@ -770,27 +809,44 @@ function PageMappingWorkspace({
           const bOrder = b.section?.section_order ?? b.mapping.expected_order ?? Number.MAX_SAFE_INTEGER;
           if (aOrder !== bOrder) return aOrder - bOrder;
           return a.mapping.updated_at.localeCompare(b.mapping.updated_at);
-        }),
-    [page.section_mappings, page.page_type, actualSectionById, assessmentByMappingId, rewriteByMappingId]
+        });
+    },
+    [page]
   );
   const visibleMappingItems = React.useMemo(
     () => mappingItems.filter((item) => item.mapping.match_status !== "missing-from-live"),
     [mappingItems]
+  );
+  const editableMappingItems = React.useMemo(
+    () => visibleMappingItems.filter((item) => getMappingEditability(item.mapping, item.section, page.page_type).status === "editable"),
+    [visibleMappingItems, page.page_type]
+  );
+  const lockedMappingItems = React.useMemo(
+    () => visibleMappingItems.filter((item) => getMappingEditability(item.mapping, item.section, page.page_type).status !== "editable"),
+    [visibleMappingItems, page.page_type]
   );
   const hiddenSpecsSlots = React.useMemo(
     () => mappingItems.filter((item) => item.mapping.match_status === "missing-from-live"),
     [mappingItems]
   );
   const [selectedMappingId, setSelectedMappingId] = React.useState(visibleMappingItems[0]?.mapping.id ?? "");
+  const [editorOpen, setEditorOpen] = React.useState(false);
 
   React.useEffect(() => {
     setSelectedMappingId(visibleMappingItems[0]?.mapping.id ?? "");
+    setEditorOpen(false);
   }, [page.id, visibleMappingItems]);
 
   const selectedItem =
     mappingItems.find((item) => item.mapping.id === selectedMappingId) ??
     visibleMappingItems[0] ??
     null;
+
+  function openEditor(mappingId: string) {
+    setSelectedMappingId(mappingId);
+    setEditorOpen(true);
+  }
+
   const canvasItems = React.useMemo<CanvasItem[]>(() => {
     const entries: CanvasItem[] = [];
     const used = new Set<string>();
@@ -836,7 +892,7 @@ function PageMappingWorkspace({
     });
 
     return entries;
-  }, [visibleMappingItems, page.page_type]);
+  }, [mappingItems, visibleMappingItems, page.page_type]);
 
   if (visibleMappingItems.length === 0) {
     return (
@@ -848,74 +904,100 @@ function PageMappingWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="overflow-hidden rounded-[32px] border border-slate-300 bg-[#eef2f6] shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div className="mx-auto max-w-[980px] space-y-10 bg-white p-4 md:p-6">
-            {shouldRenderSyntheticHero(page, visibleMappingItems) ? (
-              <SyntheticPageHero page={page} firstItem={visibleMappingItems[0] ?? null} />
-            ) : null}
-            {canRenderDirectImage(page.spec_screenshot) ? (
-              <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100">
-                <img
-                  src={page.spec_screenshot ?? ""}
-                  alt={`${page.spec_page_name || page.page_title || "Page"} reference`}
-                  className="h-auto w-full object-cover"
-                />
-              </div>
-            ) : null}
-
-            {canvasItems.map((entry, index) =>
-              entry.kind === "single" ? (
-                <button
-                  key={entry.item.mapping.id}
-                  type="button"
-                  onClick={() => setSelectedMappingId(entry.item.mapping.id)}
-                  className={`block w-full rounded-[30px] text-left transition ${
-                    selectedItem?.mapping.id === entry.item.mapping.id
-                      ? "bg-white ring-4 ring-[#15284B]/10"
-                      : "bg-white hover:ring-2 hover:ring-slate-200"
-                  }`}
-                >
-                  <PageCanvasBlock
-                    index={index}
-                    total={canvasItems.length}
-                    mapping={entry.item.mapping}
-                    section={entry.item.section}
-                    selected={selectedItem?.mapping.id === entry.item.mapping.id}
-                  />
-                </button>
-              ) : (
-                <HomepageSwitcherGroup
-                  key={entry.id}
-                  variants={entry.variants}
-                  selectedMappingId={selectedMappingId}
-                  onSelect={setSelectedMappingId}
-                />
-              )
-            )}
+      <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#3B9189]">Mapped live page</p>
+            <p className="mt-1 text-xl font-black tracking-[-0.035em] text-[#15284B]">
+              {page.spec_page_name || page.page_title || page.page_path || "Selected page"}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Click a section in the page map or preview. Property sections open for editing; Venterra/global blocks open read-only.
+            </p>
           </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold text-slate-700">
+              {editableMappingItems.length} editable
+            </span>
+            <span className="rounded-full border border-[#BD4830]/30 bg-[#BD4830]/10 px-3 py-1 font-semibold text-[#BD4830]">
+              {lockedMappingItems.length} locked/global
+            </span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-semibold text-slate-700">
+              {hiddenSpecsSlots.length} missing Specs
+            </span>
+          </div>
+        </div>
+
+        <SectionMapRail
+          items={visibleMappingItems}
+          selectedMappingId={selectedItem?.mapping.id ?? ""}
+          total={visibleMappingItems.length}
+          pageType={page.page_type}
+          onSelect={openEditor}
+        />
+      </div>
+
+      <div className="overflow-hidden rounded-[32px] border border-slate-300 bg-[#eef2f6] shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+        <div className="mx-auto max-w-[1180px] space-y-10 bg-white p-4 md:p-6">
+          {shouldRenderSyntheticHero(page, visibleMappingItems) ? (
+            <SyntheticPageHero page={page} firstItem={visibleMappingItems[0] ?? null} />
+          ) : null}
+          {canRenderDirectImage(page.spec_screenshot) ? (
+            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100">
+              <img
+                src={page.spec_screenshot ?? ""}
+                alt={`${page.spec_page_name || page.page_title || "Page"} reference`}
+                className="h-auto w-full object-cover"
+              />
+            </div>
+          ) : null}
+
+          {canvasItems.map((entry, index) =>
+            entry.kind === "single" ? (
+              <button
+                key={entry.item.mapping.id}
+                type="button"
+                onClick={() => openEditor(entry.item.mapping.id)}
+                className={`group block w-full rounded-[30px] text-left transition ${
+                  selectedItem?.mapping.id === entry.item.mapping.id
+                    ? "bg-white ring-4 ring-[#15284B]/10"
+                    : "bg-white hover:ring-2 hover:ring-slate-200"
+                }`}
+              >
+                <PageCanvasBlock
+                  index={index}
+                  total={canvasItems.length}
+                  mapping={entry.item.mapping}
+                  section={entry.item.section}
+                  selected={selectedItem?.mapping.id === entry.item.mapping.id}
+                  pageType={page.page_type}
+                />
+              </button>
+            ) : (
+              <HomepageSwitcherGroup
+                key={entry.id}
+                variants={entry.variants}
+                selectedMappingId={selectedMappingId}
+                pageType={page.page_type}
+                onSelect={openEditor}
+              />
+            )
+          )}
         </div>
       </div>
 
-      {selectedItem && (
-        <div className="rounded-[30px] border border-slate-300 bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]">
-          <p className="text-2xl font-semibold tracking-[-0.04em] text-slate-950">
-            {getSectionDisplayTitle(selectedItem.section, selectedItem.mapping)}
-          </p>
-
-          <SectionRewritePanel
-            propertyId={propertyId}
-            page={page}
-            mapping={selectedItem.mapping}
-            section={selectedItem.section}
-            assessment={selectedItem.assessment}
-            rewrite={selectedItem.rewrite}
-            canDraftRewrite={canDraftRewrite}
-            draftRoleTitle={draftRoleTitle}
-            onSaved={onRewriteSaved}
-          />
-        </div>
-      )}
+      {selectedItem ? (
+        <SectionEditorDrawer
+          open={editorOpen}
+          onClose={() => setEditorOpen(false)}
+          propertyId={propertyId}
+          page={page}
+          item={selectedItem}
+          canDraftRewrite={canDraftRewrite}
+          draftRoleTitle={draftRoleTitle}
+          onSaved={onRewriteSaved}
+        />
+      ) : null}
 
       {hiddenSpecsSlots.length > 0 ? (
         <details className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
@@ -976,6 +1058,67 @@ function getHomepageSwitcherTabLabel(
   return null;
 }
 
+function SectionMapRail({
+  items,
+  selectedMappingId,
+  total,
+  pageType,
+  onSelect,
+}: {
+  items: Array<{
+    mapping: SiteContentSectionMapping;
+    section: SiteContentSection | null;
+    assessment: SiteContentSectionAssessment | null;
+    rewrite: SiteContentSectionRewrite | null;
+  }>;
+  selectedMappingId: string;
+  total: number;
+  pageType: string | null;
+  onSelect: (mappingId: string) => void;
+}) {
+  return (
+    <div className="mt-5 flex gap-3 overflow-x-auto pb-1">
+      {items.map((item, index) => {
+        const title = getSectionDisplayTitle(item.section, item.mapping);
+        const editability = getMappingEditability(item.mapping, item.section, pageType);
+        const status = item.rewrite?.draft_status && item.rewrite.draft_status !== "not_started"
+          ? item.rewrite.draft_status.replace(/_/g, " ")
+          : editability.status !== "editable"
+            ? editability.label
+          : item.assessment?.overall_status?.replace(/-/g, " ") ?? item.mapping.match_status.replace(/-/g, " ");
+        const selected = selectedMappingId === item.mapping.id;
+        return (
+          <button
+            key={item.mapping.id}
+            type="button"
+            onClick={() => onSelect(item.mapping.id)}
+            className={`min-w-[220px] rounded-[18px] border px-4 py-3 text-left transition ${
+              selected
+                ? "border-[#15284B] bg-[#15284B] text-white shadow-[0_12px_28px_rgba(21,40,75,0.22)]"
+                : editability.status !== "editable"
+                  ? "border-[#BD4830]/30 bg-[#BD4830]/5 text-slate-800 hover:border-[#BD4830]/50 hover:bg-white"
+                  : "border-slate-200 bg-slate-50 text-slate-800 hover:border-[#3B9189]/60 hover:bg-white"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${selected ? "text-white/58" : "text-slate-500"}`}>
+                {getSectionLocationLabel(index, total)}
+              </span>
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${
+                selected ? "bg-white/14 text-white" : editability.status !== "editable" ? "bg-white text-[#BD4830]" : "bg-white text-[#15284B]"
+              }`}>
+                {editability.status !== "editable" ? <Lock className="h-3 w-3" /> : null}
+                {status}
+              </span>
+            </div>
+            <p className="mt-2 line-clamp-2 text-sm font-black leading-5">{title}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function getHomepageSwitcherTabOrder(label: string) {
   if (label === "Pet-Friendly Fun") return 0;
   if (label === "High-Tech Living") return 1;
@@ -983,9 +1126,94 @@ function getHomepageSwitcherTabOrder(label: string) {
   return 9;
 }
 
+function getMappingEditability(
+  mapping: SiteContentSectionMapping,
+  section: SiteContentSection | null,
+  pageType: string | null
+): {
+  status: "editable" | "locked_global" | "invalid_missing" | "needs_mapping";
+  label: string;
+  reason: string;
+  flags: string[];
+} {
+  const status =
+    mapping.editability_status ??
+    (mapping.match_status === "missing-from-live"
+      ? "invalid_missing"
+      : getGlobalVenterraBlockFlags(pageType, mapping, section).length > 0
+        ? "locked_global"
+        : mapping.match_status === "extra-on-live"
+          ? "needs_mapping"
+          : "editable");
+  const flags = mapping.editability_flags ?? getGlobalVenterraBlockFlags(pageType, mapping, section);
+  const fallbackReason =
+    status === "locked_global"
+      ? "This is a Venterra/global block. It is visible for context, but property-level editing is locked."
+      : status === "invalid_missing"
+        ? "This Specs slot is missing from the current live page, so it needs mapping or creation before section editing."
+        : status === "needs_mapping"
+          ? "This live block does not have a confident Specs mapping yet. Map it before rewrite work."
+          : "Property-level section editing is allowed for this mapped live section.";
+  const label =
+    status === "locked_global"
+      ? "Locked"
+      : status === "invalid_missing"
+        ? "Missing"
+        : status === "needs_mapping"
+          ? "Needs map"
+          : "Editable";
+  return {
+    status,
+    label,
+    reason: mapping.editability_reason ?? fallbackReason,
+    flags,
+  };
+}
+
+function getGlobalVenterraBlockFlags(
+  pageType: string | null,
+  mapping: SiteContentSectionMapping,
+  section: SiteContentSection | null
+): string[] {
+  const source = [
+    pageType,
+    mapping.expected_section_key,
+    mapping.expected_section_label,
+    mapping.expected_section_role,
+    section?.section_key,
+    section?.section_label,
+    section?.eyebrow,
+    section?.heading,
+    section?.title,
+    section?.subtitle,
+    section?.original_copy,
+    section?.bullet_points?.join(" "),
+    section?.switcher_details?.map((detail) => `${detail.title} ${detail.body} ${detail.bullets.join(" ")} ${detail.cta_label ?? ""}`).join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const flags: string[] = [];
+  if (pageType === "about-venterra" || source.includes("about venterra")) flags.push("about_venterra_page");
+  if (/\bventerra\b/.test(source)) flags.push("venterra_brand_content");
+  if (/live easy|48 hour service guarantee|resident referral bonus|experience leader|better living/i.test(source)) {
+    flags.push("corporate_resident_experience_program");
+  }
+  if (/smart hub|smarthub|smart ?home|high-tech living|technology package|venterra mobile app/i.test(source)) {
+    flags.push("corporate_technology_program");
+  }
+  if (/pet-friendly fun|view full venterra pet policies|restricted breeds|pets welcome/i.test(source)) {
+    flags.push("corporate_pet_policy_program");
+  }
+
+  return Array.from(new Set(flags));
+}
+
 function HomepageSwitcherGroup({
   variants,
   selectedMappingId,
+  pageType,
   onSelect,
 }: {
   variants: Array<{
@@ -996,6 +1224,7 @@ function HomepageSwitcherGroup({
     };
   }>;
   selectedMappingId: string;
+  pageType: string | null;
   onSelect: (mappingId: string) => void;
 }) {
   return (
@@ -1015,20 +1244,31 @@ function HomepageSwitcherGroup({
           const body = buildSectionBaselinePreview(section);
           const ctaLabels = extractCtaLabels(section, mapping);
           const selected = selectedMappingId === mapping.id;
+          const editability = getMappingEditability(mapping, section, pageType);
           return (
             <button
               key={mapping.id}
               type="button"
               onClick={() => onSelect(mapping.id)}
-              className={`block w-full rounded-[28px] border text-left transition ${
-                selected ? "border-[#15284B] bg-[#f8fbff] ring-4 ring-[#15284B]/10" : "border-slate-200 bg-white hover:border-slate-300"
+              className={`group block w-full rounded-[28px] border text-left transition ${
+                selected
+                  ? "border-[#15284B] bg-[#f8fbff] ring-4 ring-[#15284B]/10"
+                  : editability.status !== "editable"
+                    ? "border-[#BD4830]/25 bg-white hover:border-[#BD4830]/45"
+                    : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               <div className="px-5 py-8 md:px-7">
-                <div className="mb-6">
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                   <span className="inline-flex rounded-full bg-[#eef3f8] px-4 py-2 text-sm font-semibold text-[#15284B]">
                     {variant.tabLabel}
                   </span>
+                  {editability.status !== "editable" ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[#BD4830]/30 bg-[#BD4830]/10 px-3 py-1 text-xs font-semibold text-[#BD4830]">
+                      <Lock className="h-3.5 w-3.5" />
+                      {editability.label}
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-8 md:grid-cols-[0.95fr_1.05fr] md:items-start">
@@ -1107,12 +1347,14 @@ function PageCanvasBlock({
   mapping,
   section,
   selected,
+  pageType,
 }: {
   index: number;
   total: number;
   mapping: SiteContentSectionMapping;
   section: SiteContentSection | null;
   selected: boolean;
+  pageType: string | null;
 }) {
   const title = getSectionDisplayTitle(section, mapping);
   const subheading = getSectionDisplaySubheading(section, mapping);
@@ -1122,9 +1364,26 @@ function PageCanvasBlock({
   const body = buildSectionBaselinePreview(section);
   const bodyLines = getSectionBodyLines(section);
   const excerpt = bodyLines.length > 0 ? bodyLines.slice(0, 2) : [body];
+  const editability = getMappingEditability(mapping, section, pageType);
+  const affordanceLabel = selected
+    ? editability.status === "editable" ? "Selected" : editability.label
+    : editability.status === "editable" ? "Click to edit" : "Inspect only";
 
   return (
-    <div>
+    <div className="relative">
+      <span
+        className={`pointer-events-none absolute right-4 top-4 z-10 rounded-full border px-3 py-1 text-xs font-semibold shadow-sm transition ${
+          selected
+            ? editability.status === "editable"
+              ? "border-[#15284B] bg-[#15284B] text-white"
+              : "border-[#BD4830] bg-[#BD4830] text-white"
+            : editability.status === "editable"
+              ? "border-slate-200 bg-white/90 text-[#15284B] opacity-0 group-hover:opacity-100"
+              : "border-[#BD4830]/30 bg-white/95 text-[#BD4830]"
+        }`}
+      >
+        {affordanceLabel}
+      </span>
       {layout === "hero" ? (
         <div className="overflow-hidden rounded-[28px] bg-[#15284B] text-white shadow-[0_18px_44px_rgba(21,40,75,0.25)]">
           <div className="min-h-[420px] bg-[linear-gradient(180deg,rgba(10,18,34,0.12),rgba(10,18,34,0.26)),radial-gradient(circle_at_top,rgba(122,193,229,0.24),transparent_40%),linear-gradient(135deg,#89d0ee_0%,#53a8d1_30%,#28527f_100%)] p-8 md:p-12">
@@ -1435,6 +1694,180 @@ function parseGovernedInputs(rewrite: SiteContentSectionRewrite | null): Record<
   }
 }
 
+function SectionEditorDrawer({
+  open,
+  onClose,
+  propertyId,
+  page,
+  item,
+  canDraftRewrite,
+  draftRoleTitle,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  propertyId: string;
+  page: SiteContentPage;
+  item: {
+    mapping: SiteContentSectionMapping;
+    section: SiteContentSection | null;
+    assessment: SiteContentSectionAssessment | null;
+    rewrite: SiteContentSectionRewrite | null;
+  };
+  canDraftRewrite: boolean;
+  draftRoleTitle: string;
+  onSaved: () => Promise<void>;
+}) {
+  React.useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const title = getSectionDisplayTitle(item.section, item.mapping);
+  const location = item.section?.section_order != null ? `Section ${item.section.section_order + 1}` : "Mapped section";
+  const editability = getMappingEditability(item.mapping, item.section, page.page_type);
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-[#15284B]/28 backdrop-blur-[2px]" role="dialog" aria-modal="true">
+      <button
+        type="button"
+        aria-label="Close editor drawer"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+      />
+      <aside className="relative flex h-full w-full max-w-[760px] flex-col border-l border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)]">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#3B9189]">{location}</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[#15284B]">{title}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              {editability.status === "editable"
+                ? "Edit the live mapped section with its Specs slot, assessment, and AI working context attached."
+                : "Inspect this mapped block without changing corporate/global or unmapped site content."}
+            </p>
+          </div>
+          <Button type="button" variant="outline" className="h-10 w-10 rounded-full p-0" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          {editability.status === "editable" ? (
+            <SectionRewritePanel
+              propertyId={propertyId}
+              page={page}
+              mapping={item.mapping}
+              section={item.section}
+              assessment={item.assessment}
+              rewrite={item.rewrite}
+              canDraftRewrite={canDraftRewrite}
+              draftRoleTitle={draftRoleTitle}
+              onSaved={onSaved}
+            />
+          ) : (
+            <SectionLockedPanel
+              page={page}
+              mapping={item.mapping}
+              section={item.section}
+              assessment={item.assessment}
+              editability={editability}
+            />
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function SectionLockedPanel({
+  page,
+  mapping,
+  section,
+  assessment,
+  editability,
+}: {
+  page: SiteContentPage;
+  mapping: SiteContentSectionMapping;
+  section: SiteContentSection | null;
+  assessment: SiteContentSectionAssessment | null;
+  editability: ReturnType<typeof getMappingEditability>;
+}) {
+  const title = getSectionDisplayTitle(section, mapping);
+  const liveCopy = section?.original_copy?.trim() || buildSectionBaselinePreview(section);
+  const ctaLabels = extractCtaLabels(section, mapping);
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-[24px] border border-[#BD4830]/30 bg-[#BD4830]/10 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4830]">
+              <Lock className="h-4 w-4" />
+              {editability.label}
+            </p>
+            <h3 className="mt-2 text-xl font-semibold tracking-normal text-[#15284B]">{title}</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-700">{editability.reason}</p>
+          </div>
+        </div>
+        {editability.flags.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {editability.flags.map((flag) => (
+              <span key={flag} className="rounded-full border border-[#BD4830]/20 bg-white px-2.5 py-1 text-xs font-semibold text-[#BD4830]">
+                {humanizeFlag(flag)}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="rounded-[24px] border border-slate-300 bg-[#fbfcfe] p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current live block</p>
+        <div className="mt-4 space-y-4">
+          <p className="whitespace-pre-wrap text-base leading-8 text-slate-800">{liveCopy}</p>
+          {section?.bullet_points?.length ? (
+            <ul className="grid gap-2 pl-5 text-sm leading-7 text-slate-700">
+              {section.bullet_points.map((point, index) => (
+                <li key={index} className="list-disc">
+                  {point}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {ctaLabels.length > 0 ? (
+            <div className="flex flex-wrap gap-3 pt-2">
+              {ctaLabels.map((label) => (
+                <span key={label} className="rounded-full bg-[#15284B] px-5 py-3 text-sm font-semibold text-white">
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-[22px] border border-slate-200 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Page</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">{page.spec_page_name || page.page_title || page.page_path || "Selected page"}</p>
+        </div>
+        <div className="rounded-[22px] border border-slate-200 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Specs slot</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">{mapping.expected_section_label || "No confident Specs slot"}</p>
+        </div>
+      </div>
+
+      <ResiSourcePanel mapping={mapping} />
+
+      {assessment ? <SectionAssessmentPanel assessment={assessment} /> : null}
+    </div>
+  );
+}
+
 function SectionRewritePanel({
   propertyId,
   page,
@@ -1507,10 +1940,66 @@ function SectionRewritePanel({
   const sectionTitle = getSectionDisplayTitle(section, mapping);
   const liveCopy = section?.original_copy?.trim() || buildSectionBaselinePreview(section);
   const ctaLabels = extractCtaLabels(section, mapping);
+  const aiContext = [
+    `Page: ${page.spec_page_name || page.page_title || page.page_path || "Selected page"}`,
+    `Section: ${sectionTitle}`,
+    mapping.expected_section_label ? `Specs slot: ${mapping.expected_section_label}` : null,
+    mapping.expected_section_role ? `Specs role: ${mapping.expected_section_role}` : null,
+    assessment?.summary ? `Assessment: ${assessment.summary}` : null,
+    assessmentFlags.length > 0 ? `Flags: ${assessmentFlags.map(humanizeFlag).join(", ")}` : null,
+    ctaLabels.length > 0 ? `CTA labels: ${ctaLabels.join(", ")}` : null,
+  ].filter(Boolean).join("\n");
+
+  function prepareAiBrief() {
+    const brief = [
+      "Rewrite this mapped live section using the attached governed context.",
+      "",
+      aiContext,
+      "",
+      "Keep the section specific, resident-facing, aligned to the page role, and suitable for review before publishing.",
+    ].join("\n");
+    setRewriteBrief(brief);
+    if (!refinementNotes.trim()) {
+      setRefinementNotes("AI context staged from live copy, Specs mapping, and section assessment. Human review is still required before approval.");
+    }
+  }
+
+  function useLiveCopyAsDraft() {
+    setProposedCopy(liveCopy);
+    if (draftStatus === "not_started") setDraftStatus("drafted");
+  }
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="rounded-[24px] border border-[#7DCAC2]/50 bg-[#7DCAC2]/10 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#15284B]">
+              <Sparkles className="h-4 w-4" />
+              AI working context
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              Section context is staged from the live page, Specs mapping, and assessment. Generation is ready for a real VACS/LLM endpoint when that API is exposed to this workspace.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" className="rounded-xl bg-white" onClick={prepareAiBrief} disabled={!canDraftRewrite}>
+              <Wand2 className="mr-2 h-4 w-4" />
+              Stage AI brief
+            </Button>
+            <Button type="button" variant="outline" className="rounded-xl bg-white" onClick={useLiveCopyAsDraft} disabled={!canDraftRewrite}>
+              Use live copy
+            </Button>
+          </div>
+        </div>
+        <div className="mt-4 rounded-2xl border border-white/70 bg-white/70 p-4">
+          <p className="whitespace-pre-wrap text-xs leading-5 text-slate-700">{aiContext}</p>
+        </div>
+      </div>
+
+      <ResiSourcePanel mapping={mapping} />
+
+      <div className="grid gap-5">
         <div className="rounded-[24px] border border-slate-300 bg-[#fbfcfe] p-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current copy</p>
           <div className="mt-4 space-y-4">
@@ -1537,7 +2026,17 @@ function SectionRewritePanel({
         </div>
 
         <div className="rounded-[24px] border border-[#15284B]/18 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#15284B]">New copy</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#15284B]">Drafting workspace</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Use the live section, Specs mapping, assessment, Captain context, and editor notes to create the replacement copy here.
+              </p>
+            </div>
+            <span className="inline-flex h-9 items-center justify-center rounded-full border border-[#7DCAC2]/60 bg-[#7DCAC2]/10 px-3 text-xs font-semibold text-[#15284B]">
+              VACS in Pond
+            </span>
+          </div>
 
           <div className="mt-4 space-y-3">
             <Textarea
@@ -1658,6 +2157,55 @@ function SectionRewritePanel({
           )}
         </div>
       </details>
+    </div>
+  );
+}
+
+function ResiSourcePanel({ mapping }: { mapping: SiteContentSectionMapping }) {
+  const source = mapping.resi_source;
+  if (!source || source.status === "not_resi_backed" || source.status === "unavailable") return null;
+
+  const global = source.status === "global_locked" || source.scope === "global";
+  const label = global ? "Global Resi source - inspect only" : source.status === "property_matched" ? "Property Resi source matched" : "Possible property Resi source";
+
+  return (
+    <div className={`rounded-[22px] border p-5 ${global ? "border-[#BD4830]/30 bg-[#BD4830]/10" : "border-[#3B9189]/30 bg-[#3B9189]/10"}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${global ? "text-[#BD4830]" : "text-[#294782]"}`}>Live Resi source</p>
+          <h4 className="mt-2 text-base font-semibold text-[#15284B]">{label}</h4>
+        </div>
+        <span className={`rounded-full bg-white px-3 py-1 text-xs font-semibold ${global ? "text-[#BD4830]" : "text-[#294782]"}`}>
+          {source.confidence}% match confidence
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-700">{source.rationale}</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Object</p>
+          <p className="mt-1 text-sm font-semibold text-slate-800">{source.source_title || source.source_object_type || "Resi content object"}</p>
+          <p className="mt-1 text-xs text-slate-500">{source.source_object_type || "Unknown type"}</p>
+        </div>
+        <div className="rounded-xl border border-white/80 bg-white/70 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Scope</p>
+          <p className="mt-1 text-sm font-semibold text-slate-800">
+            {global ? `${source.affected_property_count ?? "Multiple"} properties` : "Property-specific"}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">{global ? "Global blocks cannot be changed from this workspace." : "Source context is available for editorial review."}</p>
+        </div>
+      </div>
+      {source.safe_fields.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Safe source fields</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {source.safe_fields.map((field) => (
+              <span key={`${source.source_object_id}-${field.field_path}`} className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
+                {field.field_path}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -5,6 +5,17 @@ Date: 2026-04-09
 Owner: MarketingOps / Property Analytics
 Scope: Relationship model between VACS and Site Content Creator within the governed platform
 
+## 08/27/2026 Supersession
+
+Mark superseded the original separate-workspace direction. The active product direction is one in-Pond AI Content Suite where VACS drafting capability is embedded directly inside the live Site Content editor.
+
+Current rule:
+
+- Do not build or promote a separate VACS bridge/launcher work surface for operators.
+- Do not promote old Content Office as the active content editing surface.
+- Use AI Content Suite as the primary Pond workspace for property -> page -> mapped live sections -> editable drafts.
+- Keep Data Pond/Captain/Specs as governed inputs and keep Resi Content Bridge as the explicit apply/readback lane for live Resi changes.
+
 ## 1. Purpose
 
 Define how `VACS` and `Site Content Creator` should work together.
@@ -244,8 +255,8 @@ Current-state note:
 
 - `VACS` is a real platform system today
 - the current repo-verified implementation is the protected API surface at `api.venterradev.com/v1/vacs/*`
-- `vacs.venterradev.com` remains the intended canonical standalone product surface in architecture
-- current-state reporting should not assume a separate deployed VACS frontend host unless deployment evidence is available
+- `vacs.venterradev.com` is no longer the operator target for this lane
+- `/site-content` is the active AI Content Suite workspace inside the Pond, with `/vacs` retained only as compatibility access to the same editor
 
 ## 7. What Must Feel Unified
 

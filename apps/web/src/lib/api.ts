@@ -19,7 +19,7 @@ export const LOGGED_OUT_MARKER = "logged_out";
 export const CLOUDFLARE_LOGGED_OUT_STORAGE_KEY = "cloudflare_logged_out";
 const APP_ORIGIN_FALLBACK = "https://app.local";
 const CLOUDFLARE_ACCESS_TEAM_DOMAIN =
-  (process.env.NEXT_PUBLIC_CLOUDFLARE_ACCESS_TEAM_DOMAIN ?? "https://macxs.cloudflareaccess.com").replace(/\/$/, "");
+  (process.env.NEXT_PUBLIC_CLOUDFLARE_ACCESS_TEAM_DOMAIN ?? "https://datapond.cloudflareaccess.com").replace(/\/$/, "");
 
 export function normalizeSafeNextPath(nextPath: string | null | undefined, fallback = "/"): string {
   if (!nextPath) return fallback;
@@ -430,6 +430,28 @@ export interface CaptainOfficeHistoryItem {
   generated_at: string | null;
 }
 
+export interface CaptainRuntimeInteractionStatus {
+  interaction: CaptainOfficeHistoryItem;
+  original_interaction: CaptainOfficeHistoryItem;
+  research: {
+    research_request_id: string;
+    status: string;
+    progress_message: string;
+    elapsed_seconds: number;
+    started_at: string;
+    updated_at: string;
+    completed_at: string | null;
+    stages: Array<{ label: string; state: "complete" | "active" | "pending" | "held_up" | string }>;
+    checks: Array<{
+      name: string;
+      status: "complete" | "working" | "held_up" | string;
+      latest_data_at: string | null;
+      updated_at: string;
+      completed_at: string | null;
+    }>;
+  } | null;
+}
+
 export interface CaptainEvidencePacketRead {
   evidence_packet_id: string;
   property_id: string;
@@ -477,6 +499,31 @@ export interface CaptainOfficeState {
   watch_items: Array<Record<string, unknown>>;
   actions: Array<Record<string, unknown>>;
   audit_events: Array<Record<string, unknown>>;
+  property_visual_snapshot: {
+    screenshot_id: string;
+    property_id: string;
+    page_url: string;
+    captured_at: string;
+    viewport: {
+      width: number;
+      height: number;
+      device_scale_factor: number;
+    };
+    image_url: string;
+    image_r2_key: string;
+    image_content_type: string;
+    image_bytes: number;
+    image_sha256: string;
+    html_sha256: string | null;
+    capture_provider: string;
+    provenance: Record<string, unknown>;
+    created_at: string;
+  } | null;
+  captain_note: {
+    text: string;
+    source: string;
+    freshness_at: string | null;
+  } | null;
   alerts: Array<{ severity: string; title: string; detail: string }>;
 }
 
@@ -925,6 +972,13 @@ export async function submitCaptainRuntimeInteraction(body: CaptainRuntimeIntera
   return data;
 }
 
+export async function getCaptainRuntimeInteractionStatus(interactionId: string): Promise<CaptainRuntimeInteractionStatus> {
+  const res = await apiFetch(`/v1/captain-runtime/interactions/${encodeURIComponent(interactionId)}/status`);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error?.message ?? "Failed to load Captain request status");
+  return data;
+}
+
 export async function getExpertReadsForProperty(propertyId: string, limit = 25): Promise<ExpertReadRead[]> {
   const res = await apiFetch(`/v1/expert-reads/properties/${encodeURIComponent(propertyId)}?limit=${limit}`);
   if (!res.ok) {
@@ -1141,11 +1195,43 @@ export interface PibDetailResponse {
   };
   ga4: Record<string, unknown> | null;
   site_performance: Record<string, unknown> | null;
+  latest_psi: {
+    source: string;
+    freshness: string;
+    latest_metric_date: string | null;
+    mobile: {
+      score: number | null;
+      status: string | null;
+      metric_date: string;
+      property_id: string;
+      source: string;
+      domain_key: string | null;
+      mirror_batch_id: string | null;
+      source_validation_batch_id: string | null;
+      source_row_hash: string | null;
+      collection_id?: number | null;
+      created_at: string | null;
+    } | null;
+    desktop: {
+      score: number | null;
+      status: string | null;
+      metric_date: string;
+      property_id: string;
+      source: string;
+      domain_key: string | null;
+      mirror_batch_id: string | null;
+      source_validation_batch_id: string | null;
+      source_row_hash: string | null;
+      collection_id?: number | null;
+      created_at: string | null;
+    } | null;
+  } | null;
   local_presence: Record<string, unknown> | null;
   search_performance: (Record<string, unknown> & { top_keywords: { query: string; clicks: number; impressions: number; ctr: number; position: number }[] }) | null;
   cir: Record<string, unknown> | null;
   reviews: (Record<string, unknown> & { themes: Record<string, number>; critical_reviews: { reviewer: string; rating: number; comment: string; date: string }[] }) | null;
   marketing: Record<string, unknown> | null;
+  ad_keywords: Array<Record<string, unknown>>;
   leasing: {
     t7: Record<string, unknown> | null;
     t7_portfolio: Record<string, unknown> | null;
@@ -2744,8 +2830,30 @@ export interface SiteContentSectionMapping {
   match_status: "matched" | "partial" | "extra-on-live" | "missing-from-live";
   match_confidence: number;
   rationale: string;
+  editability_status?: "editable" | "locked_global" | "invalid_missing" | "needs_mapping";
+  editability_reason?: string;
+  editability_flags?: string[];
+  resi_source?: SiteContentResiSourceBinding;
   created_at: string;
   updated_at: string;
+}
+
+export interface SiteContentResiSafeField {
+  field_path: string;
+  field_role: string;
+  safety_notes: string | null;
+}
+
+export interface SiteContentResiSourceBinding {
+  status: "property_matched" | "property_suggested" | "global_locked" | "not_resi_backed" | "unavailable";
+  scope: "property" | "global" | "unknown";
+  source_object_type: string | null;
+  source_object_id: string | null;
+  source_title: string | null;
+  confidence: number;
+  affected_property_count: number | null;
+  safe_fields: SiteContentResiSafeField[];
+  rationale: string;
 }
 
 export interface SiteContentSectionMappingSummary {

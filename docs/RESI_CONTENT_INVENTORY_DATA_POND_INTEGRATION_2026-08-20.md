@@ -251,15 +251,17 @@ The Resi Content Bridge supports the first live-ready apply workflow:
 - local inventory read: `show-faq`
 - live V2 readback: `read-v2-faq`
 - approved FAQ answer apply: `apply-faq-answer`
-- Resi property cache clear: `clear-property-cache`
-- public delivery verification: `verify-public-faq`
+- Mark/manual Resi control-panel system-cache clear for V2 sites when needed
+- rendered public website/browser verification
 
 Mutation commands require exact confirm phrases:
 
 - `APPLY_RESI_CONTENT_CHANGE`
-- `CLEAR_RESI_CONTENT_CACHE`
+- `CLEAR_RESI_CONTENT_CACHE` only for legacy/original V1 sites where Resi confirms it applies
 
 The first verified production proof was The Vine Kyle Parkway (`TX4EK`) FAQ `Can I tour The Vine?`, recorded as change request `resi_faq_hard_hat_tx4ek_3d1e27857b7e`.
+
+09/01/2026 cache clarification: V1 is a different/original site set, including examples such as Delta, Camber, and Cendana. It is not the cache-control path for V2 sites such as The Vine. Until Resi exposes V2 cache control, V2-site cache clearing is a Mark/manual Resi control-panel action, followed by rendered public website/browser proof.
 
 ## Current Gaps
 

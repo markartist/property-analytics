@@ -148,8 +148,8 @@ export default function ContentOfficePage() {
   if (!canView) {
     return (
       <RestrictedSurfaceCard
-        title="Content Office is curator-only"
-        description="This workspace is reserved for curators and stewards turning governed intelligence into channel-ready content."
+        title="Legacy Content Office is steward-only"
+        description="The active content editing workspace is AI Content Suite inside the Pond."
       />
     );
   }
@@ -167,11 +167,11 @@ export default function ContentOfficePage() {
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 text-emerald-700">
             <BriefcaseBusiness className="h-4 w-4" />
-            <span className="text-xs font-semibold uppercase tracking-[0.22em]">{getRoleTitle(user?.role ?? "viewer")} office</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.22em]">{getRoleTitle(user?.role ?? "viewer")} legacy lane</span>
           </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">Content Office</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">Legacy Content Office</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Governed channel work from Captain, Data Pond, Site Content, and local search signals.
+            Retained for older channel queues. Live page mapping and content editing now belong in AI Content Suite.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -180,6 +180,24 @@ export default function ContentOfficePage() {
           <Badge variant="outline">GBP first</Badge>
         </div>
       </div>
+
+      <Card className="border-[#7DCAC2]/50 bg-[#7DCAC2]/10">
+        <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-[#15284B]">Use AI Content Suite for current content work</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">
+              The active workspace maps live property pages and lets curators edit section copy directly in the Pond.
+            </p>
+          </div>
+          <Link
+            href="/site-content"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-[#15284B] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#294782]"
+          >
+            Open AI Content Suite
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </CardContent>
+      </Card>
 
       {error && (
         <Card className="border-rose-200 bg-rose-50">

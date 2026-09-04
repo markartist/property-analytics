@@ -6,9 +6,11 @@ Status: Required context before extending Resi content integration
 
 ## Read This First
 
+08/27/2026 product-direction supersession: Mark clarified that VACS should not be a separate bridge or separate operator work surface in the Pond. The active content workspace is AI Content Suite: property -> page -> mapped live sections -> editable drafts, with VACS drafting capability embedded in that editor. Content Office is legacy/busted for this lane and should not be promoted as the active content-editing destination.
+
 This project is no longer an API experiment. It is an emerging operating model for connecting Resi's live content system into Venterra's Data Pond, content workflows, Captain/Navigator, VACS, Site Content, Content Office, property groups, and supervisors.
 
-The correct mental model:
+The correct technical model:
 
 > Resi remains the live external CMS/source system. Data Pond becomes the governed content brain. Resi Content Bridge is the narrow, auditable hand that applies approved changes and proves them.
 
@@ -56,18 +58,18 @@ Resi V2 management API:
 - Validated read endpoints include `/me`, `/properties`, `/lead-sources`, and content endpoints
 - Validated write endpoint so far: `PATCH /faqs/{id}` for an approved FAQ answer update
 
-Resi V1 public/delivery API:
+Legacy Resi V1 API:
 
 - Base: `https://v2.getresi.com/api/v1`
-- Used for public delivery readback and cache clearing
-- Validated cache endpoint: `POST /cache/clear`
-- Cache body must contain exactly one target, such as `property_id`
-- Resi confirmed website cache clearing exists in V1 today and is not yet present in V2
+- Applies to a different/original set of Resi sites, such as Delta, Camber, and Cendana.
+- Do not use V1 as the cache-control path for Resi V2 sites such as The Vine.
+- Resi has no V2 cache-control endpoint yet.
+- For V2 sites, Mark clears the system cache manually in the Resi control panel when needed.
 
 Keep this split unless Resi later changes the API:
 
 - V2 = management/content layer
-- V1 = public delivery and cache proof layer
+- V1 = legacy/original-site API only; not the V2-site cache layer
 
 ## Credential Discipline
 
@@ -188,13 +190,14 @@ python3 scripts/resi_content_bridge.py read-v2-faq \
   --expected-text "The Vine is now offering Hard Hat Tours"
 ```
 
-Verify public V1 delivery:
+Verify public website after Mark clears V2-site cache manually:
 
 ```bash
-python3 scripts/resi_content_bridge.py verify-public-faq \
-  --property-code TX4EK \
-  --question "Can I tour The Vine?" \
-  --expected-text "The Vine is now offering Hard Hat Tours"
+python3 - <<'PY'
+import requests
+html = requests.get("https://thevinekyle.com/faqs/", timeout=30).text
+assert "The Vine is now offering tours" in html
+PY
 ```
 
 Apply approved FAQ answer:
@@ -208,11 +211,11 @@ python3 scripts/resi_content_bridge.py apply-faq-answer \
   --confirm APPLY_RESI_CONTENT_CHANGE
 ```
 
-Clear Resi property cache:
+Legacy V1 cache command, not for V2 sites such as The Vine:
 
 ```bash
 python3 scripts/resi_content_bridge.py clear-property-cache \
-  --property-code TX4EK \
+  --property-code LEGACY_V1_PROPERTY_CODE \
   --change-request-id resi_faq_hard_hat_tx4ek_3d1e27857b7e \
   --confirm CLEAR_RESI_CONTENT_CACHE
 ```
@@ -242,11 +245,11 @@ Validated chain:
 3. Bridge patched V2 FAQ answer.
 4. V2 readback matched exactly.
 5. Local `pond_content_change_requests` row was recorded.
-6. V1 property cache clear returned `202 Accepted`.
-7. V1 public FAQ delivery returned updated answer.
-8. Mark confirmed the public site rendered the updated FAQ in browser.
+6. A V1 cache clear was tested at the time, but later clarified as not the correct cache path for Resi V2 sites.
+7. Mark manually cleared the applicable system cache through the Resi control panel.
+8. The public site rendered the updated FAQ in browser.
 
-Important nuance: local inventory is point-in-time. After a live change, `show-faq` can still show stale pre-change inventory until the next collector run. Use `read-v2-faq` or `verify-public-faq` for present-tense proof.
+Important nuance: local inventory is point-in-time. After a live change, `show-faq` can still show stale pre-change inventory until the next collector run. Use `read-v2-faq` for present-tense Resi management proof, refresh the collector for Pond truth, and use the rendered website/browser layer after Mark clears the V2-site system cache.
 
 ## Partner Feedback From Resi / Grady
 
@@ -254,7 +257,8 @@ Grady's reply matters. Capture these points in future planning:
 
 - Resi API is still beta, but the nuts and bolts are available.
 - Docs are updated with code and nothing is intentionally gated at this stage.
-- Website cache clearing is a clear V1 capability and is not present in V2 yet.
+- Website cache clearing is a V1 capability for the older/original V1 site set, not the cache-control path for Resi V2 sites such as The Vine.
+- Resi does not have V2 cache control yet; Mark can manually clear the relevant system cache in the Resi control panel.
 - Media should generally not be updated through the API right now because media syncs from Venterra feeds.
 - Resi is still working on the right way to handle API activity against external syncing rules.
 - Incremental/change-detection support is in development.
@@ -264,7 +268,7 @@ Grady's reply matters. Capture these points in future planning:
 Consequence for agents:
 
 - Keep media read-only until explicit current-task approval from Mark and clear Resi guidance.
-- Keep cache clear V1.
+- Do not use V1 cache clear for V2 sites such as The Vine unless Resi explicitly confirms a future bridge path.
 - Do not assume incremental sync or webhooks exist yet.
 - Use Data Pond snapshots and `pond_content_change_requests` as the local audit ledger until Resi activity logging/webhooks mature.
 - Prepare future asks in a collaborative partner tone, not a vendor-defect tone.
@@ -294,8 +298,8 @@ Future user-facing workflow:
 5. Route to owner/supervisor approval.
 6. Apply with minimal payload through bridge.
 7. Read back V2.
-8. Clear Resi cache if needed.
-9. Verify public V1 delivery.
+8. Have Mark clear the applicable V2-site system cache manually in the Resi control panel when needed.
+9. Verify rendered public website/browser layer.
 10. Optionally verify public website/browser layer.
 11. Record proof and close loop.
 
@@ -338,15 +342,15 @@ Fees and pricing-adjacent fields are operational/PMS-owned. Do not treat them as
 
 ## Public Website Versus API Proof
 
-There are three proof layers:
+There are three proof layers for V2 sites:
 
 1. V2 management readback: "Resi management state changed."
-2. V1 public delivery readback: "Resi public delivery data changed."
-3. Public website/browser check: "The rendered website changed for users."
+2. Refreshed local Pond inventory: "The Data Pond mirror sees the changed value."
+3. Public website/browser check after CP cache clear: "The rendered website changed for users."
 
-These can diverge temporarily because of cache, CDN, firewall, or hosted-site behavior.
+These can diverge temporarily because of Resi system cache, CDN, firewall, or hosted-site behavior.
 
-The Vine proved all three, but note:
+The Vine proved the V2 management, refreshed inventory, and rendered website layers, but note:
 
 - A scripted HTTP check of `https://thevinekyle.com/faqs/` returned `403` at one point while normal app/browser traffic later showed the update.
 - The bridge should not confuse website firewall behavior with failed Resi API state.
@@ -363,7 +367,7 @@ Stop and ask Mark before:
 - Any announcement date/publication state update.
 - Any review text update.
 - Any fee/pricing/operational field update.
-- Any cache clear unless Mark asks for it or it is part of an approved test.
+- Any cache clear. V2 sites require Mark/manual CP cache clear until Resi provides a V2 cache-control path.
 - Any host/admin/DNS/Cloudflare/Worker/WordPress/Kinsta change.
 - Any change to locked PIB files.
 
@@ -428,4 +432,4 @@ When talking internally:
 
 ## One-Sentence Summary For Future Agents
 
-Use Resi Content Bridge to make approved Resi content changes visible, governed, applied, and proven through Data Pond; do not expand write scope until the object type, approval path, property impact, cache behavior, and readback proof are all explicit.
+Use Resi Content Bridge to make approved Resi content changes visible, governed, applied, and proven through Data Pond; do not expand write scope until the object type, approval path, property impact, V2-site cache behavior, and readback proof are all explicit.

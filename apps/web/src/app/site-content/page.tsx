@@ -15,11 +15,11 @@ export default function SiteContentRoutePage() {
   if (!canPerformOfferingAction(user?.role, "siteContent", "view")) {
     return (
       <RestrictedSurfaceCard
-        title="Site Content Creator is steward-only"
-        description="This governed content workspace is reserved for stewards managing crawl, mapping, assessment, and rewrite operations. Observers and curators should use the Dock, Watchtower, or downstream report surfaces instead."
+        title="AI Content Suite is curator-only"
+        description="This governed Pond workspace is reserved for curators and stewards editing mapped live site content."
       />
     );
   }
 
-  return <SiteContentCreatorPage />;
+  return <SiteContentCreatorPage title="AI Content Suite" eyebrow="Live content editor" />;
 }

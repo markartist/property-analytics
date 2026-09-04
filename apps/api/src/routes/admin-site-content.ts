@@ -14,6 +14,13 @@ import {
   type SpecsSectionTemplate,
 } from "../platform/shared/specs-property-marketing-v1";
 import { getBriefCompletenessMap } from "../platform/intelligence/brief-completeness";
+import {
+  matchResiSourceToSection,
+  unavailableResiSourceBinding,
+  type ResiSafeField,
+  type ResiSectionSourceBinding,
+  type ResiSourceObject,
+} from "../platform/site-content/resi-section-mapping";
 
 const adminSiteContent = new Hono<{ Bindings: Env; Variables: AuthVariables }>();
 adminSiteContent.use("*", requireAuth);
@@ -143,6 +150,7 @@ type ExtractedSection = {
 };
 
 type SectionMappingStatus = "matched" | "partial" | "extra-on-live" | "missing-from-live";
+type SectionEditabilityStatus = "editable" | "locked_global" | "invalid_missing" | "needs_mapping";
 
 type SectionMappingRow = {
   id: string;
@@ -155,8 +163,31 @@ type SectionMappingRow = {
   match_status: SectionMappingStatus;
   match_confidence: number;
   rationale: string;
+  editability_status?: SectionEditabilityStatus;
+  editability_reason?: string;
+  editability_flags?: string[];
+  resi_source?: ResiSectionSourceBinding;
   created_at: string;
   updated_at: string;
+};
+
+type ResiSnapshotRow = {
+  raw_properties_json: string;
+};
+
+type ResiObjectRow = {
+  object_type: string;
+  object_id: string;
+  public_title: string | null;
+  public_subtitle: string | null;
+  text_summary: string | null;
+  is_global: number | null;
+  affected_property_count: number;
+};
+
+type ResiFieldRow = ResiSafeField & {
+  object_type: string;
+  object_id: string;
 };
 
 type SectionMappingSummary = {
@@ -216,6 +247,192 @@ type SectionRewriteSummary = {
   in_review: number;
   approved: number;
 };
+
+async function loadResiSourceBindings(
+  db: D1Database,
+  property: PropertyBriefRow,
+  pages: PageRow[],
+  sections: SectionRow[],
+  mappings: SectionMappingRow[]
+): Promise<Map<string, ResiSectionSourceBinding>> {
+  const bindings = new Map<string, ResiSectionSourceBinding>();
+  const mappedSections = sections.filter((section) => mappings.some((mapping) => mapping.section_id === section.id));
+  if (mappedSections.length === 0) return bindings;
+
+  try {
+    const run = await queryFirst<{ run_id: string }>(
+      db,
+      `SELECT run_id FROM resi_content_inventory_runs ORDER BY fetched_at DESC LIMIT 1`
+    );
+    if (!run) {
+      for (const section of mappedSections) bindings.set(section.id, unavailableResiSourceBinding("No Resi inventory run is available yet."));
+      return bindings;
+    }
+
+    const snapshot = await queryFirst<ResiSnapshotRow>(
+      db,
+      `SELECT raw_properties_json FROM resi_v2_api_snapshots ORDER BY fetched_at DESC LIMIT 1`
+    );
+    const resiPropertyIds = resolveResiPropertyIds(snapshot?.raw_properties_json ?? null, property);
+    if (resiPropertyIds.length === 0) {
+      for (const section of mappedSections) {
+        bindings.set(section.id, unavailableResiSourceBinding("The selected property could not be resolved in the latest Resi inventory snapshot."));
+      }
+      return bindings;
+    }
+
+    const placeholders = resiPropertyIds.map(() => "?").join(",");
+    const objects = await queryAll<ResiObjectRow>(
+      db,
+      `SELECT
+         o.object_type,
+         o.object_id,
+         o.public_title,
+         o.public_subtitle,
+         o.text_summary,
+         o.is_global,
+         COUNT(DISTINCT all_links.resi_property_id) AS affected_property_count
+       FROM resi_content_objects o
+       JOIN resi_content_property_links target_links
+         ON target_links.run_id = o.run_id
+        AND target_links.object_type = o.object_type
+        AND target_links.object_id = o.object_id
+       LEFT JOIN resi_content_property_links all_links
+         ON all_links.run_id = o.run_id
+        AND all_links.object_type = o.object_type
+        AND all_links.object_id = o.object_id
+       WHERE o.run_id = ?
+         AND target_links.resi_property_id IN (${placeholders})
+       GROUP BY o.object_type, o.object_id, o.public_title, o.public_subtitle, o.text_summary, o.is_global`,
+      [run.run_id, ...resiPropertyIds]
+    );
+
+    const fields = await queryAll<ResiFieldRow>(
+      db,
+      `SELECT DISTINCT f.object_type, f.object_id, f.field_path, f.field_role, f.safety_notes
+       FROM resi_content_fields f
+       JOIN resi_content_property_links property_link
+         ON property_link.run_id = f.run_id
+        AND property_link.object_type = f.object_type
+        AND property_link.object_id = f.object_id
+       WHERE f.run_id = ?
+         AND property_link.resi_property_id IN (${placeholders})
+         AND f.editability_class = 'safe_content_change'`,
+      [run.run_id, ...resiPropertyIds]
+    );
+    const safeFieldsByObject = new Map<string, ResiSafeField[]>();
+    for (const field of fields) {
+      const key = `${field.object_type}:${field.object_id}`;
+      const existing = safeFieldsByObject.get(key) ?? [];
+      existing.push({ field_path: field.field_path, field_role: field.field_role, safety_notes: field.safety_notes });
+      safeFieldsByObject.set(key, existing);
+    }
+    const sources: ResiSourceObject[] = objects.map((object) => ({
+      object_type: object.object_type,
+      object_id: object.object_id,
+      public_title: object.public_title,
+      public_subtitle: object.public_subtitle,
+      text_summary: object.text_summary,
+      is_global: object.is_global === 1,
+      affected_property_count: Number(object.affected_property_count ?? 0),
+      safe_fields: safeFieldsByObject.get(`${object.object_type}:${object.object_id}`) ?? [],
+    }));
+    const pagesById = new Map(pages.map((page) => [page.id, page]));
+    const mappingsBySectionId = new Map(
+      mappings.filter((mapping) => mapping.section_id).map((mapping) => [mapping.section_id!, mapping])
+    );
+
+    for (const section of mappedSections) {
+      const mapping = mappingsBySectionId.get(section.id);
+      const page = pagesById.get(section.page_id);
+      if (!mapping || !page) continue;
+      bindings.set(section.id, matchResiSourceToSection({
+        page_type: page.page_type,
+        specs_section_key: mapping.expected_section_key,
+        section: {
+          label: section.section_label,
+          heading: section.heading,
+          eyebrow: section.eyebrow,
+          title: section.title,
+          subtitle: section.subtitle,
+          copy: section.original_copy,
+          bullets: safeParseJsonArray(section.bullet_points_json),
+        },
+        sources,
+      }));
+    }
+  } catch {
+    for (const section of mappedSections) {
+      bindings.set(section.id, unavailableResiSourceBinding("Resi source inventory is not available in this environment yet."));
+    }
+  }
+
+  return bindings;
+}
+
+function resolveResiPropertyIds(rawPropertiesJson: string | null, property: PropertyBriefRow): string[] {
+  if (!rawPropertiesJson) return [];
+  let payload: unknown;
+  try {
+    payload = JSON.parse(rawPropertiesJson);
+  } catch {
+    return [];
+  }
+  const candidates = extractResiPropertyRecords(payload);
+  const propertyName = normalizeSourceText(property.property_name);
+  const propertyHosts = [property.revised_url, property.live_url, property.staging_url]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => safeHostname(value));
+
+  return Array.from(new Set(candidates.flatMap((candidate) => {
+    const name = normalizeSourceText(String(candidate.name ?? candidate.property_name ?? candidate.title ?? ""));
+    const nestedUrls = candidate.urls && typeof candidate.urls === "object"
+      ? candidate.urls as Record<string, unknown>
+      : {};
+    const urls = [
+      candidate.website_url,
+      candidate.websiteUrl,
+      candidate.url,
+      candidate.website,
+      nestedUrls.property_website,
+      nestedUrls.website_url,
+      nestedUrls.url,
+    ]
+      .filter((value): value is string => typeof value === "string")
+      .map(safeHostname);
+    const nameMatch = name.length > 0 && (name === propertyName || name.includes(propertyName) || propertyName.includes(name));
+    const hostMatch = urls.some((host) => propertyHosts.includes(host));
+    if (!nameMatch && !hostMatch) return [];
+    const id = candidate.id ?? candidate.property_id ?? candidate.propertyId;
+    return typeof id === "string" || typeof id === "number" ? [String(id)] : [];
+  })));
+}
+
+function extractResiPropertyRecords(payload: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(payload)) return payload.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object");
+  if (!payload || typeof payload !== "object") return [];
+  const record = payload as Record<string, unknown>;
+  for (const key of ["data", "results", "items", "properties"]) {
+    if (Array.isArray(record[key])) return extractResiPropertyRecords(record[key]);
+    if (record[key] && typeof record[key] === "object") {
+      const nested = extractResiPropertyRecords(record[key]);
+      if (nested.length > 0) return nested;
+    }
+  }
+  return [];
+}
+
+function normalizeSourceText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function safeHostname(value: string): string {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
 
 adminSiteContent.get("/", requireOfferingAction("siteContent", "view"), async (c) => {
   await ensureSiteContentTables(c.env.POP_BRIEF_DB);
@@ -312,7 +529,20 @@ adminSiteContent.get("/:propertyId", requireOfferingAction("siteContent", "view"
       )
     : [];
 
-  await syncSectionAssessments(c.env.POP_BRIEF_DB, property, pages, sections, sectionMappings);
+  // Read-only source provenance. This never creates a durable binding or changes Resi.
+  const resiSourceBySectionId = await loadResiSourceBindings(
+    c.env.POP_BRIEF_DB,
+    property,
+    pages,
+    sections,
+    sectionMappings
+  );
+  const sectionMappingsWithResi = sectionMappings.map((mapping) => ({
+    ...mapping,
+    resi_source: mapping.section_id ? resiSourceBySectionId.get(mapping.section_id) : undefined,
+  }));
+
+  await syncSectionAssessments(c.env.POP_BRIEF_DB, property, pages, sections, sectionMappingsWithResi);
 
   const sectionAssessments = pages.length
     ? await queryAll<SectionAssessmentRow>(
@@ -325,7 +555,7 @@ adminSiteContent.get("/:propertyId", requireOfferingAction("siteContent", "view"
       )
     : [];
 
-  await syncSectionRewrites(c.env.POP_BRIEF_DB, property, pages, sections, sectionMappings, sectionAssessments);
+  await syncSectionRewrites(c.env.POP_BRIEF_DB, property, pages, sections, sectionMappingsWithResi, sectionAssessments);
 
   const sectionRewrites = pages.length
     ? await queryAll<SectionRewriteRow>(
@@ -341,7 +571,11 @@ adminSiteContent.get("/:propertyId", requireOfferingAction("siteContent", "view"
   const pagesWithSections = await Promise.all(
     pages.map(async (page) => {
       const pageSections = sections.filter((section) => section.page_id === page.id);
-      const pageMappings = sectionMappings.filter((mapping) => mapping.page_id === page.id);
+      const pageMappings = decorateSectionMappings(
+        page,
+        pageSections,
+        sectionMappingsWithResi.filter((mapping) => mapping.page_id === page.id)
+      );
       const sectionOverrides = await buildSectionDisplayOverrides(page, property, pageSections, pageMappings);
 
       return {
@@ -804,11 +1038,28 @@ adminSiteContent.patch("/:propertyId/rewrite", requireOfferingAction("siteConten
       )
     : null;
 
+  const resiSourceBySectionId = await loadResiSourceBindings(
+    c.env.POP_BRIEF_DB,
+    property,
+    [page],
+    section ? [section] : [],
+    [mapping]
+  );
+  const mappingWithResi: SectionMappingRow = {
+    ...mapping,
+    resi_source: mapping.section_id ? resiSourceBySectionId.get(mapping.section_id) : undefined,
+  };
+
+  const editability = classifySectionEditability(page, mappingWithResi, section);
+  if (editability.status !== "editable") {
+    return c.json(errJson("GOVERNANCE_BLOCKED", editability.reason), 403);
+  }
+
   const now = nowISO();
   const actor = c.get("user");
   const approvedAt = parse.data.draft_status === "approved" ? now : null;
   const approvedBy = parse.data.draft_status === "approved" ? actor.id : null;
-  const governedInputs = JSON.stringify(buildGovernedInputsSnapshot(property, page, mapping, assessment, section));
+  const governedInputs = JSON.stringify(buildGovernedInputsSnapshot(property, page, mappingWithResi, assessment, section));
 
   const existingRewrite = await queryFirst<{ id: string }>(
     c.env.POP_BRIEF_DB,
@@ -1512,6 +1763,8 @@ async function syncSectionRewrites(
     const page = pages.find((candidate) => candidate.id === mapping.page_id);
     if (!page) continue;
     const section = mapping.section_id ? sectionById.get(mapping.section_id) ?? null : null;
+    const editability = classifySectionEditability(page, mapping, section);
+    if (editability.status !== "editable") continue;
     const assessment = assessmentByMappingId.get(mapping.id) ?? null;
     await run(
       db,
@@ -1535,6 +1788,117 @@ async function syncSectionRewrites(
       ]
     );
   }
+}
+
+function decorateSectionMappings(
+  page: PageRow,
+  sections: SectionRow[],
+  mappings: SectionMappingRow[]
+): SectionMappingRow[] {
+  const sectionById = new Map(sections.map((section) => [section.id, section]));
+  return mappings.map((mapping) => {
+    const classification = classifySectionEditability(
+      page,
+      mapping,
+      mapping.section_id ? sectionById.get(mapping.section_id) ?? null : null
+    );
+    return {
+      ...mapping,
+      editability_status: classification.status,
+      editability_reason: classification.reason,
+      editability_flags: classification.flags,
+      rationale:
+        classification.status === "editable"
+          ? mapping.rationale
+          : `${mapping.rationale} Edit lock: ${classification.reason}`,
+    };
+  });
+}
+
+function classifySectionEditability(
+  page: PageRow,
+  mapping: Pick<SectionMappingRow, "match_status" | "expected_section_key" | "expected_section_label" | "expected_section_role" | "resi_source">,
+  section: SectionRow | null
+): { status: SectionEditabilityStatus; reason: string; flags: string[] } {
+  if (mapping.match_status === "missing-from-live") {
+    return {
+      status: "invalid_missing",
+      reason: "This Specs slot is missing from the current live page, so it needs mapping or creation before section editing.",
+      flags: ["missing_live_section"],
+    };
+  }
+
+  if (mapping.resi_source?.status === "global_locked") {
+    return {
+      status: "locked_global",
+      reason: mapping.resi_source.rationale,
+      flags: ["resi_global_content"],
+    };
+  }
+
+  const globalFlags = getGlobalVenterraBlockFlags(page, mapping, section);
+  if (globalFlags.length > 0) {
+    return {
+      status: "locked_global",
+      reason: "This is a Venterra/global block. It is visible for context, but property-level editing is locked.",
+      flags: globalFlags,
+    };
+  }
+
+  if (mapping.match_status === "extra-on-live") {
+    return {
+      status: "needs_mapping",
+      reason: "This live block does not have a confident Specs mapping yet. Map it before rewrite work.",
+      flags: ["unmapped_live_section"],
+    };
+  }
+
+  return {
+    status: "editable",
+    reason: "Property-level section editing is allowed for this mapped live section.",
+    flags: [],
+  };
+}
+
+function getGlobalVenterraBlockFlags(
+  page: PageRow,
+  mapping: Pick<SectionMappingRow, "expected_section_key" | "expected_section_label" | "expected_section_role">,
+  section: SectionRow | null
+): string[] {
+  const source = [
+    page.page_type,
+    page.page_title,
+    page.page_path,
+    mapping.expected_section_key,
+    mapping.expected_section_label,
+    mapping.expected_section_role,
+    section?.section_key,
+    section?.section_label,
+    section?.eyebrow,
+    section?.heading,
+    section?.title,
+    section?.subtitle,
+    section?.original_copy,
+    section?.bullet_points_json,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const flags: string[] = [];
+  if (page.page_type === "about-venterra" || source.includes("about venterra")) flags.push("about_venterra_page");
+  if (/\bventerra\b/.test(source)) flags.push("venterra_brand_content");
+  if (/live easy|48 hour service guarantee|resident referral bonus|experience leader|better living/i.test(source)) {
+    flags.push("corporate_resident_experience_program");
+  }
+  if (/smart hub|smarthub|smart ?home|high-tech living|technology package|venterra mobile app/i.test(source)) {
+    flags.push("corporate_technology_program");
+  }
+  if (/pet-friendly fun|view full venterra pet policies|restricted breeds|pets welcome/i.test(source)) {
+    flags.push("corporate_pet_policy_program");
+  }
+
+  return Array.from(new Set(flags));
 }
 
 function buildDefaultRewriteBrief(
@@ -1574,6 +1938,10 @@ function buildGovernedInputsSnapshot(
     expected_section_label: mapping.expected_section_label,
     expected_section_role: mapping.expected_section_role,
     match_status: mapping.match_status,
+    editability_status: mapping.editability_status ?? classifySectionEditability(page, mapping, section).status,
+    editability_reason: mapping.editability_reason ?? classifySectionEditability(page, mapping, section).reason,
+    editability_flags: mapping.editability_flags ?? classifySectionEditability(page, mapping, section).flags,
+    resi_source: mapping.resi_source ?? null,
     assessment_summary: assessment?.summary ?? null,
     assessment_flags: assessment ? safeParseJsonArray(assessment.flags_json) : [],
     live_section_title: section?.title ?? section?.heading ?? section?.section_label ?? null,

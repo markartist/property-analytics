@@ -13,7 +13,7 @@ This document treats the following as parts of one coordinated platform:
 
 - `app.venterradev.com`
 - `pilot.venterradev.com`
-- `vacs.venterradev.com`
+- AI Content Suite inside the Data Pond; historical `vacs.venterradev.com` standalone direction is superseded for operator work
 - `specs.venterradev.com`
 
 The goal is to move from isolated tools and reports toward a verifiable, agent-assisted property operations system.
@@ -124,7 +124,7 @@ Responsibilities:
 
 This is the first operational product surface on top of Data Pond.
 
-### 3.4 `vacs.venterradev.com`
+### 3.4 AI Content Suite
 
 Role: Venterra AI Content System
 
@@ -644,7 +644,7 @@ The platform should be treated as a unified property operations system:
 - `app.venterradev.com` is the truth backbone
 - `specs.venterradev.com` defines what good looks like
 - `pilot.venterradev.com` operationalizes pilot monitoring and reporting
-- `vacs.venterradev.com` operationalizes property-aware content and experience adaptation
+- AI Content Suite inside the Pond operationalizes property-aware content and experience adaptation; the old standalone VACS destination is no longer the operator lane
 
 Property Advocates are the central operating agents in this model.
 
