@@ -9,8 +9,8 @@ import { useAuth } from "@/components/auth-provider";
 import { canAccessOffering, getRoleTitle, type AppRole, type SurfaceId } from "@/lib/permissions";
 import {
   Anchor, ArrowLeft, ArrowRight, Loader2,
-  FileText, BarChart2, Megaphone, Calendar, TrendingUp, Download, Bot, Compass,
-  UserRoundCheck,
+  BriefcaseBusiness, ClipboardCheck, Download, Bot, Compass, Eye, FileText, Gauge,
+  MessageSquare, MonitorCheck, Search, UserRoundCheck,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -46,107 +46,125 @@ interface DockCard {
 
 const DOCK_CARDS: DockCard[] = [
   {
-    key: "pib",
+    key: "watchtower",
+    surfaceId: "watchtower",
+    href: "/watchtower",
+    icon: Eye,
+    title: "Watchtower",
+    subtitle: "Health and source posture",
+    description: "Review system freshness, source readiness, closure posture, and trust pressure before work moves downstream.",
+    accentColor: "border-l-[#15284B]",
+    iconBg: "bg-[#15284B]",
+    metrics: () => [],
+  },
+  {
+    key: "resi-edge-launch",
+    surfaceId: "resiEdgeLaunch",
+    href: "/resi-edge/launch",
+    icon: MonitorCheck,
+    title: "Resi Edge Launch",
+    subtitle: "Protected launch room",
+    description: "Open the current launch room for readiness, blockers, proof packets, and batch progress.",
+    accentColor: "border-l-[#3B9189]",
+    iconBg: "bg-[#3B9189]",
+    metrics: () => [],
+  },
+  {
+    key: "tracker",
+    surfaceId: "tracker",
+    href: "/tracker",
+    icon: Gauge,
+    title: "Pilot Tracker",
+    subtitle: "Pilot movement and comparisons",
+    description: "Follow active pilot and paired-lane movement from the governed tracking surface.",
+    accentColor: "border-l-[#5A81CF]",
+    iconBg: "bg-[#5A81CF]",
+    metrics: () => [],
+  },
+  {
+    key: "captain-office",
+    surfaceId: "captainOffice",
+    href: "/captains/AR4PB",
+    icon: ClipboardCheck,
+    title: "Captain’s Office",
+    subtitle: "Property intelligence workspace",
+    description: "Work from Captain Runtime, watch items, evidence lineage, and candidate memory without leaving Data Pond.",
+    accentColor: "border-l-[#294782]",
+    iconBg: "bg-[#294782]",
+    metrics: () => [],
+  },
+  {
+    key: "pib-builder",
     surfaceId: "pibBuilder",
     href: "/analysis/pib",
     icon: FileText,
     title: "PIB Builder",
-    subtitle: "Portfolio Intelligence Brief",
-    description: "Build, email, open, save, and schedule property PIB reports from the governed Builder.",
-    accentColor: "border-l-[#15284B]",
-    iconBg: "bg-[#15284B]",
+    subtitle: "Canonical briefing lane",
+    description: "Build, open, email, save, and schedule property intelligence briefs through the governed PIB control plane.",
+    accentColor: "border-l-[#3D66B9]",
+    iconBg: "bg-[#3D66B9]",
     metrics: (d) => {
       const items: { label: string; value: string }[] = [];
       if (d.pib) {
         items.push({ label: "Properties", value: String(d.pib.communities) });
         if (d.pib.avg_cir != null) items.push({ label: "Avg CIR", value: `${d.pib.avg_cir}%` });
-        if (d.pib.total_sessions) items.push({ label: "Sessions", value: d.pib.total_sessions.toLocaleString() });
         if (d.pib.avg_mobile_score != null) items.push({ label: "PageSpd", value: String(d.pib.avg_mobile_score) });
       }
       return items;
     },
   },
   {
-    key: "analysis",
-    surfaceId: "popBrief",
-    href: "/analysis",
-    icon: BarChart2,
-    title: "Analysis",
-    subtitle: "Deep-dive property analysis",
-    description: "Detailed single-property analysis with full metric breakdowns, comparisons, and trend charts.",
-    accentColor: "border-l-[#0D5E6D]",
-    iconBg: "bg-[#0D5E6D]",
-    metrics: (d) => {
-      const items: { label: string; value: string }[] = [];
-      if (d.pib) {
-        if (d.pib.avg_rating != null) items.push({ label: "Avg Rating", value: d.pib.avg_rating.toFixed(2) });
-        items.push({ label: "Properties", value: String(d.pib.communities) });
-      }
-      return items;
-    },
-  },
-  {
-    key: "leasing",
-    surfaceId: "tracker",
-    href: "/t7-metrics",
-    icon: Calendar,
-    title: "Leasing Funnel",
-    subtitle: "T7 & T30 guest card metrics",
-    description: "Weekly leasing funnel — guest cards, visits, tours, applications, leases, move-ins. Community vs portfolio benchmarks.",
-    accentColor: "border-l-amber-500",
-    iconBg: "bg-amber-500",
-    metrics: (d) => {
-      const items: { label: string; value: string }[] = [];
-      if (d.leasing) {
-        items.push({ label: "Properties", value: String(d.leasing.communities) });
-        if (d.leasing.total_guest_cards) items.push({ label: "T7 GCs", value: d.leasing.total_guest_cards.toLocaleString() });
-        if (d.leasing.avg_visit_conv != null) items.push({ label: "V/GC", value: `${d.leasing.avg_visit_conv}%` });
-      }
-      return items;
-    },
-  },
-  {
-    key: "marketing",
-    surfaceId: "popBrief",
-    href: "/marketing",
-    icon: Megaphone,
-    title: "Marketing Data",
-    subtitle: "Ad spend, occupancy, reputation",
-    description: "Seven-section marketing overview — advertising, property performance, guest cards per door, website & SEO, projects, reputation, pricing.",
-    accentColor: "border-l-purple-500",
-    iconBg: "bg-purple-500",
+    key: "search-intelligence",
+    surfaceId: "searchIntelligence",
+    href: "/analysis/search-intelligence",
+    icon: Search,
+    title: "Search Intelligence",
+    subtitle: "Search and competitive reads",
+    description: "Inspect search signals, keyword posture, and source-backed visibility opportunities.",
+    accentColor: "border-l-[#3D66B9]",
+    iconBg: "bg-[#3D66B9]",
     metrics: (d) => {
       const items: { label: string; value: string }[] = [];
       if (d.marketing) {
         items.push({ label: "Properties", value: String(d.marketing.communities) });
-        if (d.marketing.avg_occupancy != null) items.push({ label: "Avg Occ", value: `${d.marketing.avg_occupancy}%` });
-        if (d.marketing.total_ad_spend > 0) items.push({ label: "Ad Spend", value: `$${d.marketing.total_ad_spend.toLocaleString()}` });
       }
       return items;
     },
   },
   {
-    key: "t30",
-    surfaceId: "tracker",
-    href: "/t30-metrics",
-    icon: TrendingUp,
-    title: "T30 Metrics",
-    subtitle: "30-day leasing window",
-    description: "Rolling 30-day leasing metrics with conversion ratios and week-over-week deltas.",
-    accentColor: "border-l-emerald-500",
-    iconBg: "bg-emerald-500",
+    key: "gbp-posts",
+    surfaceId: "gbpPosts",
+    href: "/gbp-posts",
+    icon: MessageSquare,
+    title: "GBP Posts",
+    subtitle: "Local posting workflow",
+    description: "Build governed Google Business Profile drafts from Data Pond and Captain signals.",
+    accentColor: "border-l-[#7DCAC2]",
+    iconBg: "bg-[#3B9189]",
     metrics: () => [],
   },
   {
-    key: "vacs",
-    surfaceId: "vacs",
-    href: "/vacs",
+    key: "gsc-report",
+    surfaceId: "gscReport",
+    href: "/gsc",
+    icon: Search,
+    title: "GSC Report",
+    subtitle: "Search Console reporting",
+    description: "Generate and review Search Console visibility reports from the current Data Pond source posture.",
+    accentColor: "border-l-[#5A81CF]",
+    iconBg: "bg-[#5A81CF]",
+    metrics: () => [],
+  },
+  {
+    key: "site-content",
+    surfaceId: "siteContent",
+    href: "/site-content",
     icon: Bot,
-    title: "VACS Bridge",
-    subtitle: "Governed content system",
-    description: "Bridge into the VACS lane from The Pond — machine-contract posture, shared foundations, trust state, and next hardening moves.",
-    accentColor: "border-l-cyan-500",
-    iconBg: "bg-cyan-600",
+    title: "AI Content Suite",
+    subtitle: "Mapped live page editor",
+    description: "Edit live property-page sections in the Pond with VACS drafting, Captain context, Specs mapping, and rewrite governance in one workspace.",
+    accentColor: "border-l-[#7DCAC2]",
+    iconBg: "bg-[#3B9189]",
     metrics: () => [],
   },
   {
@@ -157,8 +175,8 @@ const DOCK_CARDS: DockCard[] = [
     title: "EVS Bridge",
     subtitle: "Validation lane",
     description: "Bridge into EVS from The Pond — mixed human-and-machine validation posture, BrowserStack-adjacent workflow context, and governed next moves.",
-    accentColor: "border-l-teal-500",
-    iconBg: "bg-teal-600",
+    accentColor: "border-l-[#3D66B9]",
+    iconBg: "bg-[#3D66B9]",
     metrics: () => [],
   },
   {
@@ -167,7 +185,7 @@ const DOCK_CARDS: DockCard[] = [
     href: "/evs/employee-photo-audit",
     icon: UserRoundCheck,
     title: "Employee Photo Audit",
-    subtitle: "Legacy team photo QA",
+    subtitle: "Archived team photo QA",
     description: "Ad-hoc BrowserStack report for legacy #meet-the-team sections, listing missing employee photos by property and employee.",
     accentColor: "border-l-[#3D66B9]",
     iconBg: "bg-[#294782]",
@@ -181,8 +199,8 @@ const DOCK_CARDS: DockCard[] = [
     title: "Backup & Export",
     subtitle: "Download your data",
     description: "Export community data, metrics, and marketing records as JSON or CSV for offline analysis.",
-    accentColor: "border-l-slate-400",
-    iconBg: "bg-slate-500",
+    accentColor: "border-l-[#9B9B96]",
+    iconBg: "bg-[#9B9B96]",
     metrics: () => [],
   },
 ];
@@ -213,7 +231,7 @@ export default function DockPage() {
   const role = user?.role ?? "viewer";
   const roleIntro = ROLE_DOCK_INTRO[role];
   const visibleCards = DOCK_CARDS.filter((card) => canAccessOffering(role, card.surfaceId));
-  const featuredCards = visibleCards.filter((card) => ["pib", "analysis", "leasing", "marketing"].includes(card.key));
+  const featuredCards = visibleCards.filter((card) => ["watchtower", "resi-edge-launch", "tracker", "captain-office", "pib-builder"].includes(card.key));
   const workflowCards = visibleCards.filter((card) => !featuredCards.includes(card));
 
   React.useEffect(() => {
@@ -237,7 +255,7 @@ export default function DockPage() {
             <p className="text-sm text-white/50">
               Your reports and dashboards
               {preview?.week_date && (
-                <span className="ml-2">&middot; Week of {format(parseISO(preview.week_date), "MMM d, yyyy")}</span>
+                <span className="ml-2">&middot; Week of {format(parseISO(preview.week_date), "MM/dd/yyyy")}</span>
               )}
             </p>
             <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/40">
@@ -313,7 +331,7 @@ export default function DockPage() {
             {workflowCards.length > 0 ? (
               <section className="space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Workflow bridges</p>
+                  <p className="text-sm font-semibold text-slate-900">Workflow lanes</p>
                   <p className="mt-1 text-sm text-slate-600">Execution and utility lanes available to your current role.</p>
                 </div>
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">

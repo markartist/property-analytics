@@ -265,6 +265,116 @@ body {
       linear-gradient(145deg, rgba(246, 246, 245, 0.06), rgba(21, 40, 75, 0.18)),
       rgba(6, 23, 34, 0.54);
   }
+
+  .resi-waterglass-stage {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(125, 202, 194, 0.17), transparent 28%),
+      radial-gradient(circle at 88% 4%, rgba(90, 129, 207, 0.18), transparent 30%),
+      radial-gradient(circle at 78% 82%, rgba(224, 36, 114, 0.08), transparent 34%),
+      linear-gradient(135deg, var(--venterra-navy) 0%, var(--venterra-bay) 45%, var(--venterra-navy) 100%);
+  }
+
+  .resi-waterglass-stage::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      linear-gradient(90deg, rgba(246, 246, 245, 0.042) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(246, 246, 245, 0.034) 1px, transparent 1px),
+      linear-gradient(112deg, transparent 6%, rgba(246, 246, 245, 0.07) 28%, transparent 46%),
+      linear-gradient(68deg, transparent 36%, rgba(125, 202, 194, 0.08) 58%, transparent 78%);
+    background-size: 42px 42px, 42px 42px, auto, auto;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.42));
+    pointer-events: none;
+  }
+
+  .resi-waterglass-stage > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .resi-waterglass-panel,
+  .resi-waterglass-card,
+  .resi-waterglass-dark {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: rgba(246, 246, 245, 0.34);
+    -webkit-backdrop-filter: blur(18px) saturate(130%) contrast(104%);
+    backdrop-filter: blur(18px) saturate(130%) contrast(104%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      inset 1px 0 0 rgba(255, 255, 255, 0.18),
+      0 18px 54px rgba(0, 0, 0, 0.16);
+  }
+
+  .resi-waterglass-panel::before,
+  .resi-waterglass-card::before,
+  .resi-waterglass-dark::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      linear-gradient(118deg, rgba(125, 202, 194, 0.18), transparent 28%),
+      linear-gradient(292deg, transparent 68%, rgba(90, 129, 207, 0.16)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.15), transparent 34%);
+    opacity: 0.58;
+    pointer-events: none;
+  }
+
+  .resi-waterglass-panel > *,
+  .resi-waterglass-card > *,
+  .resi-waterglass-dark > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .resi-waterglass-panel {
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.94), rgba(246, 246, 245, 0.82)),
+      rgba(246, 246, 245, 0.76);
+  }
+
+  .resi-waterglass-card {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(246, 246, 245, 0.72)),
+      rgba(246, 246, 245, 0.72);
+  }
+
+  .resi-waterglass-stage-card {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(246, 246, 245, 0.66)),
+      rgba(246, 246, 245, 0.64);
+    border-color: rgba(214, 214, 210, 0.78);
+  }
+
+  .resi-waterglass-dark {
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.08), rgba(21, 40, 75, 0.26)),
+      rgba(21, 40, 75, 0.78);
+    border-color: rgba(125, 202, 194, 0.24);
+    color: white;
+  }
+
+  .resi-waterglass-pending-row {
+    background:
+      linear-gradient(145deg, rgba(246, 246, 245, 0.72), rgba(214, 214, 210, 0.54)),
+      rgba(214, 214, 210, 0.52);
+  }
+
+  .resi-waterglass-pending-row::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(246, 246, 245, 0.2);
+    pointer-events: none;
+  }
 }
 
 @keyframes watchtower-sweep {
@@ -291,7 +401,13 @@ body {
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .clearwater-glass {
+  .clearwater-glass,
+  .resi-waterglass-dark {
     background: rgba(21, 40, 75, 0.78);
+  }
+
+  .resi-waterglass-panel,
+  .resi-waterglass-card {
+    background: rgba(246, 246, 245, 0.96);
   }
 }

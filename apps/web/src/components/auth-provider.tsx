@@ -18,6 +18,10 @@ import {
 export interface AuthUser {
   id: string;
   email: string;
+  full_name?: string | null;
+  display_name?: string | null;
+  name?: string | null;
+  given_name?: string | null;
   role: "admin" | "editor" | "viewer";
 }
 

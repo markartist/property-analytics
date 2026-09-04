@@ -689,8 +689,8 @@ export default function EvsPage() {
                 <Link href="/system" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-[#0D5E6D] hover:text-[#0D5E6D]">
                   Open Control Plane <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="/vacs" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-[#0D5E6D] hover:text-[#0D5E6D]">
-                  Open VACS Bridge <ArrowRight className="h-4 w-4" />
+                <Link href="/site-content" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-[#0D5E6D] hover:text-[#0D5E6D]">
+                  Open AI Content Suite <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
