@@ -4,6 +4,10 @@
 
 ---
 
+### 09/04/2026 - Platform test expectations aligned to current governed labels
+- Full API platform validation exposed stale test expectations after the cleanup commit stack: Captain Brief source labels now normalize ADC/Apartments.com to `Apartments.com / ADC`, Captain Brief narrative terminology now uses `Web Ops Summary`, and health advisory freshness uses canonical `bi_report` rather than legacy `bi_manual` in the route fixture.
+- Updated tests only; no route behavior, data source behavior, Jira/Confluence/MS365/Cloudflare state, or locked PIB files were changed.
+
 ### 09/04/2026 - Ad hoc source coverage filtering cleanup
 - Final corporate cleanup found one remaining `utils/adhoc_report_sources.py` change after the reporting commit: search source coverage now accepts an explicit property-id filter and labels stale rows as governed-portfolio coverage rather than local-row coverage.
 - Commit this with the required context updates so ad hoc search reports keep source-readiness scoped to the requested property set.

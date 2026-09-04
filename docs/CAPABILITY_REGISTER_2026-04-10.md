@@ -1,5 +1,10 @@
 # Capability Register
 
+## 09/04/2026 Platform Test Expectation Alignment
+
+- Aligned API platform tests with current governed labels: Captain Brief assertions now expect `Apartments.com / ADC` and `Web Ops Summary`, and the health-status fixture asserts `bi_report` as the current advisory manual BI source.
+- Scope is validation-only; no runtime behavior or source-system mutation changed.
+
 ## 09/04/2026 Ad Hoc Source Coverage Filtering Cleanup
 
 - Finalized the remaining `utils/adhoc_report_sources.py` cleanup so ad hoc search-source coverage can be filtered to an explicit governed property set and freshness wording reflects governed-portfolio rows.

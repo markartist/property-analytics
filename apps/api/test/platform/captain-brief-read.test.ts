@@ -433,7 +433,7 @@ test("latest Captain Brief read returns source readiness and unit-number aged in
     assert.equal(json.marketingInsight.opsRead.posture, "traffic_gap");
     assert.equal(json.marketingInsight.conversionRead.metrics.t30GuestCards, 166);
     assert.equal(json.marketingInsight.conversionRead.metrics.availableUnits, 55);
-    assert.equal(json.marketingInsight.sourceSpendRead.bestSources.lease.sourceGroup, "Apartments.com");
+    assert.equal(json.marketingInsight.sourceSpendRead.bestSources.lease.sourceGroup, "Apartments.com / ADC");
     assert.equal(json.marketingInsight.sourceSpendRead.metrics.latestAdSpendTotal, 3438);
     assert.equal(json.competitorMarketRead.status, "grounded");
     assert.equal(json.competitorMarketRead.counts.competitors, 1);
@@ -454,14 +454,14 @@ test("latest Captain Brief read returns source readiness and unit-number aged in
     assert.ok(json.competitorMarketRead.why.some((item: Record<string, unknown>) => String(item.statement).includes("Pricing and concession review")));
     assert.match(json.competitorMarketRead.stephanieAnswers.packageStatus, /not confirmed/);
     assert.equal(json.marketingInsight.cancelDenial.topReasons[0].reason, "Abandoned");
-    assert.match(json.marketingInsight.narrative, /Marketing Ops Summary shows 166 T30 leads/);
+    assert.match(json.marketingInsight.narrative, /Web Ops Summary shows 166 T30 leads/);
     assert.equal(json.diagnosticRead.primaryConstraint, "inventory");
     assert.equal(json.diagnosticRead.confidence, "medium");
     assert.equal(json.diagnosticRead.recoveryMath.availableUnits, 55);
     assert.equal(json.diagnosticRead.recoveryMath.targetAvailableUnits, 45);
     assert.equal(json.diagnosticRead.recoveryMath.moveInsNeeded, 10);
     assert.equal(json.diagnosticRead.recoveryMath.guestCardsNeededAtCurrentClose, 213);
-    assert.equal(json.diagnosticRead.sourceSpendDiagnosis.bestSources.lease.sourceGroup, "Apartments.com");
+    assert.equal(json.diagnosticRead.sourceSpendDiagnosis.bestSources.lease.sourceGroup, "Apartments.com / ADC");
     assert.equal(json.diagnosticRead.competitorMarketRead.pricingPressure.posture, "visible_value_pressure");
     assert.ok(json.diagnosticRead.recommendations.some((item: Record<string, unknown>) => item.constraint === "competitive_market"));
     assert.ok(json.diagnosticRead.doNotRecommend.some((gate: string) => gate.includes("ADC/package")));

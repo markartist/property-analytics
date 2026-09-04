@@ -143,7 +143,7 @@ async function seedHealthTables(db: D1Database) {
      (collection_date, data_source, status, properties_total, properties_success, properties_failed, properties_skipped, retry_attempts, rate_limit_hits, started_at, completed_at, error_message, notes)
      VALUES
      (DATE('now', 'localtime'), 'ga4', 'retry_scheduled', 2, 1, 1, 0, 1, 0, '2026-04-16T11:00:00.000Z', NULL, 'Temporary API error', 'retry queued'),
-     (DATE('now', 'localtime'), 'bi_manual', 'completed', 1, 1, 0, 0, 0, 0, '2026-04-16T10:00:00.000Z', '2026-04-16T10:15:00.000Z', NULL, NULL)`
+     (DATE('now', 'localtime'), 'bi_report', 'completed', 1, 1, 0, 0, 0, 0, '2026-04-16T10:00:00.000Z', '2026-04-16T10:15:00.000Z', NULL, NULL)`
   );
   await run(
     db,
@@ -187,7 +187,7 @@ test("health status returns structured closure context for Watchtower", async ()
     assert.deepEqual(
       json.daily_collection_status.closure.advisory_sources[0],
       {
-        source: "bi_manual",
+        source: "bi_report",
         status: "completed",
         run_recorded: true,
         latest_recorded_date: new Date().toISOString().slice(0, 10),
