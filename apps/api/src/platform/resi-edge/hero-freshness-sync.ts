@@ -246,6 +246,10 @@ function normalizeUrl(value: string, baseUrl: string): string {
   try {
     const url = new URL(value, baseUrl);
     url.hash = "";
+    if (url.pathname === "/__resi-edge/native-dam-asset") {
+      const source = url.searchParams.get("src");
+      if (source) return normalizeUrl(source, baseUrl);
+    }
     return url.toString();
   } catch {
     return value.trim();

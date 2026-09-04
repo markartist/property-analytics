@@ -15,7 +15,7 @@ The scheduler turns the active `captain_support_agents` roster into an explicit 
 - Runtime owner: `apps/api/src/platform/captain/runtime.ts`
 - Worker host: `pop-brief-api`
 - Cron schedule: every `15` minutes
-- Current deployed Worker version: `30a8911d-93c1-432f-a74f-13ac42ffcfb8`
+- Current deployed Worker version: `beab4f92-3b1a-4c03-9078-c75422b39909`
 - Routine contract: `config/captain_active_routine_manifest.json`
 - D1 migration: `apps/api/migrations/0068_create_captain_routine_schedule.sql`
 - Infra mirror: `infra/migrations/045_create_captain_routine_schedule.sql`
@@ -98,3 +98,11 @@ GROUP BY run_type, run_status;
 
 - routine scheduler updates run/watch/action state;
 - Captain refresh snapshots the resulting state for the Office Wall and R2 evidence.
+
+## 09/04/2026 Activation Readback
+
+- Remote `pop-brief-db` migration `0068_create_captain_routine_schedule.sql` is applied.
+- Current schedule state: `996` active rows and `38` leased rows.
+- Current cadence state: `732` active daily rows, `264` active weekly rows, `20` leased daily rows, and `18` leased weekly rows.
+- Recent six-hour scheduled run readback: `69` success, `433` warning, and `116` skipped Captain agent runs.
+- Due backlog at readback was empty.

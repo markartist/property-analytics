@@ -46,6 +46,10 @@ def normalize_url(value: str, base_url: str) -> str:
         return ""
     parsed = urllib.parse.urljoin(base_url, value)
     parts = urllib.parse.urlsplit(parsed)
+    if parts.path == "/__resi-edge/native-dam-asset":
+        source = urllib.parse.parse_qs(parts.query).get("src", [""])[0]
+        if source:
+            return normalize_url(source, base_url)
     return urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path, parts.query, ""))
 
 

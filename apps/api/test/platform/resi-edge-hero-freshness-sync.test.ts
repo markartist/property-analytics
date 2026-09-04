@@ -54,6 +54,17 @@ test("hero source extractor prefers the native hero data-src", () => {
   assert.equal(result.url, "https://example.com/media/current-hero.jpg");
 });
 
+test("hero source extractor normalizes same-origin DAM proxy URLs to original source", () => {
+  const sourceImage = "https://dam.getresi.co/100/current-hero.jpg";
+  const result = extractHeroSourceFromHtml(
+    `<section data-page-section="hero"><div data-src="/__resi-edge/native-dam-asset?src=${encodeURIComponent(sourceImage)}"></div></section>`,
+    "https://example.com/"
+  );
+
+  assert.equal(result.method, "hero_data_src");
+  assert.equal(result.url, sourceImage);
+});
+
 test("scheduled hero freshness sync records current hero source", async () => {
   const bucket = new FakeR2Bucket();
   const sourceImage = "https://dam.getresi.co/100/current-hero.jpg";
@@ -102,6 +113,64 @@ test("scheduled hero freshness sync records current hero source", async () => {
   assert.equal(record.recommended_action, "none");
   assert.ok(record.source_metadata.sha256);
   assert.ok(bucket.objects.has("resi-edge-hero-freshness/_latest-summary.json"));
+});
+
+test("scheduled hero freshness sync treats native DAM proxy as current source", async () => {
+  const bucket = new FakeR2Bucket();
+  const sourceImage = "https://dam.getresi.co/100/proxied-hero.jpg";
+  const proxiedSource = `/__resi-edge/native-dam-asset?src=${encodeURIComponent(sourceImage)}`;
+  const sourceSha = Array.from(
+    new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("proxied-source-bytes")))
+  )
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  bucket.objects.set(
+    "resi-edge-media-state/tx4tp-proxy-example-com/current.json",
+    JSON.stringify({
+      schema_version: "resi_edge_hero_media_state.v1",
+      generated_at: "2026-09-01T00:30:00.000Z",
+      property_code: "TX4TP",
+      domain: "proxy.example.com",
+      status: "accepted",
+      source_image: sourceImage,
+      source_sha256: sourceSha,
+    })
+  );
+  const fetcher = (async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.startsWith("https://proxy.example.com/")) {
+      return new Response(`<section data-page-section="hero"><div data-src="${proxiedSource}"></div></section>`, {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      });
+    }
+    if (url === sourceImage) {
+      return new Response("proxied-source-bytes", {
+        status: 200,
+        headers: { "content-type": "image/jpeg" },
+      });
+    }
+    return new Response("not found", { status: 404 });
+  }) as typeof fetch;
+
+  const summary = await runScheduledResiEdgeHeroFreshnessSync(env(bucket), new Date("2026-09-01T01:05:00.000Z"), {
+    fetcher,
+    manifests: [
+      {
+        package_contract_id: "resi-edge-canonical-upgrade-package",
+        target: { source_property_code: "TX4TP", domain: "proxy.example.com", property_name: "Proxy Example" },
+        mobile_shell: { hero: { source_image: sourceImage } },
+      },
+    ],
+  });
+
+  assert.equal(summary.ok, true);
+  assert.equal(summary.current_count, 1);
+  assert.equal(summary.refresh_needed_count, 0);
+  const record = JSON.parse(bucket.objects.get("resi-edge-hero-freshness/tx4tp-proxy-example-com/current.json") || "{}");
+  assert.equal(record.status, "current");
+  assert.equal(record.detected_source_image, sourceImage);
+  assert.equal(record.source_metadata.url, sourceImage);
 });
 
 test("scheduled hero freshness sync flags changed native hero source", async () => {

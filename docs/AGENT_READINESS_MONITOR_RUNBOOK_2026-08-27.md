@@ -18,17 +18,17 @@ This is useful as a progressive AEO readiness layer, especially for Markdown/LLM
 - Production results: `https://agent-readiness.venterrawebops.com/v1/agent-readiness/results`
 - D1 database: `pop-brief-db`
 - R2 bucket: `pop-brief-uploads`
-- Worker version: `78ba56d4-179e-4500-9d10-149887b26e3d`
+- Worker version: `9a42a512-ff3f-4656-a8f9-52d8d2e56eea`
 
 ## Schedule
 
 The Worker Cron Trigger runs every six hours and scans due targets in small batches. Each active target defaults to a seven-day cadence.
 
-Initial live seed on 08/27/2026:
+Current live seed on 09/04/2026:
 
-- `116` active targets
-- `94` corporate property pages from the governed property identity matrix
-- `22` Resi vanity domains from active Resi Edge manifests
+- `123` active targets
+- `95` corporate property pages from governed identity sources
+- `28` Resi vanity domains from active Resi Edge manifests
 - Batch size: `8` targets per run
 
 This means the first portfolio pass should finish progressively across roughly four days, then each target becomes due seven days after its latest scan.
@@ -130,7 +130,7 @@ curl -sS https://agent-readiness.venterrawebops.com/v1/agent-readiness/status
 curl -sS 'https://agent-readiness.venterrawebops.com/v1/agent-readiness/targets?limit=5'
 ```
 
-08/27/2026 smoke results: health returned `ok: true`; status returned `116` active/due targets and no result rows yet; protected manual run failed closed because no admin secret is configured.
+09/04/2026 activation smoke: health returned `ok: true`; status returned `123` active targets. Worker version `9a42a512-ff3f-4656-a8f9-52d8d2e56eea` fixes a success-result insert placeholder mismatch that caused prior rows to fail with `D1_ERROR: 44 values for 45 columns`. Manual run remains intentionally closed because no admin secret is configured, so post-fix proof is expected on the next six-hour scheduled scan.
 
 ## Boundary
 

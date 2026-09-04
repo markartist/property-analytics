@@ -120,10 +120,12 @@ The Agent Readiness monitor is a dedicated Cloudflare Worker for progressive wee
 - Worker folder: `/Users/mark/Property_Analytics/ops/cloudflare/agent-readiness-monitor/`
 - Production health: `https://agent-readiness.venterrawebops.com/health`
 - Production status: `https://agent-readiness.venterrawebops.com/v1/agent-readiness/status`
-- Worker version: `78ba56d4-179e-4500-9d10-149887b26e3d`
+- Worker version: `9a42a512-ff3f-4656-a8f9-52d8d2e56eea`
 - Runbook: `/Users/mark/Property_Analytics/docs/AGENT_READINESS_MONITOR_RUNBOOK_2026-08-27.md`
 
-The Worker runs every six hours and processes due targets in batches of `8`; each target defaults to a seven-day cadence. Initial live seed on 08/27/2026 created `116` active targets: `94` corporate property pages from the governed property identity matrix and `22` Resi vanity domains from active Resi Edge manifests. The Worker stores raw Cloudflare scanner responses in R2 under `agent-readiness/raw/` and run manifests under `agent-readiness/runs/`, while normalizing current/history posture into D1 tables `agent_readiness_targets`, `agent_readiness_runs`, `agent_readiness_results`, and `agent_readiness_check_results`.
+The Worker runs every six hours and processes due targets in batches of `8`; each target defaults to a seven-day cadence. Current live seed on 09/04/2026 has `123` active targets: `95` corporate property pages from governed identity sources and `28` Resi vanity domains from active Resi Edge manifests. The Worker stores raw Cloudflare scanner responses in R2 under `agent-readiness/raw/` and run manifests under `agent-readiness/runs/`, while normalizing current/history posture into D1 tables `agent_readiness_targets`, `agent_readiness_runs`, `agent_readiness_results`, and `agent_readiness_check_results`.
+
+09/04/2026 activation note: Worker version `9a42a512-ff3f-4656-a8f9-52d8d2e56eea` fixes the success-result D1 insert placeholder mismatch that caused prior current rows to show `D1_ERROR: 44 values for 45 columns`. Manual runs remain disabled until `AGENT_READINESS_ADMIN_SECRET` is represented in Keeper/KSM, so post-fix result proof waits for the next six-hour scheduled scan.
 
 Manual runs are disabled until `AGENT_READINESS_ADMIN_SECRET` is represented in Keeper/KSM and set as a Worker secret. This lane is read-only toward Venterra and property websites; it does not edit DNS, robots.txt, WordPress/Kinsta, Resi Edge Workers, content, Cloudflare zone settings, source systems, or locked PIB files.
 

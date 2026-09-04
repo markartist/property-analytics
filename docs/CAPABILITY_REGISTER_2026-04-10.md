@@ -280,6 +280,19 @@
 - Header/contract validation initially passed, but visual proof failed when broken native-continuation/native content became visible. The Anatole Worker route was removed, Anatole's Cloudflare cache was purged, and native Kinsta/Resi rendering was visually verified on desktop and mobile.
 - Disposition: central expansion paused; Anatole restored by removing the Worker route. Do not expand or retry central/thin delivery until the visual proof gap is fixed offline and Mark explicitly approves another attempt. No WordPress/Kinsta mutation, analytics admin mutation, Ahrefs mutation, source content mutation, dashboard production mutation, or locked PIB mutation was performed.
 
+## 09/04/2026 Cloudflare Scheduled-Lane Activation
+
+- Applied remote D1 migrations `/Users/mark/Property_Analytics/apps/api/migrations/0067_create_agent_readiness_tables.sql` and `/Users/mark/Property_Analytics/apps/api/migrations/0068_create_captain_routine_schedule.sql` to `pop-brief-db`.
+- Seeded Agent Readiness targets from governed identity sources: `123` active targets, including `95` corporate property pages and `28` Resi vanity targets.
+- Deployed `pop-brief-api` version `beab4f92-3b1a-4c03-9078-c75422b39909` with the `*/15` scheduled handler active for Captain routine execution, PIB reports, Resi Edge promo sync, and Resi Edge hero freshness sync. Production readback showed `996` active Captain routine rows, `38` leased rows, no due backlog, and recent scheduled Captain runs writing normally.
+- Deployed Agent Readiness Worker version `9a42a512-ff3f-4656-a8f9-52d8d2e56eea` after correcting the success insert placeholder mismatch that produced `D1_ERROR: 44 values for 45 columns`. Manual runs remain disabled until `AGENT_READINESS_ADMIN_SECRET` is represented in Keeper/KSM; the next post-fix scheduled proof is pending the six-hour Cron.
+- Deployed Resi Edge hero media refresh Worker version `4861d95e-d405-4e5f-9b5e-d44a859b646e` and central topper service version `26e3c8dd-ff65-4bc8-bf86-0075d857f8e1`. The hero media queue remains disabled by design.
+- Corrected Resi Edge hero freshness normalization for same-origin native DAM proxy URLs. Production proof `/Users/mark/Property_Analytics/reports/resi_edge_performance/hero-freshness-manual-sync/20260904T202716Z/summary.json` returned `27` properties, `27` current, `0` refresh needed, `0` source missing, and `0` source errors.
+- Corrected `/Users/mark/Property_Analytics/scripts/sync_resi_edge_promo_records.py` so explicit `--upload` writes remote R2. Production proof `/Users/mark/Property_Analytics/reports/resi_edge_performance/promo-record-sync/20260904T202046Z/summary.json` uploaded `27/27` records with `16` active specials and `0` missing feed rows.
+- Published Pond web deployment `https://aef5fb82.property-analytics.pages.dev`; direct smokes returned `200` for `/pond`, `/commodores`, `/captains/AR4PB`, `/site-content`, `/vacs`, and `/watchtower`. The protected custom route `https://pond.venterrawebops.com/pond` returned expected Cloudflare Access `302`.
+- Validation passed: API platform tests `159/159`, API typecheck, web build, focused Python tests for Agent Readiness SQL and promo remote upload, and Python compile checks for touched scripts.
+- Disposition: production scheduled/read-model lanes are active. This did not mutate individual Resi Edge property Workers, DNS, WordPress/Kinsta, Jira, Confluence, Microsoft 365, source tickets, or locked PIB files.
+
 ## 08/31/2026 Resi Edge Hero Freshness Monitor
 
 - Added a read-only hero source freshness lane for active Resi Edge properties. The Cloudflare API Worker scheduled routine `/Users/mark/Property_Analytics/apps/api/src/platform/resi-edge/hero-freshness-sync.ts` reads native desktop/cache-busted homepages, extracts `data-page-section="hero"` / `data-src`, compares against each active manifest's hero source, and writes R2 receipts under `resi-edge-hero-freshness/`.

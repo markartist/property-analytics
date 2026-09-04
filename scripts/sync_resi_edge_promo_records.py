@@ -133,6 +133,7 @@ def upload_record(path: Path, key: str, env: dict[str, str]) -> dict[str, Any]:
         str(path),
         "--content-type",
         "application/json; charset=utf-8",
+        "--remote",
     ]
     result = run(command, env)
     return {
