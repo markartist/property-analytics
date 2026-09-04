@@ -3579,9 +3579,11 @@ The next high-value documents to create from this register are:
     - `/Users/mark/Property_Analytics/scripts/run_adhoc_report.py`
     - `/Users/mark/Property_Analytics/scripts/backfill_portfolio_gsc_queries.py`
     - `/Users/mark/Property_Analytics/scripts/backfill_portfolio_gsc_daily.py`
+    - `/Users/mark/Property_Analytics/scripts/backfill_portfolio_gbp.py`
   - current capability:
-    - builds Outlook-safe ad hoc packets for portfolio organic search performance with GA4 channel metrics, GSC daily metrics, GSC strict-discovery non-brand query rollups by `encasa_region`, full top 10 terms per group in the workbook, paid/organic keyword overlap, Ahrefs, and source coverage
+    - builds Outlook-safe ad hoc packets for portfolio organic search performance with GA4 channel metrics, GSC daily metrics, GSC strict-discovery non-brand query rollups by `encasa_region`, full top 10 terms per group in the workbook, brand/non-brand mix, intent clusters, property opportunities, and core source coverage
     - classifies GSC query rows per property using governed property identity context, property-name tokens, city/state, address filtering, and apartment-intent phrase rules
+    - keeps Andrew-style performance packets GA4/GSC-only unless another outlet is separately certified for the exact question and date window
     - writes the standard ad hoc report packet: `request.json`, `report_spec.json`, `report.html`, `report.xlsx`, `validation.json`, `delivery.json`, and `sources_used.md`
   - boundary:
     - reporting and Data Pond backfill only
@@ -3590,5 +3592,6 @@ The next high-value documents to create from this register are:
   - latest proof:
     - 09/04/2026 GSC query backfill packet `/Users/mark/Property_Analytics/reports/adhoc_executive/andrew_foresi_search_backfill/20260904_114006/` wrote `903,479` query rows for `85` successful properties and `0` failed properties
     - 09/04/2026 GSC daily backfill packet `/Users/mark/Property_Analytics/reports/adhoc_executive/andrew_foresi_search_backfill/20260904_114646_gsc_daily/` wrote `35,195` daily rows for `92` successful properties and `0` failed properties
-    - DataForSEO was intentionally removed from the Andrew packet after review because stored coverage was too thin for a portfolio-grade executive read
-    - final Andrew report packet `/Users/mark/Property_Analytics/reports/adhoc_executive/organic_nonbrand_search_terms/20260904_122516_andrew-foresi-portfolio-non-branded-organic-search-performance-by-group/` passed Outlook validation with no warnings and includes `17,746` strict-discovery non-brand clicks across `14` groups
+    - 09/04/2026 GBP daily backfill packet `/Users/mark/Property_Analytics/reports/adhoc_executive/andrew_foresi_search_backfill/20260904_124925_gbp/` wrote `55,419` daily rows for `91` of `91` GBP-mapped properties, but GBP was not included in the Andrew organic term packet because it measures profile/local demand rather than owned-site organic search
+    - Google Ads, GBP terms, Ahrefs, and DataForSEO were intentionally excluded from the Andrew packet after review because they were paid-media, source-limited, snapshot-only, or not aligned to the non-branded organic search-term question
+    - final Andrew report packet `/Users/mark/Property_Analytics/reports/adhoc_executive/organic_nonbrand_search_terms/20260904_125828_andrew-foresi-portfolio-non-branded-organic-search-performance-by-group/` passed Outlook validation with no warnings and includes `17,746` strict-discovery non-brand clicks across `14` groups
