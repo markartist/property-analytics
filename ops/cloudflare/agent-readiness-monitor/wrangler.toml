@@ -1,0 +1,34 @@
+name = "agent-readiness-monitor"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+account_id = "5a5a60afaad00085864fe6bab7eb2882"
+workers_dev = false
+
+routes = [
+  { pattern = "agent-readiness.venterrawebops.com", custom_domain = true }
+]
+
+[triggers]
+crons = ["0 */6 * * *"]
+
+[[d1_databases]]
+binding = "POP_BRIEF_DB"
+database_name = "pop-brief-db"
+database_id = "dad3e7d1-147b-438d-8cd0-2cbf537a87b2"
+
+[[r2_buckets]]
+binding = "POP_BRIEF_UPLOADS"
+bucket_name = "pop-brief-uploads"
+
+[vars]
+AGENT_READINESS_ENABLED = "true"
+AGENT_READINESS_MAX_TARGETS_PER_RUN = "8"
+AGENT_READINESS_TARGET_CADENCE_DAYS = "7"
+AGENT_READINESS_SCANNER_URL = "https://isitagentready.com/api/scan"
+AGENT_READINESS_TIMEOUT_MS = "25000"
+AGENT_READINESS_SEED_CORPORATE_PAGES = "true"
+AGENT_READINESS_SCHEMA_VERSION = "agent-readiness-monitor-v1"
+
+# Optional secret for manual POST /v1/agent-readiness/run.
+# Set only through Keeper-backed deployment flow:
+# AGENT_READINESS_ADMIN_SECRET

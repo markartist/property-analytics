@@ -15,6 +15,7 @@ import { createExecutionSnapshotBuilder } from "../platform/execution-snapshots/
 import { createAgentRuntimeGateway } from "../platform/agent-runtime/gateway";
 import { createLifecycleEngine } from "../platform/lifecycle/engine";
 import { runPropertyAdvocateFlow } from "../platform/orchestration/property-advocate-runner";
+import { runScheduledResiEdgeHeroFreshnessSync } from "../platform/resi-edge/hero-freshness-sync";
 
 type PlatformVariables = AuthVariables & {
   platformRequestId: string;
@@ -211,6 +212,16 @@ platform.post("/pipeline-health/build", async (c) => {
     const service = createPipelineHealthBuilder(c.env.POP_BRIEF_DB);
     const result = await service.build(await c.req.json());
     return okJson(c, 201, result);
+  } catch (error) {
+    const response = serviceErrorResponse(c, error);
+    return c.json(response.body, response.status as any);
+  }
+});
+
+platform.post("/resi-edge/hero-freshness/sync", async (c) => {
+  try {
+    const result = await runScheduledResiEdgeHeroFreshnessSync(c.env, new Date());
+    return okJson(c, 200, result);
   } catch (error) {
     const response = serviceErrorResponse(c, error);
     return c.json(response.body, response.status as any);

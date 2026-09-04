@@ -330,6 +330,29 @@ test("platform routes accept Cloudflare Access JWT assertions minted for the con
   }
 });
 
+test("platform route can manually trigger Resi Edge hero freshness sync", async () => {
+  const { db, close } = await createTestD1Database();
+  try {
+    const env = {
+      ...createPlatformRouteEnv(db),
+      RESI_EDGE_HERO_FRESHNESS_SYNC_ENABLED: "false",
+    };
+
+    const response = await requestPlatform(env, "/v1/platform/resi-edge/hero-freshness/sync", {
+      method: "POST",
+      headers: { "X-Request-Id": "route-resi-edge-hero-sync-001" },
+    });
+    assert.equal(response.status, 200);
+    const json = await response.json();
+    assert.equal(json.meta.requestId, "route-resi-edge-hero-sync-001");
+    assert.equal(json.result.ok, true);
+    assert.equal(json.result.skipped, true);
+    assert.equal(json.result.property_count, 0);
+  } finally {
+    close();
+  }
+});
+
 test("platform routes cover agent runtime, lifecycle emission, and noise-budget summary", async () => {
   const { db, close } = await createTestD1Database();
   try {

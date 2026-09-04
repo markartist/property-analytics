@@ -95,6 +95,8 @@ Codex should own:
 
 4. `ops-watch-publisher`
    - Builds the read model used by Data Pond and Captain Watch.
+   - Preserves the Captain Ticket Care contract from `/Users/mark/Property_Analytics/docs/CAPTAIN_TICKET_CARE_SOP_2026-09-04.md`, including per-ticket flags, property queues, blocker ownership, evidence requirements, and approval-gated action guidance.
+   - Preserves the Commodore Bridge contract from `/Users/mark/Property_Analytics/docs/COMMODORE_BRIDGE_OPERATING_MODEL_2026-09-04.md`, including governed-region rollups, shared pattern candidates, regional escalation candidates, and drill links back to Captain offices.
    - No outbound Jira comments, transitions, email sends, or Teams messages without a reviewed action queue.
 
 5. `ops-watch-action-gateway`
@@ -115,6 +117,7 @@ Codex should own:
   - `captain_persona_profiles`
   - `captain_refresh_runs`
   - `captain_office_wall_snapshots`
+  - future regional read-model tables should carry Commodore Bridge rollups and pattern candidates derived from the same normalized Ops Watch/Captain rows.
   - future read/publish layer may also populate `captain_watch_items` and `captain_actions` after review.
 - Data Pond API:
   - Read-only status and details first

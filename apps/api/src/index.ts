@@ -32,6 +32,9 @@ import { experiments } from "./routes/experiments";
 import { directives } from "./routes/directives";
 import { pibBuilder, runScheduledPibReports } from "./routes/pib-builder";
 import { runScheduledCaptains } from "./platform/captain/runtime";
+import { runScheduledResiEdgeHeroFreshnessSync } from "./platform/resi-edge/hero-freshness-sync";
+import { runScheduledResiEdgePromoSync } from "./platform/resi-edge/promo-record-sync";
+import { runIndependentScheduledJobs } from "./scheduled";
 
 // Phase 2 leasing funnel metric routers
 const t7Metrics = createLeasingMetricsRouter("t7_metrics", "t7_metrics");
@@ -116,7 +119,11 @@ export default {
   request: app.request.bind(app),
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     const scheduledAt = new Date(controller.scheduledTime);
-    await runScheduledCaptains(env.POP_BRIEF_DB, scheduledAt);
-    await runScheduledPibReports(env, scheduledAt);
+    await runIndependentScheduledJobs([
+      { label: "Captain routine", run: () => runScheduledCaptains(env.POP_BRIEF_DB, scheduledAt) },
+      { label: "PIB reports", run: () => runScheduledPibReports(env, scheduledAt) },
+      { label: "Resi Edge promo sync", run: () => runScheduledResiEdgePromoSync(env, scheduledAt) },
+      { label: "Resi Edge hero freshness sync", run: () => runScheduledResiEdgeHeroFreshnessSync(env, scheduledAt) },
+    ]);
   },
 };

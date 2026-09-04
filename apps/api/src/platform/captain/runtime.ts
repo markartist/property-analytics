@@ -25,6 +25,24 @@ interface SupportAgentRow {
   source_scope_json?: string | null;
 }
 
+interface CaptainRoutineScheduleRow {
+  schedule_id: string;
+  property_id: string;
+  agent_key: string;
+  cadence: "daily" | "weekly" | "monthly" | "ad_hoc";
+  status: "active" | "paused" | "retired" | "leased";
+  priority: number;
+  next_run_at: string | null;
+  last_started_at: string | null;
+  last_finished_at: string | null;
+  last_success_at: string | null;
+  last_status: CaptainRunStatus | null;
+  last_run_id: string | null;
+  source_fingerprint: string | null;
+  lease_id: string | null;
+  lease_until: string | null;
+}
+
 interface CaptainCommandPosture {
   scopeTypes: string[];
   designation: string | null;
@@ -93,6 +111,34 @@ export async function ensureCaptainRuntimeTables(db: D1Database): Promise<void> 
   );
   await run(db, `CREATE INDEX IF NOT EXISTS idx_captain_agent_runs_property ON captain_agent_runs(property_id, started_at DESC)`);
   await run(db, `CREATE INDEX IF NOT EXISTS idx_captain_agent_runs_agent ON captain_agent_runs(property_id, agent_key, started_at DESC)`);
+
+  await run(
+    db,
+    `CREATE TABLE IF NOT EXISTS captain_routine_schedule (
+      schedule_id TEXT PRIMARY KEY,
+      property_id TEXT NOT NULL,
+      agent_key TEXT NOT NULL,
+      cadence TEXT NOT NULL CHECK (cadence IN ('daily', 'weekly', 'monthly', 'ad_hoc')),
+      status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active', 'paused', 'retired', 'leased')),
+      priority INTEGER NOT NULL DEFAULT 50,
+      next_run_at TEXT,
+      last_started_at TEXT,
+      last_finished_at TEXT,
+      last_success_at TEXT,
+      last_status TEXT CHECK (last_status IS NULL OR last_status IN ('success', 'warning', 'failed', 'skipped')),
+      last_run_id TEXT,
+      source_fingerprint TEXT,
+      lease_id TEXT,
+      lease_until TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (property_id, agent_key)
+    )`
+  );
+  await run(db, `CREATE INDEX IF NOT EXISTS idx_captain_routine_schedule_due ON captain_routine_schedule(status, next_run_at, priority DESC)`);
+  await run(db, `CREATE INDEX IF NOT EXISTS idx_captain_routine_schedule_property ON captain_routine_schedule(property_id, status, cadence, next_run_at)`);
+  await run(db, `CREATE INDEX IF NOT EXISTS idx_captain_routine_schedule_agent ON captain_routine_schedule(agent_key, status, next_run_at)`);
 
   await run(
     db,
@@ -349,102 +395,299 @@ export async function runCaptainAgents(
 
 export async function runScheduledCaptains(db: D1Database, scheduledAt: Date) {
   await ensureCaptainRuntimeTables(db);
-  const schedule = captainScheduleBucket(scheduledAt);
-  const agentRows = await queryAll<Pick<SupportAgentRow, "property_id" | "agent_key" | "role" | "cadence" | "source_scope_json">>(
-    db,
-    `SELECT property_id, agent_key, role, cadence, source_scope_json
-     FROM captain_support_agents
-     WHERE status = 'active'
-     ORDER BY property_id, agent_key`,
-    []
-  );
-  const eligibleRows = agentRows.filter((row) => isAgentEligibleForScheduledCadence(row, schedule.cadence));
-  const selectedRows = eligibleRows
-    .filter((row) => captainAgentBucket(row.property_id, row.agent_key, schedule.bucketCount) === schedule.bucketIndex)
-    .sort((left, right) => designationPriorityWeight(right.source_scope_json) - designationPriorityWeight(left.source_scope_json) || left.property_id.localeCompare(right.property_id) || left.agent_key.localeCompare(right.agent_key));
+  const asOfIso = scheduledAt.toISOString();
+  const sync = await syncCaptainRoutineSchedule(db, asOfIso);
+  const leaseId = `captain-routine-lease-${compactTimestamp(asOfIso)}-${crypto.randomUUID().slice(0, 8)}`;
+  const selectedRows = await leaseDueCaptainRoutines(db, asOfIso, leaseId, scheduledCaptainBatchSize(scheduledAt));
   const runs = [];
   for (const row of selectedRows) {
-    runs.push(await runCaptainAgents(db, row.property_id, { agentKey: row.agent_key, runType: "scheduled", actorId: "cloudflare-cron" }));
+    const startedAt = new Date().toISOString();
+    try {
+      const result = await runCaptainAgents(db, row.property_id, { agentKey: row.agent_key, runType: "scheduled", actorId: "cloudflare-cron" });
+      const firstRun = result.results[0];
+      await completeCaptainRoutineSchedule(db, row, firstRun, startedAt, new Date().toISOString(), scheduledAt);
+      runs.push(result);
+    } catch (error) {
+      const finishedAt = new Date().toISOString();
+      await failCaptainRoutineSchedule(db, row, startedAt, finishedAt, scheduledAt);
+      runs.push({
+        propertyCode: row.property_id,
+        agentKey: row.agent_key,
+        status: "failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
   return {
-    scheduledAt: scheduledAt.toISOString(),
-    mode: schedule.mode,
-    cadence: schedule.cadence,
-    bucketIndex: schedule.bucketIndex,
-    bucketCount: schedule.bucketCount,
+    scheduledAt: asOfIso,
+    mode: "due_queue",
+    leaseId,
+    sync,
     selectedAgentCount: selectedRows.length,
-    totalEligibleAgentCount: eligibleRows.length,
     runs,
   };
 }
 
-const DAILY_CAPTAIN_CRON_SLOTS = ["12:00", "12:20", "12:40", "13:00"];
-const WEEKLY_CAPTAIN_CRON_SLOTS = ["13:30"];
+async function syncCaptainRoutineSchedule(db: D1Database, asOfIso: string) {
+  await releaseExpiredCaptainRoutineLeases(db, asOfIso);
+  const activeAgentCount = await queryFirst<{ count: number }>(
+    db,
+    `SELECT COUNT(*) AS count
+     FROM captain_support_agents
+     WHERE status = 'active'`
+  );
+  const dailyFloor = new Date(Date.parse(asOfIso) - 24 * 60 * 60 * 1000).toISOString();
+  const weeklyFloor = new Date(Date.parse(asOfIso) - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const monthlyFloor = new Date(Date.parse(asOfIso) - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const upsert = await run(
+    db,
+    `INSERT INTO captain_routine_schedule (
+       schedule_id, property_id, agent_key, cadence, status, priority,
+       next_run_at, last_finished_at, last_success_at, last_status, last_run_id,
+       created_at, updated_at
+     )
+     WITH latest AS (
+       SELECT property_id, agent_key,
+              MAX(finished_at) AS latest_finished_at,
+              MAX(CASE WHEN run_status IN ('success', 'warning') THEN finished_at ELSE NULL END) AS latest_success_at
+       FROM captain_agent_runs
+       GROUP BY property_id, agent_key
+     )
+     SELECT
+       'captain_schedule_' || lower(replace(a.property_id, ' ', '_')) || '_' || lower(replace(a.agent_key, ' ', '_')) AS schedule_id,
+       a.property_id,
+       a.agent_key,
+       a.cadence,
+       'active' AS status,
+       CASE WHEN a.cadence = 'daily' THEN 50 ELSE 40 END
+         + CASE
+             WHEN a.agent_key LIKE '%_source_scout' OR a.agent_key LIKE '%_boatswain' THEN 8
+             WHEN a.agent_key LIKE '%_inventory_watch' OR a.agent_key LIKE '%_funnel_watch' THEN 6
+             WHEN a.agent_key LIKE '%_navigator_watch' OR a.agent_key LIKE '%_media_watch' THEN 4
+             ELSE 0
+           END AS priority,
+       CASE
+         WHEN a.cadence = 'daily' THEN
+           CASE
+             WHEN l.latest_finished_at IS NULL OR l.latest_finished_at <= ? THEN ?
+             ELSE strftime('%Y-%m-%dT%H:%M:%fZ', l.latest_finished_at, '+1 day')
+           END
+         WHEN a.cadence = 'weekly' THEN
+           CASE
+             WHEN l.latest_finished_at IS NULL OR l.latest_finished_at <= ? THEN ?
+             ELSE strftime('%Y-%m-%dT%H:%M:%fZ', l.latest_finished_at, '+7 days')
+           END
+         WHEN a.cadence = 'monthly' THEN
+           CASE
+             WHEN l.latest_finished_at IS NULL OR l.latest_finished_at <= ? THEN ?
+             ELSE strftime('%Y-%m-%dT%H:%M:%fZ', l.latest_finished_at, '+30 days')
+           END
+         ELSE NULL
+       END AS next_run_at,
+       l.latest_finished_at,
+       l.latest_success_at,
+       (
+         SELECT r.run_status
+         FROM captain_agent_runs r
+         WHERE r.property_id = a.property_id AND r.agent_key = a.agent_key
+         ORDER BY r.finished_at DESC, r.started_at DESC, r.id DESC
+         LIMIT 1
+       ) AS last_status,
+       (
+         SELECT r.id
+         FROM captain_agent_runs r
+         WHERE r.property_id = a.property_id AND r.agent_key = a.agent_key
+         ORDER BY r.finished_at DESC, r.started_at DESC, r.id DESC
+         LIMIT 1
+       ) AS last_run_id,
+       ? AS created_at,
+       ? AS updated_at
+     FROM captain_support_agents a
+     LEFT JOIN latest l ON l.property_id = a.property_id AND l.agent_key = a.agent_key
+     WHERE a.status = 'active'
+     ON CONFLICT(property_id, agent_key) DO UPDATE SET
+       cadence = excluded.cadence,
+       status = CASE
+         WHEN captain_routine_schedule.status = 'paused' THEN captain_routine_schedule.status
+         WHEN captain_routine_schedule.status = 'leased'
+          AND captain_routine_schedule.lease_until IS NOT NULL
+          AND captain_routine_schedule.lease_until > ? THEN captain_routine_schedule.status
+         ELSE 'active'
+       END,
+       priority = excluded.priority,
+       next_run_at = COALESCE(captain_routine_schedule.next_run_at, excluded.next_run_at),
+       last_finished_at = COALESCE(excluded.last_finished_at, captain_routine_schedule.last_finished_at),
+       last_success_at = COALESCE(excluded.last_success_at, captain_routine_schedule.last_success_at),
+       last_status = COALESCE(excluded.last_status, captain_routine_schedule.last_status),
+       last_run_id = COALESCE(excluded.last_run_id, captain_routine_schedule.last_run_id),
+       updated_at = excluded.updated_at`,
+    [
+      dailyFloor,
+      asOfIso,
+      weeklyFloor,
+      asOfIso,
+      monthlyFloor,
+      asOfIso,
+      asOfIso,
+      asOfIso,
+      asOfIso,
+    ]
+  );
+  await run(
+    db,
+    `UPDATE captain_routine_schedule
+     SET status = 'retired', lease_id = NULL, lease_until = NULL, updated_at = ?
+     WHERE status != 'retired'
+       AND NOT EXISTS (
+         SELECT 1
+         FROM captain_support_agents a
+         WHERE a.property_id = captain_routine_schedule.property_id
+           AND a.agent_key = captain_routine_schedule.agent_key
+           AND a.status = 'active'
+      )`,
+    [asOfIso]
+  );
+  return { activeAgentCount: Number(activeAgentCount?.count ?? 0), scheduleRowsUpserted: Number(upsert.meta?.changes ?? 0) };
+}
 
-function captainScheduleBucket(scheduledAt: Date) {
-  const slot = `${String(scheduledAt.getUTCHours()).padStart(2, "0")}:${String(scheduledAt.getUTCMinutes()).padStart(2, "0")}`;
-  const weeklyIndex = scheduledAt.getUTCDay() === 1 ? WEEKLY_CAPTAIN_CRON_SLOTS.indexOf(slot) : -1;
-  if (weeklyIndex >= 0) {
-    const bucketCount = 4;
-    return { cadence: "weekly" as const, mode: "weekly_bucketed", bucketIndex: weekBucketOffset(scheduledAt, bucketCount), bucketCount };
+async function releaseExpiredCaptainRoutineLeases(db: D1Database, asOfIso: string) {
+  await run(
+    db,
+    `UPDATE captain_routine_schedule
+     SET status = 'active', lease_id = NULL, lease_until = NULL, updated_at = ?
+     WHERE status = 'leased'
+       AND lease_until IS NOT NULL
+       AND lease_until <= ?`,
+    [asOfIso, asOfIso]
+  );
+}
+
+async function leaseDueCaptainRoutines(db: D1Database, asOfIso: string, leaseId: string, limit: number) {
+  const rows = await queryAll<CaptainRoutineScheduleRow>(
+    db,
+    `SELECT *
+     FROM captain_routine_schedule
+     WHERE status = 'active'
+       AND cadence != 'ad_hoc'
+       AND next_run_at IS NOT NULL
+       AND next_run_at <= ?
+     ORDER BY priority DESC, next_run_at ASC, property_id ASC, agent_key ASC
+     LIMIT ?`,
+    [asOfIso, limit]
+  );
+  const leased: CaptainRoutineScheduleRow[] = [];
+  const leaseUntil = new Date(Date.parse(asOfIso) + 15 * 60 * 1000).toISOString();
+  for (const row of rows) {
+    const result = await run(
+      db,
+      `UPDATE captain_routine_schedule
+       SET status = 'leased', lease_id = ?, lease_until = ?, updated_at = ?
+       WHERE schedule_id = ?
+         AND status = 'active'
+         AND next_run_at <= ?`,
+      [leaseId, leaseUntil, asOfIso, row.schedule_id, asOfIso]
+    );
+    if (Number(result.meta?.changes ?? 0) > 0) {
+      leased.push({ ...row, status: "leased", lease_id: leaseId, lease_until: leaseUntil });
+    }
   }
-  const dailyIndex = DAILY_CAPTAIN_CRON_SLOTS.indexOf(slot);
-  if (dailyIndex >= 0) {
-    const bucketCount = 16;
-    return { cadence: "daily" as const, mode: "daily_bucketed", bucketIndex: dayBucketOffset(scheduledAt, bucketCount) + dailyIndex, bucketCount };
+  return leased;
+}
+
+async function completeCaptainRoutineSchedule(
+  db: D1Database,
+  row: CaptainRoutineScheduleRow,
+  result: AgentRunResult | undefined,
+  startedAt: string,
+  finishedAt: string,
+  scheduledAt: Date
+) {
+  const status = result?.status ?? "skipped";
+  await run(
+    db,
+    `UPDATE captain_routine_schedule
+     SET status = 'active',
+         lease_id = NULL,
+         lease_until = NULL,
+         last_started_at = ?,
+         last_finished_at = ?,
+         last_success_at = CASE WHEN ? IN ('success', 'warning') THEN ? ELSE last_success_at END,
+         last_status = ?,
+         last_run_id = ?,
+         next_run_at = ?,
+         updated_at = ?
+     WHERE schedule_id = ?`,
+    [
+      startedAt,
+      finishedAt,
+      status,
+      finishedAt,
+      status,
+      result?.runId ?? null,
+      nextRunAfterStatus(row.cadence, status, scheduledAt, row.property_id, row.agent_key),
+      finishedAt,
+      row.schedule_id,
+    ]
+  );
+}
+
+async function failCaptainRoutineSchedule(
+  db: D1Database,
+  row: CaptainRoutineScheduleRow,
+  startedAt: string,
+  finishedAt: string,
+  scheduledAt: Date
+) {
+  await run(
+    db,
+    `UPDATE captain_routine_schedule
+     SET status = 'active',
+         lease_id = NULL,
+         lease_until = NULL,
+         last_started_at = ?,
+         last_finished_at = ?,
+         last_status = 'failed',
+         next_run_at = ?,
+         updated_at = ?
+     WHERE schedule_id = ?`,
+    [startedAt, finishedAt, nextRunAfterStatus(row.cadence, "failed", scheduledAt, row.property_id, row.agent_key), finishedAt, row.schedule_id]
+  );
+}
+
+function scheduledCaptainBatchSize(scheduledAt: Date) {
+  if (scheduledAt.getUTCDay() === 1 && scheduledAt.getUTCHours() === 13 && scheduledAt.getUTCMinutes() === 30) {
+    return 75;
   }
-  const fallbackBucketCount = 16;
-  const fallbackIndex = Math.abs((scheduledAt.getUTCHours() * 60 + scheduledAt.getUTCMinutes()) % fallbackBucketCount);
-  return { cadence: "daily" as const, mode: "daily_fallback_bucketed", bucketIndex: fallbackIndex, bucketCount: fallbackBucketCount };
+  return 50;
 }
 
-function dayBucketOffset(scheduledAt: Date, bucketCount: number) {
-  const dayStart = Date.UTC(scheduledAt.getUTCFullYear(), 0, 1);
-  const currentDay = Date.UTC(scheduledAt.getUTCFullYear(), scheduledAt.getUTCMonth(), scheduledAt.getUTCDate());
-  const dayOfYear = Math.floor((currentDay - dayStart) / 86_400_000);
-  const slotCount = DAILY_CAPTAIN_CRON_SLOTS.length;
-  return (dayOfYear % Math.ceil(bucketCount / slotCount)) * slotCount;
+function nextRunAfterStatus(cadence: string, status: CaptainRunStatus, scheduledAt: Date, propertyId: string, agentKey: string) {
+  if (status === "failed") return new Date(scheduledAt.getTime() + 2 * 60 * 60 * 1000).toISOString();
+  if (status === "skipped") return new Date(scheduledAt.getTime() + 12 * 60 * 60 * 1000).toISOString();
+  return addCadence(scheduledAt, cadence, propertyId, agentKey).toISOString();
 }
 
-function weekBucketOffset(scheduledAt: Date, bucketCount: number) {
-  const yearStart = Date.UTC(scheduledAt.getUTCFullYear(), 0, 1);
-  const currentDay = Date.UTC(scheduledAt.getUTCFullYear(), scheduledAt.getUTCMonth(), scheduledAt.getUTCDate());
-  const weekOfYear = Math.floor((currentDay - yearStart) / (7 * 86_400_000));
-  return weekOfYear % bucketCount;
+function addCadence(base: Date, cadence: string, propertyId: string, agentKey: string) {
+  const next = new Date(base);
+  if (cadence === "weekly") {
+    next.setUTCDate(next.getUTCDate() + 7);
+  } else if (cadence === "monthly") {
+    next.setUTCDate(next.getUTCDate() + 30);
+  } else {
+    next.setUTCDate(next.getUTCDate() + 1);
+  }
+  const minuteOffset = stableMinuteOffset(propertyId, agentKey);
+  next.setUTCMinutes(minuteOffset % 60, 0, 0);
+  return next;
 }
 
-function captainAgentBucket(propertyId: string, agentKey: string, bucketCount: number) {
+function stableMinuteOffset(propertyId: string, agentKey: string) {
   const key = `${propertyId}:${agentKey}`;
   let hash = 0;
   for (let index = 0; index < key.length; index += 1) {
     hash = (hash * 31 + key.charCodeAt(index)) >>> 0;
   }
-  return hash % bucketCount;
-}
-
-function designationPriorityWeight(sourceScopeJson?: string | null) {
-  const designation = String(parseJsonObject(sourceScopeJson)?.designation ?? "").trim();
-  if (designation === "Critical") return 3;
-  if (designation === "Sale" || designation === "Spotlight") return 2;
-  return 1;
-}
-
-function isAgentEligibleForScheduledCadence(
-  agent: Pick<SupportAgentRow, "agent_key" | "role" | "cadence" | "source_scope_json">,
-  cadence: "daily" | "weekly"
-) {
-  if (agent.cadence === cadence) {
-    return true;
-  }
-  if (cadence !== "daily" || agent.cadence !== "weekly") {
-    return false;
-  }
-  const designation = String(parseJsonObject(agent.source_scope_json)?.designation ?? "").trim();
-  if (designation !== "Critical") {
-    return false;
-  }
-  const roleKey = captainAgentRoleKey(agent.agent_key);
-  return roleKey === "reputation_watch" || roleKey === "logkeeper";
+  return hash % 1440;
 }
 
 export async function createCaptainBriefRun(

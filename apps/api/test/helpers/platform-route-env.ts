@@ -4,6 +4,7 @@ export function createPlatformRouteEnv(db: D1Database): Env {
   return {
     POP_BRIEF_DB: db,
     POP_BRIEF_UPLOADS: {} as R2Bucket,
+    RESI_EDGE_ASSETS: {} as R2Bucket,
     RESEND_API_KEY: "test-resend",
     EMAIL_FROM: "test@example.com",
     SEMRUSH_API_KEY: "test-semrush",
