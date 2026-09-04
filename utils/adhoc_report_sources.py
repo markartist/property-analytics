@@ -137,14 +137,28 @@ def classify_report_type(request: ReportRequest) -> str:
         or ("where" in subject and "search" in subject and "apartment" in subject)
     ):
         return "ils_search_behavior"
+    if (
+        ("non-branded" in subject or "nonbrand" in subject or "non-brand" in subject)
+        and ("organic" in subject or "search" in subject)
+    ):
+        return "organic_nonbrand_search_terms"
     if "organic" in subject and "search" in subject:
         return "organic_search_share"
+    if (
+        "resi edge" in subject
+        and ("launch" in subject or "pilot" in subject)
+        and ("cta" in subject or "event" in subject or "behavior" in subject or "behaviour" in subject)
+    ):
+        return "resi_edge_launch_cta_study"
+    if "resi edge" in subject and ("traffic" in subject or "trend" in subject or "sparkline" in subject):
+        return "resi_edge_traffic_trends"
     if "traffic" in subject or "sessions" in subject or "channel" in subject:
         return "ga4_traffic_summary"
     raise ValueError(
         "This preliminary ad hoc registry cannot resolve that subject yet. "
-        "Supported report types: organic_search_share, ga4_traffic_summary, ils_search_behavior, "
-        "content_manager_workup, content_intelligence_pack."
+        "Supported report types: organic_search_share, organic_nonbrand_search_terms, "
+        "ga4_traffic_summary, ils_search_behavior, content_manager_workup, content_intelligence_pack, "
+        "resi_edge_launch_cta_study, resi_edge_traffic_trends."
     )
 
 
@@ -161,6 +175,11 @@ def load_portfolio_properties() -> list[dict[str, str]]:
                 "property_id": str(ga4),
                 "property_name": (identity.property_name if identity else row.get("name")) or str(ga4),
                 "property_code": (identity.property_code if identity else "") or "",
+                "encasa_region": str(row.get("encasa_region") or ""),
+                "city": (identity.city if identity and identity.city else row.get("city")) or "",
+                "state": (identity.state if identity and identity.state else row.get("state")) or "",
+                "gsc_url": str(row.get("gsc_url") or ""),
+                "domain": str(row.get("domain") or ""),
             }
         )
     return sorted(properties, key=lambda item: item["property_name"])
@@ -856,7 +875,15 @@ COMMON_BRAND_WORDS = {
 
 
 def organic_tokenize(value: str) -> set[str]:
-    return {token for token in re.findall(r"[a-z0-9]+", value.lower()) if len(token) >= 3}
+    raw_tokens = [token for token in re.findall(r"[a-z0-9]+", value.lower()) if len(token) >= 3]
+    tokens = set(raw_tokens)
+    tokens.update(
+        f"{left}{right}"
+        for left, right in zip(raw_tokens, raw_tokens[1:])
+        if len(f"{left}{right}") >= 6
+    )
+    singulars = {token[:-1] for token in tokens if token.endswith("s") and len(token) >= 5}
+    return tokens | singulars
 
 
 def brand_tokens_for_property(property_name: str) -> set[str]:
@@ -868,8 +895,47 @@ def classify_organic_query(query: str, property_name: str, city: str | None = No
     text = f" {query.lower()} "
     tokens = organic_tokenize(query)
     brand_tokens = brand_tokens_for_property(property_name)
-    if "venterra" in tokens or (brand_tokens and len(tokens & brand_tokens) >= min(2, len(brand_tokens))):
+    brand_overlap = tokens & brand_tokens
+    meaningful_query_tokens = {token for token in tokens if token not in COMMON_BRAND_WORDS}
+    has_address_number = re.search(r"\b\d{2,6}\b", text)
+    if has_address_number and not re.search(r"\bapartments?\s+(in|near)\s+\d{5}\b", text):
+        return "Brand / property", "Address / property lookup"
+    if re.search(r"\b\d{2,6}\b", text) and any(
+        term in text
+        for term in (
+            " rd ",
+            " road ",
+            " ln ",
+            " lane ",
+            " ave ",
+            " avenue ",
+            " blvd ",
+            " boulevard ",
+            " dr ",
+            " drive ",
+            " st ",
+            " street ",
+            " way ",
+            " pkwy ",
+            " parkway ",
+            " ct ",
+            " court ",
+        )
+    ):
+        return "Brand / property", "Address / property lookup"
+    if "venterra" in tokens:
         return "Brand / property", "Brand capture"
+    if "ventara" in tokens or "ventera" in tokens:
+        return "Brand / property", "Brand capture"
+    if brand_tokens and brand_overlap:
+        if any(len(token) >= 5 for token in brand_overlap):
+            return "Brand / property", "Brand capture"
+        if len(brand_overlap) >= min(2, len(brand_tokens)):
+            return "Brand / property", "Brand capture"
+        if meaningful_query_tokens and meaningful_query_tokens <= brand_tokens:
+            return "Brand / property", "Brand capture"
+        if len(brand_overlap) == 1 and len(meaningful_query_tokens) <= 2 and any(len(token) >= 5 for token in brand_overlap):
+            return "Brand / property", "Brand capture"
     if city and city.lower() in text:
         return "Non-brand", "City / local market"
     if state and re.search(rf"\b{re.escape(state.lower())}\b", text):
@@ -997,6 +1063,566 @@ def build_brand_nonbrand_intent_rows(
         "total_clicks": total_clicks,
         "nonbrand_click_share": (nonbrand_clicks / total_clicks) if total_clicks else None,
     }
+
+
+def build_group_nonbrand_search_rows(
+    conn: sqlite3.Connection,
+    properties: list[dict[str, str]],
+    start: date,
+    end: date,
+) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, Any]]:
+    property_ids = [item["property_id"] for item in properties]
+    ph = placeholders(property_ids)
+    property_map = {item["property_id"]: item for item in properties}
+    prop_context: dict[str, dict[str, str | None]] = {}
+    for prop in properties:
+        identity = resolve_property_identity(prop["property_id"]) or resolve_property_identity(prop["property_name"])
+        prop_context[prop["property_id"]] = {
+            "name": prop["property_name"],
+            "city": prop.get("city") or (identity.city if identity else None),
+            "state": prop.get("state") or (identity.state if identity else None),
+        }
+
+    rows = conn.execute(
+        f"""
+        SELECT
+          COALESCE(ga4_property_id, property_id) AS resolved_property_id,
+          query,
+          SUM(clicks) AS clicks,
+          SUM(impressions) AS impressions,
+          CASE WHEN SUM(impressions) > 0 THEN SUM(average_position * impressions) / SUM(impressions) END AS avg_position
+        FROM gsc_queries
+        WHERE COALESCE(ga4_property_id, property_id) IN ({ph}) AND metric_date BETWEEN ? AND ?
+        GROUP BY COALESCE(ga4_property_id, property_id), query
+        """,
+        (*property_ids, start.isoformat(), end.isoformat()),
+    ).fetchall()
+
+    group_bucket: dict[str, dict[str, Any]] = {}
+    query_bucket: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in rows:
+        property_id = str(row["resolved_property_id"] or "")
+        prop = property_map.get(property_id)
+        if not prop:
+            continue
+        context = prop_context.get(property_id, {})
+        query = str(row["query"] or "").strip()
+        if not query:
+            continue
+        segment_name, intent_name = classify_organic_query(
+            query,
+            str(context.get("name") or ""),
+            context.get("city"),
+            context.get("state"),
+        )
+        if not segment_name.startswith("Non-brand") or intent_name == "Other discovery":
+            continue
+
+        group_name = prop.get("encasa_region") or "Unassigned"
+        clicks = float(row["clicks"] or 0)
+        impressions = float(row["impressions"] or 0)
+        avg_position = float(row["avg_position"] or 0)
+        position_weight = avg_position * impressions
+
+        group_item = group_bucket.setdefault(
+            group_name,
+            {
+                "clicks": 0.0,
+                "impressions": 0.0,
+                "position_weight": 0.0,
+                "properties": set(),
+                "queries": set(),
+                "top_query": "",
+                "top_query_clicks": -1.0,
+            },
+        )
+        group_item["clicks"] += clicks
+        group_item["impressions"] += impressions
+        group_item["position_weight"] += position_weight
+        group_item["properties"].add(property_id)
+        group_item["queries"].add(query.lower())
+        if clicks > float(group_item["top_query_clicks"]):
+            group_item["top_query"] = query
+            group_item["top_query_clicks"] = clicks
+
+        query_key = (group_name, query.lower())
+        query_item = query_bucket.setdefault(
+            query_key,
+            {
+                "group": group_name,
+                "query": query,
+                "intent_cluster": intent_name,
+                "clicks": 0.0,
+                "impressions": 0.0,
+                "position_weight": 0.0,
+                "properties": set(),
+                "property_clicks": {},
+            },
+        )
+        query_item["clicks"] += clicks
+        query_item["impressions"] += impressions
+        query_item["position_weight"] += position_weight
+        query_item["properties"].add(property_id)
+        property_clicks = query_item["property_clicks"]
+        property_clicks[prop["property_name"]] = float(property_clicks.get(prop["property_name"], 0.0)) + clicks
+
+    total_clicks = sum(float(item["clicks"]) for item in group_bucket.values())
+    total_impressions = sum(float(item["impressions"]) for item in group_bucket.values())
+    group_rows: list[dict[str, object]] = []
+    for rank, (group_name, item) in enumerate(
+        sorted(group_bucket.items(), key=lambda pair: float(pair[1]["clicks"]), reverse=True),
+        start=1,
+    ):
+        impressions = float(item["impressions"] or 0)
+        group_rows.append(
+            {
+                "rank": rank,
+                "group": group_name,
+                "nonbrand_clicks": fmt_num(item["clicks"]),
+                "click_share": fmt_pct((float(item["clicks"]) / total_clicks) if total_clicks else None),
+                "nonbrand_impressions": fmt_num(impressions),
+                "impression_share": fmt_pct((impressions / total_impressions) if total_impressions else None),
+                "ctr": fmt_pct((float(item["clicks"]) / impressions) if impressions else None),
+                "avg_position": fmt_num((float(item["position_weight"]) / impressions) if impressions else None, 1),
+                "properties": fmt_num(len(item["properties"])),
+                "distinct_queries": fmt_num(len(item["queries"])),
+                "top_query": item["top_query"],
+                "top_query_clicks": fmt_num(item["top_query_clicks"] if item["top_query_clicks"] >= 0 else None),
+            }
+        )
+
+    grouped_queries: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in query_bucket.values():
+        grouped_queries[str(item["group"])].append(item)
+
+    top_rows: list[dict[str, object]] = []
+    for group_name in sorted(grouped_queries):
+        ranked = sorted(
+            grouped_queries[group_name],
+            key=lambda item: (float(item["clicks"]), float(item["impressions"])),
+            reverse=True,
+        )
+        for rank, item in enumerate(ranked[:10], start=1):
+            impressions = float(item["impressions"] or 0)
+            clicks = float(item["clicks"] or 0)
+            avg_position_value = (float(item["position_weight"]) / impressions) if impressions else None
+            property_clicks = item["property_clicks"]
+            dominant_property, dominant_clicks = max(
+                property_clicks.items(),
+                key=lambda pair: pair[1],
+                default=("-", 0.0),
+            )
+            property_count = len(item["properties"])
+            ctr = (clicks / impressions) if impressions else None
+            if impressions >= 10000 and (ctr or 0) < 0.025 and (avg_position_value or 99) <= 20:
+                read = "High visibility, low CTR"
+            elif (avg_position_value or 99) <= 10 and (ctr or 0) < 0.05:
+                read = "Ranking present; improve snippet"
+            elif property_count >= 5:
+                read = "Portfolio pattern"
+            elif clicks >= 25:
+                read = "Protect current demand"
+            else:
+                read = "Monitor"
+            top_rows.append(
+                {
+                    "group": group_name,
+                    "group_rank": rank,
+                    "query": item["query"],
+                    "intent_cluster": item["intent_cluster"],
+                    "clicks": fmt_num(clicks),
+                    "impressions": fmt_num(impressions),
+                    "ctr": fmt_pct(ctr),
+                    "avg_position": fmt_num(avg_position_value, 1),
+                    "properties": fmt_num(property_count),
+                    "dominant_property": dominant_property,
+                    "dominant_clicks": fmt_num(dominant_clicks),
+                    "opportunity_read": read,
+                }
+            )
+
+    return group_rows, top_rows, {
+        "nonbrand_clicks": total_clicks,
+        "nonbrand_impressions": total_impressions,
+        "group_count": len(group_bucket),
+        "query_count": len(query_bucket),
+        "property_count": len({prop for item in group_bucket.values() for prop in item["properties"]}),
+    }
+
+
+def source_table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table_name,),
+    ).fetchone()
+    return bool(row)
+
+
+def build_search_source_coverage_rows(conn: sqlite3.Connection, start: date, end: date) -> list[dict[str, object]]:
+    source_specs = [
+        ("GA4 daily performance", "ga4_daily_metrics", "metric_date", "property_id", "Complete owned-site traffic backbone."),
+        ("GA4 channel mix", "ga4_traffic_sources", "metric_date", "property_id", "Organic Search sessions, engagement, and key events."),
+        ("GSC daily performance", "gsc_daily_metrics", "metric_date", "COALESCE(ga4_property_id, property_id)", "Backfilled for the executive window where API rows were available."),
+        ("GSC query performance", "gsc_queries", "metric_date", "COALESCE(ga4_property_id, property_id)", "Backfilled query-level source for non-brand term reporting."),
+        ("Google Business Profile daily", "gbp_daily_insights", "metric_date", "property_id", "Local/entity demand and profile actions."),
+        ("Google Business Profile terms", "gbp_search_keywords", "printf('%04d-%02d-01', year, month)", "property_id", "Monthly GBP search phrases; Google provides limited historical keyword rows."),
+        ("Google Ads keywords", "google_ads_keywords", "metric_date", "property_id", "Paid demand and paid/organic overlap."),
+        ("DataForSEO SERP checks", "dataforseo_property_keyword_rankings", "run_date", "COALESCE(ga4_property_id, property_id)", "SERP rank, local-pack, and competitor surface overlay."),
+        ("Ahrefs GSC overlay", "ahrefs_gsc_daily_summary", "metric_date", "property_id", "Secondary SEO/GSC overlay where licensed data exists."),
+        ("Ahrefs site audit", "ahrefs_site_audit_project_health", "snapshot_date", "property_id", "Technical health and crawl issue overlay."),
+    ]
+    rows: list[dict[str, object]] = []
+    for source_name, table_name, date_expr, property_expr, read in source_specs:
+        if not source_table_exists(conn, table_name):
+            rows.append(
+                {
+                    "source": source_name,
+                    "table": table_name,
+                    "first_available": "-",
+                    "latest_available": "-",
+                    "rows": "-",
+                    "properties": "-",
+                    "coverage_read": "No local table is available.",
+                }
+            )
+            continue
+        row = conn.execute(
+            f"""
+            SELECT
+              MIN({date_expr}) AS min_date,
+              MAX({date_expr}) AS max_date,
+              COUNT(*) AS rows,
+              COUNT(DISTINCT {property_expr}) AS properties
+            FROM {table_name}
+            WHERE {date_expr} BETWEEN ? AND ?
+            """,
+            (start.isoformat(), end.isoformat()),
+        ).fetchone()
+        first_available = str(row["min_date"]) if row and row["min_date"] else None
+        latest_available = str(row["max_date"]) if row and row["max_date"] else None
+        if not latest_available:
+            coverage_read = "No rows inside the selected window."
+        elif latest_available < end.isoformat():
+            coverage_read = f"{read} Latest local row is {fmt_date(latest_available)}."
+        else:
+            coverage_read = read
+        rows.append(
+            {
+                "source": source_name,
+                "table": table_name,
+                "first_available": fmt_date(first_available) if first_available else "-",
+                "latest_available": fmt_date(latest_available) if latest_available else "-",
+                "rows": fmt_num(row["rows"] if row else None),
+                "properties": fmt_num(row["properties"] if row else None),
+                "coverage_read": coverage_read,
+            }
+        )
+    return rows
+
+
+def build_organic_nonbrand_search_terms(conn: sqlite3.Connection, request: ReportRequest) -> ReportBuild:
+    start, end, date_range = resolve_date_window(conn, request)
+    properties = load_portfolio_properties()
+    property_ids = [item["property_id"] for item in properties]
+    summary = fetch_share_summary(conn, property_ids, start, end)
+    gsc_summary = fetch_gsc_summary(conn, property_ids, start, end)
+    channel_rows = build_channel_mix_rows(conn, property_ids, start, end)
+    monthly_rows = build_organic_monthly_rows(conn, property_ids, start, end)
+    property_rows = build_organic_property_opportunity_rows(conn, properties, start, end)
+    segment_rows, intent_rows, brand_summary = build_brand_nonbrand_intent_rows(conn, properties, start, end)
+    group_rows, group_top_terms, group_summary = build_group_nonbrand_search_rows(conn, properties, start, end)
+    core_source_tables = {"ga4_daily_metrics", "ga4_traffic_sources", "gsc_daily_metrics", "gsc_queries"}
+    source_rows = [
+        row
+        for row in build_search_source_coverage_rows(conn, start, end)
+        if str(row.get("table", "")) in core_source_tables
+    ]
+
+    organic_sessions = float(summary.get("organic_sessions") or 0)
+    total_sessions = float(summary.get("total_sessions") or 0)
+    nonbrand_clicks = float(group_summary.get("nonbrand_clicks") or 0)
+    nonbrand_impressions = float(group_summary.get("nonbrand_impressions") or 0)
+    top_group = group_rows[0]["group"] if group_rows else "the leading group"
+    top_group_clicks = group_rows[0]["nonbrand_clicks"] if group_rows else "-"
+    top_query = group_top_terms[0]["query"] if group_top_terms else "the leading non-brand term"
+    gsc_min = gsc_summary.get("min_date")
+    gsc_max = gsc_summary.get("max_date")
+    gsc_window = (
+        f"{fmt_date(gsc_min)} through {fmt_date(gsc_max)}"
+        if gsc_min and gsc_max
+        else "the available GSC window"
+    )
+    organic_channel_rank = next((idx + 1 for idx, row in enumerate(channel_rows) if row["channel"] == "Organic Search"), None)
+    rank_read = (
+        f"Organic Search is the #{organic_channel_rank} GA4 channel by sessions."
+        if organic_channel_rank
+        else "Organic Search is present in the GA4 channel mix."
+    )
+
+    monthly_rows_human = []
+    for row in monthly_rows:
+        copy = dict(row)
+        month = str(copy.get("month") or "")
+        if re.match(r"^\d{4}-\d{2}$", month):
+            copy["month"] = fmt_date(f"{month}-01")
+        monthly_rows_human.append(copy)
+
+    report = OutlookReport(
+        title="Andrew Foresi Portfolio Non-Branded Search Performance Report",
+        subtitle="Organic Search Intelligence",
+        version="1.0.0",
+        date_range=date_range,
+        generated_at=fmt_generated_at(),
+        question_answered=request.subject,
+        kpis=[
+            ReportKpi("Organic Sessions", fmt_num(organic_sessions), primary=True, note=f"{fmt_pct(summary.get('organic_share'))} of total sessions"),
+            ReportKpi("GSC Clicks", fmt_num(gsc_summary.get("clicks")), note=f"{fmt_num(gsc_summary.get('impressions'))} impressions"),
+            ReportKpi("Non-Brand Clicks", fmt_num(nonbrand_clicks), note=f"{fmt_pct(brand_summary.get('nonbrand_click_share'))} of classified clicks"),
+            ReportKpi("Groups Covered", fmt_num(group_summary.get("group_count")), note=f"{fmt_num(group_summary.get('query_count'))} non-brand query/group rows"),
+        ],
+        sections=[
+            ReportSection(
+                title="Executive Read",
+                paragraphs=[
+                    (
+                        f"Across {len(properties)} governed portfolio properties, Organic Search produced "
+                        f"{fmt_num(organic_sessions)} sessions from {date_range}, representing "
+                        f"{fmt_pct(summary.get('organic_share'))} of {fmt_num(total_sessions)} total GA4 sessions. "
+                        f"{rank_read}"
+                    ),
+                    (
+                        f"GSC is the source of record for search terms. In the available GSC daily window "
+                        f"({gsc_window}), Google organic generated {fmt_num(gsc_summary.get('clicks'))} clicks, "
+                        f"{fmt_num(gsc_summary.get('impressions'))} impressions, {fmt_pct(gsc_summary.get('ctr'))} CTR, "
+                        f"and average position {fmt_num(gsc_summary.get('avg_position'), 1)}."
+                    ),
+                    (
+                        f"After property-context classification, non-brand discovery accounts for "
+                        f"{fmt_num(nonbrand_clicks)} clicks and {fmt_num(nonbrand_impressions)} impressions. "
+                        f"{top_group} leads the group table with {top_group_clicks} non-brand clicks; "
+                        f"the leading visible query in the top-10-by-group workbook is '{top_query}'."
+                    ),
+                ],
+                callout=(
+                    "The workbook contains the full top 10 non-brand GSC terms for every operating group. "
+                    "The email keeps the executive read compact and uses the workbook for the detailed term list."
+                ),
+            ),
+            ReportSection(
+                title="Portfolio Organic",
+                paragraphs=[
+                    "GA4 measures owned-site arrival and engagement; GSC explains the Google query demand creating the organic visibility."
+                ],
+                tables=[
+                    ReportTable(
+                        title="GA4 Channel Mix",
+                        columns=[
+                            ("channel", "Channel"),
+                            ("sessions", "Sessions"),
+                            ("share", "Share"),
+                            ("new_users", "New users"),
+                            ("engagement_rate", "Engagement"),
+                            ("key_events", "Key events"),
+                        ],
+                        rows=channel_rows,
+                    ),
+                    ReportTable(
+                        title="Monthly Organic Trend",
+                        columns=[
+                            ("month", "Month"),
+                            ("organic_sessions", "Organic sessions"),
+                            ("organic_sessions_mom", "MoM"),
+                            ("organic_new_users", "Organic new users"),
+                            ("organic_share", "Organic share"),
+                            ("organic_engagement_rate", "Organic engagement"),
+                            ("organic_key_events", "Organic key events"),
+                            ("gsc_clicks", "GSC clicks"),
+                            ("gsc_impressions", "GSC impressions"),
+                        ],
+                        rows=monthly_rows_human,
+                        limit=22,
+                    ),
+                ],
+            ),
+            ReportSection(
+                title="Non-Brand By Group",
+                paragraphs=[
+                    "These rows remove property-name and Venterra-name demand so the read focuses on renter discovery terms that can scale."
+                ],
+                tables=[
+                    ReportTable(
+                        title="Group Non-Brand Summary",
+                        columns=[
+                            ("rank", "Rank"),
+                            ("group", "Group"),
+                            ("nonbrand_clicks", "Clicks"),
+                            ("click_share", "Click share"),
+                            ("nonbrand_impressions", "Impressions"),
+                            ("ctr", "CTR"),
+                            ("avg_position", "Avg position"),
+                            ("properties", "Properties"),
+                            ("distinct_queries", "Distinct terms"),
+                            ("top_query", "Top query"),
+                        ],
+                        rows=group_rows,
+                    ),
+                    ReportTable(
+                        title="Top Non-Brand Terms By Group",
+                        intro="Email preview shows the highest-ranked rows; workbook includes the full top 10 for every group.",
+                        columns=[
+                            ("group", "Group"),
+                            ("group_rank", "Rank"),
+                            ("query", "Query"),
+                            ("intent_cluster", "Intent"),
+                            ("clicks", "Clicks"),
+                            ("impressions", "Impressions"),
+                            ("ctr", "CTR"),
+                            ("avg_position", "Avg position"),
+                            ("properties", "Properties"),
+                            ("dominant_property", "Dominant property"),
+                            ("opportunity_read", "Read"),
+                        ],
+                        rows=group_top_terms,
+                        limit=45,
+                    ),
+                ],
+            ),
+            ReportSection(
+                title="Brand Vs Discovery",
+                paragraphs=[
+                    "Brand/property clicks represent demand capture. Non-brand clicks represent discovery demand where content, snippets, local proof, and authority can improve acquisition."
+                ],
+                tables=[
+                    ReportTable(
+                        title="Brand / Non-Brand Mix",
+                        columns=[
+                            ("segment", "Segment"),
+                            ("clicks", "Clicks"),
+                            ("click_share", "Click share"),
+                            ("impressions", "Impressions"),
+                            ("impression_share", "Impression share"),
+                            ("ctr", "CTR"),
+                            ("avg_position", "Avg position"),
+                            ("properties", "Properties"),
+                            ("top_query", "Top query"),
+                        ],
+                        rows=segment_rows,
+                    ),
+                    ReportTable(
+                        title="Non-Brand Intent Clusters",
+                        columns=[
+                            ("segment", "Segment"),
+                            ("intent_cluster", "Intent cluster"),
+                            ("clicks", "Clicks"),
+                            ("click_share", "Click share"),
+                            ("impressions", "Impressions"),
+                            ("ctr", "CTR"),
+                            ("avg_position", "Avg position"),
+                            ("properties", "Properties"),
+                            ("top_query", "Top query"),
+                        ],
+                        rows=[row for row in intent_rows if str(row.get("segment", "")).startswith("Non-brand")],
+                        limit=12,
+                    ),
+                ],
+            ),
+            ReportSection(
+                title="Data Coverage",
+                paragraphs=[
+                    "This packet uses only GA4 and GSC. Partial advisory outlets were removed so the workbook does not mix portfolio-grade facts with limited snapshots.",
+                    "GA4 supports the full owned-site organic traffic read for the selected window. GSC supports Google search-term reporting only for the dates returned by the Search Console API and stored in the local Data Pond.",
+                ],
+                tables=[
+                    ReportTable(
+                        title="Core Source Coverage",
+                        columns=[
+                            ("source", "Source"),
+                            ("first_available", "First"),
+                            ("latest_available", "Latest"),
+                            ("rows", "Rows"),
+                            ("properties", "Properties"),
+                            ("coverage_read", "Read"),
+                        ],
+                        rows=source_rows,
+                    ),
+                ],
+            ),
+            ReportSection(
+                title="Property Actions",
+                paragraphs=[
+                    "The property table ranks where organic traffic and GSC visibility are already material, then flags whether the next move is CTR improvement, discovery growth, or maintenance."
+                ],
+                tables=[
+                    ReportTable(
+                        title="Property Organic Opportunity",
+                        columns=[
+                            ("rank", "Rank"),
+                            ("property", "Property"),
+                            ("property_code", "Code"),
+                            ("organic_sessions", "Organic sessions"),
+                            ("organic_share", "Organic share"),
+                            ("organic_engagement_rate", "Organic engagement"),
+                            ("organic_key_events", "Organic key events"),
+                            ("gsc_clicks", "GSC clicks"),
+                            ("gsc_impressions", "GSC impressions"),
+                            ("gsc_ctr", "GSC CTR"),
+                            ("gsc_avg_position", "GSC avg position"),
+                            ("opportunity_read", "Read"),
+                        ],
+                        rows=property_rows,
+                        limit=20,
+                    )
+                ],
+            ),
+        ],
+        source_note=(
+            "Local Data Pond portfolio_analytics.db tables ga4_daily_metrics, ga4_traffic_sources, "
+            "gsc_daily_metrics, and gsc_queries. GSC query and daily rows were backfilled through the governed "
+            "Keeper-backed collectors before this report run."
+        ),
+    )
+
+    workbook_sheets = {
+        "Group Summary": group_rows,
+        "Top 10 Nonbrand By Group": group_top_terms,
+        "Brand Nonbrand": segment_rows,
+        "Intent Clusters": intent_rows,
+        "Monthly Trend": monthly_rows_human,
+        "Channel Mix": channel_rows,
+        "Property Opportunities": property_rows,
+        "Core Source Coverage": source_rows,
+    }
+    return ReportBuild(
+        report_type="organic_nonbrand_search_terms",
+        report=report,
+        workbook_sheets=workbook_sheets,
+        spec={
+            "request": asdict(request),
+            "report_type": "organic_nonbrand_search_terms",
+            "date_range": date_range,
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "property_count": len(properties),
+            "group_count": group_summary.get("group_count"),
+            "nonbrand_clicks": group_summary.get("nonbrand_clicks"),
+            "nonbrand_impressions": group_summary.get("nonbrand_impressions"),
+            "sources": [
+                "ga4_daily_metrics",
+                "ga4_traffic_sources",
+                "gsc_daily_metrics",
+                "gsc_queries",
+            ],
+            "backfill_packets": [
+                "reports/adhoc_executive/andrew_foresi_search_backfill/20260904_114006",
+                "reports/adhoc_executive/andrew_foresi_search_backfill/20260904_114646_gsc_daily",
+            ],
+            "classification_method": (
+                "GSC queries are classified per property using Venterra/property-name tokens plus city, state, "
+                "address, and apartment-intent phrase rules; group rollups include only rows classified as "
+                "Non-brand with a specific discovery intent cluster."
+            ),
+        },
+    )
 
 
 def classify_landing_page(value: str) -> str:
@@ -4484,6 +5110,1164 @@ def build_ils_search_behavior(conn: sqlite3.Connection, request: ReportRequest) 
     )
 
 
+PILOT_LAUNCH_CTA_COHORT = [
+    "Champions Green",
+    "The District Universal Boulevard",
+    "The Harrison",
+    "Ventana",
+    "Calais Midtown",
+]
+
+RESI_EDGE_20_LAUNCH_CTA_COHORT = [
+    "Anatole at Norman",
+    "Carlyle Place",
+    "Village Walk",
+    "Retreat at Kedron Village",
+    "Tuscany at Lindbergh",
+    "The Phoenix",
+    "Creekside",
+    "Boulevard at Lakeside",
+    "Luma Headwaters",
+    "Canton Mill Lofts",
+    "San Palmilla",
+    "Links at Windsor Parke",
+    "Stonecreek Ranch",
+    "Park on Wurzbach",
+    "The Metropolitan",
+    "Axial Buckhead",
+    "Forest View",
+    "Timberlane Village",
+    "Balmoral Village",
+    "The Whitney",
+]
+
+LAUNCH_CTA_EVENT_CATEGORIES = {
+    "Quote / Unit Detail": [
+        "pricequote_click",
+        "resi_price_quote",
+        "sightmap_unit_details_outbound_click",
+    ],
+    "Availability Entry": [
+        "find_your_home_click",
+        "find_home_click",
+    ],
+    "Schedule Tour": [
+        "scheduletour_click",
+        "schedule_tour_click",
+        "resi_apt_tour_click",
+    ],
+    "Apply": [
+        "applyonline_click",
+        "apply_now_click",
+        "resi_application_start",
+        "sightmap_unit_details_apply_click",
+    ],
+    "Phone": [
+        "phonecall",
+        "phone_click",
+        "resi_phone_click",
+    ],
+    "Directions": [
+        "resi_get_directions",
+    ],
+    "3D Tour": [
+        "resi_3d_tour_view",
+    ],
+    "PDF Downloads": [
+        "resi_residence_pdf_download",
+    ],
+    "Form Starts": [
+        "form_start",
+    ],
+    "Form Submits": [
+        "form_submit",
+    ],
+    "Unit Exploration": [
+        "sightmap_unit_list_unit_click",
+        "sightmap_unit_map_unit_click",
+    ],
+    "Search Refinement": [
+        "sightmap_filters_change",
+        "sightmap_unit_list_change",
+    ],
+    "Inventory Exposure": [
+        "sightmap_unit_list_impression",
+        "sightmap_unit_matches_impression",
+    ],
+}
+
+LAUNCH_HIGH_INTENT_CATEGORIES = {
+    "Quote / Unit Detail",
+    "Availability Entry",
+    "Schedule Tour",
+    "Apply",
+    "Phone",
+    "Directions",
+    "3D Tour",
+    "Form Submits",
+}
+
+LAUNCH_COMMON_HIGH_INTENT_CATEGORIES = {
+    "Quote / Unit Detail",
+    "Schedule Tour",
+    "Apply",
+    "Phone",
+    "Directions",
+    "Form Submits",
+}
+
+
+def launch_study_rate(numerator: float | int | None, denominator: float | int | None) -> float | None:
+    if numerator is None or denominator in (None, 0):
+        return None
+    return float(numerator) / float(denominator) * 100
+
+
+def launch_study_ratio(numerator: float | int | None, denominator: float | int | None) -> float | None:
+    if numerator is None or denominator in (None, 0):
+        return None
+    return float(numerator) / float(denominator)
+
+
+def fmt_launch_rate(value: float | None, decimals: int = 1) -> str:
+    if value is None:
+        return "-"
+    return f"{float(value):,.{decimals}f}"
+
+
+def fmt_launch_rate_delta(value: float | None, decimals: int = 1) -> str:
+    if value is None:
+        return "-"
+    return f"{float(value):+,.{decimals}f}"
+
+
+def resolve_launch_study_cohort(names: list[str]) -> list[dict[str, str]]:
+    cohort: list[dict[str, str]] = []
+    for name in names:
+        identity = resolve_property_identity(name)
+        if not identity or not getattr(identity, "ga4_property_id", None):
+            raise ValueError(f"Could not resolve launch study property through the identity matrix: {name}")
+        cohort.append(
+            {
+                "property_name": identity.property_name or name,
+                "property_code": identity.property_code or "",
+                "property_id": str(identity.ga4_property_id),
+            }
+        )
+    return cohort
+
+
+def launch_study_event_names(categories: set[str] | None = None) -> list[str]:
+    names: set[str] = set()
+    selected = categories or set(LAUNCH_CTA_EVENT_CATEGORIES)
+    for category, event_names in LAUNCH_CTA_EVENT_CATEGORIES.items():
+        if category in selected:
+            names.update(event_names)
+    return sorted(names)
+
+
+def fetch_launch_daily_metrics(
+    conn: sqlite3.Connection,
+    property_ids: list[str],
+    start: date,
+    end: date,
+) -> dict[str, float]:
+    ph = placeholders(property_ids)
+    row = conn.execute(
+        f"""
+        SELECT
+          COALESCE(SUM(sessions), 0) AS sessions,
+          COALESCE(SUM(engaged_sessions), 0) AS engaged_sessions,
+          COALESCE(SUM(total_users), 0) AS total_users,
+          COALESCE(SUM(new_users), 0) AS new_users,
+          COALESCE(SUM(pageviews), 0) AS pageviews,
+          COUNT(DISTINCT metric_date) AS active_days,
+          COUNT(DISTINCT property_id || ':' || metric_date) AS property_days
+        FROM ga4_daily_metrics
+        WHERE property_id IN ({ph}) AND metric_date BETWEEN ? AND ?
+        """,
+        (*property_ids, start.isoformat(), end.isoformat()),
+    ).fetchone()
+    return {key: float(row[key] or 0) for key in row.keys()}
+
+
+def fetch_launch_event_counts(
+    conn: sqlite3.Connection,
+    property_ids: list[str],
+    start: date,
+    end: date,
+    event_names: list[str],
+) -> dict[str, int]:
+    if not event_names:
+        return {}
+    prop_ph = placeholders(property_ids)
+    event_ph = placeholders(event_names)
+    rows = conn.execute(
+        f"""
+        SELECT LOWER(event_name) AS event_name, COALESCE(SUM(event_count), 0) AS event_count
+        FROM ga4_event_facts
+        WHERE property_id IN ({prop_ph})
+          AND event_date BETWEEN ? AND ?
+          AND LOWER(event_name) IN ({event_ph})
+        GROUP BY LOWER(event_name)
+        """,
+        (*property_ids, start.isoformat(), end.isoformat(), *event_names),
+    ).fetchall()
+    return {str(row["event_name"]): int(row["event_count"] or 0) for row in rows}
+
+
+def fetch_launch_all_events(
+    conn: sqlite3.Connection,
+    property_ids: list[str],
+    start: date,
+    end: date,
+) -> list[dict[str, object]]:
+    prop_ph = placeholders(property_ids)
+    rows = conn.execute(
+        f"""
+        SELECT
+          LOWER(event_name) AS event_name,
+          COALESCE(SUM(event_count), 0) AS event_count,
+          COUNT(DISTINCT property_id) AS properties,
+          COUNT(DISTINCT event_date) AS active_days
+        FROM ga4_event_facts
+        WHERE property_id IN ({prop_ph}) AND event_date BETWEEN ? AND ?
+        GROUP BY LOWER(event_name)
+        ORDER BY event_count DESC
+        """,
+        (*property_ids, start.isoformat(), end.isoformat()),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def category_counts_from_events(events: dict[str, int]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for category, event_names in LAUNCH_CTA_EVENT_CATEGORIES.items():
+        counts[category] = sum(events.get(event_name, 0) for event_name in event_names)
+    return counts
+
+
+def build_launch_summary(
+    conn: sqlite3.Connection,
+    label: str,
+    cohort: list[dict[str, str]],
+    start: date,
+    end: date,
+    pre_start: date,
+    pre_end: date,
+) -> dict[str, object]:
+    property_ids = [item["property_id"] for item in cohort]
+    high_intent_events = launch_study_event_names(LAUNCH_HIGH_INTENT_CATEGORIES)
+    all_cta_events = launch_study_event_names()
+
+    launch_daily = fetch_launch_daily_metrics(conn, property_ids, start, end)
+    pre_daily = fetch_launch_daily_metrics(conn, property_ids, pre_start, pre_end)
+    launch_events = fetch_launch_event_counts(conn, property_ids, start, end, all_cta_events)
+    pre_events = fetch_launch_event_counts(conn, property_ids, pre_start, pre_end, all_cta_events)
+    launch_category_counts = category_counts_from_events(launch_events)
+    pre_category_counts = category_counts_from_events(pre_events)
+
+    high_intent_total = sum(launch_category_counts.get(category, 0) for category in LAUNCH_HIGH_INTENT_CATEGORIES)
+    pre_high_intent_total = sum(pre_category_counts.get(category, 0) for category in LAUNCH_HIGH_INTENT_CATEGORIES)
+    behavior_total = sum(launch_category_counts.values())
+    pre_behavior_total = sum(pre_category_counts.values())
+    high_intent_rate = launch_study_rate(high_intent_total, launch_daily["sessions"])
+    pre_high_intent_rate = launch_study_rate(pre_high_intent_total, pre_daily["sessions"])
+    behavior_rate = launch_study_rate(behavior_total, launch_daily["sessions"])
+    pre_behavior_rate = launch_study_rate(pre_behavior_total, pre_daily["sessions"])
+    expected_property_days = len(property_ids) * ((end - start).days + 1)
+
+    return {
+        "label": label,
+        "properties": cohort,
+        "property_ids": property_ids,
+        "start": start,
+        "end": end,
+        "pre_start": pre_start,
+        "pre_end": pre_end,
+        "launch_daily": launch_daily,
+        "pre_daily": pre_daily,
+        "launch_events": launch_events,
+        "pre_events": pre_events,
+        "category_counts": launch_category_counts,
+        "pre_category_counts": pre_category_counts,
+        "high_intent_total": high_intent_total,
+        "pre_high_intent_total": pre_high_intent_total,
+        "behavior_total": behavior_total,
+        "pre_behavior_total": pre_behavior_total,
+        "high_intent_rate": high_intent_rate,
+        "pre_high_intent_rate": pre_high_intent_rate,
+        "behavior_rate": behavior_rate,
+        "pre_behavior_rate": pre_behavior_rate,
+        "expected_property_days": expected_property_days,
+    }
+
+
+def launch_scorecard_row(summary: dict[str, object]) -> dict[str, object]:
+    launch_daily = summary["launch_daily"]
+    pre_daily = summary["pre_daily"]
+    assert isinstance(launch_daily, dict)
+    assert isinstance(pre_daily, dict)
+    high_intent_rate = summary["high_intent_rate"]
+    pre_high_intent_rate = summary["pre_high_intent_rate"]
+    behavior_rate = summary["behavior_rate"]
+    pre_behavior_rate = summary["pre_behavior_rate"]
+    rate_delta = (
+        float(high_intent_rate) - float(pre_high_intent_rate)
+        if high_intent_rate is not None and pre_high_intent_rate is not None
+        else None
+    )
+    behavior_delta = (
+        float(behavior_rate) - float(pre_behavior_rate)
+        if behavior_rate is not None and pre_behavior_rate is not None
+        else None
+    )
+    coverage = launch_study_rate(launch_daily["property_days"], summary["expected_property_days"])
+    return {
+        "cohort": summary["label"],
+        "launch_window": fmt_date_range(summary["start"], summary["end"]),
+        "pre_window": fmt_date_range(summary["pre_start"], summary["pre_end"]),
+        "properties": fmt_num(len(summary["properties"])),
+        "data_coverage": f"{fmt_num(launch_daily['property_days'])}/{fmt_num(summary['expected_property_days'])} ({fmt_launch_rate(coverage)}%)",
+        "sessions": fmt_num(launch_daily["sessions"]),
+        "engagement_rate": fmt_pct(
+            float(launch_daily["engaged_sessions"]) / float(launch_daily["sessions"])
+            if launch_daily["sessions"]
+            else None
+        ),
+        "high_intent_ctas": fmt_num(summary["high_intent_total"]),
+        "high_intent_per_100_sessions": fmt_launch_rate(high_intent_rate),
+        "pre_high_intent_per_100_sessions": fmt_launch_rate(pre_high_intent_rate),
+        "high_intent_rate_delta": fmt_launch_rate_delta(rate_delta),
+        "behavior_events": fmt_num(summary["behavior_total"]),
+        "behavior_per_100_sessions": fmt_launch_rate(behavior_rate),
+        "pre_behavior_per_100_sessions": fmt_launch_rate(pre_behavior_rate),
+        "behavior_rate_delta": fmt_launch_rate_delta(behavior_delta),
+        "form_starts": fmt_num(summary["category_counts"].get("Form Starts", 0)),
+        "form_submits": fmt_num(summary["category_counts"].get("Form Submits", 0)),
+    }
+
+
+def build_launch_daily_curve_rows(
+    conn: sqlite3.Connection,
+    pilot: dict[str, object],
+    resi: dict[str, object],
+) -> list[dict[str, object]]:
+    common_events = launch_study_event_names(LAUNCH_COMMON_HIGH_INTENT_CATEGORIES)
+    rows: list[dict[str, object]] = []
+    for day_index in range(9):
+        pilot_date = pilot["start"] + timedelta(days=day_index)
+        resi_date = resi["start"] + timedelta(days=day_index)
+        pilot_daily = fetch_launch_daily_metrics(conn, pilot["property_ids"], pilot_date, pilot_date)
+        resi_daily = fetch_launch_daily_metrics(conn, resi["property_ids"], resi_date, resi_date)
+        pilot_events = fetch_launch_event_counts(conn, pilot["property_ids"], pilot_date, pilot_date, common_events)
+        resi_events = fetch_launch_event_counts(conn, resi["property_ids"], resi_date, resi_date, common_events)
+        pilot_ctas = sum(pilot_events.values())
+        resi_ctas = sum(resi_events.values())
+        pilot_rate = launch_study_rate(pilot_ctas, pilot_daily["engaged_sessions"])
+        resi_rate = launch_study_rate(resi_ctas, resi_daily["engaged_sessions"])
+        rows.append(
+            {
+                "launch_day": f"Day {day_index + 1}",
+                "weekday": pilot_date.strftime("%A"),
+                "pilot_date": fmt_date(pilot_date),
+                "pilot_engaged_sessions": fmt_num(pilot_daily["engaged_sessions"]),
+                "pilot_common_outcomes": fmt_num(pilot_ctas),
+                "pilot_outcomes_per_100_engaged": fmt_launch_rate(pilot_rate),
+                "resi_date": fmt_date(resi_date),
+                "resi_engaged_sessions": fmt_num(resi_daily["engaged_sessions"]),
+                "resi_common_outcomes": fmt_num(resi_ctas),
+                "resi_outcomes_per_100_engaged": fmt_launch_rate(resi_rate),
+                "rate_gap": fmt_launch_rate_delta(
+                    float(resi_rate) - float(pilot_rate) if resi_rate is not None and pilot_rate is not None else None
+                ),
+            }
+        )
+    return rows
+
+
+def build_launch_event_mix_rows(pilot: dict[str, object], resi: dict[str, object]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    pilot_behavior_total = float(pilot["behavior_total"] or 0)
+    resi_behavior_total = float(resi["behavior_total"] or 0)
+    for category in LAUNCH_CTA_EVENT_CATEGORIES:
+        pilot_count = int(pilot["category_counts"].get(category, 0))
+        resi_count = int(resi["category_counts"].get(category, 0))
+        rows.append(
+            {
+                "category": category,
+                "included_events": ", ".join(LAUNCH_CTA_EVENT_CATEGORIES[category]),
+                "pilot_events": fmt_num(pilot_count),
+                "pilot_mix": fmt_pct(pilot_count / pilot_behavior_total if pilot_behavior_total else None),
+                "resi_events": fmt_num(resi_count),
+                "resi_mix": fmt_pct(resi_count / resi_behavior_total if resi_behavior_total else None),
+                "event_delta": fmt_signed_num(resi_count - pilot_count),
+            }
+        )
+    return rows
+
+
+def build_launch_property_rows(
+    conn: sqlite3.Connection,
+    label: str,
+    cohort: list[dict[str, str]],
+    start: date,
+    end: date,
+) -> list[dict[str, object]]:
+    all_cta_events = launch_study_event_names()
+    high_intent_events = launch_study_event_names(LAUNCH_HIGH_INTENT_CATEGORIES)
+    rows: list[dict[str, object]] = []
+    for prop in cohort:
+        property_ids = [prop["property_id"]]
+        daily = fetch_launch_daily_metrics(conn, property_ids, start, end)
+        events = fetch_launch_event_counts(conn, property_ids, start, end, all_cta_events)
+        high_intent = fetch_launch_event_counts(conn, property_ids, start, end, high_intent_events)
+        category_counts = category_counts_from_events(events)
+        high_intent_total = sum(high_intent.values())
+        behavior_total = sum(category_counts.values())
+        rows.append(
+            {
+                "cohort": label,
+                "property": prop["property_name"],
+                "property_code": prop["property_code"],
+                "sessions": fmt_num(daily["sessions"]),
+                "engagement_rate": fmt_pct(
+                    float(daily["engaged_sessions"]) / float(daily["sessions"]) if daily["sessions"] else None
+                ),
+                "high_intent_ctas": fmt_num(high_intent_total),
+                "high_intent_per_100_sessions": fmt_launch_rate(launch_study_rate(high_intent_total, daily["sessions"])),
+                "behavior_events": fmt_num(behavior_total),
+                "quote": fmt_num(category_counts.get("Quote / Unit Detail", 0)),
+                "tour": fmt_num(category_counts.get("Schedule Tour", 0)),
+                "apply": fmt_num(category_counts.get("Apply", 0)),
+                "phone": fmt_num(category_counts.get("Phone", 0)),
+                "directions": fmt_num(category_counts.get("Directions", 0)),
+                "pdf_downloads": fmt_num(category_counts.get("PDF Downloads", 0)),
+                "form_submit": fmt_num(category_counts.get("Form Submits", 0)),
+                "unit_exploration": fmt_num(category_counts.get("Unit Exploration", 0)),
+                "search_refinement": fmt_num(category_counts.get("Search Refinement", 0)),
+                "inventory_exposure": fmt_num(category_counts.get("Inventory Exposure", 0)),
+                "_sort_rate": launch_study_rate(high_intent_total, daily["sessions"]) or 0,
+            }
+        )
+    rows.sort(key=lambda item: (-float(item["_sort_rate"]), str(item["property"])))
+    for row in rows:
+        row.pop("_sort_rate", None)
+    return rows
+
+
+def avg_float(values: list[float]) -> float | None:
+    clean = [float(value) for value in values if value is not None]
+    if not clean:
+        return None
+    return sum(clean) / len(clean)
+
+
+def median_float(values: list[float]) -> float | None:
+    clean = sorted(float(value) for value in values if value is not None)
+    if not clean:
+        return None
+    middle = len(clean) // 2
+    if len(clean) % 2:
+        return clean[middle]
+    return (clean[middle - 1] + clean[middle]) / 2
+
+
+def build_common_normalized_property_rows(
+    conn: sqlite3.Connection,
+    label: str,
+    cohort: list[dict[str, str]],
+    start: date,
+    end: date,
+    pre_start: date,
+    pre_end: date,
+) -> list[dict[str, object]]:
+    common_events = launch_study_event_names(LAUNCH_COMMON_HIGH_INTENT_CATEGORIES)
+    rows: list[dict[str, object]] = []
+    for prop in cohort:
+        property_ids = [prop["property_id"]]
+        launch_daily = fetch_launch_daily_metrics(conn, property_ids, start, end)
+        pre_daily = fetch_launch_daily_metrics(conn, property_ids, pre_start, pre_end)
+        launch_outcomes = sum(fetch_launch_event_counts(conn, property_ids, start, end, common_events).values())
+        pre_outcomes = sum(fetch_launch_event_counts(conn, property_ids, pre_start, pre_end, common_events).values())
+        launch_per_100_sessions = launch_study_rate(launch_outcomes, launch_daily["sessions"])
+        launch_per_100_engaged = launch_study_rate(launch_outcomes, launch_daily["engaged_sessions"])
+        pre_per_100_sessions = launch_study_rate(pre_outcomes, pre_daily["sessions"])
+        pre_per_100_engaged = launch_study_rate(pre_outcomes, pre_daily["engaged_sessions"])
+        engaged_rate_delta = (
+            float(launch_per_100_engaged) - float(pre_per_100_engaged)
+            if launch_per_100_engaged is not None and pre_per_100_engaged is not None
+            else None
+        )
+        rows.append(
+            {
+                "cohort": label,
+                "property": prop["property_name"],
+                "property_code": prop["property_code"],
+                "launch_common_outcomes": fmt_num(launch_outcomes),
+                "pre_common_outcomes": fmt_num(pre_outcomes),
+                "launch_sessions": fmt_num(launch_daily["sessions"]),
+                "launch_engaged_sessions": fmt_num(launch_daily["engaged_sessions"]),
+                "common_per_100_sessions": fmt_launch_rate(launch_per_100_sessions),
+                "common_per_100_engaged": fmt_launch_rate(launch_per_100_engaged),
+                "pre_common_per_100_engaged": fmt_launch_rate(pre_per_100_engaged),
+                "engaged_rate_delta": fmt_launch_rate_delta(engaged_rate_delta),
+                "engaged_rate_lift": fmt_change(pct_change(launch_per_100_engaged, pre_per_100_engaged)),
+                "common_per_property_day": fmt_launch_rate(launch_study_ratio(launch_outcomes, launch_daily["property_days"])),
+                "present_days": fmt_num(launch_daily["property_days"]),
+                "_launch_per_100_engaged": launch_per_100_engaged,
+                "_pre_per_100_engaged": pre_per_100_engaged,
+                "_launch_per_100_sessions": launch_per_100_sessions,
+                "_pre_per_100_sessions": pre_per_100_sessions,
+                "_launch_outcomes": float(launch_outcomes),
+                "_pre_outcomes": float(pre_outcomes),
+                "_launch_engaged_sessions": float(launch_daily["engaged_sessions"]),
+                "_pre_engaged_sessions": float(pre_daily["engaged_sessions"]),
+                "_launch_sessions": float(launch_daily["sessions"]),
+                "_pre_sessions": float(pre_daily["sessions"]),
+                "_launch_property_days": float(launch_daily["property_days"]),
+            }
+        )
+    rows.sort(key=lambda item: (-(float(item["_launch_per_100_engaged"] or 0)), str(item["property"])))
+    return rows
+
+
+def build_common_normalized_summary_row(label: str, rows: list[dict[str, object]]) -> dict[str, object]:
+    launch_engaged_rates = [row["_launch_per_100_engaged"] for row in rows if row["_launch_per_100_engaged"] is not None]
+    pre_engaged_rates = [row["_pre_per_100_engaged"] for row in rows if row["_pre_per_100_engaged"] is not None]
+    launch_session_rates = [row["_launch_per_100_sessions"] for row in rows if row["_launch_per_100_sessions"] is not None]
+    launch_outcomes = sum(float(row["_launch_outcomes"]) for row in rows)
+    pre_outcomes = sum(float(row["_pre_outcomes"]) for row in rows)
+    launch_engaged_sessions = sum(float(row["_launch_engaged_sessions"]) for row in rows)
+    pre_engaged_sessions = sum(float(row["_pre_engaged_sessions"]) for row in rows)
+    launch_sessions = sum(float(row["_launch_sessions"]) for row in rows)
+    launch_property_days = sum(float(row["_launch_property_days"]) for row in rows)
+    avg_launch_engaged = avg_float(launch_engaged_rates)
+    avg_pre_engaged = avg_float(pre_engaged_rates)
+    delta = (
+        float(avg_launch_engaged) - float(avg_pre_engaged)
+        if avg_launch_engaged is not None and avg_pre_engaged is not None
+        else None
+    )
+    session_weighted_engaged = launch_study_rate(launch_outcomes, launch_engaged_sessions)
+    pre_session_weighted_engaged = launch_study_rate(pre_outcomes, pre_engaged_sessions)
+    return {
+        "cohort": label,
+        "properties": fmt_num(len(rows)),
+        "common_outcomes": fmt_num(launch_outcomes),
+        "sessions": fmt_num(launch_sessions),
+        "engaged_sessions": fmt_num(launch_engaged_sessions),
+        "session_weighted_per_100_engaged": fmt_launch_rate(session_weighted_engaged),
+        "pre_session_weighted_per_100_engaged": fmt_launch_rate(pre_session_weighted_engaged),
+        "property_weighted_avg_per_100_engaged": fmt_launch_rate(avg_launch_engaged),
+        "pre_property_weighted_avg_per_100_engaged": fmt_launch_rate(avg_pre_engaged),
+        "property_weighted_delta": fmt_launch_rate_delta(delta),
+        "property_weighted_lift": fmt_change(pct_change(avg_launch_engaged, avg_pre_engaged)),
+        "property_median_per_100_engaged": fmt_launch_rate(median_float(launch_engaged_rates)),
+        "property_avg_per_100_sessions": fmt_launch_rate(avg_float(launch_session_rates)),
+        "outcomes_per_property_day": fmt_launch_rate(launch_study_ratio(launch_outcomes, launch_property_days)),
+    }
+
+
+def build_launch_coverage_gap_rows(
+    conn: sqlite3.Connection,
+    label: str,
+    cohort: list[dict[str, str]],
+    start: date,
+    end: date,
+) -> list[dict[str, object]]:
+    property_ids = [item["property_id"] for item in cohort]
+    ph = placeholders(property_ids)
+    found = {
+        (str(row["property_id"]), str(row["metric_date"]))
+        for row in conn.execute(
+            f"""
+            SELECT property_id, metric_date
+            FROM ga4_daily_metrics
+            WHERE property_id IN ({ph}) AND metric_date BETWEEN ? AND ?
+            """,
+            (*property_ids, start.isoformat(), end.isoformat()),
+        ).fetchall()
+    }
+    rows: list[dict[str, object]] = []
+    expected_days = (end - start).days + 1
+    for prop in cohort:
+        missing = []
+        for day_offset in range(expected_days):
+            current = start + timedelta(days=day_offset)
+            if (prop["property_id"], current.isoformat()) not in found:
+                missing.append(fmt_date(current))
+        if missing:
+            rows.append(
+                {
+                    "cohort": label,
+                    "property": prop["property_name"],
+                    "property_code": prop["property_code"],
+                    "present_days": fmt_num(expected_days - len(missing)),
+                    "expected_days": fmt_num(expected_days),
+                    "missing_dates": ", ".join(missing),
+                }
+            )
+    return rows
+
+
+def build_resi_edge_launch_cta_study(conn: sqlite3.Connection, request: ReportRequest) -> ReportBuild:
+    pilot_cohort = resolve_launch_study_cohort(PILOT_LAUNCH_CTA_COHORT)
+    resi_cohort = resolve_launch_study_cohort(RESI_EDGE_20_LAUNCH_CTA_COHORT)
+
+    pilot_start = date(2026, 3, 25)
+    pilot_end = date(2026, 4, 2)
+    pilot_pre_start = date(2026, 3, 16)
+    pilot_pre_end = date(2026, 3, 24)
+    resi_start = date(2026, 8, 19)
+    resi_end = date(2026, 8, 27)
+    resi_pre_start = date(2026, 8, 10)
+    resi_pre_end = date(2026, 8, 18)
+
+    pilot = build_launch_summary(
+        conn,
+        "03/25/2026 Pilot Cohort",
+        pilot_cohort,
+        pilot_start,
+        pilot_end,
+        pilot_pre_start,
+        pilot_pre_end,
+    )
+    resi = build_launch_summary(
+        conn,
+        "08/19/2026 Phase 2",
+        resi_cohort,
+        resi_start,
+        resi_end,
+        resi_pre_start,
+        resi_pre_end,
+    )
+
+    scorecard_rows = [launch_scorecard_row(pilot), launch_scorecard_row(resi)]
+    daily_curve_rows = build_launch_daily_curve_rows(conn, pilot, resi)
+    event_mix_rows = build_launch_event_mix_rows(pilot, resi)
+    pilot_property_rows = build_launch_property_rows(conn, "03/25/2026 Pilot Cohort", pilot_cohort, pilot_start, pilot_end)
+    resi_property_rows = build_launch_property_rows(conn, "08/19/2026 Phase 2", resi_cohort, resi_start, resi_end)
+    pilot_common_property_rows_internal = build_common_normalized_property_rows(
+        conn,
+        "03/25/2026 Pilot Cohort",
+        pilot_cohort,
+        pilot_start,
+        pilot_end,
+        pilot_pre_start,
+        pilot_pre_end,
+    )
+    resi_common_property_rows_internal = build_common_normalized_property_rows(
+        conn,
+        "08/19/2026 Phase 2",
+        resi_cohort,
+        resi_start,
+        resi_end,
+        resi_pre_start,
+        resi_pre_end,
+    )
+    pilot_common_summary = build_common_normalized_summary_row(
+        "03/25/2026 Pilot Cohort",
+        pilot_common_property_rows_internal,
+    )
+    resi_common_summary = build_common_normalized_summary_row(
+        "08/19/2026 Phase 2",
+        resi_common_property_rows_internal,
+    )
+    normalized_summary_rows = [pilot_common_summary, resi_common_summary]
+    normalized_summary_html_rows = [
+        {
+            "cohort": row["cohort"],
+            "properties": row["properties"],
+            "common_outcomes": row["common_outcomes"],
+            "engaged_sessions": row["engaged_sessions"],
+            "property_weighted_avg_per_100_engaged": row["property_weighted_avg_per_100_engaged"],
+            "pre_property_weighted_avg_per_100_engaged": row["pre_property_weighted_avg_per_100_engaged"],
+            "property_weighted_lift": row["property_weighted_lift"],
+            "property_median_per_100_engaged": row["property_median_per_100_engaged"],
+        }
+        for row in normalized_summary_rows
+    ]
+    pilot_common_property_rows = [
+        {key: value for key, value in row.items() if not key.startswith("_")}
+        for row in pilot_common_property_rows_internal
+    ]
+    resi_common_property_rows = [
+        {key: value for key, value in row.items() if not key.startswith("_")}
+        for row in resi_common_property_rows_internal
+    ]
+    pilot_common_property_html_rows = [
+        {
+            "property": row["property"],
+            "property_code": row["property_code"],
+            "launch_common_outcomes": row["launch_common_outcomes"],
+            "common_per_100_engaged": row["common_per_100_engaged"],
+            "pre_common_per_100_engaged": row["pre_common_per_100_engaged"],
+            "engaged_rate_lift": row["engaged_rate_lift"],
+        }
+        for row in pilot_common_property_rows
+    ]
+    resi_common_property_html_rows = [
+        {
+            "property": row["property"],
+            "property_code": row["property_code"],
+            "launch_common_outcomes": row["launch_common_outcomes"],
+            "common_per_100_engaged": row["common_per_100_engaged"],
+            "pre_common_per_100_engaged": row["pre_common_per_100_engaged"],
+            "engaged_rate_lift": row["engaged_rate_lift"],
+        }
+        for row in resi_common_property_rows
+    ]
+    scorecard_html_rows = [
+        {
+            "cohort": row["cohort"],
+            "sessions": row["sessions"],
+            "engagement_rate": row["engagement_rate"],
+            "high_intent_ctas": row["high_intent_ctas"],
+            "high_intent_per_100_sessions": row["high_intent_per_100_sessions"],
+            "behavior_events": row["behavior_events"],
+            "behavior_per_100_sessions": row["behavior_per_100_sessions"],
+        }
+        for row in scorecard_rows
+    ]
+    daily_curve_html_rows = [
+        {
+            "launch_day": row["launch_day"],
+            "weekday": row["weekday"],
+            "pilot_common_outcomes": row["pilot_common_outcomes"],
+            "pilot_outcomes_per_100_engaged": row["pilot_outcomes_per_100_engaged"],
+            "resi_common_outcomes": row["resi_common_outcomes"],
+            "resi_outcomes_per_100_engaged": row["resi_outcomes_per_100_engaged"],
+            "rate_gap": row["rate_gap"],
+        }
+        for row in daily_curve_rows
+    ]
+    event_mix_html_rows = [
+        {
+            "category": row["category"],
+            "pilot_events": row["pilot_events"],
+            "pilot_mix": row["pilot_mix"],
+            "resi_events": row["resi_events"],
+            "resi_mix": row["resi_mix"],
+            "event_delta": row["event_delta"],
+        }
+        for row in event_mix_rows
+    ]
+    coverage_gap_rows = build_launch_coverage_gap_rows(
+        conn,
+        "03/25/2026 Pilot Cohort",
+        pilot_cohort,
+        pilot_start,
+        pilot_end,
+    ) + build_launch_coverage_gap_rows(
+        conn,
+        "08/19/2026 Phase 2",
+        resi_cohort,
+        resi_start,
+        resi_end,
+    )
+    pilot_expected_daily_rows = len(pilot_cohort) * ((pilot_end - pilot_start).days + 1)
+    resi_expected_daily_rows = len(resi_cohort) * ((resi_end - resi_start).days + 1)
+    pilot_coverage_rate = launch_study_rate(pilot["launch_daily"]["property_days"], pilot_expected_daily_rows)
+    resi_coverage_rate = launch_study_rate(resi["launch_daily"]["property_days"], resi_expected_daily_rows)
+    coverage_paragraphs = [
+        (
+            f"GA4 daily-row coverage is {fmt_num(pilot['launch_daily']['property_days'])}/"
+            f"{fmt_num(pilot_expected_daily_rows)} ({fmt_launch_rate(pilot_coverage_rate)}%) for the pilot cohort "
+            f"and {fmt_num(resi['launch_daily']['property_days'])}/{fmt_num(resi_expected_daily_rows)} "
+            f"({fmt_launch_rate(resi_coverage_rate)}%) for the Phase 2 cohort."
+        )
+    ]
+    coverage_tables = []
+    if coverage_gap_rows:
+        coverage_paragraphs.append(
+            "The rows below are an active retrieval queue, not an executive conclusion. Retrieve or zero-fill successful GA4 omissions before sending."
+        )
+        coverage_tables.append(
+            ReportTable(
+                title="Missing Daily Rows",
+                columns=[
+                    ("cohort", "Cohort"),
+                    ("property", "Property"),
+                    ("property_code", "Code"),
+                    ("present_days", "Present days"),
+                    ("expected_days", "Expected days"),
+                    ("missing_dates", "Missing dates"),
+                ],
+                rows=coverage_gap_rows,
+            )
+        )
+    else:
+        coverage_paragraphs.append(
+            "No launch-window daily GA4 rows are missing from the local Data Pond for either comparison cohort."
+        )
+    raw_event_rows = [
+        {"cohort": "03/25/2026 Pilot Cohort", **row}
+        for row in fetch_launch_all_events(conn, pilot["property_ids"], pilot_start, pilot_end)
+    ] + [
+        {"cohort": "08/19/2026 Phase 2", **row}
+        for row in fetch_launch_all_events(conn, resi["property_ids"], resi_start, resi_end)
+    ]
+
+    pilot_rate = pilot["high_intent_rate"]
+    resi_rate = resi["high_intent_rate"]
+    rate_gap = float(resi_rate) - float(pilot_rate) if resi_rate is not None and pilot_rate is not None else None
+    relative_lift = pct_change(resi_rate, pilot_rate)
+    resi_pre_lift = pct_change(resi["high_intent_rate"], resi["pre_high_intent_rate"])
+    pilot_pre_lift = pct_change(pilot["high_intent_rate"], pilot["pre_high_intent_rate"])
+    pilot_no_3d_total = int(pilot["high_intent_total"]) - int(pilot["category_counts"].get("3D Tour", 0))
+    resi_no_3d_total = int(resi["high_intent_total"]) - int(resi["category_counts"].get("3D Tour", 0))
+    pilot_no_3d_rate = launch_study_rate(pilot_no_3d_total, pilot["launch_daily"]["sessions"])
+    resi_no_3d_rate = launch_study_rate(resi_no_3d_total, resi["launch_daily"]["sessions"])
+    no_3d_rate_gap = (
+        float(resi_no_3d_rate) - float(pilot_no_3d_rate)
+        if resi_no_3d_rate is not None and pilot_no_3d_rate is not None
+        else None
+    )
+    no_3d_interpretation = "The cohorts are near parity on non-3D high-intent outcomes."
+    if no_3d_rate_gap is not None and abs(no_3d_rate_gap) >= 0.5:
+        no_3d_interpretation = (
+            "Phase 2 leads on non-3D high-intent outcomes."
+            if no_3d_rate_gap > 0
+            else "Pilot still leads on non-3D high-intent outcomes."
+        )
+    sensitivity_rows = [
+        {
+            "view": "High-intent outcomes, including 3D Tour",
+            "pilot_events": fmt_num(pilot["high_intent_total"]),
+            "pilot_cta_per_100_sessions": fmt_launch_rate(pilot["high_intent_rate"]),
+            "resi_events": fmt_num(resi["high_intent_total"]),
+            "resi_cta_per_100_sessions": fmt_launch_rate(resi["high_intent_rate"]),
+            "rate_gap": fmt_launch_rate_delta(rate_gap),
+            "interpretation": "Not comparable until 3D Tour tracking parity is verified.",
+        },
+        {
+            "view": "High-intent outcomes, excluding 3D Tour",
+            "pilot_events": fmt_num(pilot_no_3d_total),
+            "pilot_cta_per_100_sessions": fmt_launch_rate(pilot_no_3d_rate),
+            "resi_events": fmt_num(resi_no_3d_total),
+            "resi_cta_per_100_sessions": fmt_launch_rate(resi_no_3d_rate),
+            "rate_gap": fmt_launch_rate_delta(no_3d_rate_gap),
+            "interpretation": no_3d_interpretation,
+        },
+    ]
+    sensitivity_html_rows = [
+        {
+            "view": row["view"].replace("High-intent outcomes, ", ""),
+            "pilot_cta_per_100_sessions": row["pilot_cta_per_100_sessions"],
+            "resi_cta_per_100_sessions": row["resi_cta_per_100_sessions"],
+            "rate_gap": row["rate_gap"],
+            "interpretation": row["interpretation"],
+        }
+        for row in sensitivity_rows
+    ]
+    normalized_rate_gap = (
+        float(resi_common_summary["property_weighted_avg_per_100_engaged"])
+        - float(pilot_common_summary["property_weighted_avg_per_100_engaged"])
+    )
+    pilot_engagement_rate = (
+        float(pilot["launch_daily"]["engaged_sessions"]) / float(pilot["launch_daily"]["sessions"])
+        if pilot["launch_daily"]["sessions"]
+        else None
+    )
+    phase_2_engagement_rate = (
+        float(resi["launch_daily"]["engaged_sessions"]) / float(resi["launch_daily"]["sessions"])
+        if resi["launch_daily"]["sessions"]
+        else None
+    )
+    phase_2_engagement_gap = (
+        float(phase_2_engagement_rate) - float(pilot_engagement_rate)
+        if phase_2_engagement_rate is not None and pilot_engagement_rate is not None
+        else None
+    )
+
+    report = OutlookReport(
+        title="Resi Edge CTA Study",
+        subtitle="Property Intelligence Brief",
+        version="1.1.1",
+        date_range=(
+            f"Pilot {fmt_date_range(pilot_start, pilot_end)}; "
+            f"Phase 2 {fmt_date_range(resi_start, resi_end)}"
+        ),
+        generated_at=fmt_generated_at(),
+        question_answered=(
+            "How did common CTA outcomes and supporting events compare across the two first-nine-day launch windows?"
+        ),
+        kpis=[
+            ReportKpi(
+                "Phase 2",
+                str(resi_common_summary["property_weighted_avg_per_100_engaged"]),
+                primary=True,
+                note="Common outcomes per 100 engaged sessions.",
+            ),
+            ReportKpi(
+                "Pilot",
+                str(pilot_common_summary["property_weighted_avg_per_100_engaged"]),
+                note="Common outcomes per 100 engaged sessions.",
+            ),
+            ReportKpi(
+                "Rate Gap",
+                fmt_launch_rate_delta(normalized_rate_gap),
+                note="Phase 2 minus pilot.",
+            ),
+            ReportKpi(
+                "Engagement Rate",
+                fmt_pct(phase_2_engagement_rate),
+                note=f"{fmt_pp(phase_2_engagement_gap)} vs pilot.",
+            ),
+        ],
+        sections=[
+            ReportSection(
+                title="Executive Read",
+                paragraphs=[
+                    (
+                        "The primary normalized read now uses common high-intent outcomes only: quote/detail, "
+                        "schedule tour, apply, phone, directions, and form submit. It excludes 3D Tour, PDF downloads, "
+                        "form starts, and SightMap inventory exploration from the lead KPI while preserving those "
+                        "events as supporting behavior."
+                    ),
+                    (
+                        f"On a property-weighted basis, the 08/19/2026 Phase 2 cohort averaged "
+                        f"{resi_common_summary['property_weighted_avg_per_100_engaged']} common outcomes per 100 "
+                        f"engaged sessions, compared with {pilot_common_summary['property_weighted_avg_per_100_engaged']} "
+                        "for the 03/25/2026 pilot cohort."
+                    ),
+                    (
+                        f"Against each cohort's own nine-day pre-period, the Phase 2 cohort changed "
+                        f"{resi_common_summary['property_weighted_lift']} on the property-weighted common-outcome rate, "
+                        f"while the pilot changed {pilot_common_summary['property_weighted_lift']}. This is the cleaner "
+                        "pre/post lens because it controls for cohort size and each cohort's starting behavior."
+                    ),
+                    (
+                        f"The main tracking-comparability fork is 3D Tour: the pilot produced "
+                        f"{fmt_num(pilot['category_counts'].get('3D Tour', 0))} 3D Tour events while Phase 2 "
+                        f"produced {fmt_num(resi['category_counts'].get('3D Tour', 0))} under the same event name. "
+                        "Treat that as a captured-event difference, not proof that Phase 2 visitors never used "
+                        "3D tours. Excluding 3D Tour, "
+                        f"Phase 2 is {fmt_launch_rate(resi_no_3d_rate)} outcomes per 100 sessions and the "
+                        f"pilot is {fmt_launch_rate(pilot_no_3d_rate)}, a {fmt_launch_rate_delta(no_3d_rate_gap)} "
+                        "rate gap."
+                    ),
+                ],
+                callout=(
+                    "Both launch windows start on a Wednesday and run nine calendar days, so the Day 1-9 curve is "
+                    "also weekday-aligned."
+                ),
+            ),
+            ReportSection(
+                title="Normalized Comparison",
+                paragraphs=[
+                    "Recommended comparison layer: common event set, per engaged session, property-weighted, with pre/post context.",
+                ],
+                tables=[
+                    ReportTable(
+                        title="Common High-Intent Outcomes",
+                        intro="Common outcomes are quote/detail, schedule tour, apply, phone, directions, and form submit.",
+                        columns=[
+                            ("cohort", "Cohort"),
+                            ("properties", "Properties"),
+                            ("common_outcomes", "Common outcomes"),
+                            ("engaged_sessions", "Engaged sessions"),
+                            ("property_weighted_avg_per_100_engaged", "Property avg / 100 engaged"),
+                            ("pre_property_weighted_avg_per_100_engaged", "Pre property avg / 100 engaged"),
+                            ("property_weighted_lift", "Property avg lift"),
+                            ("property_median_per_100_engaged", "Property median / 100 engaged"),
+                        ],
+                        rows=normalized_summary_html_rows,
+                    )
+                ],
+            ),
+            ReportSection(
+                title="Cohort Scorecard",
+                tables=[
+                    ReportTable(
+                        title="Launch and Pre-Period Scorecard",
+                        intro="This supporting scorecard includes availability entry and 3D Tour in high-intent outcomes and uses sessions as the denominator.",
+                        columns=[
+                            ("cohort", "Cohort"),
+                            ("sessions", "Sessions"),
+                            ("engagement_rate", "Engagement"),
+                            ("high_intent_ctas", "High-intent outcomes"),
+                            ("high_intent_per_100_sessions", "Outcomes / 100 sessions"),
+                            ("behavior_events", "Behavior events"),
+                            ("behavior_per_100_sessions", "Behavior / 100"),
+                        ],
+                        rows=scorecard_html_rows,
+                    ),
+                    ReportTable(
+                        title="Behavior and Form Addendum",
+                        intro="This broader event layer keeps PDF downloads, funnel starts, and SightMap exploration/exposure events visible without blending them all into the high-intent outcome KPI.",
+                        columns=[
+                            ("cohort", "Cohort"),
+                            ("behavior_events", "Behavior events"),
+                            ("behavior_per_100_sessions", "Behavior / 100"),
+                            ("pre_behavior_per_100_sessions", "Pre behavior / 100"),
+                            ("behavior_rate_delta", "Behavior delta"),
+                            ("form_starts", "Form starts"),
+                            ("form_submits", "Form submits"),
+                        ],
+                        rows=scorecard_rows,
+                    )
+                ],
+            ),
+            ReportSection(
+                title="Day 1-9 Curve",
+                tables=[
+                    ReportTable(
+                        title="Weekday-Aligned Common Outcome Curve",
+                        intro="Each row compares the same launch-day index and weekday. Rates use common outcomes per 100 engaged sessions.",
+                        columns=[
+                            ("launch_day", "Launch day"),
+                            ("weekday", "Weekday"),
+                            ("pilot_common_outcomes", "Pilot outcomes"),
+                            ("pilot_outcomes_per_100_engaged", "Pilot / 100 engaged"),
+                            ("resi_common_outcomes", "Phase 2 outcomes"),
+                            ("resi_outcomes_per_100_engaged", "Phase 2 / 100 engaged"),
+                            ("rate_gap", "Rate gap"),
+                        ],
+                        rows=daily_curve_html_rows,
+                    )
+                ],
+            ),
+            ReportSection(
+                title="Data Coverage",
+                paragraphs=coverage_paragraphs,
+                tables=coverage_tables,
+            ),
+            ReportSection(
+                title="CTA Mix",
+                tables=[
+                    ReportTable(
+                        title="CTA and Event Mix",
+                        intro="Event names are grouped to account for legacy, SightMap, and Resi Edge naming differences.",
+                        columns=[
+                            ("category", "Category"),
+                            ("pilot_events", "Pilot events"),
+                            ("pilot_mix", "Pilot mix"),
+                            ("resi_events", "Phase 2 events"),
+                            ("resi_mix", "Phase 2 mix"),
+                            ("event_delta", "Event delta"),
+                        ],
+                        rows=event_mix_html_rows,
+                    )
+                ],
+            ),
+            ReportSection(
+                title="Sensitivity Read",
+                paragraphs=[
+                    "This view isolates the effect of treating 3D Tour as a high-intent outcome versus treating it as a tracking-sensitive engagement event. Form submits remain included in both rows.",
+                ],
+                tables=[
+                    ReportTable(
+                        title="3D Tour Sensitivity",
+                        columns=[
+                            ("view", "View"),
+                            ("pilot_cta_per_100_sessions", "Pilot outcomes / 100"),
+                            ("resi_cta_per_100_sessions", "Phase 2 outcomes / 100"),
+                            ("rate_gap", "Rate gap"),
+                            ("interpretation", "Interpretation"),
+                        ],
+                        rows=sensitivity_html_rows,
+                    )
+                ],
+            ),
+            ReportSection(
+                title="Property Detail",
+                tables=[
+                    ReportTable(
+                        title="Normalized Phase 2 Property Detail",
+                        intro="Sorted by common outcomes per 100 engaged sessions.",
+                        columns=[
+                            ("property", "Property"),
+                            ("property_code", "Code"),
+                            ("launch_common_outcomes", "Launch outcomes"),
+                            ("common_per_100_engaged", "Launch / 100 engaged"),
+                            ("pre_common_per_100_engaged", "Pre / 100 engaged"),
+                            ("engaged_rate_lift", "Lift"),
+                        ],
+                        rows=resi_common_property_html_rows,
+                        limit=12,
+                    ),
+                    ReportTable(
+                        title="Normalized Pilot Property Detail",
+                        intro="Sorted by common outcomes per 100 engaged sessions.",
+                        columns=[
+                            ("property", "Property"),
+                            ("property_code", "Code"),
+                            ("launch_common_outcomes", "Launch outcomes"),
+                            ("common_per_100_engaged", "Launch / 100 engaged"),
+                            ("pre_common_per_100_engaged", "Pre / 100 engaged"),
+                            ("engaged_rate_lift", "Lift"),
+                        ],
+                        rows=pilot_common_property_html_rows,
+                    ),
+                ],
+                warning=(
+                    "The pilot control config also contains a 03/24/2026 marker; this study follows the requested "
+                    "03/25/2026 launch date and compares the first nine launch days on that basis."
+                ),
+            ),
+            ReportSection(
+                title="Read Limits",
+                paragraphs=[
+                    "The cohorts are different sizes, different calendar months, and different property mixes, so rate-based comparisons are the primary read.",
+                    "Event naming changed across the pilot and Phase 2 launch periods. The grouping table shows exactly which GA4 event names are included in each category.",
+                    "This is an event-behavior report, not a lease attribution report. Guest-card and lease outcomes should be layered in separately if we want conversion quality beyond web intent.",
+                ],
+            ),
+        ],
+        source_note=(
+            "Local Data Pond portfolio_analytics.db tables ga4_daily_metrics and ga4_event_facts; "
+            "pilot cohort from Intelligence Office pilot documentation; Phase 2 cohort from the Resi Edge optimized launch snapshot."
+        ),
+    )
+
+    workbook_sheets = {
+        "Normalized Summary": normalized_summary_rows,
+        "Normalized Resi Detail": resi_common_property_rows,
+        "Normalized Pilot Detail": pilot_common_property_rows,
+        "Cohort Scorecard": scorecard_rows,
+        "Day 1-9 Curve": daily_curve_rows,
+        "CTA Mix": event_mix_rows,
+        "3D Sensitivity": sensitivity_rows,
+        "Phase 2 Detail": resi_property_rows,
+        "Pilot Detail": pilot_property_rows,
+        "Coverage Gaps": coverage_gap_rows,
+        "Raw Event Names": raw_event_rows,
+    }
+    spec = {
+        "report_type": "resi_edge_launch_cta_study",
+        "windows": {
+            "pilot_launch": {"start": pilot_start.isoformat(), "end": pilot_end.isoformat()},
+            "pilot_pre": {"start": pilot_pre_start.isoformat(), "end": pilot_pre_end.isoformat()},
+            "resi_edge_20_launch": {"start": resi_start.isoformat(), "end": resi_end.isoformat()},
+            "resi_edge_20_pre": {"start": resi_pre_start.isoformat(), "end": resi_pre_end.isoformat()},
+        },
+        "cohorts": {
+            "pilot": pilot_cohort,
+            "resi_edge_20": resi_cohort,
+        },
+        "event_categories": LAUNCH_CTA_EVENT_CATEGORIES,
+        "high_intent_categories": sorted(LAUNCH_HIGH_INTENT_CATEGORIES),
+        "common_high_intent_categories": sorted(LAUNCH_COMMON_HIGH_INTENT_CATEGORIES),
+        "primary_normalization": {
+            "event_set": "Common high-intent outcomes only: quote/detail, schedule tour, apply, phone, directions, and form_submit.",
+            "denominator": "Engaged sessions",
+            "cohort_aggregation": "Property-weighted average with property median and session-weighted rollup shown as supporting context.",
+            "baseline": "Each cohort's own matching nine-day pre-period.",
+            "weekday_alignment": "Both launch windows start on Wednesday and cover the same nine-day weekday sequence.",
+        },
+        "source_tables": ["ga4_daily_metrics", "ga4_event_facts"],
+        "launch_day_included": True,
+    }
+    return ReportBuild(
+        report_type="resi_edge_launch_cta_study",
+        report=report,
+        workbook_sheets=workbook_sheets,
+        spec=spec,
+    )
+
+
 def build_report(request: ReportRequest) -> ReportBuild:
     report_type = classify_report_type(request)
     conn = sqlite3.connect(DB_PATH)
@@ -4491,6 +6275,8 @@ def build_report(request: ReportRequest) -> ReportBuild:
     try:
         if report_type == "organic_search_share":
             return build_organic_search_share(conn, request)
+        if report_type == "organic_nonbrand_search_terms":
+            return build_organic_nonbrand_search_terms(conn, request)
         if report_type == "ga4_traffic_summary":
             return build_ga4_traffic_summary(conn, request)
         if report_type == "ils_search_behavior":
@@ -4499,6 +6285,17 @@ def build_report(request: ReportRequest) -> ReportBuild:
             return build_content_manager_workup(conn, request)
         if report_type == "content_intelligence_pack":
             return build_content_intelligence_pack(conn, request)
+        if report_type == "resi_edge_launch_cta_study":
+            return build_resi_edge_launch_cta_study(conn, request)
+        if report_type == "resi_edge_traffic_trends":
+            from resi_edge_traffic_trends_report import build_resi_edge_traffic_trends
+
+            return build_resi_edge_traffic_trends(
+                conn,
+                request,
+                RESI_EDGE_20_LAUNCH_CTA_COHORT,
+                LAUNCH_CTA_EVENT_CATEGORIES,
+            )
         raise ValueError(f"Unsupported report type: {report_type}")
     finally:
         conn.close()

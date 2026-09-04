@@ -38,6 +38,7 @@ from Data_Collection.utils.source_freshness_policy import (
     is_guest_card_harvest_suspended,
     latest_recorded_date_for_source,
 )
+from Data_Collection.utils.gsc_indexing_actions import load_latest_indexing_action_summary
 from Data_Collection.utils.email_sender import EmailSender
 from apps.api.scripts.wrangler_auth import build_runtime_env as build_wrangler_runtime_env
 from utils.pib_email_shell import wrap_pib_light_email
@@ -135,7 +136,7 @@ class DataAlertEmailer:
             if item.get('classification') == 'manual_dependency'
         )
 
-    def _write_alert_snapshot(self, *, closure, collection_failures, issues, indexation_warnings, remediation_actions):
+    def _write_alert_snapshot(self, *, closure, collection_failures, issues, indexation_warnings, indexing_action_summary, remediation_actions):
         self.alert_snapshot_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         payload = {
@@ -145,6 +146,7 @@ class DataAlertEmailer:
             "issues": issues or {},
             "cross_source_diagnostics": self._cross_source_diagnostics(issues or {}),
             "indexation_warnings": indexation_warnings or [],
+            "indexing_action_summary": indexing_action_summary or {},
             "remediation_actions": remediation_actions or [],
             "runtime_health": self._runtime_health_snapshot(),
         }
@@ -906,9 +908,59 @@ class DataAlertEmailer:
         finally:
             conn.close()
 
-    def build_alert_html(self, issues, collection_failures=None, remediation_actions=None, indexation_warnings=None):
+    def check_gsc_indexing_action_summary(self):
+        """Return the latest read-only daily GSC indexing action packet summary."""
+        return load_latest_indexing_action_summary()
+
+    def _build_indexing_action_html(self, indexing_action_summary=None):
+        packet = indexing_action_summary or {}
+        summary = packet.get("summary") or {}
+        if not summary:
+            return ""
+
+        action_type_counts = summary.get("action_type_counts") or {}
+        priority_counts = summary.get("priority_counts") or {}
+        top_properties = summary.get("top_properties") or []
+        action_rows = ""
+        for action_type, count in sorted(action_type_counts.items(), key=lambda item: (-int(item[1]), item[0]))[:8]:
+            action_rows += (
+                f'<tr><td style="padding:8px;border:1px solid #e2e8f0;">{html.escape(str(action_type))}</td>'
+                f'<td style="padding:8px;border:1px solid #e2e8f0;text-align:right;">{int(count)}</td></tr>'
+            )
+        if not action_rows:
+            action_rows = '<tr><td style="padding:8px;border:1px solid #e2e8f0;" colspan="2">No actionable indexing follow-up.</td></tr>'
+
+        priority_bits = ", ".join(f"{html.escape(str(k))}: {int(v)}" for k, v in sorted(priority_counts.items())) or "none"
+        top_property_bits = ", ".join(f"{html.escape(str(name))} ({int(count)})" for name, count in top_properties[:5]) or "none"
+        packet_path = html.escape(str(packet.get("latest_packet") or summary.get("packet_dir") or ""))
+
+        return f"""
+        <div style="margin-top:12px;padding:12px;border-left:4px solid #3B9189;background:#f6fffd;font-family:Arial, sans-serif;">
+          <div style="font-size:16px;font-weight:700;color:#15284B;margin-bottom:6px;">GSC Indexing Action Queue</div>
+          <div style="font-size:13px;color:#475569;margin-bottom:8px;line-height:1.45;">
+            Inspection date: {html.escape(str(summary.get("inspection_date_human") or summary.get("inspection_date") or ""))}<br>
+            Standard pages inspected: <strong>{int(summary.get("standard_pages_inspected") or 0)} / {int(summary.get("standard_page_targets") or 0)}</strong><br>
+            Standard pages indexed: <strong>{int(summary.get("standard_pages_indexed") or 0)}</strong><br>
+            Missing standard-page inspections: <strong>{int(summary.get("standard_pages_missing_inspection") or 0)}</strong><br>
+            Actionable URLs: <strong>{int(summary.get("actionable_urls") or 0)}</strong> ({priority_bits})<br>
+            Top properties: {top_property_bits}<br>
+            Packet: <code>{packet_path}</code>
+          </div>
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;font-size:13px;background:#ffffff;">
+            <tr style="background:#f8fafc;">
+              <th style="padding:8px;border:1px solid #e2e8f0;text-align:left;">Action Type</th>
+              <th style="padding:8px;border:1px solid #e2e8f0;text-align:right;">URLs</th>
+            </tr>
+            {action_rows}
+          </table>
+        </div>
+        """
+
+    def build_alert_html(self, issues, collection_failures=None, remediation_actions=None, indexation_warnings=None, indexing_action_summary=None):
         """Build HTML email body for data alerts."""
         indexation_warnings = indexation_warnings or []
+        indexing_action_summary = indexing_action_summary or {}
+        indexing_action_count = int((indexing_action_summary.get("summary") or {}).get("actionable_urls") or 0)
         total_missing = sum(len(v['missing']) for v in issues.values())
         total_stale = sum(len(v['stale']) for v in issues.values())
         collection_failure_count = self._failure_item_count(collection_failures)
@@ -917,8 +969,8 @@ class DataAlertEmailer:
         indexation_warning_count = len(indexation_warnings)
         critical_indexation_count = sum(1 for item in indexation_warnings if item.get("severity") == "critical")
 
-        if total_missing == 0 and total_stale == 0 and collection_failure_count == 0 and manual_dependency_count == 0 and indexation_warning_count == 0:
-            return self._build_all_clear_html()
+        if total_missing == 0 and total_stale == 0 and collection_failure_count == 0 and manual_dependency_count == 0 and indexation_warning_count == 0 and indexing_action_count == 0:
+            return self._build_all_clear_html(indexing_action_summary=indexing_action_summary)
 
         if critical_indexation_count > 0 or core_failure_sources > 0 or total_missing > 10 or total_stale > 10:
             severity = "CRITICAL"
@@ -1057,6 +1109,8 @@ class DataAlertEmailer:
             </div>
             """
 
+        indexing_action_html = self._build_indexing_action_html(indexing_action_summary)
+
         remediation_html = ""
         if remediation_actions:
             remediation_html += """
@@ -1150,6 +1204,7 @@ class DataAlertEmailer:
             + diagnostics_html
             + failures_html
             + indexation_html
+            + indexing_action_html
             + issues_html
             + f'<div style="margin-top:12px;font-family:Arial, sans-serif;font-size:12px;color:#475569;">'
               'Recommended actions: check collector logs, run manual collection, verify API credentials/quotas.<br>'
@@ -1164,8 +1219,9 @@ class DataAlertEmailer:
             badge_bg=severity_bg,
         )
 
-    def _build_all_clear_html(self):
+    def _build_all_clear_html(self, indexing_action_summary=None):
         """Build HTML for all-clear status."""
+        indexing_action_html = self._build_indexing_action_html(indexing_action_summary)
         return wrap_pib_light_email(
             title="Data Collection Status",
             subtitle=f"Portfolio Analytics Monitoring | {datetime.now().strftime('%B %d, %Y at %I:%M %p')}",
@@ -1175,7 +1231,7 @@ class DataAlertEmailer:
                 '<div style="margin-top:12px;font-size:16px;color:#15284B;font-weight:700;">All data collectors are up to date.</div>'
                 '<div style="margin-top:6px;font-size:13px;color:#475569;">No missing or stale data detected for any properties.</div>'
                 '</div>'
-            ),
+            ) + indexing_action_html,
         )
 
     def get_latest_registry_validation_summary(self):
@@ -1229,12 +1285,13 @@ class DataAlertEmailer:
         finally:
             conn.close()
 
-    def send_alert_email(self, issues, collection_failures=None, remediation_actions=None, indexation_warnings=None):
+    def send_alert_email(self, issues, collection_failures=None, remediation_actions=None, indexation_warnings=None, indexing_action_summary=None):
         """Send alert email via Gmail SMTP."""
 
         # Build email
         indexation_warnings = indexation_warnings or []
-        html_body = self.build_alert_html(issues, collection_failures, remediation_actions, indexation_warnings)
+        indexing_action_summary = indexing_action_summary or {}
+        html_body = self.build_alert_html(issues, collection_failures, remediation_actions, indexation_warnings, indexing_action_summary)
         registry_summary = self.get_latest_registry_validation_summary()
         if registry_summary:
             counts = registry_summary['counts']
@@ -1279,11 +1336,14 @@ class DataAlertEmailer:
         core_failure_sources, _ = self.summarize_failure_tiers(collection_failures or {})
         indexation_warning_count = len(indexation_warnings)
         critical_indexation_count = sum(1 for item in indexation_warnings if item.get("severity") == "critical")
+        indexing_action_count = int((indexing_action_summary.get("summary") or {}).get("actionable_urls") or 0)
 
         if critical_indexation_count > 0:
             subject = f"🔴 CRITICAL: {critical_indexation_count} Core GSC Indexation Warning(s)"
         elif indexation_warning_count > 0:
             subject = f"⚠️ GSC Core Indexation Alert: {indexation_warning_count} warning(s)"
+        elif indexing_action_count > 0:
+            subject = f"⚠️ GSC Indexing Actions: {indexing_action_count} URL(s) need follow-up"
         elif core_failure_sources > 0:
             subject = f"🔴 CRITICAL: Consolidated Morning Failure Alert ({collection_failure_count} jobs failed)"
         elif collection_failure_count > 0:
@@ -1302,6 +1362,7 @@ class DataAlertEmailer:
 
 Total Issues: {total_issues}
 GSC Core Indexation Warnings: {indexation_warning_count}
+GSC Indexing Action URLs: {indexing_action_count}
 
 Please view this email in an HTML-capable client for full details.
 
@@ -1426,12 +1487,28 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         print()
 
+        print("Checking GSC indexing action queue...")
+        indexing_action_summary = self.check_gsc_indexing_action_summary()
+        indexing_action_count = int((indexing_action_summary.get("summary") or {}).get("actionable_urls") or 0) if indexing_action_summary else 0
+        if indexing_action_summary:
+            summary = indexing_action_summary.get("summary") or {}
+            print(
+                "🧭 GSC indexing actions: "
+                f"{indexing_action_count} actionable URL(s), "
+                f"{summary.get('standard_pages_inspected', 0)} / {summary.get('standard_page_targets', 0)} standard pages inspected"
+            )
+        else:
+            print("⚠️  No GSC indexing action packet found")
+
+        print()
+
         remediation_actions = self.attempt_auto_remediation(collection_failures)
         if remediation_actions:
             print("Re-checking integrity after auto-remediation...")
             collection_failures = self.check_collection_failures()
             issues = self.check_data_freshness()
             indexation_warnings = self.check_gsc_indexation_warnings()
+            indexing_action_summary = self.check_gsc_indexing_action_summary()
             print(f"   Remaining collection failures: {len(collection_failures)}")
             remaining_issues = sum(len(v['missing']) + len(v['stale']) for v in issues.values())
             print(f"   Remaining freshness issues: {remaining_issues}")
@@ -1443,6 +1520,7 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             collection_failures=collection_failures,
             issues=issues,
             indexation_warnings=indexation_warnings,
+            indexing_action_summary=indexing_action_summary,
             remediation_actions=remediation_actions,
         )
         print(f"Alert snapshot: {snapshot_path}")
@@ -1450,7 +1528,7 @@ Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
         # Send alert email
         print("Sending alert email...")
-        success = self.send_alert_email(issues, collection_failures, remediation_actions, indexation_warnings)
+        success = self.send_alert_email(issues, collection_failures, remediation_actions, indexation_warnings, indexing_action_summary)
 
         print()
         print("="*80)

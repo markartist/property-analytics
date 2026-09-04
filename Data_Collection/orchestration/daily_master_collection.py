@@ -61,6 +61,10 @@ from Data_Collection.utils.source_freshness_policy import (
     is_semrush_sunset,
 )
 from Data_Collection.utils.property_identity import resolve_property_identity
+from Data_Collection.utils.gsc_indexing_actions import (
+    STANDARD_RESI_CORE_PATHS,
+    build_daily_indexing_action_packet,
+)
 from apps.api.scripts.wrangler_auth import build_runtime_env as build_wrangler_runtime_env
 from utils.config_manager import Config
 from utils.keeper_file_materializer import materialize_keeper_file
@@ -73,7 +77,7 @@ validate_preflight(__file__)
 from google.analytics.data_v1beta import BetaAnalyticsDataClient, RunReportRequest, DateRange, Metric, Dimension
 from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from google.auth.transport.requests import AuthorizedSession, Request
 from googleapiclient.discovery import build
 import pickle
 import requests
@@ -113,6 +117,7 @@ class PortfolioDataCollector:
             'ga4_events': {'success': 0, 'failed': 0, 'skipped': 0},
             'gsc': {'success': 0, 'failed': 0, 'skipped': 0},
             'gsc_inspection': {'success': 0, 'failed': 0, 'skipped': 0},
+            'resi_edge_gsc_indexing': {'success': 0, 'failed': 0, 'skipped': 0},
             'google_ads': {'success': 0, 'failed': 0, 'skipped': 0},
             'psi': {'success': 0, 'failed': 0, 'skipped': 0},
             'semrush': {'success': 0, 'failed': 0, 'skipped': 0},
@@ -144,6 +149,7 @@ class PortfolioDataCollector:
 
         # Credential warnings from pre-flight check
         self.credential_warnings = []
+        self.gsc_credentials = None
         self._run_lock_file = None
         self.source_level_retry_property_id = "__source__"
 
@@ -188,6 +194,13 @@ class PortfolioDataCollector:
     def _collect_ga4_for_property(self, prop, start_date, end_date, collection_id: int) -> tuple[str, str | None]:
         prop_name = prop['name']
         ga4_id = prop['ga4_property_id']
+        start_day = start_date.date() if hasattr(start_date, "date") else start_date
+        end_day = end_date.date() if hasattr(end_date, "date") else end_date
+        expected_dates = {
+            (start_day + timedelta(days=day_offset)).strftime('%Y-%m-%d')
+            for day_offset in range((end_day - start_day).days + 1)
+        }
+        reported_dates = set()
 
         request = RunReportRequest(
             property=f"properties/{ga4_id}",
@@ -208,13 +221,11 @@ class PortfolioDataCollector:
         )
 
         response = self.ga4_client.run_report(request)
-        if not response.rows:
-            return 'skipped', 'No data'
 
-        days_collected = 0
         for row in response.rows:
             date_str = row.dimension_values[0].value
             formatted_date = f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
+            reported_dates.add(formatted_date)
             self.db.insert_ga4_daily_metrics(
                 property_id=ga4_id,
                 metric_date=formatted_date,
@@ -229,7 +240,23 @@ class PortfolioDataCollector:
                 },
                 collection_id=collection_id
             )
-            days_collected += 1
+
+        zero_fill_dates = sorted(expected_dates - reported_dates)
+        for formatted_date in zero_fill_dates:
+            self.db.insert_ga4_daily_metrics(
+                property_id=ga4_id,
+                metric_date=formatted_date,
+                data={
+                    'sessions': 0,
+                    'engaged_sessions': 0,
+                    'total_users': 0,
+                    'new_users': 0,
+                    'pageviews': 0,
+                    'avg_session_duration': 0.0,
+                    'bounce_rate': 0.0,
+                },
+                collection_id=collection_id
+            )
 
         traffic_request = RunReportRequest(
             property=f"properties/{ga4_id}",
@@ -301,7 +328,10 @@ class PortfolioDataCollector:
                     }
                 )
 
-        return 'success', f'Collected {days_collected} days + traffic + devices'
+        return 'success', (
+            f'Collected {len(expected_dates)} daily rows '
+            f'({len(reported_dates)} reported + {len(zero_fill_dates)} zero-filled) + traffic + devices'
+        )
 
     def _queue_property_retry(
         self,
@@ -473,6 +503,7 @@ class PortfolioDataCollector:
                     print(f'   ⚠️  Error saving token: {e}')
 
             # Build GSC service
+            self.gsc_credentials = creds
             service = build('searchconsole', 'v1', credentials=creds)
             return service
 
@@ -1268,6 +1299,16 @@ class PortfolioDataCollector:
         seed_targets = []
         if full_url:
             base = full_url.rstrip('/')
+            domain_is_resi_vanity = domain and domain != 'venterraliving.com'
+            if str(property_info.get('site_type') or '').lower() == 'resi' or domain_is_resi_vanity:
+                for raw_path in STANDARD_RESI_CORE_PATHS:
+                    path = str(raw_path or '').strip()
+                    if path == '/':
+                        seed_targets.append(base + '/')
+                    else:
+                        normalized = path if path.startswith('/') else f'/{path}'
+                        seed_targets.append(base + normalized)
+
             known_page_paths = property_info.get('known_page_paths') or []
             if known_page_paths:
                 for raw_path in known_page_paths:
@@ -1358,6 +1399,80 @@ class PortfolioDataCollector:
 
         return targets[:max_urls]
 
+    def build_gsc_indexing_action_packet(self):
+        """Build the daily read-only GSC indexing action packet."""
+        print('=' * 80)
+        print('🧭 BUILDING GSC INDEXING ACTION PACKET')
+        print('=' * 80)
+        print()
+
+        try:
+            latest = build_daily_indexing_action_packet(
+                db_path=self.db_path,
+                registry_path=self.registry_path,
+            )
+            summary = latest.get('summary') or {}
+            print(f"Inspection date: {summary.get('inspection_date')}")
+            print(f"Inspected URLs: {summary.get('inspected_urls', 0)}")
+            print(
+                "Standard pages inspected: "
+                f"{summary.get('standard_pages_inspected', 0)} / {summary.get('standard_page_targets', 0)}"
+            )
+            print(f"Actionable URLs: {summary.get('actionable_urls', 0)}")
+            print(f"Packet: {latest.get('latest_packet')}")
+        except Exception as e:
+            print(f'⚠️  GSC indexing action packet failed: {e}')
+            self.results['errors'].append({
+                'property': 'All Properties',
+                'collector': 'GSC Indexing Actions',
+                'error': str(e)[:100]
+            })
+        print()
+
+    def collect_resi_edge_gsc_indexing_watch(self):
+        """Collect the first-20 Resi Edge vanity-domain standard-page index watch."""
+        print('=' * 80)
+        print('🔎 COLLECTING RESI EDGE GSC INDEXING WATCH')
+        print('=' * 80)
+        print()
+
+        try:
+            script = self.base_dir / 'scripts' / 'collect_resi_edge_gsc_indexing.py'
+            if not script.exists():
+                raise FileNotFoundError(str(script))
+            result = subprocess.run(
+                [sys.executable, str(script)],
+                timeout=3600,
+            )
+            if result.returncode == 0:
+                self.results['resi_edge_gsc_indexing']['success'] = 1
+                print('✅ Resi Edge GSC indexing watch completed successfully')
+            else:
+                self.results['resi_edge_gsc_indexing']['failed'] = 1
+                print(f'❌ Resi Edge GSC indexing watch failed (exit code {result.returncode})')
+                self.results['errors'].append({
+                    'property': 'First 20 Resi Edge',
+                    'collector': 'Resi Edge GSC Indexing Watch',
+                    'error': f'collect_resi_edge_gsc_indexing.py exited {result.returncode}'
+                })
+        except subprocess.TimeoutExpired:
+            self.results['resi_edge_gsc_indexing']['failed'] = 1
+            print('❌ Resi Edge GSC indexing watch timed out after 60 minutes')
+            self.results['errors'].append({
+                'property': 'First 20 Resi Edge',
+                'collector': 'Resi Edge GSC Indexing Watch',
+                'error': 'Timed out after 60 minutes'
+            })
+        except Exception as e:
+            self.results['resi_edge_gsc_indexing']['failed'] = 1
+            print(f'❌ Resi Edge GSC indexing watch failed: {e}')
+            self.results['errors'].append({
+                'property': 'First 20 Resi Edge',
+                'collector': 'Resi Edge GSC Indexing Watch',
+                'error': str(e)[:100]
+            })
+        print()
+
     def _parse_url_inspection_result(self, payload: dict) -> dict:
         """Flatten GSC URL inspection payload into reportable fields."""
         result = (payload or {}).get('inspectionResult', {})
@@ -1382,6 +1497,26 @@ class PortfolioDataCollector:
             'raw_response_json': json.dumps(payload, separators=(',', ':'))
         }
 
+    def _inspect_gsc_url(self, session: AuthorizedSession, site_url: str, inspection_url: str) -> dict:
+        """Inspect one URL with a bounded HTTP timeout.
+
+        The googleapiclient transport can block indefinitely on URL Inspection
+        reads. Search Analytics still uses the standard client, but URL
+        Inspection uses the REST endpoint directly so the daily job can keep
+        moving and record property-level failures instead of freezing.
+        """
+        response = session.post(
+            'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+            json={
+                'inspectionUrl': inspection_url,
+                'siteUrl': site_url,
+                'languageCode': 'en-US',
+            },
+            timeout=(8, 20),
+        )
+        response.raise_for_status()
+        return response.json()
+
     def collect_gsc_url_inspection_data(self, properties, max_urls_per_property: int = 10):
         """Collect GSC URL Inspection data for reportable index coverage status."""
         print('=' * 80)
@@ -1389,13 +1524,14 @@ class PortfolioDataCollector:
         print('=' * 80)
         print()
 
-        if not self.gsc_service:
+        if not self.gsc_service or not self.gsc_credentials:
             print('⚠️  GSC service not available; skipping URL inspection')
             self.results['gsc_inspection']['skipped'] += len(properties)
             print()
             return
 
         inspection_date = datetime.now().strftime('%Y-%m-%d')
+        inspection_session = AuthorizedSession(self.gsc_credentials)
         gsc_properties = self._reportable_gsc_properties(properties)
         print(f'Properties with GSC access: {len(gsc_properties)}/{len(properties)}')
         print(f'Max URLs per property: {max_urls_per_property}')
@@ -1435,13 +1571,7 @@ class PortfolioDataCollector:
             inserted = 0
             for url in targets:
                 try:
-                    payload = self.gsc_service.urlInspection().index().inspect(
-                        body={
-                            'inspectionUrl': url,
-                            'siteUrl': gsc_url,
-                            'languageCode': 'en-US'
-                        }
-                    ).execute()
+                    payload = self._inspect_gsc_url(inspection_session, gsc_url, url)
                     parsed = self._parse_url_inspection_result(payload)
                     self.db.insert_gsc_url_inspection(
                         property_id=ga4_id,
@@ -3500,6 +3630,7 @@ class PortfolioDataCollector:
         print(f'  GA4 Events:   ✅ {self.results["ga4_events"]["success"]} | ⚠️  {self.results["ga4_events"]["skipped"]} | ❌ {self.results["ga4_events"]["failed"]}')
         print(f'  GSC:          ✅ {self.results["gsc"]["success"]} | ⚠️  {self.results["gsc"]["skipped"]} | ❌ {self.results["gsc"]["failed"]}')
         print(f'  GSC Inspect:  ✅ {self.results["gsc_inspection"]["success"]} | ⚠️  {self.results["gsc_inspection"]["skipped"]} | ❌ {self.results["gsc_inspection"]["failed"]}')
+        print(f'  Resi GSC:     ✅ {self.results["resi_edge_gsc_indexing"]["success"]} | ⚠️  {self.results["resi_edge_gsc_indexing"]["skipped"]} | ❌ {self.results["resi_edge_gsc_indexing"]["failed"]}')
         print(f'  Google Ads:   ✅ {self.results["google_ads"]["success"]} | ⚠️  {self.results["google_ads"]["skipped"]} | ❌ {self.results["google_ads"]["failed"]}')
         print(f'  PSI:          ✅ {self.results["psi"]["success"]} | ⚠️  {self.results["psi"]["skipped"]} | ❌ {self.results["psi"]["failed"]}')
         print(f'  SEMRush:      ✅ {self.results["semrush"]["success"]} | ⚠️  {self.results["semrush"]["skipped"]} | ❌ {self.results["semrush"]["failed"]}')
@@ -3525,6 +3656,7 @@ class PortfolioDataCollector:
                 'ga4',
                 'ga4_events',
                 'gsc',
+                'resi_edge_gsc_indexing',
                 'google_ads',
                 'psi',
                 'semrush',
@@ -3693,7 +3825,13 @@ class PortfolioDataCollector:
             time.sleep(2)
 
             # Collect URL inspection/index coverage signals
-            self.collect_gsc_url_inspection_data(properties, max_urls_per_property=10)
+            self.collect_gsc_url_inspection_data(properties, max_urls_per_property=25)
+
+            # Build a read-only action/reporting packet from the daily inspection rows.
+            self.build_gsc_indexing_action_packet()
+
+            # Collect first-20 Resi Edge vanity-domain standard-page indexing posture.
+            self.collect_resi_edge_gsc_indexing_watch()
 
             # Small pause
             time.sleep(2)

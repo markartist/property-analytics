@@ -100,12 +100,14 @@ def run_adhoc_report(
     spec_path = run_dir / "report_spec.json"
     html_path = run_dir / "report.html"
     workbook_path = run_dir / "report.xlsx"
+    workbook_data_path = run_dir / "workbook_data.json"
     validation_path = run_dir / "validation.json"
     delivery_path = run_dir / "delivery.json"
     sources_path = run_dir / "sources_used.md"
 
     request_path.write_text(json.dumps(asdict(request), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     spec_path.write_text(json.dumps(build.spec, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    workbook_data_path.write_text(json.dumps(build.workbook_sheets, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     html_path.write_text(render_outlook_report(build.report), encoding="utf-8")
     write_sources(sources_path, build.spec)
 

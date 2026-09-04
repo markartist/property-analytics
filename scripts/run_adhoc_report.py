@@ -28,8 +28,9 @@ def main() -> int:
         "--report-type",
         default="auto",
         help=(
-            "auto, organic_search_share, ga4_traffic_summary, ils_search_behavior, "
-            "content_manager_workup, or content_intelligence_pack (Property Intel Pack)"
+            "auto, organic_search_share, organic_nonbrand_search_terms, ga4_traffic_summary, ils_search_behavior, "
+            "content_manager_workup, content_intelligence_pack (Property Intel Pack), "
+            "resi_edge_launch_cta_study, or resi_edge_traffic_trends"
         ),
     )
     parser.add_argument(
