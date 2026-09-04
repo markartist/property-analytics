@@ -72,6 +72,95 @@ The builder maps common Jira ticket language into Captain categories:
 - `vendor_followup`: generic pending vendor follow-up
 - `jira_followup`: fallback clarification/ownership lane
 
+## Pricing And Specials Routing Resource
+
+Use this known resource for tickets asking for pricing, concession, special, or floor-plan-specific special modifications that are not website-owned hero banner work:
+
+- Venterra Pricing Link: `https://venterra.atlassian.net/servicedesk/customer/portal/4/create/128`
+
+Marketing/WebOps handles the main website hero banner lane only. If a ticket asks for system specials, pricing, concessions, or specials scoped to specific floor plans, reply politely and professionally that the request needs to be submitted through the Venterra Pricing Link because Marketing/WebOps can only handle the hero banner portion.
+
+Default response shape:
+
+```text
+Hi <First Name>,
+
+Thanks for sending this over. Our team can help with main website hero banner updates, but pricing, concession, and floor-plan-specific special changes need to be submitted through the Venterra Pricing Link so the correct pricing team can review and process them:
+
+https://venterra.atlassian.net/servicedesk/customer/portal/4/create/128
+
+Thanks, and have a great day!
+```
+
+## Assisted Jira Handling With Final Approval
+
+The agent may surface Jira tickets that look safe for low-friction handling, but Jira mutation remains approval-gated. The default flow is:
+
+1. Inspect the ticket, reporter, status, current comments, and available workflow transitions.
+2. Classify the likely handling path using the routing rules in this runbook.
+3. Draft the exact public comment and proposed status transition.
+4. Ask for final approval before posting, transitioning, closing, or otherwise mutating Jira.
+5. After approval, apply the comment/status change and read back the final ticket state.
+
+### Proof Screenshot Closeout SOP
+
+For tickets where the requester needs visual proof before closure, keep proof delivery and closeout copy separate.
+
+Required sequence after approval:
+
+1. Capture and verify the live proof image first.
+2. In Jira `Reply to customer`, post only the screenshot/proof image. Do not add completion text in this reply.
+3. Confirm the image is visible on the ticket before closing.
+4. Use the workflow close/Done transition.
+5. Put the customer-facing completion text only in the transition/closure comment field:
+
+```text
+Hello, <First Name>! This is now complete.
+
+Thanks, and have a great day!
+```
+
+6. Read back the final ticket status and customer-visible activity.
+
+Do not paste the screenshot into a text-bearing reply and then also close with a comment; Jira can duplicate or split rich-editor text around the media block. If the workflow does not expose a closure comment field through the available tool or UI, stop for Mark rather than substituting a second public completion reply.
+
+Good assisted-handling candidates:
+
+- Reporter confirms the requested item is complete and asks to close the ticket.
+- Vendor ticket has already been entered and the Jira ticket should move to `Pending Vendor`.
+- The request is pricing, concession, system-special, or floor-plan-special work that should be redirected to the Venterra Pricing Link.
+- The request is a local entity or map-pin update that needs a clear vendor-entered status update.
+- The request is a main hero banner update that stays within Marketing/WebOps scope.
+
+Do not auto-handle without a new approval in the current conversation when:
+
+- The ticket requires live website, Resi, Cloudflare, Google Business Profile, pricing-system, or source-system mutation.
+- The ticket changes approved public offer language, legal/pricing terms, floor-plan eligibility, or concession scope.
+- The right owner, property, system, or status is ambiguous.
+- The comment would contradict the reporter, an approver, or a visible source-system state.
+
+Default ticket-comment style:
+
+- Open with the reporter's first name.
+- Keep the response concise, professional, and specific.
+- Use the Venterra Pricing Link only when routing pricing/specials requests out of Marketing/WebOps scope.
+- End every customer-facing ticket comment with `Thanks, and have a great day!`
+
+## Captain Ticket Care
+
+Captain Ticket Care is the in-Pond stewardship layer over Jira Captain Watch. The canonical SOP is:
+
+- `/Users/mark/Property_Analytics/docs/CAPTAIN_TICKET_CARE_SOP_2026-09-04.md`
+
+The Ticket Wall in Captain's Office consumes `OPS_WATCH_SNAPSHOT.ticketCare`, not a separate tracker. It classifies active Jira Captain records into property queues, flags Critical/stale/pending-vendor/customer-waiting/proof-needed/routing-check work, and gives each Captain one next-best action to keep visible for the property.
+
+Default boundaries:
+
+- Jira remains the source of the work order.
+- Ops Watch and Captain Ticket Care are read-only unless Mark approves a specific mutation in the current conversation.
+- Captain flags are stewardship signals, not replacement truth for Jira.
+- Visual proof closeout still follows the proof-image SOP in this runbook.
+
 Each record carries:
 
 - Captain watch key
