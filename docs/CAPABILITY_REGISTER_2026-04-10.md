@@ -1,5 +1,11 @@
 # Capability Register
 
+## 09/04/2026 Corporate Git Cleanup Workstream Organization
+
+- Mark approved cleaning and organizing the remaining dirty corporate git tree after the Commodore Bridge commits.
+- Remaining changes should be grouped into coherent commits rather than bundled as one mixed platform commit: Captain Ticket Wall/Jira SOP, AI Content Suite/VACS-in-Pond, Captain routine scheduler, Resi Edge Cloudflare/hero/runtime work, Agent Readiness monitor, and ad hoc/source reporting utilities.
+- Cleanup boundary: preserve user/generated work, remove only clearly accidental scratch files, and keep credential material out of commits. The untracked `apps/api/-` JSON dump is scratch output and should not be committed.
+
 ## 09/04/2026 Regional Commodore Roster And Standing Orders
 
 - Added `/Users/mark/Property_Analytics/config/commodore_roster.json` as the governed source for regional Commodore persona names, call signs, activation status, standing-order status, review cadence, standing orders, and optional future `humanOwner`.

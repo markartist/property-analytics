@@ -4,6 +4,12 @@
 
 ---
 
+### 09/04/2026 - Corporate git cleanup and workstream commit organization
+- Mark asked to clean the tree and organize the remaining uncommitted work into coherent commits after the Commodore Bridge work was committed. Proceed by grouping remaining changes by workstream instead of making one broad mixed commit.
+- Intended groupings: Captain Ticket Wall/Jira SOP, AI Content Suite/VACS-in-Pond, Captain routine scheduler, Resi Edge Cloudflare/hero/runtime work, Agent Readiness monitor, and ad hoc/source reporting utilities.
+- Keep credential discipline: do not introduce new local secrets or credential files; tracked public env changes may be committed only when reviewed as non-secret config.
+- Do not revert unrelated user/generated work during cleanup. Remove only clearly accidental scratch files, such as the untracked `apps/api/-` JSON dump.
+
 ### 09/04/2026 - Regional Commodores stood up with names and standing orders
 - Mark confirmed the regional layer needs named Commodores with active orders. Added `/Users/mark/Property_Analytics/config/commodore_roster.json` as the governed roster source for Commodore persona name, region assignment, call sign, activation status, orders status, cadence, standing orders, and future `humanOwner`.
 - The first active roster stands up `16` regional Commodores from the governed regions in `/Users/mark/Property_Analytics/config/property_identity_matrix.json`: Commodore Ozark, Commodore Peachtree, Commodore Hill Country, Commodore Cypress, Commodore Trinity, Commodore Gulf, Commodore Bayou, Commodore Heartland, Commodore Bluegrass, Commodore Crossroads, Commodore Plum Creek, Commodore Cumberland, Commodore Redbud, Commodore Oak, Commodore Alamo, and Commodore Marsh.
