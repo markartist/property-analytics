@@ -4,6 +4,7 @@ config/*
 !config/
 !config/cloudflare_analytics.yaml
 !config/cloudflare_billable_usage.yaml
+!config/commodore_roster.json
 !config/portfolio_resi_edge_stabilization/
 !config/portfolio_resi_edge_stabilization/*.json
 !config/release_reconcile_snapshot.json

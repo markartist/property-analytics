@@ -3,7 +3,7 @@
 **System Owner:** Mark Laufhutte
 **Portfolio:** Venterra Living (91 properties)
 **Database:** SQLite (`data/portfolio_analytics.db`)
-**Last Updated:** 2026-04-09
+**Last Updated:** 09/04/2026
 
 ---
 
@@ -29,6 +29,9 @@
 11. **[OPS_WATCH_RUNBOOK_2026-08-22.md](OPS_WATCH_RUNBOOK_2026-08-22.md)** - Governed Jira/Confluence/Microsoft 365/Captain monitoring layer and action boundary
 12. **[OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md](OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md)** - Live Cloudflare mirror/push ingest lane for sanitized internal Ops Watch exports
 13. **[CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md](CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md)** - Cloudflare Cron/D1/R2 refresh lane for Captain persona profiles and Office Wall snapshots
+14. **[CAPTAIN_ROUTINE_SCHEDULER_RUNBOOK_2026-08-31.md](CAPTAIN_ROUTINE_SCHEDULER_RUNBOOK_2026-08-31.md)** - Cloudflare/D1 due-queue scheduler for Captain support-agent routine execution
+15. **[CAPTAIN_TICKET_CARE_SOP_2026-09-04.md](CAPTAIN_TICKET_CARE_SOP_2026-09-04.md)** - Captain Ticket Wall stewardship model for property-level Jira follow-through
+16. **[COMMODORE_BRIDGE_OPERATING_MODEL_2026-09-04.md](COMMODORE_BRIDGE_OPERATING_MODEL_2026-09-04.md)** - Regional Commodore rollup model for trends, outliers, shared lessons, escalation candidates, active persona names, and standing orders
 
 ### Critical Knowledge
 Before working with this system, **READ THESE FIRST:**
@@ -119,6 +122,9 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 **Purpose:** Monitor Jira, Confluence, Microsoft 365, internal source packets, and Captain-facing operational signals without source-system mutation by default
 **Local runbook:** `docs/OPS_WATCH_RUNBOOK_2026-08-22.md`
 **Cloudflare ingest runbook:** `docs/OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md`
+**Captain Ticket Care SOP:** `docs/CAPTAIN_TICKET_CARE_SOP_2026-09-04.md`
+**Commodore Bridge model:** `docs/COMMODORE_BRIDGE_OPERATING_MODEL_2026-09-04.md`
+**Commodore roster source:** `config/commodore_roster.json`
 **Live ingest health:** `https://ops-watch.venterrawebops.com/health`
 **Storage:** D1 tables `ops_watch_ingest_runs`, `ops_watch_signals`, `ops_watch_action_queue`; R2 prefix `ops-watch/ingest/`
 **Credential source:** Keeper record `Ops Watch Ingest Shared Secret`
@@ -131,6 +137,24 @@ See [DATABASE_SCHEMA_REFERENCE.md](DATABASE_SCHEMA_REFERENCE.md) for complete de
 **Deployment:** Worker version `2920b8ec-8bf4-48d2-a208-ae687d327599`, initial Git commit `d19b96d`
 **Storage:** D1 tables `captain_persona_profiles`, `captain_refresh_runs`, `captain_office_wall_snapshots`; R2 prefix `captains/`
 **Boundary:** Cloudflare refreshes governed Captain state and persona deadlines for the merged `94` active-property Captain fleet; source-system harvesting remains mirror/push or separately approved Keeper-backed Worker credentials.
+
+### 8. Captain Routine Scheduler
+**Purpose:** Keep Captain support-agent routines current with a Cloudflare/D1 due queue rather than fixed-slot fleet scans
+**Runbook:** `docs/CAPTAIN_ROUTINE_SCHEDULER_RUNBOOK_2026-08-31.md`
+**Worker Host:** `pop-brief-api`
+**Schedule:** every `15` minutes, due-gated
+**Contract:** `config/captain_active_routine_manifest.json`
+**Storage:** D1 tables `captain_routine_schedule`, `captain_agent_runs`, and existing Captain Runtime watch/action tables
+**Boundary:** Runs existing Captain Runtime support-agent logic only. No Jira, Confluence, Microsoft 365, intranet, source-ticket, Resi content, Cloudflare zone, or locked PIB mutation.
+
+### 9. Agent Readiness Monitor
+**Purpose:** Run progressive weekly Cloudflare Agent Readiness scans and report current/history posture into the Pond database
+**Runbook:** `docs/AGENT_READINESS_MONITOR_RUNBOOK_2026-08-27.md`
+**Worker:** `ops/cloudflare/agent-readiness-monitor/`
+**Production:** `https://agent-readiness.venterrawebops.com/health`
+**Deployment:** Worker version `78ba56d4-179e-4500-9d10-149887b26e3d`
+**Storage:** D1 tables `agent_readiness_targets`, `agent_readiness_runs`, `agent_readiness_results`, `agent_readiness_check_results`; R2 prefixes `agent-readiness/raw/` and `agent-readiness/runs/`
+**Boundary:** Read-only scanning only. No DNS, robots.txt, WordPress/Kinsta, Resi Edge Worker, content, Cloudflare zone config, Jira, Confluence, Microsoft 365, or locked PIB mutation.
 
 ---
 

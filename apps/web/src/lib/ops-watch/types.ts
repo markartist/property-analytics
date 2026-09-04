@@ -46,6 +46,7 @@ export interface OpsWatchCaptainRecord {
   sourceSystem: string;
   itemKey: string;
   itemUrl: string;
+  title: string;
   severity: string;
   priority: string;
   status: string;
@@ -54,6 +55,155 @@ export interface OpsWatchCaptainRecord {
   category: string;
   ownerRole: string;
   nextMove: string;
+  ticketCare?: OpsWatchTicketCareRecord;
+}
+
+export interface OpsWatchTicketCareRecord {
+  flags: string[];
+  flagLabels: string[];
+  blockerOwner: string;
+  customerPromise: string;
+  evidenceNeeded: string[];
+  recommendedAction: string;
+  captainStance: string;
+  urgencyRank: number;
+}
+
+export interface OpsWatchTicketCarePropertyQueue {
+  propertyCode: string;
+  propertyName: string;
+  posture: string;
+  topFlag: string;
+  ticketCount: number;
+  staleCount: number;
+  pendingVendorCount: number;
+  proofNeededCount: number;
+  customerWaitingCount: number;
+  nextBestAction: string;
+  records: OpsWatchCaptainRecord[];
+}
+
+export interface OpsWatchTicketCarePattern {
+  patternKey: string;
+  title: string;
+  recordCount: number;
+  propertyCount: number;
+  recommendedAction: string;
+}
+
+export interface OpsWatchTicketCareSnapshot {
+  summary: {
+    ticketCount: number;
+    propertyCount: number;
+    criticalCount: number;
+    pendingVendorCount: number;
+    stale14DayCount: number;
+    vendorIdleCount: number;
+    proofNeededCount: number;
+    customerWaitingCount: number;
+    routingCheckCount: number;
+    employeePhotoCount: number;
+  };
+  propertyQueues: OpsWatchTicketCarePropertyQueue[];
+  patterns: OpsWatchTicketCarePattern[];
+}
+
+export interface OpsWatchCommodorePropertySignal {
+  propertyCode: string;
+  propertyName: string;
+  regionName: string;
+  captainHref: string;
+  posture: string;
+  topFlag: string;
+  ticketCount: number;
+  criticalCount: number;
+  stale14DayCount: number;
+  pendingVendorCount: number;
+  proofNeededCount: number;
+  customerWaitingCount: number;
+  nextBestAction: string;
+  records: OpsWatchCaptainRecord[];
+}
+
+export interface OpsWatchCommodoreRegion {
+  regionKey: string;
+  regionName: string;
+  commodoreKey: string;
+  commodoreName: string;
+  commodoreCallSign: string;
+  activationStatus: string;
+  ordersStatus: string;
+  cadence: string;
+  humanOwner: string | null;
+  standingOrders: string[];
+  activePropertyCount: number;
+  signaledPropertyCount: number;
+  activeTicketCount: number;
+  criticalCount: number;
+  stale14DayCount: number;
+  pendingVendorCount: number;
+  proofNeededCount: number;
+  customerWaitingCount: number;
+  attentionPropertyCount: number;
+  posture: string;
+  topPattern: string;
+  nextBestAction: string;
+  properties: OpsWatchCommodorePropertySignal[];
+}
+
+export interface OpsWatchCommodorePattern {
+  patternKey: string;
+  title: string;
+  recordCount: number;
+  propertyCount: number;
+  regionCount: number;
+  severity: string;
+  escalationPath: string;
+  recommendedAction: string;
+  affectedRegions: string[];
+}
+
+export interface OpsWatchCommodoreEscalation {
+  escalationKey: string;
+  title: string;
+  regionName: string;
+  severity: string;
+  escalationPath: string;
+  affectedPropertyCount: number;
+  recommendedAction: string;
+  captainHrefs: string[];
+}
+
+export interface OpsWatchCommodoreBridgeSnapshot {
+  summary: {
+    regionCount: number;
+    activePropertyCount: number;
+    signaledPropertyCount: number;
+    activeTicketCount: number;
+    criticalCount: number;
+    stale14DayCount: number;
+    pendingVendorCount: number;
+    proofNeededCount: number;
+    customerWaitingCount: number;
+    escalationCount: number;
+    crossRegionPatternCount: number;
+    activeCommodoreCount: number;
+  };
+  regions: OpsWatchCommodoreRegion[];
+  patterns: OpsWatchCommodorePattern[];
+  escalations: OpsWatchCommodoreEscalation[];
+  roster: {
+    version: string;
+    authority: string;
+    status: string;
+    cadence: string;
+  };
+  operatingModel: {
+    role: string;
+    owns: string;
+    boundary: string;
+    actionMode: string;
+  };
 }
 
 export interface OpsWatchSourcePacketRef {
@@ -72,6 +222,8 @@ export interface OpsWatchSnapshot {
   sourceReadiness: OpsWatchReadinessRow[];
   sourceSignals: OpsWatchSourceSignal[];
   captainRecords: OpsWatchCaptainRecord[];
+  ticketCare: OpsWatchTicketCareSnapshot;
+  commodoreBridge: OpsWatchCommodoreBridgeSnapshot;
   sourcePackets: OpsWatchSourcePacketRef[];
   governance: {
     mutationPolicy: string;

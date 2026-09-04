@@ -34,6 +34,7 @@ import {
   BriefcaseBusiness,
   ClipboardCheck,
   MonitorCheck,
+  Radar,
 } from "lucide-react";
 
 const SURFACE_ICONS: Record<SurfaceId, React.ElementType> = {
@@ -43,6 +44,7 @@ const SURFACE_ICONS: Record<SurfaceId, React.ElementType> = {
   fish: Fish,
   tracker: Gauge,
   popBrief: FileText,
+  commodoreBridge: Radar,
   captainOffice: ClipboardCheck,
   captainBrief: ShipWheel,
   pibBuilder: LineChart,

@@ -88,6 +88,10 @@ Start here:
 - `/Users/mark/Property_Analytics/docs/OPS_WATCH_MIRROR_PUSH_INGEST_RUNBOOK_2026-08-22.md`
 - `/Users/mark/Property_Analytics/docs/OPS_WATCH_CLOUDFLARE_OFFLOAD_PLAN_2026-08-22.md`
 - `/Users/mark/Property_Analytics/docs/CAPTAIN_CLOUDFLARE_REFRESH_RUNBOOK_2026-08-24.md`
+- `/Users/mark/Property_Analytics/docs/CAPTAIN_ROUTINE_SCHEDULER_RUNBOOK_2026-08-31.md`
+- `/Users/mark/Property_Analytics/docs/CAPTAIN_TICKET_CARE_SOP_2026-09-04.md`
+- `/Users/mark/Property_Analytics/docs/COMMODORE_BRIDGE_OPERATING_MODEL_2026-09-04.md`
+- `/Users/mark/Property_Analytics/config/commodore_roster.json`
 
 Live Cloudflare mirror/push ingest:
 
@@ -101,7 +105,7 @@ Credential source:
 - Keeper record: `Ops Watch Ingest Shared Secret`
 - Worker secret: `OPS_WATCH_INGEST_SHARED_SECRET`
 
-Boundary: Cloudflare receives signed sanitized packets only. It does not crawl inward to intranet/private systems, and Captain-facing actions remain review-required.
+Boundary: Cloudflare receives signed sanitized packets only. It does not crawl inward to intranet/private systems, and Captain-facing actions remain review-required. Captain Ticket Care and Commodore regional rollups are read-only by default; Jira comments, transitions, closures, Admiral escalations, and regional memory promotion still require explicit current-conversation approval. Commodore names and standing orders come from `config/commodore_roster.json`; do not hardcode alternate regional ownership downstream.
 
 ## Captain Cloudflare Refresh
 
@@ -117,6 +121,19 @@ The Captain refresh control plane moves recurring Captain Office Wall and person
 - R2 prefix: `captains/`
 
 The Worker creates missing Captain persona defaults, tracks the family-composition deadline, refreshes Office Wall snapshots from governed D1 state, and stores snapshot evidence in R2. It resolves the active Captain fleet by merging Awareness identities with active Captain support-agent properties; production readback currently resolves `94` active properties. It does not edit source systems or locked PIB files. Manual triggering requires a Keeper/KSM-backed `CAPTAIN_REFRESH_ADMIN_SECRET`; no local secret fallback is allowed.
+
+## Captain Routine Scheduler
+
+Captain support-agent routines run through the existing Cloudflare API Worker scheduled handler:
+
+- Worker host: `pop-brief-api`
+- Schedule: every `15` minutes, due-gated through D1
+- Runbook: `/Users/mark/Property_Analytics/docs/CAPTAIN_ROUTINE_SCHEDULER_RUNBOOK_2026-08-31.md`
+- Routine contract: `/Users/mark/Property_Analytics/config/captain_active_routine_manifest.json`
+- D1 schedule table: `captain_routine_schedule`
+- D1 run table: `captain_agent_runs`
+
+The scheduler keeps the active Captain fleet current by syncing active `captain_support_agents`, leasing due rows, executing bounded batches through the existing Captain Runtime, and advancing daily or weekly lanes from completion state. It does not brute-force all `1,034` support agents on every wakeup and does not mutate Jira, Confluence, Microsoft 365, intranet systems, source tickets, Resi content, or locked PIB files.
 
 ## Unified Foundation
 

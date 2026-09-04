@@ -1,0 +1,132 @@
+{
+  "version": "2026-09-04.v1",
+  "authority": "MarketingOps / Property Analytics",
+  "status": "active",
+  "purpose": "Governed regional Commodore roster for the Data Pond Commodore Bridge.",
+  "defaults": {
+    "activationStatus": "active",
+    "ordersStatus": "standing_orders_active",
+    "cadence": "review_after_each_ops_watch_packet",
+    "standingOrders": [
+      "Review regional Captain ticket pressure after each Ops Watch packet.",
+      "Identify shared patterns, stalled ownership, proof gaps, and source-readiness blockers across assigned properties.",
+      "Route property-specific follow-up back through the owning Captain before escalating.",
+      "Package cross-property lessons for Fleet Scribe, Admiral Read, or Ledger review only when evidence supports promotion.",
+      "Do not mutate Jira, Confluence, Microsoft 365, Resi content, Cloudflare, Captain Runtime, or Data Pond truth without explicit approval."
+    ]
+  },
+  "regions": [
+    {
+      "regionName": "Arkansas",
+      "commodoreKey": "commodore-ozark",
+      "commodoreName": "Commodore Ozark",
+      "callSign": "Ozark",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Atlanta, GA",
+      "commodoreKey": "commodore-peachtree",
+      "commodoreName": "Commodore Peachtree",
+      "callSign": "Peachtree",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Austin, TX",
+      "commodoreKey": "commodore-hill-country",
+      "commodoreName": "Commodore Hill Country",
+      "callSign": "Hill Country",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Cypress, TX",
+      "commodoreKey": "commodore-cypress",
+      "commodoreName": "Commodore Cypress",
+      "callSign": "Cypress",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Dallas, TX",
+      "commodoreKey": "commodore-trinity",
+      "commodoreName": "Commodore Trinity",
+      "callSign": "Trinity",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Florida",
+      "commodoreKey": "commodore-gulf",
+      "commodoreName": "Commodore Gulf",
+      "callSign": "Gulf",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Houston, TX",
+      "commodoreKey": "commodore-bayou",
+      "commodoreName": "Commodore Bayou",
+      "callSign": "Bayou",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Kansas City",
+      "commodoreKey": "commodore-heartland",
+      "commodoreName": "Commodore Heartland",
+      "callSign": "Heartland",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Kentucky",
+      "commodoreKey": "commodore-bluegrass",
+      "commodoreName": "Commodore Bluegrass",
+      "callSign": "Bluegrass",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Killeen",
+      "commodoreKey": "commodore-crossroads",
+      "commodoreName": "Commodore Crossroads",
+      "callSign": "Crossroads",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Kyle, TX",
+      "commodoreKey": "commodore-plum-creek",
+      "commodoreName": "Commodore Plum Creek",
+      "callSign": "Plum Creek",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Nashville, TN",
+      "commodoreKey": "commodore-cumberland",
+      "commodoreName": "Commodore Cumberland",
+      "callSign": "Cumberland",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Oklahoma",
+      "commodoreKey": "commodore-redbud",
+      "commodoreName": "Commodore Redbud",
+      "callSign": "Redbud",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Raleigh, NC",
+      "commodoreKey": "commodore-oak",
+      "commodoreName": "Commodore Oak",
+      "callSign": "Oak",
+      "humanOwner": null
+    },
+    {
+      "regionName": "San Antonio, TX",
+      "commodoreKey": "commodore-alamo",
+      "commodoreName": "Commodore Alamo",
+      "callSign": "Alamo",
+      "humanOwner": null
+    },
+    {
+      "regionName": "Savannah, GA",
+      "commodoreKey": "commodore-marsh",
+      "commodoreName": "Commodore Marsh",
+      "callSign": "Marsh",
+      "humanOwner": null
+    }
+  ]
+}

@@ -49,6 +49,7 @@ Use these names to clarify responsibility, audience, and escalation level. Do no
 | Captain's Log | Captain, supported by Logkeeper | Captain, Intelligence Office, downstream systems | Durable property memory, decisions, evidence, watch state, and action history |
 | Captain's Brief | Captain, assembled with support agents | Commodore, Fleet Scribe, Admiral, First Officer, operators | Decision-ready property read generated from the Log plus current facts |
 | Commodore Review | Commodore | Fleet Scribe, Fleet, Admiral | Regional/peer validation and cross-property context for the Captain read |
+| Commodore's Bridge | Commodore | Regional managers, Fleet Scribe, Admiral | Read-only Pond surface for regional pressure, shared patterns, outliers, and escalation candidates |
 | Fleet Review | Fleet / Fleet Command | Fleet Scribe, Admiral | Broader operating-pattern and guardrail review before official publication |
 | Official Report Package | Fleet Scribe | Approved distribution list | Locked-format email, Word, Excel, JSON, repository links, source panel, and archive record assembled from governed inputs |
 | Admiral Read | Fleet Scribe from Captain/Commodore/Fleet inputs | Admiral / VP | Highest-signal executive interpretation and decision request |
@@ -117,8 +118,16 @@ The Fleet Scribe must not:
 | Assignment tracker | Boatswain |
 | Memory/audit steward | Logkeeper |
 
+## Active Commodore Roster
+
+09/04/2026 activation note: Regional Commodore persona names, call signs, activation state, standing-order status, cadence, and future human-owner mapping are governed by `config/commodore_roster.json`. Do not create hidden regional names in UI code, reports, prompts, or downstream packet builders.
+
+The initial roster stands up one active system Commodore per governed region: Commodore Ozark, Commodore Peachtree, Commodore Hill Country, Commodore Cypress, Commodore Trinity, Commodore Gulf, Commodore Bayou, Commodore Heartland, Commodore Bluegrass, Commodore Crossroads, Commodore Plum Creek, Commodore Cumberland, Commodore Redbud, Commodore Oak, Commodore Alamo, and Commodore Marsh.
+
 ## Boundary With Data Pond
 
 The hierarchy does not create new truth ownership.
 
 Data Pond remains the source of internal operational truth where a governed source exists. The Captain and support roles interpret, reconcile, escalate, and record. They do not overwrite source-of-record facts.
+
+09/04/2026 implementation note: The Commodore's Bridge now exists at `/commodores` as the first read-only Pond implementation of the regional layer. Its operating model is documented in `/Users/mark/Property_Analytics/docs/COMMODORE_BRIDGE_OPERATING_MODEL_2026-09-04.md`.
